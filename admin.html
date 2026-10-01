@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Rehaan Computers Admin Dashboard">
+<meta name="theme-color" content="#080808">
+<title>Rehaan Computers — Admin Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body class="admin-page">
+
+<div class="admin-wrapper">
+
+<!-- LOGIN -->
+<section id="adminLoginCard" class="admin-login-card">
+
+<div class="admin-brand">
+<div class="admin-brand-logo">RC</div>
+<h1>Rehaan Computers</h1>
+<p>Secure Admin Dashboard</p>
+</div>
+
+<form id="adminLoginForm">
+
+<div class="admin-form-group">
+<label for="adminEmail">Admin Email</label>
+<input type="email" id="adminEmail" name="adminEmail" placeholder="Enter admin email" autocomplete="username" required>
+</div>
+
+<div class="admin-form-group">
+<label for="adminPassword">Password</label>
+<input type="password" id="adminPassword" name="adminPassword" placeholder="Enter admin password" autocomplete="current-password" required>
+</div>
+
+<button type="submit" id="adminLoginButton" class="admin-login-button">Login to Dashboard</button>
+
+<div id="adminLoginMessage" style="display:none;"></div>
+
+</form>
+
+</section>
+
+<!-- DASHBOARD -->
+<section id="adminDashboard">
+
+<header class="admin-dashboard-header">
+
+<div>
+<h1>Admin Dashboard</h1>
+<p>Rehaan Computers — Admission Applications</p>
+</div>
+
+<div class="admin-actions">
+<a href="index.html" class="admin-back-button">← Back to Website</a>
+<button type="button" id="refreshApplications" class="admin-action-button">↻ Refresh</button>
+<button type="button" id="adminLogoutBtn" class="admin-action-button admin-logout-button">Logout</button>
+</div>
+
+</header>
+
+<div class="applications-title">
+<h2>Admission Applications</h2>
+</div>
+
+<div id="applicationsList" class="applications-list">
+<div class="admin-loading">Loading applications...</div>
+</div>
+
+</section>
+
+</div>
+
+<script type="module" src="script.js"></script>
+<script type="module">
+/* REHAAN COMPUTERS - admin fixes. Load in admin.html AFTER script.js */
+
+import { getApps } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+
+import {
+    getAuth,
+    signOut,
+    setPersistence,
+    inMemoryPersistence
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+
+/* 1. Always ask for email + password when the admin page opens */
+
+// keep the dashboard hidden until any old saved login is cleared
+const hideDashboard = document.createElement("style");
+hideDashboard.textContent = "#adminDashboard{display:none!important}";
+document.head.appendChild(hideDashboard);
+
+// if the browser restores the page from the Back button, reload it fresh
+window.addEventListener("pageshow", event => {
+    if (event.persisted) {
+        window.location.reload();
+    }
+});
+
+const auth = getAuth(getApps()[0]);
+
+auth.authStateReady()
+    .then(() => signOut(auth))
+    .then(() => setPersistence(auth, inMemoryPersistence))
+    .catch(error => console.error("Admin session reset error:", error))
+    .then(() => setTimeout(() => hideDashboard.remove(), 400));
+
+
+/* 2. Replace "APPLICATION NaN" with the student's name */
+
+const list = document.getElementById("applicationsList");
+
+if (list) {
+
+    const fixLabels = () => {
+
+        list.querySelectorAll(".application-number").forEach(label => {
+
+            if (label.textContent.includes("NaN")) {
+
+                const heading = label
+                    .closest(".application-card")
+                    ?.querySelector("h3");
+
+                label.textContent = heading
+                    ? heading.textContent.trim()
+                    : "";
+            }
+
+        });
+
+    };
+
+    new MutationObserver(fixLabels).observe(list, {
+        childList: true,
+        subtree: true
+    });
+
+    fixLabels();
+
+}
+
+</script>
+
+</body>
+</html>

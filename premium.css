@@ -1,0 +1,89 @@
+/* REHAAN COMPUTERS - premium upgrade. Load AFTER style.css */
+@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
+@keyframes shine{to{background-position:200% center}}
+@keyframes scrollX{to{transform:translateX(-50%)}}
+@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(155,240,176,.5)}70%{box-shadow:0 0 0 8px rgba(155,240,176,0)}}
+@keyframes glowPulse{0%,100%{box-shadow:0 0 0 0 rgba(214,173,85,0)}50%{box-shadow:0 0 42px rgba(214,173,85,.2)}}
+
+/* more readable sizes */
+.nav-menu a{font-size:13px}
+.primary-btn,.secondary-btn{font-size:13px}
+.hero-content>p{font-size:17px}
+.hero-points{font-size:12px}
+.section-heading p{font-size:14px}
+.course-content p{font-size:13px}
+.course-detail-btn{font-size:11px}
+.about-text{font-size:14px}
+.benefit-card p{font-size:12px}
+.form-group label{font-size:12px}
+.form-group input,.form-group select,.form-group textarea{font-size:14px}
+.attendance-choice label{font-size:13px}
+.agreement{font-size:12px}
+.submit-btn{font-size:14px}
+.site-footer p{font-size:12px}
+
+/* moving elements */
+.hero-banner{animation:floatY 6s ease-in-out infinite}
+.hero-section::before{animation:floatY 9s ease-in-out infinite}
+.hero-content h1 span{background-image:linear-gradient(110deg,#fff 0%,var(--gold-light) 25%,#fff 50%,var(--gold-light) 75%,#fff 100%);background-size:200% auto;animation:shine 7s linear infinite}
+.banner-status::before{content:"";display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;background:#9bf0b0;animation:pulseDot 1.8s infinite}
+
+.marquee{overflow:hidden;padding:18px 0;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,.06);-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.marquee-track{display:flex;width:max-content;animation:scrollX 32s linear infinite}
+.marquee span{white-space:nowrap;padding-left:26px;color:#9a9a9a;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.marquee span::after{content:"\2726";margin-left:52px;color:var(--gold)}
+
+.course-card::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);transform:scaleX(0);transition:transform .4s ease}
+.course-card:hover::after{transform:scaleX(1)}
+
+/* scroll reveal (class added by premium.js) */
+.reveal-ready .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
+.reveal-ready .reveal.in{opacity:1;transform:none}
+
+/* process steps */
+.steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.step-card{padding:26px;border:1px solid var(--border);border-radius:var(--radius);background:rgba(255,255,255,.025)}
+.step-card b{display:block;font-family:"Playfair Display",serif;font-size:46px;line-height:1;color:transparent;-webkit-text-stroke:1px rgba(214,173,85,.55)}
+.step-card h3{margin:16px 0 8px;font-family:"Playfair Display",serif;font-size:20px}
+.step-card p{margin:0;color:#8a8a8a;font-size:13px;line-height:1.7}
+
+/* admission: form + right side panel */
+.admission-layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:26px;align-items:start;max-width:1180px;margin:0 auto}
+.admission-layout .application-form{max-width:none;margin:0}
+.admission-aside{position:sticky;top:100px;display:grid;gap:16px}
+.notice-card{padding:26px;border:1px solid rgba(214,173,85,.45);border-radius:20px;background:linear-gradient(145deg,rgba(214,173,85,.15),rgba(214,173,85,.03));animation:glowPulse 3.2s ease-in-out infinite}
+.notice-badge{display:inline-block;padding:5px 10px;border-radius:999px;background:var(--gold);color:#111;font-size:10px;font-weight:800;letter-spacing:.12em}
+.notice-card h3{margin:14px 0 8px;font-family:"Playfair Display",serif;font-size:24px;line-height:1.15}
+.notice-card p{margin:0;color:#d0d0d0;font-size:13px;line-height:1.75}
+.docs-card,.visit-card{padding:24px;border:1px solid var(--border);border-radius:20px;background:rgba(255,255,255,.03)}
+.docs-card h4,.visit-card h4{margin:0 0 14px;font-family:"Playfair Display",serif;font-size:19px;color:var(--gold-light)}
+.docs-card ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
+.docs-card li{display:flex;align-items:center;gap:14px;padding:14px;border:1px dashed rgba(214,173,85,.35);border-radius:12px;background:rgba(255,255,255,.025)}
+.docs-card li b{flex:none;width:42px;height:42px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(135deg,var(--gold-light),#c79b43);color:#111;font-family:"Playfair Display",serif;font-size:20px}
+.docs-card strong{display:block;font-size:13px}
+.docs-card span{color:#777;font-size:11px}
+.visit-card p{margin:0;color:#aaa;font-size:13px}
+.visit-facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}
+.visit-facts strong{display:block;color:var(--gold-light);font-family:"Playfair Display",serif;font-size:21px}
+.visit-facts span{color:#777;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
+
+/* faq */
+.faq-list{max-width:820px;margin:0 auto;display:grid;gap:12px}
+.faq-item{border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025);transition:border-color .25s,background .25s}
+.faq-item[open]{border-color:rgba(214,173,85,.32);background:rgba(214,173,85,.04)}
+.faq-item summary{display:flex;justify-content:space-between;gap:16px;padding:18px 22px;font-size:14px;font-weight:600;cursor:pointer;list-style:none}
+.faq-item summary::-webkit-details-marker{display:none}
+.faq-item summary::after{content:"+";color:var(--gold);font-size:22px;line-height:1;transition:transform .25s}
+.faq-item[open] summary::after{transform:rotate(45deg)}
+.faq-item p{margin:0;padding:0 22px 20px;color:#999;font-size:13px;line-height:1.8}
+
+@media (max-width:1000px){
+.admission-layout{grid-template-columns:1fr}
+.admission-aside{position:static;order:-1}
+.steps-grid{grid-template-columns:repeat(2,1fr)}
+}
+@media (max-width:560px){.steps-grid{grid-template-columns:1fr}}
+@media (prefers-reduced-motion:reduce){
+*{animation:none!important;transition:none!important}
+.reveal-ready .reveal{opacity:1;transform:none}
+}
