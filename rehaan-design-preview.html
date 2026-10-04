@@ -6104,6 +6104,9 @@ async function submitApplication(event) {
         form.reset();
 
 
+        setStudentPhoto("");
+
+
         /*
          * Restore the default attendance option
          * after form reset.
@@ -6516,22 +6519,50 @@ function initPaymentStep() {
         "click",
         () => {
 
-            navigator.clipboard?.writeText(UPI_ID)
-                .then(() => {
+            const finish = () => {
 
-                    const button = getElement("copyUpiBtn");
+                const button = getElement("copyUpiBtn");
 
-                    if (button) {
-                        button.textContent = "Copied ✓";
-                        setTimeout(() => {
-                            if (button) {
-                                button.textContent = "Copy";
-                            }
-                        }, 1500);
-                    }
+                if (button) {
+                    button.textContent = "Copied ✓";
+                    setTimeout(() => {
+                        if (button) {
+                            button.textContent = "Copy";
+                        }
+                    }, 1500);
+                }
 
-                })
-                .catch(() => {});
+            };
+
+            const fallback = () => {
+
+                try {
+
+                    const area = document.createElement("textarea");
+                    area.value = UPI_ID;
+                    area.style.position = "fixed";
+                    area.style.opacity = "0";
+                    document.body.appendChild(area);
+                    area.select();
+                    document.execCommand("copy");
+                    area.remove();
+                    finish();
+
+                } catch (copyError) {
+                    /* clipboard unavailable — silently skip */
+                }
+
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+
+                navigator.clipboard.writeText(UPI_ID)
+                    .then(finish)
+                    .catch(fallback);
+
+            } else {
+                fallback();
+            }
 
         }
     );
