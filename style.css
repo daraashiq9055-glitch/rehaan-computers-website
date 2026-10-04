@@ -2963,3 +2963,10 @@ body.admin-page {
     .tool-body { padding: 16px 18px 22px; }
     .tool-body h3 { font-size: 20px; }
 }
+
+.tools-gallery { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 22px; margin-top: 26px; }
+.tool-shot { position: relative; margin: 0; border-radius: 14px; overflow: hidden; border: 1px solid rgba(212,175,55,0.14); background: #0a0a0a; }
+.tool-shot img { display: block; width: 100%; height: 200px; object-fit: cover; filter: saturate(0.95); transition: transform 0.8s ease; }
+.tool-shot:hover img { transform: scale(1.05); }
+.tool-shot figcaption { position: absolute; inset: auto 0 0 0; padding: 26px 16px 13px; font-size: 12.5px; letter-spacing: 0.02em; color: rgba(240,234,220,0.92); background: linear-gradient(180deg, transparent, rgba(5,5,5,0.88)); }
+@media (max-width: 980px) { .tools-gallery { grid-template-columns: 1fr; } .tool-shot img { height: 210px; } }
