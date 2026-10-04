@@ -1839,7 +1839,6 @@ async function submitApplication(event) {
 
         const emailParams = {
 
-            // recipients handled by the EmailJS template
 
             student_name: fullName,
 
@@ -3507,9 +3506,10 @@ function openAddStudentModal() {
     let photoData = "";
 
     const courseOptions =
-        (typeof courses !== "undefined" && courses.length ? courses : [])
-            .map(c => `<option>${escapeHTML(c.name)}</option>`)
-            .join("");
+        `<option value="">Select Course</option>` +
+        courses.map(c =>
+            `<option value="${escapeHTML(c.title)}">${escapeHTML(c.title)}</option>`
+        ).join("");
 
     const modal = adminCreateModal("adminAddModal", `
         <div class="admin-modal-card">
@@ -3614,6 +3614,14 @@ function openAddStudentModal() {
             return;
         }
 
+        const course = modal.querySelector("#addCourse").value;
+
+        if (!course) {
+            msg.hidden = false; msg.className = "admin-modal-msg err";
+            msg.textContent = "Select a course.";
+            return;
+        }
+
         if (!admissionNumber) {
             msg.hidden = false; msg.className = "admin-modal-msg err";
             msg.textContent = "An admission number is required for offline enrolment (next suggested: " + nextAdmissionNumber() + ").";
@@ -3636,7 +3644,7 @@ function openAddStudentModal() {
                 dob: value("addDob"),
                 qualification: modal.querySelector("#addQual").value,
                 address: value("addAddress"),
-                coursePreference: modal.querySelector("#addCourse").value,
+                coursePreference: course,
                 batch: modal.querySelector("#addBatch").value,
                 source: "Institute — offline enrolment",
                 attendanceSetup: "skip",
