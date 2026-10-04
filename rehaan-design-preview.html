@@ -1,0 +1,6280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Rehaan Computers — premium computer training in Charangam, Beerwah. Practical courses in MS Office, Tally with GST, Typing, Photoshop and more. Online admission open all year with no last date. New batches begin 1 October.">
+<meta name="theme-color" content="#060606">
+<meta property="og:title" content="Rehaan Computers — Learn • Practice • Grow">
+<meta property="og:description" content="Premium computer training: practical classes, individual attention and professional certificates. Online admission open — no last date. Classes begin 1 October.">
+<meta property="og:type" content="website">
+<title>Rehaan Computers — Premium Computer Training | Admissions Open</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23060606'/%3E%3Crect x='2' y='2' width='60' height='60' rx='12' fill='none' stroke='%23d6ad55' stroke-width='2'/%3E%3Ctext x='32' y='42' font-family='Georgia,serif' font-size='26' font-weight='bold' fill='%23f2d38a' text-anchor='middle'%3ERC%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+/* =========================================================
+   REHAAN COMPUTERS
+   PREMIUM MAIN WEBSITE — CORE DESIGN SYSTEM
+   Black & gold identity, readable typography, shared by
+   index.html and admin.html. Animation layer lives in
+   premium.css (main page only).
+========================================================= */
+
+:root {
+    --bg: #060606;
+    --bg-soft: #0a0a0a;
+    --surface: #101010;
+    --surface-2: #151514;
+
+    --gold: #d6ad55;
+    --gold-light: #f2d38a;
+    --gold-soft: #c8ad73;
+    --gold-dark: #9d7731;
+    --gold-line: rgba(214, 173, 85, 0.22);
+
+    --text: #f5f3ee;
+    --text-soft: #c9c6bd;
+    --muted: #9a968c;
+    --faint: #6f6c64;
+
+    --border: rgba(255, 255, 255, 0.09);
+    --card-bg: linear-gradient(150deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.016));
+    --gold-grad: linear-gradient(135deg, var(--gold-light), #c79b43);
+
+    --radius: 20px;
+    --shadow: 0 25px 80px rgba(0, 0, 0, 0.42);
+    --transition: 0.25s ease;
+
+    --font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+    --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+
+
+* { box-sizing: border-box; }
+
+
+html {
+    scroll-behavior: smooth;
+    scroll-padding-top: 86px;
+}
+
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at 82% 4%, rgba(214, 173, 85, 0.07), transparent 26%),
+        radial-gradient(circle at 6% 58%, rgba(214, 173, 85, 0.04), transparent 26%),
+        var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+
+body.modal-open { overflow: hidden; }
+
+
+a { color: inherit; text-decoration: none; }
+
+
+button, input, select, textarea { font: inherit; }
+button { border: 0; }
+
+img, svg { display: block; max-width: 100%; }
+
+
+::selection { background: rgba(214, 173, 85, 0.35); color: #fff; }
+
+
+.container { width: min(1200px, 92%); margin: 0 auto; }
+
+
+:focus-visible {
+    outline: 2px solid var(--gold);
+    outline-offset: 2px;
+}
+
+
+/* =========================================================
+   TOP BAR
+========================================================= */
+
+.topbar {
+    background: linear-gradient(90deg, #0b0b0b, #17130a 50%, #0b0b0b);
+    border-bottom: 1px solid rgba(214, 173, 85, 0.2);
+}
+
+
+.topbar-inner {
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    padding: 7px 0;
+    color: #cfccc4;
+    font-size: 12.5px;
+    letter-spacing: 0.03em;
+}
+
+
+.topbar-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    min-width: 0;
+}
+
+
+.topbar-item b { color: var(--gold-light); font-weight: 700; }
+
+
+.topbar svg {
+    width: 14px;
+    height: 14px;
+    flex: none;
+    fill: none;
+    stroke: var(--gold);
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+
+.topbar-divider {
+    width: 1px;
+    height: 13px;
+    background: rgba(214, 173, 85, 0.45);
+}
+
+
+/* =========================================================
+   HEADER / NAV
+========================================================= */
+
+.site-header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(6, 6, 6, 0.86);
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+}
+
+
+.nav-container {
+    min-height: 76px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 26px;
+}
+
+
+.brand { display: flex; align-items: center; gap: 12px; }
+
+
+.brand-mark {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(214, 173, 85, 0.4);
+    border-radius: 13px;
+    background: linear-gradient(145deg, var(--gold-light), var(--gold-dark));
+    color: #111;
+    font-family: var(--font-display);
+    font-size: 17px;
+    font-weight: 800;
+    box-shadow: 0 8px 25px rgba(214, 173, 85, 0.14);
+}
+
+
+.brand-text strong,
+.brand-text span { display: block; }
+
+
+.brand strong {
+    font-size: 15px;
+    letter-spacing: 0.16em;
+}
+
+
+.brand span {
+    margin-top: -2px;
+    color: var(--gold);
+    font-size: 9.5px;
+    font-weight: 700;
+    letter-spacing: 0.24em;
+}
+
+
+.nav-menu {
+    display: flex;
+    align-items: center;
+    gap: 26px;
+}
+
+
+.nav-menu a {
+    position: relative;
+    color: #a5a19a;
+    font-size: 13.5px;
+    font-weight: 600;
+    transition: color var(--transition);
+}
+
+
+.nav-menu a::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -8px;
+    width: 0;
+    height: 1.5px;
+    background: linear-gradient(90deg, var(--gold), var(--gold-light));
+    transition: width var(--transition);
+}
+
+
+.nav-menu a:hover,
+.nav-menu a.active { color: #fff; }
+
+
+.nav-menu a:hover::after,
+.nav-menu a.active::after { width: 100%; }
+
+
+.nav-menu a.nav-admin {
+    padding: 8px 15px;
+    border: 1px solid rgba(214, 173, 85, 0.4);
+    border-radius: 999px;
+    color: var(--gold-light);
+    font-size: 12.5px;
+}
+
+
+.nav-menu a.nav-admin::after { display: none; }
+
+
+.nav-menu a.nav-admin:hover {
+    background: rgba(214, 173, 85, 0.1);
+    color: #fff;
+}
+
+
+.mobile-menu-btn {
+    display: none;
+    width: 44px;
+    height: 44px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    font-size: 19px;
+    cursor: pointer;
+}
+
+
+/* =========================================================
+   HERO
+========================================================= */
+
+.hero-section {
+    position: relative;
+    min-height: 660px;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+
+.hero-aura {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(60px);
+    pointer-events: none;
+}
+
+
+.hero-aura-one {
+    width: 560px;
+    height: 560px;
+    top: -260px;
+    right: -140px;
+    background: rgba(214, 173, 85, 0.08);
+}
+
+
+.hero-aura-two {
+    width: 420px;
+    height: 420px;
+    bottom: -220px;
+    left: -160px;
+    background: rgba(214, 173, 85, 0.045);
+}
+
+
+.hero-grid {
+    position: relative;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: minmax(0, 1.15fr) minmax(380px, 0.85fr);
+    align-items: center;
+    gap: 70px;
+    padding: 96px 0;
+}
+
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 9px;
+    margin-bottom: 22px;
+    padding: 8px 15px;
+    border: 1px solid var(--gold-line);
+    border-radius: 999px;
+    background: rgba(214, 173, 85, 0.06);
+    color: var(--gold-light);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.17em;
+}
+
+
+.live-dot {
+    width: 7px;
+    height: 7px;
+    flex: none;
+    border-radius: 50%;
+    background: #6fe08c;
+}
+
+
+.hero-content h1 {
+    max-width: 740px;
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: clamp(42px, 5.6vw, 74px);
+    font-weight: 700;
+    line-height: 1.04;
+    letter-spacing: -0.02em;
+}
+
+
+.hero-content h1 span {
+    display: block;
+    background: linear-gradient(120deg, #ffffff 20%, var(--gold-light) 65%, var(--gold) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+}
+
+
+.hero-content > p {
+    max-width: 580px;
+    margin: 26px 0 0;
+    color: var(--text-soft);
+    font-size: 17px;
+    line-height: 1.8;
+}
+
+
+.hero-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 34px;
+}
+
+
+.primary-btn,
+.secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50px;
+    padding: 0 24px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    cursor: pointer;
+    transition:
+        transform var(--transition),
+        box-shadow var(--transition),
+        border-color var(--transition),
+        background var(--transition),
+        color var(--transition);
+}
+
+
+.primary-btn {
+    border: 1px solid rgba(242, 211, 138, 0.4);
+    background: var(--gold-grad);
+    color: #141210;
+    box-shadow: 0 12px 32px rgba(214, 173, 85, 0.16);
+}
+
+
+.primary-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 18px 40px rgba(214, 173, 85, 0.26);
+}
+
+
+.secondary-btn {
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+}
+
+
+.secondary-btn:hover {
+    transform: translateY(-2px);
+    border-color: rgba(214, 173, 85, 0.4);
+    background: rgba(214, 173, 85, 0.07);
+    color: var(--gold-light);
+}
+
+
+.hero-points {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px 22px;
+    margin-top: 30px;
+    color: var(--muted);
+    font-size: 13.5px;
+    font-weight: 600;
+}
+
+
+.hero-points span:first-child { color: #b8d6b9; }
+
+
+/* =========================================================
+   HERO BANNER
+========================================================= */
+
+.hero-banner {
+    position: relative;
+    min-height: 430px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 30px;
+    overflow: hidden;
+    border: 1px solid var(--gold-line);
+    border-radius: 26px;
+    background: linear-gradient(150deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.018));
+    box-shadow: 0 35px 100px rgba(0, 0, 0, 0.42);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+
+.hero-banner::before {
+    content: "";
+    position: absolute;
+    inset: 1px;
+    border-radius: 25px;
+    pointer-events: none;
+    background:
+        linear-gradient(135deg, rgba(214, 173, 85, 0.08), transparent 35%, transparent 70%, rgba(214, 173, 85, 0.05));
+}
+
+
+.banner-glow {
+    position: absolute;
+    width: 240px;
+    height: 240px;
+    top: -100px;
+    right: -70px;
+    border-radius: 50%;
+    background: rgba(214, 173, 85, 0.15);
+    filter: blur(48px);
+}
+
+
+.banner-top,
+.banner-bottom,
+.banner-main,
+.banner-cta {
+    position: relative;
+    z-index: 2;
+}
+
+
+.banner-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    color: #9d9a93;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+}
+
+
+.banner-status {
+    padding: 6px 11px;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    border-radius: 999px;
+    background: rgba(34, 197, 94, 0.08);
+    color: #9bf0b0;
+    font-size: 9.5px;
+    letter-spacing: 0.1em;
+}
+
+
+.banner-main { padding: 46px 0 30px; }
+
+
+.banner-main small {
+    color: var(--gold);
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+}
+
+
+.banner-main h2 {
+    margin: 14px 0 12px;
+    font-family: var(--font-display);
+    font-size: 40px;
+    font-weight: 700;
+    line-height: 1.05;
+}
+
+
+.banner-main p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+
+.banner-bottom {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+
+.banner-bottom div { min-width: 0; }
+
+
+.banner-bottom strong,
+.banner-bottom span { display: block; }
+
+
+.banner-bottom strong {
+    color: var(--gold-light);
+    font-family: var(--font-display);
+    font-size: 21px;
+}
+
+
+.banner-bottom span {
+    margin-top: 2px;
+    color: #77746c;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+}
+
+
+.banner-cta {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 48px;
+    margin-top: 20px;
+    border-radius: 12px;
+    background: rgba(214, 173, 85, 0.1);
+    border: 1px solid rgba(214, 173, 85, 0.35);
+    color: var(--gold-light);
+    font-size: 14px;
+    font-weight: 700;
+    transition: var(--transition);
+}
+
+
+.banner-cta:hover {
+    background: var(--gold-grad);
+    color: #141210;
+    border-color: transparent;
+}
+
+
+/* =========================================================
+   TRUST BAR
+========================================================= */
+
+.trust-section {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.015);
+}
+
+
+.trust-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+
+.trust-grid > div {
+    min-height: 112px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    text-align: center;
+}
+
+
+.trust-grid > div:last-child { border-right: 0; }
+
+
+.trust-grid strong {
+    color: var(--gold-light);
+    font-family: var(--font-display);
+    font-size: 30px;
+    font-weight: 700;
+}
+
+
+.trust-grid span {
+    margin-top: 4px;
+    color: #807d75;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+
+/* =========================================================
+   SECTIONS (GENERAL)
+========================================================= */
+
+.section { padding: 110px 0; }
+
+
+.section-heading {
+    max-width: 720px;
+    margin: 0 auto 52px;
+    text-align: center;
+}
+
+
+.section-heading.left {
+    margin-left: 0;
+    text-align: left;
+}
+
+
+.section-heading > span {
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+}
+
+
+.section-heading h2 {
+    margin: 12px 0 14px;
+    font-family: var(--font-display);
+    font-size: clamp(32px, 4.2vw, 50px);
+    font-weight: 700;
+    line-height: 1.08;
+    letter-spacing: -0.01em;
+}
+
+
+.section-heading p {
+    margin: 0;
+    color: var(--muted);
+    font-size: 15.5px;
+    line-height: 1.75;
+}
+
+
+/* =========================================================
+   COURSES
+========================================================= */
+
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 20px;
+}
+
+
+.course-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    padding: 26px 26px 24px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--card-bg);
+    transition:
+        transform var(--transition),
+        border-color var(--transition),
+        box-shadow var(--transition);
+}
+
+
+.course-card::before {
+    content: "";
+    position: absolute;
+    width: 160px;
+    height: 160px;
+    top: -85px;
+    right: -75px;
+    border-radius: 50%;
+    background: rgba(214, 173, 85, 0.07);
+    filter: blur(16px);
+    pointer-events: none;
+}
+
+
+.course-card:hover {
+    transform: translateY(-6px);
+    border-color: rgba(214, 173, 85, 0.32);
+    box-shadow: 0 28px 65px rgba(0, 0, 0, 0.35);
+}
+
+
+.course-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    padding: 5px 11px;
+    border-radius: 999px;
+    background: var(--gold-grad);
+    color: #141210;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.13em;
+    text-transform: uppercase;
+    box-shadow: 0 6px 18px rgba(214, 173, 85, 0.25);
+}
+
+
+.course-number {
+    color: var(--gold);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+}
+
+
+.course-category {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 4px 11px;
+    border: 1px solid var(--gold-line);
+    border-radius: 999px;
+    background: rgba(214, 173, 85, 0.05);
+    color: var(--gold-soft);
+    font-size: 10.5px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+
+.course-content {
+    position: relative;
+    z-index: 1;
+    margin-top: 16px;
+}
+
+
+.course-content h3 {
+    margin: 0;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+    line-height: 1.2;
+}
+
+
+.course-content > p {
+    margin: 10px 0 0;
+    color: #928f87;
+    font-size: 13.5px;
+    line-height: 1.7;
+}
+
+
+.course-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    margin-top: 16px;
+}
+
+
+.course-chips span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.03);
+    color: #b5b2aa;
+    font-size: 11.5px;
+    font-weight: 600;
+}
+
+
+.course-chips span::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--gold);
+}
+
+
+.course-start {
+    margin-top: 14px;
+    color: #8d8a82;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+
+.course-start b { color: var(--gold-soft); font-weight: 700; }
+
+
+.course-card-footer {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 22px;
+}
+
+
+.course-fee {
+    color: var(--gold-light);
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+
+.course-card-actions {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+}
+
+
+.course-detail-btn,
+.course-apply-btn {
+    min-height: 42px;
+    padding: 0 15px;
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition:
+        transform var(--transition),
+        border-color var(--transition),
+        background var(--transition),
+        color var(--transition),
+        box-shadow var(--transition);
+}
+
+
+.course-detail-btn {
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+}
+
+
+.course-detail-btn:hover {
+    border-color: rgba(214, 173, 85, 0.4);
+    color: var(--gold-light);
+    background: rgba(214, 173, 85, 0.06);
+}
+
+
+.course-apply-btn {
+    border: 1px solid rgba(242, 211, 138, 0.4);
+    background: var(--gold-grad);
+    color: #141210;
+}
+
+
+.course-apply-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 24px rgba(214, 173, 85, 0.25);
+}
+
+
+.courses-note {
+    margin: 30px auto 0;
+    max-width: 760px;
+    text-align: center;
+    padding: 15px 22px;
+    border: 1px dashed rgba(214, 173, 85, 0.35);
+    border-radius: 14px;
+    background: rgba(214, 173, 85, 0.03);
+    color: var(--text-soft);
+    font-size: 14px;
+}
+
+
+.courses-note span { color: var(--gold); margin-right: 4px; }
+.courses-note strong { color: var(--gold-light); }
+
+
+/* =========================================================
+   ABOUT
+========================================================= */
+
+.about-section {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.012), rgba(255, 255, 255, 0.028), rgba(255, 255, 255, 0.012));
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+
+.about-grid {
+    display: grid;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 70px;
+    align-items: center;
+}
+
+
+.about-text {
+    margin: 18px 0 0;
+    color: #a09d95;
+    font-size: 15.5px;
+    line-height: 1.9;
+}
+
+
+.about-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 30px;
+}
+
+
+.about-stats div {
+    min-width: 0;
+    padding: 15px 8px;
+    border: 1px solid var(--gold-line);
+    border-radius: 14px;
+    background: rgba(214, 173, 85, 0.04);
+    text-align: center;
+}
+
+
+.about-stats strong {
+    display: block;
+    color: var(--gold-light);
+    font-family: var(--font-display);
+    font-size: 23px;
+}
+
+
+.about-stats span {
+    color: var(--faint);
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+}
+
+
+.benefits-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+}
+
+
+.benefit-card {
+    padding: 26px;
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.028);
+    transition:
+        transform var(--transition),
+        border-color var(--transition),
+        background var(--transition);
+}
+
+
+.benefit-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(214, 173, 85, 0.3);
+    background: rgba(214, 173, 85, 0.04);
+}
+
+
+.benefit-card b {
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+}
+
+
+.benefit-card h3 {
+    margin: 13px 0 8px;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+
+.benefit-card p {
+    margin: 0;
+    color: #8c8981;
+    font-size: 13.5px;
+    line-height: 1.75;
+}
+
+
+/* =========================================================
+   PROCESS STEPS
+========================================================= */
+
+.steps-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+}
+
+
+.step-card {
+    position: relative;
+    padding: 28px 26px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.028);
+    transition:
+        transform var(--transition),
+        border-color var(--transition);
+}
+
+
+.step-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(214, 173, 85, 0.3);
+}
+
+
+.step-card b {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 46px;
+    line-height: 1;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(214, 173, 85, 0.55);
+}
+
+
+.step-card h3 {
+    margin: 16px 0 8px;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+
+.step-card p {
+    margin: 0;
+    color: #8c8981;
+    font-size: 13.5px;
+    line-height: 1.75;
+}
+
+
+/* =========================================================
+   ADMISSION
+========================================================= */
+
+.admission-section { position: relative; }
+
+
+.admission-section::before {
+    content: "";
+    position: absolute;
+    width: 460px;
+    height: 460px;
+    left: -250px;
+    top: 220px;
+    border-radius: 50%;
+    background: rgba(214, 173, 85, 0.04);
+    filter: blur(75px);
+    pointer-events: none;
+}
+
+
+.admission-layout {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 380px;
+    gap: 26px;
+    align-items: start;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+
+.admission-layout .application-form {
+    max-width: none;
+    margin: 0;
+}
+
+
+.admission-aside {
+    position: sticky;
+    top: 100px;
+    display: grid;
+    gap: 16px;
+}
+
+
+.notice-card {
+    padding: 26px;
+    border: 1px solid rgba(214, 173, 85, 0.45);
+    border-radius: 20px;
+    background: linear-gradient(145deg, rgba(214, 173, 85, 0.15), rgba(214, 173, 85, 0.03));
+}
+
+
+.notice-badge {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 999px;
+    background: var(--gold);
+    color: #111;
+    font-size: 10.5px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+}
+
+
+.notice-card h3 {
+    margin: 14px 0 8px;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1.15;
+}
+
+
+.notice-card p {
+    margin: 0;
+    color: #d6d3cb;
+    font-size: 13.5px;
+    line-height: 1.75;
+}
+
+
+.notice-card strong { color: var(--gold-light); }
+
+
+.docs-card,
+.visit-card {
+    padding: 25px;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: rgba(255, 255, 255, 0.03);
+}
+
+
+.docs-card h4,
+.visit-card h4 {
+    margin: 0 0 15px;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--gold-light);
+}
+
+
+.docs-card ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 12px;
+}
+
+
+.docs-card li {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    border: 1px dashed rgba(214, 173, 85, 0.35);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.025);
+}
+
+
+.docs-card li b {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border-radius: 12px;
+    background: var(--gold-grad);
+    color: #111;
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 700;
+}
+
+
+.docs-card strong { display: block; font-size: 13.5px; }
+
+
+.docs-card span { color: #7c7970; font-size: 11.5px; }
+
+
+.visit-card p { margin: 0; color: #a09d95; font-size: 13.5px; }
+
+
+.visit-facts {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+
+.visit-facts strong {
+    display: block;
+    color: var(--gold-light);
+    font-family: var(--font-display);
+    font-size: 22px;
+}
+
+
+.visit-facts span {
+    color: #77746c;
+    font-size: 10.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.application-form {
+    position: relative;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 34px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 24px;
+    background: var(--card-bg);
+    box-shadow: var(--shadow);
+}
+
+
+.form-section-title {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 22px;
+    padding-bottom: 13px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    color: var(--gold-light);
+    font-family: var(--font-display);
+    font-size: 21px;
+    font-weight: 700;
+}
+
+
+.form-section-title em {
+    font-style: normal;
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    color: #141210;
+    background: var(--gold-grad);
+    padding: 4px 8px;
+    border-radius: 7px;
+}
+
+
+.form-section-title:not(:first-child) { margin-top: 36px; }
+
+
+.form-section-gap { margin-top: 30px; }
+
+
+.form-hint {
+    margin: -6px 0 16px;
+    color: #8b887f;
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+
+.form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+}
+
+
+.form-group { min-width: 0; }
+
+
+.form-group.full-width { grid-column: 1 / -1; }
+
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #b3b0a8;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    min-height: 50px;
+    padding: 13px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 12px;
+    outline: none;
+    background: #101010;
+    color: #fff;
+    font-size: 16px; /* keeps iOS from zooming on focus */
+    transition:
+        border-color var(--transition),
+        box-shadow var(--transition);
+}
+
+
+.form-group textarea {
+    min-height: unset;
+    resize: vertical;
+}
+
+
+.form-group input::placeholder,
+.form-group textarea::placeholder { color: #5c5a54; }
+
+
+.form-group input:hover,
+.form-group select:hover,
+.form-group textarea:hover { border-color: rgba(255, 255, 255, 0.2); }
+
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    border-color: rgba(214, 173, 85, 0.55);
+    box-shadow: 0 0 0 4px rgba(214, 173, 85, 0.08);
+}
+
+
+.form-group select.flash {
+    animation: selectFlash 1.4s ease;
+}
+
+
+@keyframes selectFlash {
+    0%, 60% { border-color: rgba(214, 173, 85, 0.9); box-shadow: 0 0 0 6px rgba(214, 173, 85, 0.16); }
+    100% { border-color: rgba(255, 255, 255, 0.11); box-shadow: none; }
+}
+
+
+/*
+   Native select:
+   Keep the actual browser/native dropdown.
+   JavaScript does NOT replace the options.
+*/
+
+.form-group select {
+    appearance: auto;
+    -webkit-appearance: auto;
+    cursor: pointer;
+    color-scheme: dark;
+}
+
+
+.form-group select option {
+    background: #101010;
+    color: #fff;
+}
+
+
+/* =========================================================
+   ATTENDANCE
+========================================================= */
+
+.attendance-choice {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 11px;
+    margin-bottom: 20px;
+}
+
+
+.attendance-choice label {
+    flex: 1;
+    min-width: 230px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.028);
+    color: #a09d95;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+        border-color var(--transition),
+        background var(--transition),
+        color var(--transition);
+}
+
+
+.attendance-choice label:has(input:checked) {
+    border-color: rgba(214, 173, 85, 0.4);
+    background: rgba(214, 173, 85, 0.06);
+    color: #fff;
+}
+
+
+.attendance-choice input {
+    width: 17px;
+    height: 17px;
+    flex: none;
+    accent-color: var(--gold);
+}
+
+
+#attendancePasswordFields {
+    transition:
+        opacity 0.2s ease,
+        max-height 0.25s ease;
+}
+
+
+#attendancePasswordFields.attendance-hidden {
+    max-height: 0;
+    overflow: hidden;
+    opacity: 0;
+    pointer-events: none;
+    margin: 0;
+}
+
+
+/* =========================================================
+   AGREEMENT / SUBMIT / MESSAGES
+========================================================= */
+
+.agreement {
+    display: flex;
+    align-items: flex-start;
+    gap: 11px;
+    margin-top: 20px;
+    color: #97948c;
+    font-size: 13px;
+    line-height: 1.6;
+    cursor: pointer;
+}
+
+
+.agreement input {
+    margin-top: 3px;
+    width: 16px;
+    height: 16px;
+    flex: none;
+    accent-color: var(--gold);
+}
+
+
+.submit-btn {
+    width: 100%;
+    min-height: 54px;
+    margin-top: 22px;
+    border: 1px solid rgba(242, 211, 138, 0.4);
+    border-radius: 12px;
+    background: var(--gold-grad);
+    color: #141210;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition:
+        transform var(--transition),
+        box-shadow var(--transition),
+        opacity var(--transition);
+}
+
+
+.submit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 38px rgba(214, 173, 85, 0.22);
+}
+
+
+.submit-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+.form-message {
+    margin-top: 16px;
+    padding: 14px 15px;
+    border-radius: 12px;
+    font-size: 13.5px;
+    line-height: 1.65;
+}
+
+
+.form-message.success {
+    border: 1px solid rgba(34, 197, 94, 0.25);
+    background: rgba(34, 197, 94, 0.08);
+    color: #9bf0b0;
+}
+
+
+.form-message.error {
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    background: rgba(239, 68, 68, 0.08);
+    color: #ffaaaa;
+}
+
+
+.form-message.info {
+    border: 1px solid rgba(59, 130, 246, 0.25);
+    background: rgba(59, 130, 246, 0.08);
+    color: #a9caff;
+}
+
+
+/* =========================================================
+   BATCH SCHEDULE
+========================================================= */
+
+.schedule-section {
+    background: linear-gradient(180deg, rgba(214, 173, 85, 0.035), transparent 60%);
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 18px;
+}
+
+
+.schedule-card {
+    padding: 30px 28px;
+    border: 1px solid var(--gold-line);
+    border-radius: var(--radius);
+    background: rgba(255, 255, 255, 0.028);
+    text-align: center;
+    transition:
+        transform var(--transition),
+        border-color var(--transition),
+        background var(--transition);
+}
+
+
+.schedule-card:hover {
+    transform: translateY(-5px);
+    border-color: rgba(214, 173, 85, 0.45);
+    background: rgba(214, 173, 85, 0.05);
+}
+
+
+.schedule-card h3 {
+    margin: 0 0 10px;
+    font-family: var(--font-display);
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--gold-light);
+}
+
+
+.schedule-card p {
+    margin: 0 0 18px;
+    color: #8f8c84;
+    font-size: 14px;
+    line-height: 1.75;
+}
+
+
+.schedule-chip {
+    display: inline-block;
+    padding: 7px 14px;
+    border: 1px solid rgba(214, 173, 85, 0.4);
+    border-radius: 999px;
+    background: rgba(214, 173, 85, 0.08);
+    color: var(--gold-soft);
+    font-size: 11.5px;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+
+.schedule-note {
+    margin: 34px 0 0;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14.5px;
+}
+
+
+.schedule-note strong { color: var(--gold-light); }
+
+
+/* =========================================================
+   FAQ
+========================================================= */
+
+.faq-list {
+    max-width: 860px;
+    margin: 0 auto;
+    display: grid;
+    gap: 13px;
+}
+
+
+.faq-item {
+    border: 1px solid var(--border);
+    border-radius: 15px;
+    background: rgba(255, 255, 255, 0.028);
+    transition: border-color 0.25s, background 0.25s;
+}
+
+
+.faq-item[open] {
+    border-color: rgba(214, 173, 85, 0.35);
+    background: rgba(214, 173, 85, 0.04);
+}
+
+
+.faq-item summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    padding: 19px 23px;
+    font-size: 15.5px;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+}
+
+
+.faq-item summary::-webkit-details-marker { display: none; }
+
+
+.faq-item summary::after {
+    content: "+";
+    color: var(--gold);
+    font-size: 23px;
+    line-height: 1;
+    flex: none;
+    transition: transform 0.25s;
+}
+
+
+.faq-item[open] summary::after { transform: rotate(45deg); }
+
+
+.faq-item p {
+    margin: 0;
+    padding: 0 23px 21px;
+    color: #94918a;
+    font-size: 14px;
+    line-height: 1.85;
+}
+
+
+/* =========================================================
+   COURSE MODAL
+========================================================= */
+
+.modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+}
+
+
+.modal.active { display: flex; }
+
+
+.modal-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+
+.modal-box {
+    position: relative;
+    z-index: 2;
+    width: min(860px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    padding: 38px;
+    border: 1px solid rgba(214, 173, 85, 0.22);
+    border-radius: 24px;
+    background: linear-gradient(150deg, #16151300, #161513, #0d0d0d), var(--bg-soft);
+    box-shadow: 0 40px 120px rgba(0, 0, 0, 0.68);
+    animation: modalIn 0.3s ease;
+}
+
+
+@keyframes modalIn {
+    from { opacity: 0; transform: translateY(18px) scale(0.985); }
+    to { opacity: 1; transform: none; }
+}
+
+
+.modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 40px;
+    height: 40px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    color: #fff;
+    font-size: 22px;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+
+.modal-close:hover {
+    border-color: rgba(214, 173, 85, 0.4);
+    color: var(--gold-light);
+    transform: rotate(90deg);
+}
+
+
+.modal-number {
+    color: var(--gold);
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+}
+
+
+.modal-category {
+    margin-top: 8px;
+    color: #85827b;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+}
+
+
+.course-counter {
+    margin-top: 15px;
+    color: #5b5952;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+}
+
+
+.modal-box h2 {
+    margin: 8px 0 6px;
+    padding-right: 44px;
+    font-family: var(--font-display);
+    font-size: clamp(30px, 4vw, 46px);
+    font-weight: 700;
+    line-height: 1.08;
+}
+
+
+.modal-subtitle {
+    margin: 0;
+    color: var(--gold-light);
+    font-size: 14px;
+    font-weight: 600;
+}
+
+
+.modal-overview {
+    margin: 18px 0 0;
+    color: #a09d95;
+    font-size: 14.5px;
+    line-height: 1.8;
+}
+
+
+.detail-section {
+    margin-top: 27px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+
+.detail-section h3 {
+    margin: 0 0 13px;
+    font-family: var(--font-display);
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--gold-light);
+}
+
+
+.detail-section p {
+    margin: 0;
+    color: #94918a;
+    font-size: 14px;
+    line-height: 1.8;
+}
+
+
+.detail-section ul {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 9px 25px;
+    margin: 0;
+    padding-left: 18px;
+}
+
+
+.detail-section li {
+    color: #a5a29a;
+    font-size: 13.5px;
+    line-height: 1.6;
+}
+
+
+.detail-section li::marker { color: var(--gold); }
+
+
+.skill-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+
+.skill-list span {
+    padding: 8px 13px;
+    border: 1px solid rgba(214, 173, 85, 0.18);
+    border-radius: 999px;
+    background: rgba(214, 173, 85, 0.05);
+    color: var(--gold-soft);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+
+.course-meta {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 11px;
+    margin-top: 30px;
+}
+
+
+.course-meta > div {
+    padding: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 13px;
+    background: rgba(255, 255, 255, 0.028);
+}
+
+
+.course-meta span,
+.course-meta strong { display: block; }
+
+
+.course-meta span {
+    color: #706d66;
+    font-size: 9.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+
+.course-meta strong {
+    margin-top: 6px;
+    color: #e3e0d8;
+    font-size: 13px;
+}
+
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+    margin-top: 30px;
+}
+
+
+.modal-actions .primary-btn,
+.modal-actions .secondary-btn { flex: 1; }
+
+
+/* =========================================================
+   FOOTER
+========================================================= */
+
+.site-footer {
+    padding: 60px 0 0;
+    border-top: 1px solid rgba(214, 173, 85, 0.16);
+    background: #040404;
+}
+
+
+.footer-grid {
+    display: grid;
+    grid-template-columns: 1.3fr 0.9fr 0.9fr;
+    gap: 45px;
+}
+
+
+.footer-brand .brand { margin-bottom: 18px; }
+
+
+.site-footer h4 {
+    margin: 0 0 16px;
+    color: var(--gold);
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+}
+
+
+.footer-grid a {
+    display: block;
+    margin-bottom: 9px;
+    color: #9b988f;
+    font-size: 13.5px;
+    transition: color var(--transition), transform var(--transition);
+}
+
+
+.footer-grid a:hover {
+    color: var(--gold-light);
+    transform: translateX(3px);
+}
+
+
+.site-footer p {
+    margin: 7px 0 0;
+    color: #85827b;
+    font-size: 13.5px;
+    line-height: 1.75;
+}
+
+
+.footer-small {
+    margin-top: 16px !important;
+    color: #66635d !important;
+    font-size: 12px !important;
+}
+
+
+.admin-access-link {
+    display: inline-flex;
+    margin-top: 16px;
+    padding: 8px 14px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+    color: #9b988f;
+    font-size: 11.5px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    transition: var(--transition);
+}
+
+
+.admin-access-link:hover {
+    color: var(--gold-light);
+    border-color: rgba(214, 173, 85, 0.4);
+}
+
+
+.footer-bottom {
+    margin-top: 50px;
+    padding: 20px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+
+.footer-bottom p {
+    margin: 0;
+    text-align: center;
+    color: #66635d;
+    font-size: 12.5px;
+}
+
+
+/* =========================================================
+   ADMIN PAGE
+========================================================= */
+
+body.admin-page {
+    min-height: 100vh;
+    background:
+        radial-gradient(circle at top right, rgba(214, 173, 85, 0.09), transparent 35%),
+        radial-gradient(circle at bottom left, rgba(214, 173, 85, 0.05), transparent 35%),
+        #060606;
+}
+
+
+.admin-wrapper {
+    width: min(1200px, 92%);
+    margin: 0 auto;
+    padding: 45px 0 80px;
+}
+
+
+.admin-login-card {
+    width: min(470px, 100%);
+    margin: 70px auto;
+    padding: 38px;
+    border: 1px solid rgba(214, 173, 85, 0.22);
+    border-radius: 26px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.055), rgba(255, 255, 255, 0.02));
+    box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+
+
+.admin-brand {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+
+.admin-brand-logo {
+    width: 74px;
+    height: 74px;
+    margin: 0 auto 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid rgba(214, 173, 85, 0.35);
+    border-radius: 20px;
+    background: linear-gradient(145deg, #f2d38a, #9d7731);
+    color: #111;
+    font-family: var(--font-display);
+    font-size: 29px;
+    font-weight: 800;
+}
+
+
+.admin-brand h1 {
+    margin: 0 0 7px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 30px;
+}
+
+
+.admin-brand p {
+    margin: 0;
+    color: #99968e;
+    font-size: 13px;
+}
+
+
+.admin-form-group { margin-bottom: 19px; }
+
+
+.admin-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #c5c2ba;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+
+.admin-form-group input {
+    width: 100%;
+    padding: 15px;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 12px;
+    outline: none;
+    background: rgba(255, 255, 255, 0.035);
+    color: #fff;
+    font-size: 16px;
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+
+
+.admin-form-group input:focus {
+    border-color: rgba(214, 173, 85, 0.5);
+    box-shadow: 0 0 0 4px rgba(214, 173, 85, 0.07);
+}
+
+
+.admin-login-button {
+    width: 100%;
+    min-height: 52px;
+    padding: 15px;
+    border: 0;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #f2d38a, #c79b43);
+    color: #141210;
+    font-size: 14.5px;
+    font-weight: 800;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: transform var(--transition), box-shadow var(--transition), opacity var(--transition);
+}
+
+
+.admin-login-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 32px rgba(214, 173, 85, 0.2);
+}
+
+
+.admin-login-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+.admin-login-note {
+    margin: 20px 0 0;
+    text-align: center;
+    color: #6f6c65;
+    font-size: 11.5px;
+    line-height: 1.6;
+}
+
+
+.admin-login-note a { color: #9b988f; }
+.admin-login-note a:hover { color: var(--gold-light); }
+
+
+.message {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: 11px;
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+
+.message.info {
+    color: #a9caff;
+    border: 1px solid rgba(59, 130, 246, 0.2);
+    background: rgba(59, 130, 246, 0.08);
+}
+
+
+.message.success {
+    color: #9bf0b0;
+    border: 1px solid rgba(34, 197, 94, 0.2);
+    background: rgba(34, 197, 94, 0.08);
+}
+
+
+.message.error {
+    color: #ffaaaa;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    background: rgba(239, 68, 68, 0.08);
+}
+
+
+#adminDashboard { display: none; }
+
+
+.admin-dashboard-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    padding: 25px;
+    border: 1px solid rgba(214, 173, 85, 0.18);
+    border-radius: 22px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.02));
+}
+
+
+.admin-dashboard-header h1 {
+    margin: 0 0 5px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 30px;
+}
+
+
+.admin-dashboard-header p {
+    margin: 0;
+    color: #8b887f;
+    font-size: 13px;
+}
+
+
+.admin-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+
+.admin-action-button {
+    padding: 11px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.11);
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.038);
+    color: #fff;
+    font-size: 12.5px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+
+.admin-action-button:hover {
+    border-color: rgba(214, 173, 85, 0.35);
+    background: rgba(214, 173, 85, 0.07);
+    color: var(--gold-light);
+}
+
+
+.admin-back-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 11px 16px;
+    border: 1px solid rgba(214, 173, 85, 0.22);
+    border-radius: 11px;
+    background: rgba(214, 173, 85, 0.05);
+    color: var(--gold-light);
+    font-size: 12.5px;
+    font-weight: 700;
+    transition: var(--transition);
+}
+
+
+.admin-back-button:hover {
+    border-color: rgba(214, 173, 85, 0.5);
+    transform: translateY(-1px);
+}
+
+
+.admin-logout-button {
+    border-color: rgba(239, 68, 68, 0.22);
+    color: #ffaaaa;
+}
+
+
+.admin-logout-button:hover {
+    border-color: rgba(239, 68, 68, 0.5);
+    background: rgba(239, 68, 68, 0.08);
+    color: #ffcccc;
+}
+
+
+.applications-title { margin: 36px 0 18px; }
+
+
+.applications-title h2 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 26px;
+}
+
+
+.applications-list {
+    display: grid;
+    gap: 18px;
+}
+
+
+.application-card {
+    padding: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 19px;
+    background: linear-gradient(145deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.018));
+    box-shadow: 0 15px 45px rgba(0, 0, 0, 0.22);
+}
+
+
+.application-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 20px;
+    padding-bottom: 18px;
+    margin-bottom: 18px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+
+.application-number {
+    display: block;
+    margin-bottom: 5px;
+    color: #77746c;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+}
+
+
+.application-card-header h3 {
+    margin: 0;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 700;
+}
+
+
+.application-status {
+    padding: 6px 11px;
+    border: 1px solid rgba(214, 173, 85, 0.28);
+    border-radius: 999px;
+    background: rgba(214, 173, 85, 0.07);
+    color: #f2d38a;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+
+.application-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 11px;
+}
+
+
+.application-field {
+    padding: 13px;
+    border-radius: 11px;
+    background: rgba(255, 255, 255, 0.028);
+}
+
+
+.application-field-wide { grid-column: 1 / -1; }
+
+
+.application-field span {
+    display: block;
+    margin-bottom: 5px;
+    color: #77746c;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+}
+
+
+.application-field strong {
+    display: block;
+    color: #e5e2da;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+
+.application-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+    padding-top: 17px;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+
+.delete-application-btn {
+    padding: 10px 15px;
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.06);
+    color: #ffaaaa;
+    font-size: 11.5px;
+    font-weight: 800;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+
+.delete-application-btn:hover {
+    border-color: rgba(239, 68, 68, 0.55);
+    background: rgba(239, 68, 68, 0.13);
+    transform: translateY(-1px);
+}
+
+
+.delete-application-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+
+.admin-loading,
+.no-applications,
+.admin-error {
+    padding: 45px 20px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.028);
+    text-align: center;
+}
+
+
+.admin-loading {
+    color: #8b887f;
+    font-size: 14px;
+}
+
+
+.no-applications h3,
+.admin-error h3 {
+    margin: 0 0 8px;
+    color: #fff;
+    font-family: var(--font-display);
+    font-size: 22px;
+}
+
+
+.no-applications p,
+.admin-error p {
+    margin: 0;
+    color: #77746c;
+    font-size: 13px;
+}
+
+
+.admin-error { border-color: rgba(239, 68, 68, 0.2); }
+
+
+/* =========================================================
+   RESPONSIVE
+========================================================= */
+
+@media (max-width: 1080px) {
+
+    .hero-grid { gap: 40px; }
+
+    .nav-menu { gap: 18px; }
+
+}
+
+
+@media (max-width: 950px) {
+
+    .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 45px;
+    }
+
+    .hero-content { max-width: 760px; }
+
+    .hero-banner {
+        max-width: 650px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .course-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+    .about-grid {
+        grid-template-columns: 1fr;
+        gap: 45px;
+    }
+
+    .admission-layout { grid-template-columns: 1fr; }
+
+    .admission-aside {
+        position: static;
+        order: -1;
+        grid-template-columns: repeat(3, 1fr);
+    }
+
+    .steps-grid { grid-template-columns: repeat(2, 1fr); }
+
+}
+
+
+@media (max-width: 760px) {
+
+    .admission-aside { grid-template-columns: 1fr; }
+
+}
+
+
+@media (max-width: 700px) {
+
+    html { scroll-padding-top: 72px; }
+
+    .container { width: 92%; }
+
+    .topbar-inner {
+        gap: 5px 12px;
+        font-size: 11.5px;
+    }
+
+    .topbar-divider { display: none; }
+
+    .nav-container { min-height: 66px; }
+
+    .mobile-menu-btn {
+        display: grid;
+        place-items: center;
+    }
+
+    .nav-menu {
+        position: absolute;
+        top: calc(100% + 1px);
+        left: 4%;
+        right: 4%;
+        z-index: 120;
+        display: none;
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0;
+        padding: 9px;
+        border: 1px solid rgba(255, 255, 255, 0.09);
+        border-radius: 16px;
+        background: rgba(12, 12, 12, 0.98);
+        box-shadow: 0 22px 60px rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+    }
+
+    .nav-menu.open { display: flex; }
+
+    .nav-menu a {
+        padding: 14px 13px;
+        border-radius: 10px;
+        font-size: 15px;
+    }
+
+    .nav-menu a::after { display: none; }
+
+    .nav-menu a:hover,
+    .nav-menu a.active { background: rgba(214, 173, 85, 0.07); }
+
+    .nav-menu a.nav-admin {
+        margin-top: 6px;
+        border-radius: 10px;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .hero-section { min-height: auto; }
+
+    .hero-grid { padding: 64px 0; }
+
+    .hero-content > p { font-size: 15.5px; }
+
+    .hero-banner {
+        min-height: 370px;
+        padding: 24px;
+    }
+
+    .banner-main { padding: 30px 0 22px; }
+
+    .banner-main h2 { font-size: 33px; }
+
+    .trust-grid > div { min-height: 96px; }
+
+    .trust-grid strong { font-size: 25px; }
+
+    .section { padding: 78px 0; }
+
+    .section-heading { margin-bottom: 38px; }
+
+    .course-grid { grid-template-columns: 1fr; }
+
+    .schedule-grid { grid-template-columns: 1fr; }
+
+    .form-grid { grid-template-columns: 1fr; }
+
+    .form-group.full-width { grid-column: auto; }
+
+    .application-form { padding: 24px 18px; }
+
+    .detail-section ul { grid-template-columns: 1fr; }
+
+    .course-meta { grid-template-columns: 1fr 1fr; }
+
+    .modal-box {
+        padding: 28px 20px;
+        max-height: 94vh;
+    }
+
+    .modal-actions { flex-direction: column; }
+
+    .modal-actions .primary-btn,
+    .modal-actions .secondary-btn { width: 100%; }
+
+    .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .admin-dashboard-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .admin-actions { width: 100%; }
+
+    .admin-action-button,
+    .admin-back-button { flex: 1; }
+
+    .application-grid { grid-template-columns: 1fr; }
+
+    .application-field-wide { grid-column: auto; }
+
+    .application-card-header { flex-direction: column; }
+
+}
+
+
+@media (max-width: 430px) {
+
+    .brand strong { font-size: 13px; }
+
+    .hero-content h1 { font-size: 37px; }
+
+    .hero-buttons { flex-direction: column; }
+
+    .hero-buttons a { width: 100%; }
+
+    .banner-bottom { gap: 7px; }
+
+    .banner-bottom strong { font-size: 17px; }
+
+    .trust-grid > div:nth-child(2) { border-right: 0; }
+
+    .trust-grid > div:nth-child(-n+2) { border-bottom: 1px solid rgba(255, 255, 255, 0.06); }
+
+    .trust-grid { grid-template-columns: repeat(2, 1fr); }
+
+    .steps-grid { grid-template-columns: 1fr; }
+
+    .benefits-grid { grid-template-columns: 1fr; }
+
+    .about-stats { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+
+    .about-stats strong { font-size: 19px; }
+
+    .course-meta { grid-template-columns: 1fr; }
+
+    .course-card-footer { flex-wrap: wrap; }
+
+    .course-card-actions { width: 100%; }
+
+    .course-detail-btn,
+    .course-apply-btn {
+        flex: 1;
+        padding: 0 8px;
+        font-size: 11.5px;
+        justify-content: center;
+        text-align: center;
+    }
+
+}
+
+
+@media (hover: none) {
+
+    .primary-btn:hover,
+    .secondary-btn:hover,
+    .course-card:hover,
+    .benefit-card:hover,
+    .step-card:hover,
+    .schedule-card:hover,
+    .submit-btn:hover {
+        transform: none;
+    }
+
+}
+
+</style>
+<style>
+/* =========================================================
+   REHAAN COMPUTERS — PREMIUM ANIMATION LAYER
+   Load AFTER style.css (index.html only — admin.html does
+   not need it). Keep the @keyframes names in sync with the
+   inline reveal script in index.html.
+========================================================= */
+
+@keyframes floatY {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-12px); }
+}
+
+@keyframes shine {
+    to { background-position: 200% center; }
+}
+
+@keyframes scrollX {
+    to { transform: translateX(-50%); }
+}
+
+@keyframes pulseDot {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(109, 224, 140, 0.5); }
+    70% { box-shadow: 0 0 0 8px rgba(109, 224, 140, 0); }
+}
+
+@keyframes glowPulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(214, 173, 85, 0); }
+    50% { box-shadow: 0 0 44px rgba(214, 173, 85, 0.2); }
+}
+
+
+/* ---------- moving elements ---------- */
+
+.hero-banner { animation: floatY 7s ease-in-out infinite; }
+
+.hero-aura-one { animation: floatY 11s ease-in-out infinite; }
+.hero-aura-two { animation: floatY 14s ease-in-out infinite reverse; }
+
+.hero-content h1 span {
+    background-image: linear-gradient(110deg, #fff 0%, var(--gold-light) 25%, #fff 50%, var(--gold-light) 75%, #fff 100%);
+    background-size: 200% auto;
+    animation: shine 7s linear infinite;
+}
+
+.live-dot { animation: pulseDot 1.8s infinite; }
+
+.banner-status::before {
+    content: "";
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    margin-right: 6px;
+    vertical-align: 1px;
+    border-radius: 50%;
+    background: #9bf0b0;
+    animation: pulseDot 1.8s infinite;
+}
+
+.notice-card { animation: glowPulse 3.4s ease-in-out infinite; }
+
+
+/* ---------- skills marquee ---------- */
+
+.marquee {
+    overflow: hidden;
+    padding: 19px 0;
+    background: #0a0a0a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+    mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+
+.marquee-track {
+    display: flex;
+    width: max-content;
+    animation: scrollX 36s linear infinite;
+}
+
+.marquee:hover .marquee-track { animation-play-state: paused; }
+
+.marquee span {
+    white-space: nowrap;
+    padding-left: 26px;
+    color: #96938c;
+    font-size: 12.5px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.marquee span::after {
+    content: "\2726";
+    margin-left: 52px;
+    color: var(--gold);
+}
+
+
+/* ---------- card shine sweep ---------- */
+
+.course-card::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    transform: scaleX(0);
+    transition: transform 0.45s ease;
+    pointer-events: none;
+}
+
+.course-card:hover::after { transform: scaleX(1); }
+
+.schedule-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(240px circle at var(--mx, 50%) var(--my, 0%), rgba(214, 173, 85, 0.09), transparent 65%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+.schedule-card { position: relative; overflow: hidden; }
+.schedule-card:hover::after { opacity: 1; }
+
+
+/* ---------- scroll reveal ---------- */
+
+.reveal-ready .reveal {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.reveal-ready .reveal.in {
+    opacity: 1;
+    transform: none;
+}
+
+
+/* ---------- reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    html { scroll-behavior: auto; }
+
+    .reveal-ready .reveal {
+        opacity: 1;
+        transform: none;
+    }
+
+    .hero-banner,
+    .hero-aura-one,
+    .hero-aura-two,
+    .hero-content h1 span,
+    .live-dot,
+    .banner-status::before,
+    .notice-card,
+    .marquee-track {
+        animation: none !important;
+    }
+
+}
+
+</style>
+</head>
+<body>
+
+<!-- TOP ADDRESS BAR -->
+<div class="topbar">
+<div class="container topbar-inner">
+<span class="topbar-item"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Charangam, Beerwah, Kashmir</span>
+<i class="topbar-divider" aria-hidden="true"></i>
+<span class="topbar-item"><b>Admissions Open</b> — no last date, apply online anytime</span>
+<i class="topbar-divider" aria-hidden="true"></i>
+<span class="topbar-item">New batches begin <b>1&nbsp;October</b></span>
+</div>
+</div>
+
+<header class="site-header">
+<div class="container nav-container">
+<a href="#home" class="brand">
+<div class="brand-mark">RC</div>
+<div class="brand-text"><strong>REHAAN</strong><span>COMPUTERS</span></div>
+</a>
+<button id="mobileMenuBtn" class="mobile-menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">☰</button>
+<nav id="navMenu" class="nav-menu">
+<a href="#home">Home</a>
+<a href="#courses">Courses</a>
+<a href="#about">Why Us</a>
+<a href="#process">Process</a>
+<a href="#admission">Admission</a>
+<a href="#faq">FAQ</a>
+<a href="admin.html" class="nav-admin">Admin Login</a>
+</nav>
+</div>
+</header>
+
+<main>
+
+<!-- HERO -->
+<section id="home" class="hero-section">
+<div class="hero-aura hero-aura-one" aria-hidden="true"></div>
+<div class="hero-aura hero-aura-two" aria-hidden="true"></div>
+<div class="container hero-grid">
+<div class="hero-content">
+<div class="eyebrow"><span class="live-dot" aria-hidden="true"></span>ADMISSIONS OPEN • NO LAST DATE</div>
+<h1>Master Real Computer Skills <span>For a Better Future</span></h1>
+<p>Rehaan Computers is a premium training centre for students, job-seekers and business learners. Practical classes on individual systems, one-to-one guidance, and a professional certificate for every course you complete.</p>
+<div class="hero-buttons">
+<a href="#courses" class="primary-btn">Explore Courses</a>
+<a href="#admission" class="secondary-btn">Apply Online Now</a>
+</div>
+<div class="hero-points">
+<span>✓ 100% Practical Training</span>
+<span>✓ Individual Attention</span>
+<span>✓ Professional Certificate</span>
+</div>
+</div>
+<div class="hero-banner">
+<div class="banner-glow" aria-hidden="true"></div>
+<div class="banner-top">
+<span>REHAAN COMPUTERS</span>
+<span class="banner-status">ADMISSION OPEN</span>
+</div>
+<div class="banner-main">
+<small>LEARN • PRACTICE • GROW</small>
+<h2>Computer Training,<br>Elevated.</h2>
+<p>Practical learning • Expert guidance • Career-ready skills</p>
+</div>
+<div class="banner-bottom">
+<div><strong>₹999/-</strong><span>Course Fee</span></div>
+<div><strong>1 OCT</strong><span>Classes Begin</span></div>
+<div><strong>OPEN</strong><span>All Year</span></div>
+</div>
+<a href="#admission" class="banner-cta">Start Your Application →</a>
+</div>
+</div>
+</section>
+
+<!-- TRUST BAR -->
+<section class="trust-section">
+<div class="container trust-grid">
+<div><strong>100%</strong><span>Practical Training</span></div>
+<div><strong>₹999</strong><span>Starting Fee</span></div>
+<div><strong>1 Oct</strong><span>Classes Begin</span></div>
+<div><strong>6+</strong><span>Computer Courses</span></div>
+</div>
+</section>
+
+<!-- SKILLS MARQUEE -->
+<div class="marquee" aria-hidden="true">
+<div class="marquee-track">
+<span>MS Word</span><span>MS Excel</span><span>PowerPoint</span><span>Typing Speed &amp; Accuracy</span><span>Tally Prime with GST</span><span>Photoshop</span><span>InPage</span><span>Marg ERP 9</span><span>Internet &amp; Email</span><span>Computer Fundamentals</span><span>MS Word</span><span>MS Excel</span><span>PowerPoint</span><span>Typing Speed &amp; Accuracy</span><span>Tally Prime with GST</span><span>Photoshop</span><span>InPage</span><span>Marg ERP 9</span><span>Internet &amp; Email</span><span>Computer Fundamentals</span>
+</div>
+</div>
+
+<!-- COURSES -->
+<section id="courses" class="section">
+<div class="container">
+<div class="section-heading reveal">
+<span>OUR COURSES</span>
+<h2>Choose Your Learning Path</h2>
+<p>Every course is hands-on and job-oriented. Open a card for the full syllabus, or apply directly — admission stays open all year with no last date.</p>
+</div>
+<div id="courseGrid" class="course-grid"></div>
+<div class="courses-note reveal">
+<span>✦</span> New batches for every course begin <strong>1 October</strong> — Morning, Afternoon and Evening slots available.
+</div>
+</div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" class="section about-section">
+<div class="container about-grid">
+<div>
+<div class="section-heading left reveal">
+<span>WHY REHAAN COMPUTERS</span>
+<h2>Your Skills, Our Priority</h2>
+</div>
+<p class="about-text reveal">Rehaan Computers provides practical computer education with individual attention, modern facilities and job-oriented learning. Every student works on their own system and practises real documents, real accounts and real designs.</p>
+<p class="about-text reveal">Our goal is simple: learn the basics, practise real work, build confidence and grow your skills — at your own pace, with no pressure of a fixed admission deadline.</p>
+<div class="about-stats reveal">
+<div><strong>1 on 1</strong><span>System per Student</span></div>
+<div><strong>3</strong><span>Flexible Batches</span></div>
+<div><strong>∞</strong><span>Practice Access</span></div>
+</div>
+</div>
+<div class="benefits-grid">
+<div class="benefit-card reveal"><b>01</b><h3>Practical Training</h3><p>Learn by actually working on computers with real tasks, not just theory and notes.</p></div>
+<div class="benefit-card reveal"><b>02</b><h3>Expert Guidance</h3><p>Get continuous guidance from experienced instructors throughout your course.</p></div>
+<div class="benefit-card reveal"><b>03</b><h3>Individual Attention</h3><p>A personal system and paced teaching, so no learner is left behind.</p></div>
+<div class="benefit-card reveal"><b>04</b><h3>Professional Certificate</h3><p>Receive a verifiable course certificate after completing your training.</p></div>
+</div>
+</div>
+</section>
+
+<!-- PROCESS -->
+<section id="process" class="section">
+<div class="container">
+<div class="section-heading reveal">
+<span>HOW ADMISSION WORKS</span>
+<h2>Four Steps to Join</h2>
+<p>The online form is the first step. Your admission is completed when you visit the centre with your documents.</p>
+</div>
+<div class="steps-grid">
+<div class="step-card reveal"><b>01</b><h3>Choose a Course</h3><p>Pick the course and the Morning, Afternoon or Evening batch that suits your schedule.</p></div>
+<div class="step-card reveal"><b>02</b><h3>Submit the Form</h3><p>Fill in the online application below — you will receive a confirmation by email.</p></div>
+<div class="step-card reveal"><b>03</b><h3>Visit the Centre</h3><p>Bring 2 passport-size photographs and a photocopy of your Aadhaar card.</p></div>
+<div class="step-card reveal"><b>04</b><h3>Start Learning</h3><p>Your new batch begins on 1 October and your practical training starts.</p></div>
+</div>
+</div>
+</section>
+
+<!-- ADMISSION -->
+<section id="admission" class="section admission-section">
+<div class="container">
+<div class="section-heading reveal">
+<span>ONLINE ADMISSION</span>
+<h2>Start Your Application</h2>
+<p>There is no last date — applications are accepted online all year. Fill in your details carefully and our team will contact you after receiving your application.</p>
+</div>
+
+<div class="admission-layout">
+
+<form id="applicationForm" class="application-form reveal">
+
+<div class="form-section-title"><em>01</em>Student Information</div>
+
+<div class="form-grid">
+
+<div class="form-group">
+<label for="fullName">Full Name *</label>
+<input id="fullName" name="fullName" type="text" autocomplete="name" placeholder="Your complete name" required>
+</div>
+
+<div class="form-group">
+<label for="parentName">Parent / Guardian Name *</label>
+<input id="parentName" name="parentName" type="text" placeholder="Father's or guardian's name" required>
+</div>
+
+<div class="form-group">
+<label for="phone">Student Phone *</label>
+<input id="phone" name="phone" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="10-digit mobile number" required>
+</div>
+
+<div class="form-group">
+<label for="guardianPhone">Guardian Phone</label>
+<input id="guardianPhone" name="guardianPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number">
+</div>
+
+<div class="form-group">
+<label for="email">Email *</label>
+<input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
+</div>
+
+<div class="form-group">
+<label for="dob">Date of Birth *</label>
+<input id="dob" name="dob" type="date" required>
+</div>
+
+<div class="form-group">
+<label for="qualification">Qualification *</label>
+<select id="qualification" name="qualification" required>
+<option value="">Select Qualification</option>
+<option value="5th">5th</option>
+<option value="6th">6th</option>
+<option value="7th">7th</option>
+<option value="8th">8th</option>
+<option value="9th">9th</option>
+<option value="10th">10th</option>
+<option value="11th">11th</option>
+<option value="12th">12th</option>
+<option value="Diploma">Diploma</option>
+<option value="ITI">ITI</option>
+<option value="Undergraduate">Undergraduate</option>
+<option value="Graduate">Graduate</option>
+<option value="Post Graduate">Post Graduate</option>
+<option value="Other">Other</option>
+</select>
+</div>
+
+<div class="form-group">
+<label for="coursePreference">Course *</label>
+<select id="coursePreference" name="coursePreference" required>
+<option value="">Select Course</option>
+</select>
+</div>
+
+<div class="form-group">
+<label for="batch">Preferred Batch *</label>
+<select id="batch" name="batch" required>
+<option value="">Select Batch</option>
+<option value="Morning">Morning</option>
+<option value="Afternoon">Afternoon</option>
+<option value="Evening">Evening</option>
+</select>
+</div>
+
+<div class="form-group">
+<label for="source">How did you hear about us?</label>
+<select id="source" name="source">
+<option value="">Select</option>
+<option value="Facebook">Facebook</option>
+<option value="Instagram">Instagram</option>
+<option value="WhatsApp">WhatsApp</option>
+<option value="Friend / Family">Friend / Family</option>
+<option value="Institute">Institute</option>
+<option value="Other">Other</option>
+</select>
+</div>
+
+<div class="form-group full-width">
+<label for="address">Address *</label>
+<textarea id="address" name="address" rows="3" placeholder="Village / Town, District, State" required></textarea>
+</div>
+
+</div>
+
+<div class="form-section-title"><em>02</em>Attendance Account</div>
+
+<p class="form-hint">Your attendance account lets you sign in to the Rehaan Computers attendance system and track your daily class attendance. You can create it now or ask at the centre.</p>
+
+<div class="attendance-choice">
+<label>
+<input type="radio" name="attendanceSetup" value="setup" checked>
+<span>Create my attendance account</span>
+</label>
+<label>
+<input type="radio" name="attendanceSetup" value="skip">
+<span>Skip for now</span>
+</label>
+</div>
+
+<div id="attendancePasswordFields" class="form-grid">
+<div class="form-group">
+<label for="attendanceEmail">Attendance Email *</label>
+<input id="attendanceEmail" name="attendanceEmail" type="email" autocomplete="email" placeholder="Email used for attendance sign-in">
+</div>
+<div class="form-group">
+<label for="attendancePassword">Password *</label>
+<input id="attendancePassword" name="attendancePassword" type="password" minlength="6" autocomplete="new-password" placeholder="Minimum 6 characters">
+</div>
+<div class="form-group">
+<label for="confirmAttendancePassword">Confirm Password *</label>
+<input id="confirmAttendancePassword" name="confirmAttendancePassword" type="password" minlength="6" autocomplete="new-password" placeholder="Repeat the password">
+</div>
+</div>
+
+<div class="form-group full-width form-section-gap">
+<label for="message">Message</label>
+<textarea id="message" name="message" rows="4" placeholder="Any additional information..."></textarea>
+</div>
+
+<div class="form-section-title form-section-gap"><em>03</em>Confirmation</div>
+
+<label class="agreement">
+<input id="agreement" name="agreement" type="checkbox" required>
+<span>I confirm that the information provided above is correct and I will visit the centre with my documents to complete the admission.</span>
+</label>
+
+<button id="applicationSubmit" class="submit-btn" type="submit">Submit Application</button>
+
+<div id="applicationMessage" class="form-message" style="display:none;" role="status" aria-live="polite"></div>
+
+</form>
+
+<aside class="admission-aside">
+<div class="notice-card reveal">
+<span class="notice-badge">NO LAST DATE</span>
+<h3>Admission Stays Open All Year</h3>
+<p>You can apply online any day. There is no deadline and no late fee. New batches begin on <strong>1&nbsp;October</strong> and seats are allotted in the order applications arrive — so earlier is better.</p>
+</div>
+
+<div class="docs-card reveal">
+<h4>Documents Required</h4>
+<ul>
+<li><b>2</b><div><strong>Passport-Size Photographs</strong><span>Bring both at your visit</span></div></li>
+<li><b>1</b><div><strong>Photocopy of Aadhaar Card</strong><span>Bring it at your visit</span></div></li>
+<li><b>₹</b><div><strong>Course Fee</strong><span>Pay at the centre — ₹999/-</span></div></li>
+</ul>
+</div>
+
+<div class="visit-card reveal">
+<h4>Visit the Centre</h4>
+<p>Rehaan Computers, Charangam, Beerwah, Kashmir</p>
+<div class="visit-facts"><div><strong>₹999/-</strong><span>Course Fee</span></div><div><strong>1 Oct</strong><span>Classes Begin</span></div></div>
+</div>
+</aside>
+
+</div>
+</div>
+</section>
+
+<!-- BATCH SCHEDULE -->
+<section id="schedule" class="section schedule-section">
+<div class="container">
+<div class="section-heading reveal">
+<span>BATCH SCHEDULE</span>
+<h2>Classes Begin 1 October</h2>
+<p>Every course starts on 1 October with three flexible batch options. Choose your preferred batch in the application form above.</p>
+</div>
+<div class="schedule-grid">
+<div class="schedule-card reveal">
+<h3>Morning Batch</h3>
+<p>Ideal for school and college students who attend regular classes in the afternoon.</p>
+<span class="schedule-chip">Starts 1 October</span>
+</div>
+<div class="schedule-card reveal">
+<h3>Afternoon Batch</h3>
+<p>Perfect for learners who prefer a relaxed mid-day schedule after lunch.</p>
+<span class="schedule-chip">Starts 1 October</span>
+</div>
+<div class="schedule-card reveal">
+<h3>Evening Batch</h3>
+<p>Designed for working learners and business users after shop and office hours.</p>
+<span class="schedule-chip">Starts 1 October</span>
+</div>
+</div>
+<p class="schedule-note reveal">✦ Admission is open all year with <strong>no last date</strong> — apply online and complete your admission at the centre.</p>
+</div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="section">
+<div class="container">
+<div class="section-heading reveal">
+<span>FAQ</span>
+<h2>Common Questions</h2>
+</div>
+<div class="faq-list">
+<details class="faq-item reveal"><summary>Is my admission complete after I submit the form?</summary><p>No. The form registers your application. You must visit the centre with 2 passport-size photographs and a photocopy of your Aadhaar card to complete your admission.</p></details>
+<details class="faq-item reveal"><summary>Is there a last date for admission?</summary><p>No. Online admission stays open all year — there is no last date. New batches begin on 1 October and seats are allotted in the order applications arrive.</p></details>
+<details class="faq-item reveal"><summary>When do classes start?</summary><p>Classes for all courses and all batches (Morning, Afternoon and Evening) begin on 1 October.</p></details>
+<details class="faq-item reveal"><summary>What documents do I need to bring?</summary><p>Two passport-size photographs and one photocopy of your Aadhaar card. Carry them when you visit the centre after applying online.</p></details>
+<details class="faq-item reveal"><summary>What is the course fee?</summary><p>The fee is ₹999/- for the courses listed on this website. Payment is made at the centre when you complete your admission.</p></details>
+<details class="faq-item reveal"><summary>What is the attendance account for?</summary><p>It signs you in to the Rehaan Computers attendance system so you can track your daily class attendance. You can create it in the application form or ask at the centre.</p></details>
+<details class="faq-item reveal"><summary>Which batches are available?</summary><p>You can choose a Morning, Afternoon or Evening batch in the application form. All batches start on 1 October.</p></details>
+</div>
+</div>
+</section>
+
+</main>
+
+<!-- COURSE MODAL -->
+<div id="courseModal" class="modal" aria-hidden="true">
+<div class="modal-overlay" id="courseModalOverlay"></div>
+<div class="modal-box" role="dialog" aria-modal="true" aria-label="Course details">
+<button id="courseModalClose" class="modal-close" type="button" aria-label="Close course details">×</button>
+<div class="modal-number" id="detailNumber"></div>
+<div class="modal-category" id="detailCategory"></div>
+<div class="course-counter" id="courseCounter"></div>
+<h2 id="detailTitle"></h2>
+<p id="detailSubtitle" class="modal-subtitle"></p>
+<p id="detailOverview" class="modal-overview"></p>
+<div class="detail-section"><h3>What You Will Learn</h3><ul id="detailLearn"></ul></div>
+<div class="detail-section"><h3>Practical Training</h3><p id="detailPractical"></p></div>
+<div class="detail-section"><h3>Who Is It For?</h3><p id="detailWho"></p></div>
+<div class="detail-section"><h3>Skills</h3><div id="detailSkills" class="skill-list"></div></div>
+<div class="course-meta">
+<div><span>Duration</span><strong id="detailDuration"></strong></div>
+<div><span>Level</span><strong id="detailLevel"></strong></div>
+<div><span>Certificate</span><strong id="detailCertificate"></strong></div>
+<div><span>Classes Start</span><strong>1 October</strong></div>
+</div>
+<div class="modal-actions">
+<button id="previousCourse" class="secondary-btn" type="button">← Previous</button>
+<button id="detailApplyBtn" class="primary-btn" type="button">Apply for This Course</button>
+<button id="nextCourse" class="secondary-btn" type="button">Next →</button>
+</div>
+</div>
+</div>
+
+<footer class="site-footer">
+<div class="container footer-grid">
+<div class="footer-brand">
+<div class="brand">
+<div class="brand-mark">RC</div>
+<div class="brand-text"><strong>REHAAN</strong><span>COMPUTERS</span></div>
+</div>
+<p>Premium computer training in Charangam, Beerwah. Practical classes, individual attention and professional certificates — Learn • Practice • Grow.</p>
+<p class="footer-small">Managed by Dar Yasir<br>Created by Dar Yasir</p>
+</div>
+<div>
+<h4>Explore</h4>
+<a href="#home">Home</a>
+<a href="#courses">Courses</a>
+<a href="#about">Why Us</a>
+<a href="#process">Admission Process</a>
+<a href="#admission">Apply Online</a>
+<a href="#schedule">Batch Schedule</a>
+<a href="#faq">FAQ</a>
+</div>
+<div>
+<h4>Visit Us</h4>
+<p>Charangam, Beerwah,<br>Kashmir</p>
+<p class="footer-small">Admissions open all year —<br>no last date. New batches<br>begin 1 October.</p>
+<a href="admin.html" class="admin-access-link">Admin Login</a>
+</div>
+</div>
+<div class="footer-bottom">
+<p>© <span id="footerYear">2026</span> Rehaan Computers — Build a Better Future With Computer Skills</p>
+</div>
+</footer>
+
+<script type="module">
+/* =========================================================
+   REHAAN COMPUTERS
+   MAIN WEBSITE + FIREBASE + ADMIN
+========================================================= */
+
+import {
+    initializeApp,
+    getApps
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
+
+import {
+    getAuth,
+    signInWithEmailAndPassword,
+    signOut,
+    onAuthStateChanged,
+    createUserWithEmailAndPassword
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
+
+import {
+    getFirestore,
+    collection,
+    addDoc,
+    getDocs,
+    doc,
+    getDoc,
+    deleteDoc,
+    query,
+    orderBy
+} from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
+
+
+/* =========================================================
+   FIREBASE CONFIG
+========================================================= */
+
+const firebaseConfig = {
+    apiKey: "AIzaSyBXRQvUZBPP_E3Q0SZBYTsOc6sfzAEiqpE",
+    authDomain: "rehaan-computers.firebaseapp.com",
+    projectId: "rehaan-computers",
+    storageBucket: "rehaan-computers.firebasestorage.app",
+    messagingSenderId: "292017935720",
+    appId: "1:292017935720:web:d767adbf23823fbf5c72dd"
+};
+
+
+const app = initializeApp(firebaseConfig);
+
+const auth = getAuth(app);
+
+const db = getFirestore(app);
+
+
+/* =========================================================
+   EMAILJS
+========================================================= */
+
+const EMAILJS_PUBLIC_KEY = "YRae0-hRcye59NaRL";
+const EMAILJS_SERVICE_ID = "service_52jdh14";
+
+const EMAILJS_ADMIN_TEMPLATE = "template_ubj4sw3";
+const EMAILJS_APPLICANT_TEMPLATE = "template_ka7zy85";
+
+
+if (window.emailjs) {
+    emailjs.init({
+        publicKey: EMAILJS_PUBLIC_KEY
+    });
+}
+
+
+/* =========================================================
+   COURSE DATA
+========================================================= */
+
+const courses = [
+
+    {
+        title: "One Year Computer Diploma Course",
+
+        subtitle:
+            "Basic to Advanced Computer Skills",
+
+        duration:
+            "1 Year",
+
+        level:
+            "Beginner → Advanced",
+
+        certificate:
+            "Professional Certificate",
+
+        category:
+            "Computer Diploma",
+
+        overview:
+            "A complete computer diploma designed to build strong fundamentals and practical computer skills from beginner to advanced level.",
+
+        learn: [
+            "Computer Fundamentals",
+            "Windows & File Management",
+            "MS Word",
+            "MS Excel",
+            "MS PowerPoint",
+            "Internet & Email",
+            "Typing Practice",
+            "Tally Prime",
+            "GST Basics"
+        ],
+
+        practical:
+            "Students practice office documents, spreadsheets, presentations, typing, accounting tasks and everyday computer operations.",
+
+        who:
+            "Students, beginners and learners who want a complete computer foundation.",
+
+        skills: [
+            "Office Productivity",
+            "Accounting Basics",
+            "Typing",
+            "Digital Skills",
+            "Practical Computer Work"
+        ]
+    },
+
+
+    {
+        title: "Six Month Computer Certificate Course",
+
+        subtitle:
+            "Get Certified • Boost Your Profile",
+
+        duration:
+            "6 Months",
+
+        level:
+            "Beginner → Intermediate",
+
+        certificate:
+            "Professional Certificate",
+
+        category:
+            "Computer Certificate",
+
+        overview:
+            "A practical six-month certificate course covering the most useful computer and office productivity skills.",
+
+        learn: [
+            "Computer Fundamentals",
+            "MS Word",
+            "MS Excel",
+            "PowerPoint",
+            "Internet",
+            "Email",
+            "Typing",
+            "Office Productivity"
+        ],
+
+        practical:
+            "Practice documents, spreadsheets, presentations, typing, internet tasks and everyday office work.",
+
+        who:
+            "Students and beginners who want practical computer skills with a structured learning path.",
+
+        skills: [
+            "Office Skills",
+            "Typing",
+            "Internet Skills",
+            "Document Creation",
+            "Digital Productivity"
+        ]
+    },
+
+
+    {
+        title: "Three Month Computer Certificate Course",
+
+        subtitle:
+            "Learn Fast • Gain Skills",
+
+        duration:
+            "3 Months",
+
+        level:
+            "Beginner",
+
+        certificate:
+            "Professional Certificate",
+
+        category:
+            "Computer Certificate",
+
+        overview:
+            "A short practical course focused on essential computer skills for beginners.",
+
+        learn: [
+            "Computer Basics",
+            "MS Word",
+            "MS Excel",
+            "PowerPoint",
+            "Internet",
+            "Email",
+            "Typing Practice"
+        ],
+
+        practical:
+            "Practice documents, spreadsheets, presentations, typing and basic internet tasks.",
+
+        who:
+            "Beginners who want essential computer skills within a short learning period.",
+
+        skills: [
+            "Computer Basics",
+            "MS Office",
+            "Typing",
+            "Internet",
+            "Email"
+        ]
+    },
+
+
+    {
+        title: "Typing Diploma Course",
+
+        subtitle:
+            "Typing Speed & Accuracy",
+
+        duration:
+            "Flexible",
+
+        level:
+            "Beginner → Advanced",
+
+        certificate:
+            "Typing Diploma",
+
+        category:
+            "Typing",
+
+        overview:
+            "A focused typing course designed to improve keyboard familiarity, speed and typing accuracy through regular practice.",
+
+        learn: [
+            "English Typing",
+            "Typing Accuracy",
+            "Speed Development",
+            "Daily Practice",
+            "Keyboard Familiarity"
+        ],
+
+        practical:
+            "Regular typing exercises are used to build speed, accuracy and confidence.",
+
+        who:
+            "Students, job seekers and anyone who wants to improve typing skills.",
+
+        skills: [
+            "Typing Speed",
+            "Typing Accuracy",
+            "Keyboard Skills",
+            "Computer Confidence"
+        ]
+    },
+
+
+    {
+        title: "Crash Computer Course",
+
+        subtitle:
+            "Accounts • Design • Office Work",
+
+        duration:
+            "Short Term",
+
+        level:
+            "Beginner → Intermediate",
+
+        certificate:
+            "Course Certificate",
+
+        category:
+            "Crash Course",
+
+        overview:
+            "A short job-oriented computer course covering accounting, GST, design and office-related practical work.",
+
+        learn: [
+            "Tally Prime",
+            "GST",
+            "Photoshop",
+            "InPage",
+            "Office Work",
+            "Practical Tasks"
+        ],
+
+        practical:
+            "Students practice accounting, GST, design and office-related exercises.",
+
+        who:
+            "Learners who want practical job-oriented computer skills in a shorter period.",
+
+        skills: [
+            "Tally Prime",
+            "GST Basics",
+            "Graphic Design",
+            "InPage",
+            "Office Work"
+        ]
+    },
+
+
+    {
+        title: "Marg ERP 9 Course",
+
+        subtitle:
+            "Tally + Inventory + Business Solutions",
+
+        duration:
+            "Flexible",
+
+        level:
+            "Beginner → Intermediate",
+
+        certificate:
+            "Course Certificate",
+
+        category:
+            "ERP / Accounting",
+
+        overview:
+            "A practical ERP course covering accounting, inventory, billing and business management using Marg ERP 9.",
+
+        learn: [
+            "Marg ERP 9",
+            "Accounting",
+            "Inventory",
+            "Billing",
+            "Business Management",
+            "Practical Work"
+        ],
+
+        practical:
+            "Practice accounting, inventory, billing and business ERP operations.",
+
+        who:
+            "Students, business learners and anyone interested in accounting or inventory work.",
+
+        skills: [
+            "ERP Operations",
+            "Accounting",
+            "Inventory",
+            "Billing",
+            "Business Management"
+        ]
+    }
+
+];
+
+
+/* =========================================================
+   HELPERS
+========================================================= */
+
+function getElement(id) {
+    return document.getElementById(id);
+}
+
+
+function showElement(element) {
+    if (element) {
+        element.style.display = "";
+    }
+}
+
+
+function hideElement(element) {
+    if (element) {
+        element.style.display = "none";
+    }
+}
+
+
+function escapeHTML(value) {
+
+    if (value === null || value === undefined) {
+        return "";
+    }
+
+    return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+}
+
+
+function isValidEmail(email) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        String(email).trim()
+    );
+}
+
+
+function isValidPhone(phone) {
+    return /^\d{10}$/.test(
+        String(phone).trim()
+    );
+}
+
+
+function formatDate(value) {
+
+    if (!value) {
+        return "—";
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+        return String(value);
+    }
+
+    return date.toLocaleString("en-IN", {
+        dateStyle: "medium",
+        timeStyle: "short"
+    });
+}
+
+
+function showFormMessage(type, message) {
+
+    const box = getElement("applicationMessage");
+
+    if (!box) {
+        return;
+    }
+
+    box.className = `form-message ${type}`;
+
+    box.textContent = message;
+
+    box.style.display = "block";
+}
+
+
+/* =========================================================
+   MOBILE NAVIGATION
+========================================================= */
+
+function initMobileNavigation() {
+
+    const menuButton = getElement("mobileMenuBtn");
+    const navMenu = getElement("navMenu");
+
+    if (!menuButton || !navMenu) {
+        return;
+    }
+
+
+    menuButton.addEventListener("click", () => {
+
+        const isOpen =
+            navMenu.classList.toggle("open");
+
+        menuButton.setAttribute(
+            "aria-expanded",
+            String(isOpen)
+        );
+
+        menuButton.setAttribute(
+            "aria-label",
+            isOpen ? "Close menu" : "Open menu"
+        );
+
+    });
+
+
+    navMenu.querySelectorAll("a").forEach(link => {
+
+        link.addEventListener("click", () => {
+
+            navMenu.classList.remove("open");
+
+            menuButton.setAttribute(
+                "aria-expanded",
+                "false"
+            );
+
+            menuButton.setAttribute(
+                "aria-label",
+                "Open menu"
+            );
+
+        });
+
+    });
+
+}
+
+
+/* =========================================================
+   NAV ACTIVE SECTION
+========================================================= */
+
+function initNavigationHighlight() {
+
+    const navLinks =
+        [...document.querySelectorAll(".nav-menu a")];
+
+    if (!navLinks.length) {
+        return;
+    }
+
+
+    const sections = [
+        ...document.querySelectorAll(
+            "main section[id]"
+        )
+    ];
+
+
+    const observer = new IntersectionObserver(
+        entries => {
+
+            entries.forEach(entry => {
+
+                if (!entry.isIntersecting) {
+                    return;
+                }
+
+                navLinks.forEach(link => {
+
+                    link.classList.toggle(
+                        "active",
+                        link.getAttribute("href") ===
+                        `#${entry.target.id}`
+                    );
+
+                });
+
+            });
+
+        },
+        {
+            rootMargin: "-35% 0px -55% 0px"
+        }
+    );
+
+
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+
+}
+
+
+/* =========================================================
+   COURSE GRID
+========================================================= */
+
+function renderCourseGrid() {
+
+    const grid = getElement("courseGrid");
+
+    if (!grid) {
+        return;
+    }
+
+
+    grid.innerHTML = courses.map(
+        (course, index) => {
+
+            return `
+                <article class="course-card reveal">
+
+                    ${
+                        index === 0
+                            ? '<span class="course-badge">Most Popular</span>'
+                            : ""
+                    }
+
+                    <div class="course-number">
+                        COURSE ${String(index + 1).padStart(2, "0")}
+                    </div>
+
+                    <div>
+                        <span class="course-category">
+                            ${escapeHTML(course.category)}
+                        </span>
+                    </div>
+
+                    <div class="course-content">
+
+                        <h3>
+                            ${escapeHTML(course.title)}
+                        </h3>
+
+                        <p>
+                            ${escapeHTML(course.overview)}
+                        </p>
+
+                        <div class="course-chips">
+                            <span>${escapeHTML(course.duration)}</span>
+                            <span>${escapeHTML(course.level)}</span>
+                            <span>${escapeHTML(course.certificate)}</span>
+                        </div>
+
+                        <p class="course-start">
+                            Classes start <b>1 October</b> — Morning, Afternoon &amp; Evening batches
+                        </p>
+
+                    </div>
+
+                    <div class="course-card-footer">
+
+                        <strong class="course-fee">
+                            ₹999/-
+                        </strong>
+
+                        <div class="course-card-actions">
+
+                            <button
+                                type="button"
+                                class="course-detail-btn"
+                                data-course-index="${index}">
+                                View Details
+                            </button>
+
+                            <button
+                                type="button"
+                                class="course-apply-btn"
+                                data-apply-index="${index}">
+                                Apply Now
+                            </button>
+
+                        </div>
+
+                    </div>
+
+                </article>
+            `;
+
+        }
+    ).join("");
+
+
+    grid.querySelectorAll(
+        ".course-detail-btn"
+    ).forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            const index =
+                Number(button.dataset.courseIndex);
+
+            openCourseModal(index);
+
+        });
+
+    });
+
+
+    grid.querySelectorAll(
+        ".course-apply-btn"
+    ).forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            const index =
+                Number(button.dataset.applyIndex);
+
+            selectCourseForApplication(index);
+
+        });
+
+    });
+
+}
+
+
+/*
+ * Pre-fill the admission form with a course and
+ * bring the applicant to the form. Shared by the
+ * course cards and the course modal.
+ */
+
+function selectCourseForApplication(index) {
+
+    const course = courses[index];
+
+    if (!course) {
+        return;
+    }
+
+
+    const select =
+        getElement("coursePreference");
+
+    if (select) {
+
+        select.value = course.title;
+
+        select.classList.remove("flash");
+
+        void select.offsetWidth;
+
+        select.classList.add("flash");
+
+        select.addEventListener(
+            "animationend",
+            () => select.classList.remove("flash"),
+            { once: true }
+        );
+
+    }
+
+
+    closeCourseModal();
+
+
+    const admission =
+        getElement("admission");
+
+    if (admission) {
+
+        admission.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    }
+
+}
+
+
+/* =========================================================
+   COURSE SELECT
+========================================================= */
+
+function populateCourseSelect() {
+
+    const select =
+        getElement("coursePreference");
+
+    if (!select) {
+        return;
+    }
+
+
+    /*
+       Important:
+       Only this select is populated.
+       Qualification is NEVER overwritten.
+    */
+
+    select.innerHTML = `
+        <option value="">
+            Select Course
+        </option>
+    `;
+
+
+    courses.forEach(course => {
+
+        const option =
+            document.createElement("option");
+
+        option.value = course.title;
+
+        option.textContent =
+            `${course.title} — ₹999/-`;
+
+        select.appendChild(option);
+
+    });
+
+}
+
+
+/* =========================================================
+   COURSE MODAL
+========================================================= */
+
+let currentCourseIndex = 0;
+
+
+function openCourseModal(index) {
+
+    const modal = getElement("courseModal");
+
+    if (!modal) {
+        return;
+    }
+
+
+    if (
+        index < 0 ||
+        index >= courses.length
+    ) {
+        index = 0;
+    }
+
+
+    currentCourseIndex = index;
+
+    updateCourseModal();
+
+    modal.classList.add("active");
+
+    modal.setAttribute(
+        "aria-hidden",
+        "false"
+    );
+
+    document.body.classList.add("modal-open");
+
+}
+
+
+function closeCourseModal() {
+
+    const modal = getElement("courseModal");
+
+    if (!modal) {
+        return;
+    }
+
+
+    modal.classList.remove("active");
+
+    modal.setAttribute(
+        "aria-hidden",
+        "true"
+    );
+
+    document.body.classList.remove("modal-open");
+
+}
+
+
+function updateCourseModal() {
+
+    const course =
+        courses[currentCourseIndex];
+
+    if (!course) {
+        return;
+    }
+
+
+    const number =
+        getElement("detailNumber");
+
+    const category =
+        getElement("detailCategory");
+
+    const counter =
+        getElement("courseCounter");
+
+    const title =
+        getElement("detailTitle");
+
+    const subtitle =
+        getElement("detailSubtitle");
+
+    const overview =
+        getElement("detailOverview");
+
+    const learn =
+        getElement("detailLearn");
+
+    const practical =
+        getElement("detailPractical");
+
+    const who =
+        getElement("detailWho");
+
+    const skills =
+        getElement("detailSkills");
+
+    const duration =
+        getElement("detailDuration");
+
+    const level =
+        getElement("detailLevel");
+
+    const certificate =
+        getElement("detailCertificate");
+
+
+    if (number) {
+        number.textContent =
+            `COURSE ${String(currentCourseIndex + 1).padStart(2, "0")}`;
+    }
+
+
+    if (category) {
+        category.textContent =
+            course.category;
+    }
+
+
+    if (counter) {
+        counter.textContent =
+            `${currentCourseIndex + 1} / ${courses.length}`;
+    }
+
+
+    if (title) {
+        title.textContent =
+            course.title;
+    }
+
+
+    if (subtitle) {
+        subtitle.textContent =
+            course.subtitle;
+    }
+
+
+    if (overview) {
+        overview.textContent =
+            course.overview;
+    }
+
+
+    if (learn) {
+
+        learn.innerHTML =
+            course.learn.map(
+                item => `<li>${escapeHTML(item)}</li>`
+            ).join("");
+
+    }
+
+
+    if (practical) {
+        practical.textContent =
+            course.practical;
+    }
+
+
+    if (who) {
+        who.textContent =
+            course.who;
+    }
+
+
+    if (skills) {
+
+        skills.innerHTML =
+            course.skills.map(
+                item => `
+                    <span>
+                        ${escapeHTML(item)}
+                    </span>
+                `
+            ).join("");
+
+    }
+
+
+    if (duration) {
+        duration.textContent =
+            course.duration;
+    }
+
+
+    if (level) {
+        level.textContent =
+            course.level;
+    }
+
+
+    if (certificate) {
+        certificate.textContent =
+            course.certificate;
+    }
+
+}
+
+
+function initCourseModal() {
+
+    const closeButton =
+        getElement("courseModalClose");
+
+    const overlay =
+        getElement("courseModalOverlay");
+
+    const previous =
+        getElement("previousCourse");
+
+    const next =
+        getElement("nextCourse");
+
+    const apply =
+        getElement("detailApplyBtn");
+
+
+    if (closeButton) {
+        closeButton.addEventListener(
+            "click",
+            closeCourseModal
+        );
+    }
+
+
+    if (overlay) {
+        overlay.addEventListener(
+            "click",
+            closeCourseModal
+        );
+    }
+
+
+    if (previous) {
+
+        previous.addEventListener(
+            "click",
+            () => {
+
+                currentCourseIndex =
+                    currentCourseIndex === 0
+                        ? courses.length - 1
+                        : currentCourseIndex - 1;
+
+                updateCourseModal();
+
+            }
+        );
+
+    }
+
+
+    if (next) {
+
+        next.addEventListener(
+            "click",
+            () => {
+
+                currentCourseIndex =
+                    currentCourseIndex === courses.length - 1
+                        ? 0
+                        : currentCourseIndex + 1;
+
+                updateCourseModal();
+
+            }
+        );
+
+    }
+
+
+    if (apply) {
+
+        apply.addEventListener(
+            "click",
+            () => selectCourseForApplication(
+                currentCourseIndex
+            )
+        );
+
+    }
+
+
+    document.addEventListener(
+        "keydown",
+        event => {
+
+            if (event.key === "Escape") {
+                closeCourseModal();
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   ATTENDANCE AUTH
+========================================================= */
+
+let attendanceApp = null;
+let attendanceAuth = null;
+
+
+function getAttendanceAuth() {
+
+    if (!attendanceAuth) {
+
+        const existingApps =
+            getApps();
+
+        const existingAttendanceApp =
+            existingApps.find(
+                item => item.name === "attendanceApp"
+            );
+
+
+        attendanceApp =
+            existingAttendanceApp ||
+            initializeApp(
+                firebaseConfig,
+                "attendanceApp"
+            );
+
+
+        attendanceAuth =
+            getAuth(attendanceApp);
+
+    }
+
+
+    return attendanceAuth;
+
+}
+
+
+/* =========================================================
+   ATTENDANCE UI
+========================================================= */
+
+function updateAttendanceFields() {
+
+    const selected =
+        document.querySelector(
+            'input[name="attendanceSetup"]:checked'
+        );
+
+
+    const fields =
+        getElement("attendancePasswordFields");
+
+    const email =
+        getElement("attendanceEmail");
+
+    const password =
+        getElement("attendancePassword");
+
+    const confirm =
+        getElement("confirmAttendancePassword");
+
+
+    if (!selected || !fields) {
+        return;
+    }
+
+
+    const setup =
+        selected.value === "setup";
+
+
+    if (setup) {
+
+        fields.classList.remove(
+            "attendance-hidden"
+        );
+
+        if (email) {
+            email.required = true;
+        }
+
+        if (password) {
+            password.required = true;
+        }
+
+        if (confirm) {
+            confirm.required = true;
+        }
+
+    } else {
+
+        fields.classList.add(
+            "attendance-hidden"
+        );
+
+        if (email) {
+            email.required = false;
+        }
+
+        if (password) {
+            password.required = false;
+        }
+
+        if (confirm) {
+            confirm.required = false;
+        }
+
+    }
+
+}
+
+
+function initAttendanceUI() {
+
+    document
+        .querySelectorAll(
+            'input[name="attendanceSetup"]'
+        )
+        .forEach(radio => {
+
+            radio.addEventListener(
+                "change",
+                updateAttendanceFields
+            );
+
+        });
+
+
+    updateAttendanceFields();
+
+}
+
+
+/* =========================================================
+   INPUT CLEANING
+========================================================= */
+
+function initPhoneInputs() {
+
+    [
+        getElement("phone"),
+        getElement("guardianPhone")
+    ].forEach(input => {
+
+        if (!input) {
+            return;
+        }
+
+
+        input.addEventListener(
+            "input",
+            () => {
+
+                input.value =
+                    input.value
+                        .replace(/\D/g, "")
+                        .slice(0, 10);
+
+            }
+        );
+
+    });
+
+}
+
+
+/* =========================================================
+   APPLICATION VALIDATION
+========================================================= */
+
+function validateApplication(data) {
+
+    if (!data.fullName || data.fullName.length < 2) {
+
+        return {
+            valid: false,
+            message: "Please enter the student's full name."
+        };
+
+    }
+
+
+    if (!data.parentName || data.parentName.length < 2) {
+
+        return {
+            valid: false,
+            message: "Please enter the parent / guardian name."
+        };
+
+    }
+
+
+    if (!isValidPhone(data.phone)) {
+
+        return {
+            valid: false,
+            message: "Student phone number must contain exactly 10 digits."
+        };
+
+    }
+
+
+    if (
+        data.guardianPhone &&
+        !isValidPhone(data.guardianPhone)
+    ) {
+
+        return {
+            valid: false,
+            message: "Guardian phone number must contain exactly 10 digits."
+        };
+
+    }
+
+
+    if (!isValidEmail(data.email)) {
+
+        return {
+            valid: false,
+            message: "Please enter a valid student email."
+        };
+
+    }
+
+
+    if (!data.dob) {
+
+        return {
+            valid: false,
+            message: "Please select the date of birth."
+        };
+
+    }
+
+
+    if (!data.qualification) {
+
+        return {
+            valid: false,
+            message: "Please select a qualification."
+        };
+
+    }
+
+
+    if (!data.coursePreference) {
+
+        return {
+            valid: false,
+            message: "Please select a course."
+        };
+
+    }
+
+
+    if (!data.batch) {
+
+        return {
+            valid: false,
+            message: "Please select a preferred batch."
+        };
+
+    }
+
+
+    if (!data.address || data.address.length < 3) {
+
+        return {
+            valid: false,
+            message: "Please enter the address."
+        };
+
+    }
+
+
+    if (!data.agreement) {
+
+        return {
+            valid: false,
+            message: "Please confirm that the information is correct."
+        };
+
+    }
+
+
+    if (data.attendanceSetup === "setup") {
+
+        if (!isValidEmail(data.attendanceEmail)) {
+
+            return {
+                valid: false,
+                message: "Please enter a valid attendance email."
+            };
+
+        }
+
+
+        if (data.attendancePassword.length < 6) {
+
+            return {
+                valid: false,
+                message: "Attendance password must be at least 6 characters."
+            };
+
+        }
+
+
+        if (
+            data.attendancePassword !==
+            data.confirmAttendancePassword
+        ) {
+
+            return {
+                valid: false,
+                message: "Attendance passwords do not match."
+            };
+
+        }
+
+    }
+
+
+    return {
+        valid: true
+    };
+
+}
+
+
+/* =========================================================
+   EMAILJS
+========================================================= */
+
+async function sendAdminEmail(params) {
+
+    if (!window.emailjs) {
+        throw new Error("EmailJS is not available.");
+    }
+
+
+    return emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_ADMIN_TEMPLATE,
+        params
+    );
+
+}
+
+
+async function sendApplicantEmail(params) {
+
+    if (!window.emailjs) {
+        throw new Error("EmailJS is not available.");
+    }
+
+
+    return emailjs.send(
+        EMAILJS_SERVICE_ID,
+        EMAILJS_APPLICANT_TEMPLATE,
+        params
+    );
+
+}
+
+
+/* =========================================================
+   APPLICATION SUBMISSION
+========================================================= */
+
+async function submitApplication(event) {
+
+    event.preventDefault();
+
+
+    const form =
+        getElement("applicationForm");
+
+    const submitButton =
+        getElement("applicationSubmit");
+
+
+    if (!form || !submitButton) {
+        return;
+    }
+
+
+    const fullName =
+        getElement("fullName").value.trim();
+
+    const parentName =
+        getElement("parentName").value.trim();
+
+    const phone =
+        getElement("phone").value.trim();
+
+    const guardianPhone =
+        getElement("guardianPhone").value.trim();
+
+    const email =
+        getElement("email").value.trim();
+
+    const dob =
+        getElement("dob").value;
+
+    const qualification =
+        getElement("qualification").value;
+
+    const coursePreference =
+        getElement("coursePreference").value;
+
+    const batch =
+        getElement("batch").value;
+
+    const source =
+        getElement("source").value;
+
+    const address =
+        getElement("address").value.trim();
+
+    const attendanceSetup =
+        document.querySelector(
+            'input[name="attendanceSetup"]:checked'
+        )?.value || "skip";
+
+    const attendanceEmail =
+        getElement("attendanceEmail").value.trim();
+
+    const attendancePassword =
+        getElement("attendancePassword").value;
+
+    const confirmAttendancePassword =
+        getElement("confirmAttendancePassword").value;
+
+    const message =
+        getElement("message").value.trim();
+
+    const agreement =
+        getElement("agreement").checked;
+
+
+    const data = {
+
+        fullName,
+        parentName,
+        phone,
+        guardianPhone,
+        email,
+        dob,
+        qualification,
+        coursePreference,
+        batch,
+        source,
+        address,
+        attendanceSetup,
+        attendanceEmail,
+        attendancePassword,
+        confirmAttendancePassword,
+        message,
+        agreement
+
+    };
+
+
+    const validation =
+        validateApplication(data);
+
+
+    if (!validation.valid) {
+
+        showFormMessage(
+            "error",
+            validation.message
+        );
+
+        return;
+
+    }
+
+
+    submitButton.disabled = true;
+
+    submitButton.textContent =
+        "Submitting Application...";
+
+
+    showFormMessage(
+        "info",
+        "Please wait while your application is being submitted."
+    );
+
+
+    let attendanceUser = null;
+
+
+    try {
+
+        /*
+         * Create attendance account first when requested.
+         *
+         * This uses the SECONDARY Firebase Auth instance,
+         * so the main/admin Firebase session is not replaced.
+         */
+
+        if (
+            attendanceSetup === "setup"
+        ) {
+
+            try {
+
+                const attendanceAuthInstance =
+                    getAttendanceAuth();
+
+
+                const credentials =
+                    await createUserWithEmailAndPassword(
+                        attendanceAuthInstance,
+                        attendanceEmail,
+                        attendancePassword
+                    );
+
+
+                attendanceUser =
+                    credentials.user;
+
+            } catch (attendanceError) {
+
+                console.error(
+                    "Attendance account error:",
+                    attendanceError
+                );
+
+
+                let message =
+                    "Could not create the attendance account.";
+
+
+                if (
+                    attendanceError.code ===
+                    "auth/email-already-in-use"
+                ) {
+
+                    message =
+                        "That attendance email is already registered. Please use another email.";
+
+                } else if (
+                    attendanceError.code ===
+                    "auth/invalid-email"
+                ) {
+
+                    message =
+                        "The attendance email is invalid.";
+
+                } else if (
+                    attendanceError.code ===
+                    "auth/weak-password"
+                ) {
+
+                    message =
+                        "The attendance password is too weak.";
+
+                }
+
+
+                throw new Error(message);
+
+            }
+
+        }
+
+
+        /*
+         * Save application to Firestore.
+         */
+
+        const createdAt =
+            new Date().toISOString();
+
+
+        const applicationData = {
+
+            fullName,
+            parentName,
+            phone,
+            guardianPhone,
+            email,
+            dob,
+            qualification,
+            address,
+            coursePreference,
+            batch,
+            source,
+            attendanceSetup,
+
+            attendanceEmail:
+                attendanceSetup === "setup"
+                    ? attendanceEmail
+                    : "",
+
+            attendanceUid:
+                attendanceUser
+                    ? attendanceUser.uid
+                    : "",
+
+            message,
+
+            status: "New",
+
+            createdAt
+
+        };
+
+
+        await addDoc(
+            collection(db, "applications"),
+            applicationData
+        );
+
+
+        /*
+         * EmailJS parameters.
+         */
+
+        const emailParams = {
+
+            student_name: fullName,
+
+            parent_name: parentName,
+
+            student_phone: phone,
+
+            guardian_phone:
+                guardianPhone || "Not provided",
+
+            student_email: email,
+
+            dob,
+
+            qualification,
+
+            course: coursePreference,
+
+            batch,
+
+            address,
+
+            attendance_setup:
+                attendanceSetup === "setup"
+                    ? "Account requested"
+                    : "Skipped",
+
+            attendance_email:
+                attendanceSetup === "setup"
+                    ? attendanceEmail
+                    : "Not applicable",
+
+            source:
+                source || "Not specified",
+
+            message:
+                message || "No additional message",
+
+            submitted_at:
+                formatDate(createdAt)
+
+        };
+
+
+        /*
+         * IMPORTANT:
+         *
+         * Admin and applicant emails are attempted
+         * independently.
+         *
+         * One failing does not prevent the other.
+         */
+
+        const adminEmailPromise =
+            sendAdminEmail(emailParams)
+                .then(() => ({
+                    success: true
+                }))
+                .catch(error => {
+
+                    console.error(
+                        "Admin email failed:",
+                        error
+                    );
+
+                    return {
+                        success: false,
+                        error
+                    };
+
+                });
+
+
+        const applicantEmailPromise =
+            sendApplicantEmail({
+
+                student_name: fullName,
+
+                student_email: email,
+
+                parent_name: parentName,
+
+                course: coursePreference,
+
+                batch
+
+            })
+                .then(() => ({
+                    success: true
+                }))
+                .catch(error => {
+
+                    console.error(
+                        "Applicant email failed:",
+                        error
+                    );
+
+                    return {
+                        success: false,
+                        error
+                    };
+
+                });
+
+
+        const [
+            adminEmailResult,
+            applicantEmailResult
+        ] = await Promise.all([
+            adminEmailPromise,
+            applicantEmailPromise
+        ]);
+
+
+        /*
+         * The application has already been saved.
+         * Email failures therefore do not falsely report
+         * the application as completely failed.
+         */
+
+        let successMessage =
+            "Application submitted successfully. Our team will contact you soon. To complete your admission, please visit the center with 2 passport-size photographs and a photocopy of your Aadhar card.";
+
+
+        if (
+            attendanceSetup === "setup"
+        ) {
+
+            successMessage +=
+                " Your attendance account has also been created — keep these credentials safe.";
+
+        }
+
+
+        if (
+            !adminEmailResult.success ||
+            !applicantEmailResult.success
+        ) {
+
+            successMessage +=
+                " Your application was saved, although one of the email notifications could not be sent.";
+
+        }
+
+
+        showFormMessage(
+            "success",
+            successMessage
+        );
+
+
+        form.reset();
+
+
+        /*
+         * Restore the default attendance option
+         * after form reset.
+         */
+
+        const setupRadio =
+            document.querySelector(
+                'input[name="attendanceSetup"][value="setup"]'
+            );
+
+
+        if (setupRadio) {
+            setupRadio.checked = true;
+        }
+
+
+        updateAttendanceFields();
+
+
+        submitButton.disabled = false;
+
+        submitButton.textContent =
+            "Submit Application";
+
+
+        window.scrollTo({
+            top:
+                document.getElementById(
+                    "admission"
+                )?.offsetTop || 0,
+            behavior: "smooth"
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "Application submission error:",
+            error
+        );
+
+
+        showFormMessage(
+            "error",
+            error.message ||
+            "Could not submit the application. Please try again."
+        );
+
+
+        submitButton.disabled = false;
+
+        submitButton.textContent =
+            "Submit Application";
+
+    }
+
+}
+
+
+/* =========================================================
+   APPLICATION FORM INIT
+========================================================= */
+
+function initApplicationForm() {
+
+    const form =
+        getElement("applicationForm");
+
+
+    if (!form) {
+        return;
+    }
+
+
+    form.addEventListener(
+        "submit",
+        submitApplication
+    );
+
+}
+
+
+/* =========================================================
+   ADMIN VERIFICATION
+========================================================= */
+
+async function verifyAdmin(user) {
+
+    if (!user) {
+
+        return {
+            authorized: false,
+            reason: "No authenticated user."
+        };
+
+    }
+
+
+    try {
+
+        const adminReference =
+            doc(
+                db,
+                "admins",
+                user.uid
+            );
+
+
+        const adminSnapshot =
+            await getDoc(adminReference);
+
+
+        if (!adminSnapshot.exists()) {
+
+            return {
+                authorized: false,
+                reason:
+                    "No administrator record was found for this Firebase account."
+            };
+
+        }
+
+
+        const adminData =
+            adminSnapshot.data();
+
+
+        if (
+            adminData.isAdmin !== true
+        ) {
+
+            return {
+                authorized: false,
+                reason:
+                    "This administrator record does not have isAdmin set to true."
+            };
+
+        }
+
+
+        if (
+            adminData.uid &&
+            adminData.uid !== user.uid
+        ) {
+
+            return {
+                authorized: false,
+                reason:
+                    "The administrator UID does not match the signed-in account."
+            };
+
+        }
+
+
+        return {
+            authorized: true,
+            data: adminData
+        };
+
+
+    } catch (error) {
+
+        console.error(
+            "Admin verification error:",
+            error
+        );
+
+
+        return {
+            authorized: false,
+            reason:
+                "Firestore permission denied while checking administrator access."
+        };
+
+    }
+
+}
+
+
+/* =========================================================
+   ADMIN MESSAGE
+========================================================= */
+
+function showAdminMessage(
+    type,
+    message
+) {
+
+    const box =
+        getElement("adminLoginMessage");
+
+
+    if (!box) {
+        return;
+    }
+
+
+    box.className =
+        `message ${type}`;
+
+
+    box.textContent =
+        message;
+
+
+    box.style.display =
+        "block";
+
+}
+
+
+/* =========================================================
+   ADMIN UI
+========================================================= */
+
+function showAdminDashboard() {
+
+    const loginCard =
+        getElement("adminLoginCard");
+
+    const dashboard =
+        getElement("adminDashboard");
+
+
+    if (loginCard) {
+        loginCard.style.display = "none";
+    }
+
+
+    if (dashboard) {
+        dashboard.style.display = "block";
+    }
+
+}
+
+
+function showAdminLogin() {
+
+    const loginCard =
+        getElement("adminLoginCard");
+
+    const dashboard =
+        getElement("adminDashboard");
+
+
+    if (dashboard) {
+        dashboard.style.display = "none";
+    }
+
+
+    if (loginCard) {
+        loginCard.style.display = "block";
+    }
+
+}
+
+
+/* =========================================================
+   LOAD APPLICATIONS
+========================================================= */
+
+async function loadApplications() {
+
+    const list =
+        getElement("applicationsList");
+
+
+    if (!list) {
+        return;
+    }
+
+
+    list.innerHTML = `
+        <div class="admin-loading">
+            Loading applications...
+        </div>
+    `;
+
+
+    try {
+
+        const applicationsQuery =
+            query(
+                collection(db, "applications"),
+                orderBy(
+                    "createdAt",
+                    "desc"
+                )
+            );
+
+
+        const snapshot =
+            await getDocs(
+                applicationsQuery
+            );
+
+
+        if (snapshot.empty) {
+
+            list.innerHTML = `
+                <div class="no-applications">
+
+                    <h3>
+                        No Applications Yet
+                    </h3>
+
+                    <p>
+                        New admission applications will appear here.
+                    </p>
+
+                </div>
+            `;
+
+            return;
+
+        }
+
+
+        list.innerHTML = "";
+
+
+        snapshot.forEach(
+            (applicationSnapshot, index) => {
+
+                const data =
+                    applicationSnapshot.data();
+
+                const id =
+                    applicationSnapshot.id;
+
+
+                const card =
+                    document.createElement("article");
+
+                card.className =
+                    "application-card";
+
+
+                card.innerHTML = `
+
+                    <div class="application-card-header">
+
+                        <div>
+
+                            <span class="application-number">
+                                APPLICATION ${String(index + 1).padStart(2, "0")}
+                            </span>
+
+                            <h3>
+                                ${escapeHTML(
+                                    data.fullName ||
+                                    "Unnamed Applicant"
+                                )}
+                            </h3>
+
+                        </div>
+
+                        <span class="application-status">
+                            ${escapeHTML(
+                                data.status || "New"
+                            )}
+                        </span>
+
+                    </div>
+
+
+                    <div class="application-grid">
+
+                        ${adminField(
+                            "Parent / Guardian",
+                            data.parentName
+                        )}
+
+                        ${adminField(
+                            "Student Phone",
+                            data.phone
+                        )}
+
+                        ${adminField(
+                            "Guardian Phone",
+                            data.guardianPhone
+                        )}
+
+                        ${adminField(
+                            "Email",
+                            data.email
+                        )}
+
+                        ${adminField(
+                            "Date of Birth",
+                            data.dob
+                        )}
+
+                        ${adminField(
+                            "Qualification",
+                            data.qualification
+                        )}
+
+                        ${adminField(
+                            "Course",
+                            data.coursePreference
+                        )}
+
+                        ${adminField(
+                            "Preferred Batch",
+                            data.batch
+                        )}
+
+                        ${adminField(
+                            "Attendance Setup",
+                            data.attendanceSetup === "setup"
+                                ? "Account Requested"
+                                : "Skipped"
+                        )}
+
+                        ${adminField(
+                            "Attendance Email",
+                            data.attendanceEmail
+                        )}
+
+                        ${adminField(
+                            "Attendance UID",
+                            data.attendanceUid
+                        )}
+
+                        ${adminField(
+                            "Source",
+                            data.source
+                        )}
+
+                        ${adminField(
+                            "Submission Date",
+                            formatDate(data.createdAt)
+                        )}
+
+                        ${adminField(
+                            "Address",
+                            data.address,
+                            true
+                        )}
+
+                        ${adminField(
+                            "Message",
+                            data.message,
+                            true
+                        )}
+
+                    </div>
+
+
+                    <div class="application-actions">
+
+                        <button
+                            type="button"
+                            class="delete-application-btn"
+                            data-application-id="${escapeHTML(id)}">
+
+                            Delete Application
+
+                        </button>
+
+                    </div>
+                `;
+
+
+                list.appendChild(card);
+
+            }
+        );
+
+
+        list.querySelectorAll(
+            ".delete-application-btn"
+        ).forEach(button => {
+
+            button.addEventListener(
+                "click",
+                () => deleteApplication(
+                    button.dataset.applicationId,
+                    button
+                )
+            );
+
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "Loading applications error:",
+            error
+        );
+
+
+        list.innerHTML = `
+
+            <div class="admin-error">
+
+                <h3>
+                    Could Not Load Applications
+                </h3>
+
+                <p>
+                    ${escapeHTML(
+                        error.message ||
+                        "Firestore could not return the applications."
+                    )}
+                </p>
+
+            </div>
+
+        `;
+
+    }
+
+}
+
+
+function adminField(
+    label,
+    value,
+    wide = false
+) {
+
+    const safeValue =
+        value === undefined ||
+        value === null ||
+        String(value).trim() === ""
+            ? "—"
+            : String(value);
+
+
+    return `
+
+        <div class="
+            application-field
+            ${wide ? "application-field-wide" : ""}
+        ">
+
+            <span>
+                ${escapeHTML(label)}
+            </span>
+
+            <strong>
+                ${escapeHTML(safeValue)}
+            </strong>
+
+        </div>
+
+    `;
+
+}
+
+
+/* =========================================================
+   DELETE APPLICATION
+========================================================= */
+
+async function deleteApplication(
+    applicationId,
+    button
+) {
+
+    if (!applicationId) {
+        return;
+    }
+
+
+    const confirmed =
+        window.confirm(
+            "Are you sure you want to permanently delete this application?"
+        );
+
+
+    if (!confirmed) {
+        return;
+    }
+
+
+    if (button) {
+
+        button.disabled = true;
+
+        button.textContent =
+            "Deleting...";
+
+    }
+
+
+    try {
+
+        await deleteDoc(
+            doc(
+                db,
+                "applications",
+                applicationId
+            )
+        );
+
+
+        await loadApplications();
+
+
+    } catch (error) {
+
+        console.error(
+            "Delete application error:",
+            error
+        );
+
+
+        window.alert(
+            "Could not delete this application.\n\n" +
+            (
+                error.message ||
+                "Firestore denied the delete request."
+            )
+        );
+
+
+        if (button) {
+
+            button.disabled = false;
+
+            button.textContent =
+                "Delete Application";
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   ADMIN LOGIN
+========================================================= */
+
+async function handleAdminLogin(event) {
+
+    event.preventDefault();
+
+
+    const email =
+        getElement("adminEmail")?.value.trim();
+
+    const password =
+        getElement("adminPassword")?.value;
+
+
+    const button =
+        getElement("adminLoginButton");
+
+
+    if (!email || !password) {
+
+        showAdminMessage(
+            "error",
+            "Please enter your admin email and password."
+        );
+
+        return;
+
+    }
+
+
+    if (button) {
+
+        button.disabled = true;
+
+        button.textContent =
+            "Checking Access...";
+
+    }
+
+
+    try {
+
+        const credentials =
+            await signInWithEmailAndPassword(
+                auth,
+                email,
+                password
+            );
+
+
+        const verification =
+            await verifyAdmin(
+                credentials.user
+            );
+
+
+        if (!verification.authorized) {
+
+            await signOut(auth);
+
+
+            showAdminMessage(
+                "error",
+                verification.reason
+            );
+
+
+            if (button) {
+
+                button.disabled = false;
+
+                button.textContent =
+                    "Login to Dashboard";
+
+            }
+
+            return;
+
+        }
+
+
+        showAdminMessage(
+            "success",
+            "Administrator verified. Loading dashboard..."
+        );
+
+
+        showAdminDashboard();
+
+        await loadApplications();
+
+
+    } catch (error) {
+
+        console.error(
+            "Admin login error:",
+            error
+        );
+
+
+        let message =
+            "Could not sign in. Please check your email and password.";
+
+
+        if (
+            error.code ===
+            "auth/invalid-credential"
+        ) {
+
+            message =
+                "Invalid admin email or password.";
+
+        } else if (
+            error.code ===
+            "auth/user-not-found"
+        ) {
+
+            message =
+                "No Firebase account was found for this email.";
+
+        } else if (
+            error.code ===
+            "auth/wrong-password"
+        ) {
+
+            message =
+                "Incorrect admin password.";
+
+        } else if (
+            error.code ===
+            "auth/too-many-requests"
+        ) {
+
+            message =
+                "Too many login attempts. Please try again later.";
+
+        }
+
+
+        showAdminMessage(
+            "error",
+            message
+        );
+
+
+        if (button) {
+
+            button.disabled = false;
+
+            button.textContent =
+                "Login to Dashboard";
+
+        }
+
+    }
+
+}
+
+
+/* =========================================================
+   ADMIN LOGOUT
+========================================================= */
+
+async function handleAdminLogout() {
+
+    try {
+
+        await signOut(auth);
+
+        showAdminLogin();
+
+        const form =
+            getElement("adminLoginForm");
+
+        if (form) {
+            form.reset();
+        }
+
+
+    } catch (error) {
+
+        console.error(
+            "Admin logout error:",
+            error
+        );
+
+    }
+
+}
+
+
+/* =========================================================
+   ADMIN AUTH STATE
+========================================================= */
+
+function initAdminAuthentication() {
+
+    const adminPage =
+        document.body.classList.contains(
+            "admin-page"
+        );
+
+
+    const adminLoginForm =
+        getElement("adminLoginForm");
+
+
+    /*
+     * CRITICAL:
+     *
+     * The main website does not run admin
+     * authentication logic.
+     *
+     * This prevents the admin panel from
+     * appearing on index.html.
+     */
+
+    if (
+        !adminPage ||
+        !adminLoginForm
+    ) {
+        return;
+    }
+
+
+    adminLoginForm.addEventListener(
+        "submit",
+        handleAdminLogin
+    );
+
+
+    const logoutButton =
+        getElement("adminLogoutBtn");
+
+
+    if (logoutButton) {
+
+        logoutButton.addEventListener(
+            "click",
+            handleAdminLogout
+        );
+
+    }
+
+
+    const refreshButton =
+        getElement("refreshApplications");
+
+
+    if (refreshButton) {
+
+        refreshButton.addEventListener(
+            "click",
+            loadApplications
+        );
+
+    }
+
+
+    /*
+     * Back to Website is a normal link
+     * in admin.html.
+     *
+     * It does not modify authentication
+     * and does not remove admin access.
+     */
+
+
+    onAuthStateChanged(
+        auth,
+        async user => {
+
+            if (!user) {
+
+                showAdminLogin();
+
+                return;
+
+            }
+
+
+            const verification =
+                await verifyAdmin(user);
+
+
+            if (!verification.authorized) {
+
+                await signOut(auth);
+
+                showAdminLogin();
+
+                showAdminMessage(
+                    "error",
+                    verification.reason
+                );
+
+                return;
+
+            }
+
+
+            showAdminDashboard();
+
+            await loadApplications();
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   INITIALIZE MAIN WEBSITE
+========================================================= */
+
+function initMainWebsite() {
+
+    if (
+        document.body.classList.contains(
+            "admin-page"
+        )
+    ) {
+        return;
+    }
+
+
+    initMobileNavigation();
+
+    initNavigationHighlight();
+
+    renderCourseGrid();
+
+    populateCourseSelect();
+
+    initCourseModal();
+
+    initAttendanceUI();
+
+    initPhoneInputs();
+
+    initApplicationForm();
+
+}
+
+
+/* =========================================================
+   INITIALIZE
+========================================================= */
+
+document.addEventListener(
+    "DOMContentLoaded",
+    () => {
+
+        initMainWebsite();
+
+        initAdminAuthentication();
+
+    }
+);
+</script>
+<script type="module">
+/* Rehaan Computers — premium layer. Keep in sync with premium.css. */
+
+/* Footer year */
+document.getElementById("footerYear").textContent = new Date().getFullYear();
+
+/* Scroll reveal — elements carry .reveal in the markup; course cards get it from script.js */
+(function () {
+    if (!("IntersectionObserver" in window)) return;
+    document.documentElement.classList.add("reveal-ready");
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add("in");
+            io.unobserve(entry.target);
+        });
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+    const observeAll = () => {
+        document.querySelectorAll(".reveal:not(.in)").forEach((el, i) => {
+            el.style.transitionDelay = (i % 3) * 80 + "ms";
+            io.observe(el);
+        });
+    };
+    observeAll();
+    /* Course cards render after script.js finishes — observe them too */
+    const grid = document.getElementById("courseGrid");
+    if (grid) {
+        new MutationObserver(observeAll).observe(grid, { childList: true });
+    }
+})();
+</script>
+
+</body>
+</html>
