@@ -571,10 +571,22 @@ function renderCourseGrid() {
         (course, index) => {
 
             return `
-                <article class="course-card">
+                <article class="course-card reveal">
+
+                    ${
+                        index === 0
+                            ? '<span class="course-badge">Most Popular</span>'
+                            : ""
+                    }
 
                     <div class="course-number">
                         COURSE ${String(index + 1).padStart(2, "0")}
+                    </div>
+
+                    <div>
+                        <span class="course-category">
+                            ${escapeHTML(course.category)}
+                        </span>
                     </div>
 
                     <div class="course-content">
@@ -584,7 +596,17 @@ function renderCourseGrid() {
                         </h3>
 
                         <p>
-                            ${escapeHTML(course.subtitle)}
+                            ${escapeHTML(course.overview)}
+                        </p>
+
+                        <div class="course-chips">
+                            <span>${escapeHTML(course.duration)}</span>
+                            <span>${escapeHTML(course.level)}</span>
+                            <span>${escapeHTML(course.certificate)}</span>
+                        </div>
+
+                        <p class="course-start">
+                            Classes start <b>1 October</b> — Morning, Afternoon &amp; Evening batches
                         </p>
 
                     </div>
@@ -595,12 +617,23 @@ function renderCourseGrid() {
                             ₹999/-
                         </strong>
 
-                        <button
-                            type="button"
-                            class="course-detail-btn"
-                            data-course-index="${index}">
-                            View Details
-                        </button>
+                        <div class="course-card-actions">
+
+                            <button
+                                type="button"
+                                class="course-detail-btn"
+                                data-course-index="${index}">
+                                View Details
+                            </button>
+
+                            <button
+                                type="button"
+                                class="course-apply-btn"
+                                data-apply-index="${index}">
+                                Apply Now
+                            </button>
+
+                        </div>
 
                     </div>
 
@@ -625,6 +658,77 @@ function renderCourseGrid() {
         });
 
     });
+
+
+    grid.querySelectorAll(
+        ".course-apply-btn"
+    ).forEach(button => {
+
+        button.addEventListener("click", () => {
+
+            const index =
+                Number(button.dataset.applyIndex);
+
+            selectCourseForApplication(index);
+
+        });
+
+    });
+
+}
+
+
+/*
+ * Pre-fill the admission form with a course and
+ * bring the applicant to the form. Shared by the
+ * course cards and the course modal.
+ */
+
+function selectCourseForApplication(index) {
+
+    const course = courses[index];
+
+    if (!course) {
+        return;
+    }
+
+
+    const select =
+        getElement("coursePreference");
+
+    if (select) {
+
+        select.value = course.title;
+
+        select.classList.remove("flash");
+
+        void select.offsetWidth;
+
+        select.classList.add("flash");
+
+        select.addEventListener(
+            "animationend",
+            () => select.classList.remove("flash"),
+            { once: true }
+        );
+
+    }
+
+
+    closeCourseModal();
+
+
+    const admission =
+        getElement("admission");
+
+    if (admission) {
+
+        admission.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+    }
 
 }
 
@@ -952,35 +1056,9 @@ function initCourseModal() {
 
         apply.addEventListener(
             "click",
-            () => {
-
-                const select =
-                    getElement("coursePreference");
-
-                if (select) {
-
-                    select.value =
-                        courses[currentCourseIndex].title;
-
-                }
-
-
-                closeCourseModal();
-
-
-                const admission =
-                    getElement("admission");
-
-                if (admission) {
-
-                    admission.scrollIntoView({
-                        behavior: "smooth",
-                        block: "start"
-                    });
-
-                }
-
-            }
+            () => selectCourseForApplication(
+                currentCourseIndex
+            )
         );
 
     }
@@ -1747,7 +1825,7 @@ async function submitApplication(event) {
          */
 
         let successMessage =
-            "Application submitted successfully. Our team will contact you soon.";
+            "Application submitted successfully. Our team will contact you soon. To complete your admission, please visit the center with 2 passport-size photographs and a photocopy of your Aadhar card.";
 
 
         if (
@@ -1755,7 +1833,7 @@ async function submitApplication(event) {
         ) {
 
             successMessage +=
-                " Your attendance account has also been created.";
+                " Your attendance account has also been created — keep these credentials safe.";
 
         }
 

@@ -3,134 +3,48 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="description" content="Rehaan Computers — Computer Courses, Practical Training and Admission">
-<meta name="theme-color" content="#080808">
-<title>Rehaan Computers — Learn • Practice • Grow</title>
+<meta name="description" content="Rehaan Computers — premium computer training in Charangam, Beerwah. Practical courses in MS Office, Tally with GST, Typing, Photoshop and more. Online admission open all year with no last date. New batches begin 1 October.">
+<meta name="theme-color" content="#060606">
+<meta property="og:title" content="Rehaan Computers — Learn • Practice • Grow">
+<meta property="og:description" content="Premium computer training: practical classes, individual attention and professional certificates. Online admission open — no last date. Classes begin 1 October.">
+<meta property="og:type" content="website">
+<title>Rehaan Computers — Premium Computer Training | Admissions Open</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23060606'/%3E%3Crect x='2' y='2' width='60' height='60' rx='12' fill='none' stroke='%23d6ad55' stroke-width='2'/%3E%3Ctext x='32' y='42' font-family='Georgia,serif' font-size='26' font-weight='bold' fill='%23f2d38a' text-anchor='middle'%3ERC%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500&display=swap" rel="stylesheet">
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="stylesheet" href="style.css">
-<style>
-/* REHAAN COMPUTERS - premium upgrade. Load AFTER style.css */
-@keyframes floatY{0%,100%{transform:translateY(0)}50%{transform:translateY(-12px)}}
-@keyframes shine{to{background-position:200% center}}
-@keyframes scrollX{to{transform:translateX(-50%)}}
-@keyframes pulseDot{0%,100%{box-shadow:0 0 0 0 rgba(155,240,176,.5)}70%{box-shadow:0 0 0 8px rgba(155,240,176,0)}}
-@keyframes glowPulse{0%,100%{box-shadow:0 0 0 0 rgba(214,173,85,0)}50%{box-shadow:0 0 42px rgba(214,173,85,.2)}}
-
-/* more readable sizes */
-.nav-menu a{font-size:13px}
-.primary-btn,.secondary-btn{font-size:13px}
-.hero-content>p{font-size:17px}
-.hero-points{font-size:12px}
-.section-heading p{font-size:14px}
-.course-content p{font-size:13px}
-.course-detail-btn{font-size:11px}
-.about-text{font-size:14px}
-.benefit-card p{font-size:12px}
-.form-group label{font-size:12px}
-.form-group input,.form-group select,.form-group textarea{font-size:14px}
-.attendance-choice label{font-size:13px}
-.agreement{font-size:12px}
-.submit-btn{font-size:14px}
-.site-footer p{font-size:12px}
-
-/* moving elements */
-.hero-banner{animation:floatY 6s ease-in-out infinite}
-.hero-section::before{animation:floatY 9s ease-in-out infinite}
-.hero-content h1 span{background-image:linear-gradient(110deg,#fff 0%,var(--gold-light) 25%,#fff 50%,var(--gold-light) 75%,#fff 100%);background-size:200% auto;animation:shine 7s linear infinite}
-.banner-status::before{content:"";display:inline-block;width:6px;height:6px;margin-right:6px;border-radius:50%;background:#9bf0b0;animation:pulseDot 1.8s infinite}
-
-.marquee{overflow:hidden;padding:18px 0;background:#0a0a0a;border-bottom:1px solid rgba(255,255,255,.06);-webkit-mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask-image:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
-.marquee-track{display:flex;width:max-content;animation:scrollX 32s linear infinite}
-.marquee span{white-space:nowrap;padding-left:26px;color:#9a9a9a;font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase}
-.marquee span::after{content:"\2726";margin-left:52px;color:var(--gold)}
-
-.course-card::after{content:"";position:absolute;left:0;right:0;top:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);transform:scaleX(0);transition:transform .4s ease}
-.course-card:hover::after{transform:scaleX(1)}
-
-/* scroll reveal (class added by premium.js) */
-.reveal-ready .reveal{opacity:0;transform:translateY(26px);transition:opacity .7s ease,transform .7s ease}
-.reveal-ready .reveal.in{opacity:1;transform:none}
-
-/* process steps */
-.steps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
-.step-card{padding:26px;border:1px solid var(--border);border-radius:var(--radius);background:rgba(255,255,255,.025)}
-.step-card b{display:block;font-family:"Playfair Display",serif;font-size:46px;line-height:1;color:transparent;-webkit-text-stroke:1px rgba(214,173,85,.55)}
-.step-card h3{margin:16px 0 8px;font-family:"Playfair Display",serif;font-size:20px}
-.step-card p{margin:0;color:#8a8a8a;font-size:13px;line-height:1.7}
-
-/* admission: form + right side panel */
-.admission-layout{display:grid;grid-template-columns:minmax(0,1fr) 380px;gap:26px;align-items:start;max-width:1180px;margin:0 auto}
-.admission-layout .application-form{max-width:none;margin:0}
-.admission-aside{position:sticky;top:100px;display:grid;gap:16px}
-.notice-card{padding:26px;border:1px solid rgba(214,173,85,.45);border-radius:20px;background:linear-gradient(145deg,rgba(214,173,85,.15),rgba(214,173,85,.03));animation:glowPulse 3.2s ease-in-out infinite}
-.notice-badge{display:inline-block;padding:5px 10px;border-radius:999px;background:var(--gold);color:#111;font-size:10px;font-weight:800;letter-spacing:.12em}
-.notice-card h3{margin:14px 0 8px;font-family:"Playfair Display",serif;font-size:24px;line-height:1.15}
-.notice-card p{margin:0;color:#d0d0d0;font-size:13px;line-height:1.75}
-.docs-card,.visit-card{padding:24px;border:1px solid var(--border);border-radius:20px;background:rgba(255,255,255,.03)}
-.docs-card h4,.visit-card h4{margin:0 0 14px;font-family:"Playfair Display",serif;font-size:19px;color:var(--gold-light)}
-.docs-card ul{list-style:none;margin:0;padding:0;display:grid;gap:12px}
-.docs-card li{display:flex;align-items:center;gap:14px;padding:14px;border:1px dashed rgba(214,173,85,.35);border-radius:12px;background:rgba(255,255,255,.025)}
-.docs-card li b{flex:none;width:42px;height:42px;display:grid;place-items:center;border-radius:11px;background:linear-gradient(135deg,var(--gold-light),#c79b43);color:#111;font-family:"Playfair Display",serif;font-size:20px}
-.docs-card strong{display:block;font-size:13px}
-.docs-card span{color:#777;font-size:11px}
-.visit-card p{margin:0;color:#aaa;font-size:13px}
-.visit-facts{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,255,255,.08)}
-.visit-facts strong{display:block;color:var(--gold-light);font-family:"Playfair Display",serif;font-size:21px}
-.visit-facts span{color:#777;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em}
-
-/* faq */
-.faq-list{max-width:820px;margin:0 auto;display:grid;gap:12px}
-.faq-item{border:1px solid var(--border);border-radius:14px;background:rgba(255,255,255,.025);transition:border-color .25s,background .25s}
-.faq-item[open]{border-color:rgba(214,173,85,.32);background:rgba(214,173,85,.04)}
-.faq-item summary{display:flex;justify-content:space-between;gap:16px;padding:18px 22px;font-size:14px;font-weight:600;cursor:pointer;list-style:none}
-.faq-item summary::-webkit-details-marker{display:none}
-.faq-item summary::after{content:"+";color:var(--gold);font-size:22px;line-height:1;transition:transform .25s}
-.faq-item[open] summary::after{transform:rotate(45deg)}
-.faq-item p{margin:0;padding:0 22px 20px;color:#999;font-size:13px;line-height:1.8}
-
-@media (max-width:1000px){
-.admission-layout{grid-template-columns:1fr}
-.admission-aside{position:static;order:-1}
-.steps-grid{grid-template-columns:repeat(2,1fr)}
-}
-@media (max-width:560px){.steps-grid{grid-template-columns:1fr}}
-@media (prefers-reduced-motion:reduce){
-*{animation:none!important;transition:none!important}
-.reveal-ready .reveal{opacity:1;transform:none}
-}
-
-/* top address bar + admin link in nav */
-.topbar{background:linear-gradient(90deg,#0b0b0b,#17130a,#0b0b0b);border-bottom:1px solid rgba(214,173,85,.25)}
-.topbar-inner{min-height:38px;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:10px;padding:6px 0;color:#d2d2d2;font-size:12px;letter-spacing:.04em}
-.topbar svg{width:15px;height:15px;fill:none;stroke:var(--gold);stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.topbar strong{color:var(--gold-light);font-size:10px;font-weight:800;letter-spacing:.16em;text-transform:uppercase}
-.topbar i{width:1px;height:12px;background:rgba(214,173,85,.45)}
-.nav-menu a.nav-admin{padding:8px 15px;border:1px solid rgba(214,173,85,.4);border-radius:999px;color:var(--gold-light)}
-.nav-menu a.nav-admin::after{display:none}
-.nav-menu a.nav-admin:hover{background:rgba(214,173,85,.1);color:#fff}
-@media (max-width:700px){
-.nav-menu a.nav-admin{margin-top:6px;border-radius:10px;text-align:center}
-}
-
-</style>
+<link rel="stylesheet" href="premium.css">
 </head>
 <body>
+
+<!-- TOP ADDRESS BAR -->
+<div class="topbar">
+<div class="container topbar-inner">
+<span class="topbar-item"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>Charangam, Beerwah, Kashmir</span>
+<i class="topbar-divider" aria-hidden="true"></i>
+<span class="topbar-item"><b>Admissions Open</b> — no last date, apply online anytime</span>
+<i class="topbar-divider" aria-hidden="true"></i>
+<span class="topbar-item">New batches begin <b>1&nbsp;October</b></span>
+</div>
+</div>
 
 <header class="site-header">
 <div class="container nav-container">
 <a href="#home" class="brand">
 <div class="brand-mark">RC</div>
-<div><strong>REHAAN</strong><span>COMPUTERS</span></div>
+<div class="brand-text"><strong>REHAAN</strong><span>COMPUTERS</span></div>
 </a>
-<button id="mobileMenuBtn" class="mobile-menu-btn" type="button" aria-label="Open menu" aria-expanded="false">☰</button>
+<button id="mobileMenuBtn" class="mobile-menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="navMenu">☰</button>
 <nav id="navMenu" class="nav-menu">
 <a href="#home">Home</a>
 <a href="#courses">Courses</a>
-<a href="#about">About</a>
+<a href="#about">Why Us</a>
+<a href="#process">Process</a>
 <a href="#admission">Admission</a>
+<a href="#faq">FAQ</a>
+<a href="admin.html" class="nav-admin">Admin Login</a>
 </nav>
 </div>
 </header>
@@ -139,37 +53,40 @@
 
 <!-- HERO -->
 <section id="home" class="hero-section">
+<div class="hero-aura hero-aura-one" aria-hidden="true"></div>
+<div class="hero-aura hero-aura-two" aria-hidden="true"></div>
 <div class="container hero-grid">
 <div class="hero-content">
-<div class="eyebrow">LEARN • PRACTICE • GROW</div>
-<h1>Build a Better Future <span>With Computer Skills</span></h1>
-<p>Practical computer education designed to help students build real skills, confidence and career-ready knowledge.</p>
+<div class="eyebrow"><span class="live-dot" aria-hidden="true"></span>ADMISSIONS OPEN • NO LAST DATE</div>
+<h1>Master Real Computer Skills <span>For a Better Future</span></h1>
+<p>Rehaan Computers is a premium training centre for students, job-seekers and business learners. Practical classes on individual systems, one-to-one guidance, and a professional certificate for every course you complete.</p>
 <div class="hero-buttons">
 <a href="#courses" class="primary-btn">Explore Courses</a>
-<a href="#admission" class="secondary-btn">Apply Now</a>
+<a href="#admission" class="secondary-btn">Apply Online Now</a>
 </div>
 <div class="hero-points">
 <span>✓ 100% Practical Training</span>
-<span>✓ Expert Guidance</span>
+<span>✓ Individual Attention</span>
 <span>✓ Professional Certificate</span>
 </div>
 </div>
 <div class="hero-banner">
-<div class="banner-glow"></div>
+<div class="banner-glow" aria-hidden="true"></div>
 <div class="banner-top">
 <span>REHAAN COMPUTERS</span>
 <span class="banner-status">ADMISSION OPEN</span>
 </div>
 <div class="banner-main">
-<small>START YOUR LEARNING JOURNEY</small>
-<h2>Computer Skills <br> For Your Future</h2>
-<p>Practical learning • Expert guidance • Better skills</p>
+<small>LEARN • PRACTICE • GROW</small>
+<h2>Computer Training,<br>Elevated.</h2>
+<p>Practical learning • Expert guidance • Career-ready skills</p>
 </div>
 <div class="banner-bottom">
 <div><strong>₹999/-</strong><span>Course Fee</span></div>
-<div><strong>1 OCT</strong><span>Classes Start</span></div>
-<div><strong>LIMITED</strong><span>Seats</span></div>
+<div><strong>1 OCT</strong><span>Classes Begin</span></div>
+<div><strong>OPEN</strong><span>All Year</span></div>
 </div>
+<a href="#admission" class="banner-cta">Start Your Application →</a>
 </div>
 </div>
 </section>
@@ -179,20 +96,30 @@
 <div class="container trust-grid">
 <div><strong>100%</strong><span>Practical Training</span></div>
 <div><strong>₹999</strong><span>Starting Fee</span></div>
-<div><strong>1 OCT</strong><span>Classes Start</span></div>
+<div><strong>1 Oct</strong><span>Classes Begin</span></div>
 <div><strong>6+</strong><span>Computer Courses</span></div>
 </div>
 </section>
 
+<!-- SKILLS MARQUEE -->
+<div class="marquee" aria-hidden="true">
+<div class="marquee-track">
+<span>MS Word</span><span>MS Excel</span><span>PowerPoint</span><span>Typing Speed &amp; Accuracy</span><span>Tally Prime with GST</span><span>Photoshop</span><span>InPage</span><span>Marg ERP 9</span><span>Internet &amp; Email</span><span>Computer Fundamentals</span><span>MS Word</span><span>MS Excel</span><span>PowerPoint</span><span>Typing Speed &amp; Accuracy</span><span>Tally Prime with GST</span><span>Photoshop</span><span>InPage</span><span>Marg ERP 9</span><span>Internet &amp; Email</span><span>Computer Fundamentals</span>
+</div>
+</div>
+
 <!-- COURSES -->
 <section id="courses" class="section">
 <div class="container">
-<div class="section-heading">
+<div class="section-heading reveal">
 <span>OUR COURSES</span>
 <h2>Choose Your Learning Path</h2>
-<p>Select a course and explore what you will learn, practical training and course details.</p>
+<p>Every course is hands-on and job-oriented. Open a card for the full syllabus, or apply directly — admission stays open all year with no last date.</p>
 </div>
 <div id="courseGrid" class="course-grid"></div>
+<div class="courses-note reveal">
+<span>✦</span> New batches for every course begin <strong>1 October</strong> — Morning, Afternoon and Evening slots available.
+</div>
 </div>
 </section>
 
@@ -200,18 +127,40 @@
 <section id="about" class="section about-section">
 <div class="container about-grid">
 <div>
-<div class="section-heading left">
+<div class="section-heading left reveal">
 <span>WHY REHAAN COMPUTERS</span>
 <h2>Your Skills, Our Priority</h2>
 </div>
-<p class="about-text">Rehaan Computers provides practical computer education with individual attention, modern facilities and job-oriented learning.</p>
-<p class="about-text">Our goal is simple: Learn the basics, practice real work, build confidence and grow your skills.</p>
+<p class="about-text reveal">Rehaan Computers provides practical computer education with individual attention, modern facilities and job-oriented learning. Every student works on their own system and practises real documents, real accounts and real designs.</p>
+<p class="about-text reveal">Our goal is simple: learn the basics, practise real work, build confidence and grow your skills — at your own pace, with no pressure of a fixed admission deadline.</p>
+<div class="about-stats reveal">
+<div><strong>1 on 1</strong><span>System per Student</span></div>
+<div><strong>3</strong><span>Flexible Batches</span></div>
+<div><strong>∞</strong><span>Practice Access</span></div>
+</div>
 </div>
 <div class="benefits-grid">
-<div class="benefit-card"><b>01</b><h3>Practical Training</h3><p>Learn by actually working on computers and real tasks.</p></div>
-<div class="benefit-card"><b>02</b><h3>Expert Guidance</h3><p>Get guidance throughout your learning journey.</p></div>
-<div class="benefit-card"><b>03</b><h3>Individual Attention</h3><p>Individual system and attention for students.</p></div>
-<div class="benefit-card"><b>04</b><h3>Professional Certificate</h3><p>Receive a certificate after completing your course.</p></div>
+<div class="benefit-card reveal"><b>01</b><h3>Practical Training</h3><p>Learn by actually working on computers with real tasks, not just theory and notes.</p></div>
+<div class="benefit-card reveal"><b>02</b><h3>Expert Guidance</h3><p>Get continuous guidance from experienced instructors throughout your course.</p></div>
+<div class="benefit-card reveal"><b>03</b><h3>Individual Attention</h3><p>A personal system and paced teaching, so no learner is left behind.</p></div>
+<div class="benefit-card reveal"><b>04</b><h3>Professional Certificate</h3><p>Receive a verifiable course certificate after completing your training.</p></div>
+</div>
+</div>
+</section>
+
+<!-- PROCESS -->
+<section id="process" class="section">
+<div class="container">
+<div class="section-heading reveal">
+<span>HOW ADMISSION WORKS</span>
+<h2>Four Steps to Join</h2>
+<p>The online form is the first step. Your admission is completed when you visit the centre with your documents.</p>
+</div>
+<div class="steps-grid">
+<div class="step-card reveal"><b>01</b><h3>Choose a Course</h3><p>Pick the course and the Morning, Afternoon or Evening batch that suits your schedule.</p></div>
+<div class="step-card reveal"><b>02</b><h3>Submit the Form</h3><p>Fill in the online application below — you will receive a confirmation by email.</p></div>
+<div class="step-card reveal"><b>03</b><h3>Visit the Centre</h3><p>Bring 2 passport-size photographs and a photocopy of your Aadhaar card.</p></div>
+<div class="step-card reveal"><b>04</b><h3>Start Learning</h3><p>Your new batch begins on 1 October and your practical training starts.</p></div>
 </div>
 </div>
 </section>
@@ -219,51 +168,53 @@
 <!-- ADMISSION -->
 <section id="admission" class="section admission-section">
 <div class="container">
-<div class="section-heading">
-<span>ADMISSION</span>
+<div class="section-heading reveal">
+<span>ONLINE ADMISSION</span>
 <h2>Start Your Application</h2>
-<p>Fill in your details carefully. Our team will contact you after receiving your application.</p>
+<p>There is no last date — applications are accepted online all year. Fill in your details carefully and our team will contact you after receiving your application.</p>
 </div>
 
-<form id="applicationForm" class="application-form">
+<div class="admission-layout">
 
-<div class="form-section-title">Student Information</div>
+<form id="applicationForm" class="application-form reveal">
+
+<div class="form-section-title"><em>01</em>Student Information</div>
 
 <div class="form-grid">
 
 <div class="form-group">
 <label for="fullName">Full Name *</label>
-<input id="fullName" type="text" autocomplete="name" required>
+<input id="fullName" name="fullName" type="text" autocomplete="name" placeholder="Your complete name" required>
 </div>
 
 <div class="form-group">
 <label for="parentName">Parent / Guardian Name *</label>
-<input id="parentName" type="text" required>
+<input id="parentName" name="parentName" type="text" placeholder="Father's or guardian's name" required>
 </div>
 
 <div class="form-group">
 <label for="phone">Student Phone *</label>
-<input id="phone" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel" required>
+<input id="phone" name="phone" type="tel" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="10-digit mobile number" required>
 </div>
 
 <div class="form-group">
 <label for="guardianPhone">Guardian Phone</label>
-<input id="guardianPhone" type="tel" inputmode="numeric" maxlength="10">
+<input id="guardianPhone" name="guardianPhone" type="tel" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number">
 </div>
 
 <div class="form-group">
 <label for="email">Email *</label>
-<input id="email" type="email" autocomplete="email" required>
+<input id="email" name="email" type="email" autocomplete="email" placeholder="you@example.com" required>
 </div>
 
 <div class="form-group">
 <label for="dob">Date of Birth *</label>
-<input id="dob" type="date" required>
+<input id="dob" name="dob" type="date" required>
 </div>
 
 <div class="form-group">
 <label for="qualification">Qualification *</label>
-<select id="qualification" required>
+<select id="qualification" name="qualification" required>
 <option value="">Select Qualification</option>
 <option value="5th">5th</option>
 <option value="6th">6th</option>
@@ -284,14 +235,14 @@
 
 <div class="form-group">
 <label for="coursePreference">Course *</label>
-<select id="coursePreference" required>
+<select id="coursePreference" name="coursePreference" required>
 <option value="">Select Course</option>
 </select>
 </div>
 
 <div class="form-group">
 <label for="batch">Preferred Batch *</label>
-<select id="batch" required>
+<select id="batch" name="batch" required>
 <option value="">Select Batch</option>
 <option value="Morning">Morning</option>
 <option value="Afternoon">Afternoon</option>
@@ -301,7 +252,7 @@
 
 <div class="form-group">
 <label for="source">How did you hear about us?</label>
-<select id="source">
+<select id="source" name="source">
 <option value="">Select</option>
 <option value="Facebook">Facebook</option>
 <option value="Instagram">Instagram</option>
@@ -314,12 +265,14 @@
 
 <div class="form-group full-width">
 <label for="address">Address *</label>
-<textarea id="address" rows="3" required></textarea>
+<textarea id="address" name="address" rows="3" placeholder="Village / Town, District, State" required></textarea>
 </div>
 
 </div>
 
-<div class="form-section-title">Attendance Account</div>
+<div class="form-section-title"><em>02</em>Attendance Account</div>
+
+<p class="form-hint">Your attendance account lets you sign in to the Rehaan Computers attendance system and track your daily class attendance. You can create it now or ask at the centre.</p>
 
 <div class="attendance-choice">
 <label>
@@ -335,33 +288,108 @@
 <div id="attendancePasswordFields" class="form-grid">
 <div class="form-group">
 <label for="attendanceEmail">Attendance Email *</label>
-<input id="attendanceEmail" type="email">
+<input id="attendanceEmail" name="attendanceEmail" type="email" autocomplete="email" placeholder="Email used for attendance sign-in">
 </div>
 <div class="form-group">
 <label for="attendancePassword">Password *</label>
-<input id="attendancePassword" type="password" minlength="6">
+<input id="attendancePassword" name="attendancePassword" type="password" minlength="6" autocomplete="new-password" placeholder="Minimum 6 characters">
 </div>
 <div class="form-group">
 <label for="confirmAttendancePassword">Confirm Password *</label>
-<input id="confirmAttendancePassword" type="password" minlength="6">
+<input id="confirmAttendancePassword" name="confirmAttendancePassword" type="password" minlength="6" autocomplete="new-password" placeholder="Repeat the password">
 </div>
 </div>
 
-<div class="form-group full-width">
+<div class="form-group full-width form-section-gap">
 <label for="message">Message</label>
-<textarea id="message" rows="4" placeholder="Any additional information..."></textarea>
+<textarea id="message" name="message" rows="4" placeholder="Any additional information..."></textarea>
 </div>
+
+<div class="form-section-title form-section-gap"><em>03</em>Confirmation</div>
 
 <label class="agreement">
-<input id="agreement" type="checkbox" required>
-<span>I confirm that the information provided above is correct.</span>
+<input id="agreement" name="agreement" type="checkbox" required>
+<span>I confirm that the information provided above is correct and I will visit the centre with my documents to complete the admission.</span>
 </label>
 
 <button id="applicationSubmit" class="submit-btn" type="submit">Submit Application</button>
 
-<div id="applicationMessage" class="form-message" style="display:none;"></div>
+<div id="applicationMessage" class="form-message" style="display:none;" role="status" aria-live="polite"></div>
 
 </form>
+
+<aside class="admission-aside">
+<div class="notice-card reveal">
+<span class="notice-badge">NO LAST DATE</span>
+<h3>Admission Stays Open All Year</h3>
+<p>You can apply online any day. There is no deadline and no late fee. New batches begin on <strong>1&nbsp;October</strong> and seats are allotted in the order applications arrive — so earlier is better.</p>
+</div>
+
+<div class="docs-card reveal">
+<h4>Documents Required</h4>
+<ul>
+<li><b>2</b><div><strong>Passport-Size Photographs</strong><span>Bring both at your visit</span></div></li>
+<li><b>1</b><div><strong>Photocopy of Aadhaar Card</strong><span>Bring it at your visit</span></div></li>
+<li><b>₹</b><div><strong>Course Fee</strong><span>Pay at the centre — ₹999/-</span></div></li>
+</ul>
+</div>
+
+<div class="visit-card reveal">
+<h4>Visit the Centre</h4>
+<p>Rehaan Computers, Charangam, Beerwah, Kashmir</p>
+<div class="visit-facts"><div><strong>₹999/-</strong><span>Course Fee</span></div><div><strong>1 Oct</strong><span>Classes Begin</span></div></div>
+</div>
+</aside>
+
+</div>
+</div>
+</section>
+
+<!-- BATCH SCHEDULE -->
+<section id="schedule" class="section schedule-section">
+<div class="container">
+<div class="section-heading reveal">
+<span>BATCH SCHEDULE</span>
+<h2>Classes Begin 1 October</h2>
+<p>Every course starts on 1 October with three flexible batch options. Choose your preferred batch in the application form above.</p>
+</div>
+<div class="schedule-grid">
+<div class="schedule-card reveal">
+<h3>Morning Batch</h3>
+<p>Ideal for school and college students who attend regular classes in the afternoon.</p>
+<span class="schedule-chip">Starts 1 October</span>
+</div>
+<div class="schedule-card reveal">
+<h3>Afternoon Batch</h3>
+<p>Perfect for learners who prefer a relaxed mid-day schedule after lunch.</p>
+<span class="schedule-chip">Starts 1 October</span>
+</div>
+<div class="schedule-card reveal">
+<h3>Evening Batch</h3>
+<p>Designed for working learners and business users after shop and office hours.</p>
+<span class="schedule-chip">Starts 1 October</span>
+</div>
+</div>
+<p class="schedule-note reveal">✦ Admission is open all year with <strong>no last date</strong> — apply online and complete your admission at the centre.</p>
+</div>
+</section>
+
+<!-- FAQ -->
+<section id="faq" class="section">
+<div class="container">
+<div class="section-heading reveal">
+<span>FAQ</span>
+<h2>Common Questions</h2>
+</div>
+<div class="faq-list">
+<details class="faq-item reveal"><summary>Is my admission complete after I submit the form?</summary><p>No. The form registers your application. You must visit the centre with 2 passport-size photographs and a photocopy of your Aadhaar card to complete your admission.</p></details>
+<details class="faq-item reveal"><summary>Is there a last date for admission?</summary><p>No. Online admission stays open all year — there is no last date. New batches begin on 1 October and seats are allotted in the order applications arrive.</p></details>
+<details class="faq-item reveal"><summary>When do classes start?</summary><p>Classes for all courses and all batches (Morning, Afternoon and Evening) begin on 1 October.</p></details>
+<details class="faq-item reveal"><summary>What documents do I need to bring?</summary><p>Two passport-size photographs and one photocopy of your Aadhaar card. Carry them when you visit the centre after applying online.</p></details>
+<details class="faq-item reveal"><summary>What is the course fee?</summary><p>The fee is ₹999/- for the courses listed on this website. Payment is made at the centre when you complete your admission.</p></details>
+<details class="faq-item reveal"><summary>What is the attendance account for?</summary><p>It signs you in to the Rehaan Computers attendance system so you can track your daily class attendance. You can create it in the application form or ask at the centre.</p></details>
+<details class="faq-item reveal"><summary>Which batches are available?</summary><p>You can choose a Morning, Afternoon or Evening batch in the application form. All batches start on 1 October.</p></details>
+</div>
 </div>
 </section>
 
@@ -370,7 +398,7 @@
 <!-- COURSE MODAL -->
 <div id="courseModal" class="modal" aria-hidden="true">
 <div class="modal-overlay" id="courseModalOverlay"></div>
-<div class="modal-box">
+<div class="modal-box" role="dialog" aria-modal="true" aria-label="Course details">
 <button id="courseModalClose" class="modal-close" type="button" aria-label="Close course details">×</button>
 <div class="modal-number" id="detailNumber"></div>
 <div class="modal-category" id="detailCategory"></div>
@@ -386,6 +414,7 @@
 <div><span>Duration</span><strong id="detailDuration"></strong></div>
 <div><span>Level</span><strong id="detailLevel"></strong></div>
 <div><span>Certificate</span><strong id="detailCertificate"></strong></div>
+<div><span>Classes Start</span><strong>1 October</strong></div>
 </div>
 <div class="modal-actions">
 <button id="previousCourse" class="secondary-btn" type="button">← Previous</button>
@@ -397,145 +426,67 @@
 
 <footer class="site-footer">
 <div class="container footer-grid">
-<div>
-<strong>REHAAN COMPUTERS</strong>
-<p>Learn • Practice • Grow</p>
+<div class="footer-brand">
+<div class="brand">
+<div class="brand-mark">RC</div>
+<div class="brand-text"><strong>REHAAN</strong><span>COMPUTERS</span></div>
+</div>
+<p>Premium computer training in Charangam, Beerwah. Practical classes, individual attention and professional certificates — Learn • Practice • Grow.</p>
+<p class="footer-small">Managed by Dar Yasir<br>Created by Dar Yasir</p>
 </div>
 <div>
-<p>Charangam, Beerwah, Kashmir</p>
-<p>Build a Better Future With Computer Skills</p>
+<h4>Explore</h4>
+<a href="#home">Home</a>
+<a href="#courses">Courses</a>
+<a href="#about">Why Us</a>
+<a href="#process">Admission Process</a>
+<a href="#admission">Apply Online</a>
+<a href="#schedule">Batch Schedule</a>
+<a href="#faq">FAQ</a>
 </div>
 <div>
-<p>Managed by Dar Yasir</p>
-<p>Created by Dar Yasir</p>
+<h4>Visit Us</h4>
+<p>Charangam, Beerwah,<br>Kashmir</p>
+<p class="footer-small">Admissions open all year —<br>no last date. New batches<br>begin 1 October.</p>
 <a href="admin.html" class="admin-access-link">Admin Login</a>
 </div>
+</div>
+<div class="footer-bottom">
+<p>© <span id="footerYear">2026</span> Rehaan Computers — Build a Better Future With Computer Skills</p>
 </div>
 </footer>
 
 <script type="module" src="script.js"></script>
 <script type="module">
-/* REHAAN COMPUTERS - premium upgrade. Load AFTER script.js (defer). */
+/* Rehaan Computers — premium layer. Keep in sync with premium.css. */
+
+/* Footer year */
+document.getElementById("footerYear").textContent = new Date().getFullYear();
+
+/* Scroll reveal — elements carry .reveal in the markup; course cards get it from script.js */
 (function () {
-    if (document.body.classList.contains("admin-page")) return;
-
-    var courses = document.getElementById("courses");
-    var admission = document.getElementById("admission");
-    var form = document.getElementById("applicationForm");
-    if (!courses || !admission || !form) return;
-
-    /* nav links */
-    var nav = document.getElementById("navMenu");
-    var admLink = nav && nav.querySelector('a[href="#admission"]');
-    if (admLink) {
-        admLink.insertAdjacentHTML("beforebegin", '<a href="#process">Process</a>');
-        admLink.insertAdjacentHTML("afterend", '<a href="#faq">FAQ</a>');
-    }
-
-    /* admin link: move from footer to the top navigation */
-    var oldAdminLink = document.querySelector(".admin-access-link");
-    if (oldAdminLink) oldAdminLink.remove();
-    if (nav) nav.insertAdjacentHTML("beforeend", '<a href="admin.html" class="nav-admin">Admin Login</a>');
-
-    /* address bar at the very top */
-    document.body.insertAdjacentHTML("afterbegin",
-        '<div class="topbar"><div class="container topbar-inner">' +
-        '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-6.2-7-11a7 7 0 0 1 14 0c0 4.8-7 11-7 11z"/><circle cx="12" cy="10" r="2.5"/></svg>' +
-        "<strong>Visit Us</strong><i></i><span>Charangam, Beerwah, Kashmir</span>" +
-        "</div></div>");
-
-    /* moving skills strip */
-    var items = ["MS Word", "MS Excel", "PowerPoint", "Typing", "Tally Prime", "GST", "Photoshop", "InPage", "Marg ERP 9", "Internet & Email"];
-    var spans = items.map(function (i) { return "<span>" + i + "</span>"; }).join("");
-    courses.insertAdjacentHTML("beforebegin",
-        '<div class="marquee" aria-hidden="true"><div class="marquee-track">' + spans + spans + "</div></div>");
-
-    /* admission steps */
-    var steps = [
-        ["01", "Choose a Course", "Pick the course and batch that suit you."],
-        ["02", "Submit the Form", "Fill in the application below. You will get a confirmation email."],
-        ["03", "Visit the Center", "Bring 2 passport-size photographs and a photocopy of your Aadhar card."],
-        ["04", "Start Learning", "Your admission is complete and your practical training begins."]
-    ].map(function (s) {
-        return '<div class="step-card"><b>' + s[0] + "</b><h3>" + s[1] + "</h3><p>" + s[2] + "</p></div>";
-    }).join("");
-
-    admission.insertAdjacentHTML("beforebegin",
-        '<section id="process" class="section"><div class="container">' +
-        '<div class="section-heading"><span>HOW ADMISSION WORKS</span><h2>Four Steps to Join</h2>' +
-        "<p>The online form is only the first step. Your admission is complete when you visit the center.</p></div>" +
-        '<div class="steps-grid">' + steps + "</div></div></section>");
-
-    /* form + right side panel */
-    var layout = document.createElement("div");
-    layout.className = "admission-layout";
-    form.parentNode.insertBefore(layout, form);
-    layout.appendChild(form);
-    layout.insertAdjacentHTML("beforeend",
-        '<aside class="admission-aside">' +
-        '<div class="notice-card"><span class="notice-badge">IMPORTANT</span>' +
-        "<h3>Admission Is Not Complete Yet</h3>" +
-        "<p>Submitting this form only registers your application. To complete your admission, you must visit the tuition center in person with the documents below.</p></div>" +
-        '<div class="docs-card"><h4>Documents Required</h4><ul>' +
-        "<li><b>2</b><div><strong>Passport-Size Photographs</strong><span>Bring both at your visit</span></div></li>" +
-        "<li><b>1</b><div><strong>Photocopy of Aadhar Card</strong><span>Bring it at your visit</span></div></li>" +
-        "</ul></div>" +
-        '<div class="visit-card"><h4>Visit the Center</h4>' +
-        "<p>Rehaan Computers, Charangam, Beerwah, Kashmir</p>" +
-        '<div class="visit-facts"><div><strong>\u20B9999/-</strong><span>Course Fee</span></div>' +
-        "<div><strong>1 OCT</strong><span>Classes Start</span></div></div></div></aside>");
-
-    /* FAQ */
-    var faq = [
-        ["Is my admission complete after I submit the form?", "No. The form registers your application. You must visit the center with 2 passport-size photographs and a photocopy of your Aadhar card to complete your admission."],
-        ["What documents do I need to bring?", "Two passport-size photographs and one photocopy of your Aadhar card."],
-        ["What is the course fee?", "The fee is \u20B9999/- for the courses listed on this website."],
-        ["When do classes start?", "Classes start on 1 October."],
-        ["Which batches are available?", "You can choose a Morning, Afternoon or Evening batch in the application form."]
-    ].map(function (f) {
-        return '<details class="faq-item"><summary>' + f[0] + "</summary><p>" + f[1] + "</p></details>";
-    }).join("");
-
-    admission.insertAdjacentHTML("afterend",
-        '<section id="faq" class="section"><div class="container">' +
-        '<div class="section-heading"><span>FAQ</span><h2>Common Questions</h2></div>' +
-        '<div class="faq-list">' + faq + "</div></div></section>");
-
-    /* add document reminder to the success message */
-    var box = document.getElementById("applicationMessage");
-    if (box) {
-        new MutationObserver(function () {
-            if (box.classList.contains("success") && box.textContent.indexOf("photocopy") === -1) {
-                box.textContent += " To complete your admission, please visit the center with 2 passport-size photographs and a photocopy of your Aadhar card.";
-            }
-        }).observe(box, { attributes: true, childList: true, characterData: true, subtree: true });
-    }
-
-    /* scroll reveal for cards (runs after script.js has drawn the course cards) */
-    document.addEventListener("DOMContentLoaded", function () {
-        if (!("IntersectionObserver" in window)) return;
-        var targets = document.querySelectorAll(".course-card,.benefit-card,.step-card,.faq-item,.notice-card,.docs-card,.visit-card");
-        document.documentElement.classList.add("reveal-ready");
-        var io = new IntersectionObserver(function (entries) {
-            entries.forEach(function (e) {
-                if (!e.isIntersecting) return;
-                var el = e.target;
-                el.classList.add("in");
-                io.unobserve(el);
-                setTimeout(function () {
-                    el.classList.remove("reveal", "in");
-                    el.style.transitionDelay = "";
-                }, 1300);
-            });
-        }, { threshold: 0.12 });
-        targets.forEach(function (el, i) {
-            el.classList.add("reveal");
-            el.style.transitionDelay = (i % 3) * 90 + "ms";
+    if (!("IntersectionObserver" in window)) return;
+    document.documentElement.classList.add("reveal-ready");
+    const io = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+            if (!entry.isIntersecting) return;
+            entry.target.classList.add("in");
+            io.unobserve(entry.target);
+        });
+    }, { threshold: 0.12, rootMargin: "0px 0px -40px 0px" });
+    const observeAll = () => {
+        document.querySelectorAll(".reveal:not(.in)").forEach((el, i) => {
+            el.style.transitionDelay = (i % 3) * 80 + "ms";
             io.observe(el);
         });
-    });
+    };
+    observeAll();
+    /* Course cards render after script.js finishes — observe them too */
+    const grid = document.getElementById("courseGrid");
+    if (grid) {
+        new MutationObserver(observeAll).observe(grid, { childList: true });
+    }
 })();
-
 </script>
 
 </body>
