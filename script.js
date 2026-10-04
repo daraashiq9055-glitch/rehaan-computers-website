@@ -68,14 +68,35 @@ const EMAILJS_APPLICANT_TEMPLATE = "template_ka7zy85";
 const EMAILJS_APPROVAL_TEMPLATE = "template_rehaan_approval";
 
 /*
- * New-application notification goes to every institute admin.
- * In the EmailJS admin template (template_ubj4sw3) set the
- * recipients as:
+ * =========================================================
+ * NEW-APPLICATION EMAILS — HOW IT WORKS
+ * =========================================================
  *
- *     To  = {{to_email}}
- *     CC  = {{cc_email}}
+ * 1. Student submits the form → the application is saved in
+ *    Firestore FIRST, then two emails go out via EmailJS:
  *
- * Add more CC addresses separated by commas if an admin joins later.
+ *    a) ADMIN NOTIFICATION  (template_ubj4sw3)
+ *       To: daraashiq9055@gmail.com   (fixed in the EmailJS template)
+ *       CC: rehanbhat881@gmail.com    (fixed in the template's CC field)
+ *       Both inboxes receive every new application.
+ *       The website also passes to_email / cc_email variables
+ *       below, so the template could alternatively use
+ *       {{to_email}} / {{cc_email}} if ever preferred.
+ *
+ *    b) STUDENT RECEIPT  (template_ka7zy85)
+ *       To: {{student_email}} — the applicant's copy.
+ *
+ * 2. Email problems NEVER lose data: if EmailJS is down or the
+ *    monthly quota is used up, the application is still stored
+ *    and visible in the admin dashboard; the page only shows a
+ *    small "email could not be sent" note.
+ *
+ * 3. Quota: one template send = 1 request, no matter how many
+ *    CC addresses are on it. Each application uses 2 requests
+ *    (admin + student). The EmailJS dashboard counter resets
+ *    monthly. To add more admins later: extend the template's
+ *    CC field (comma separated) — zero extra quota.
+ * =========================================================
  */
 const ADMISSION_NOTIFY_EMAIL =
     "daraashiq9055@gmail.com";
