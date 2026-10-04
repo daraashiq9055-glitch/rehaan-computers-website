@@ -76,6 +76,7 @@ const courses = [
 
     {
         title: "One Year Computer Diploma Course",
+        img: "assets/excel-sheet.jpg",
 
         subtitle:
             "Basic to Advanced Computer Skills",
@@ -125,6 +126,7 @@ const courses = [
 
     {
         title: "Six Month Computer Certificate Course",
+        img: "assets/word-doc.jpg",
 
         subtitle:
             "Get Certified • Boost Your Profile",
@@ -173,6 +175,7 @@ const courses = [
 
     {
         title: "Three Month Computer Certificate Course",
+        img: "assets/excel-desk.jpg",
 
         subtitle:
             "Learn Fast • Gain Skills",
@@ -220,6 +223,7 @@ const courses = [
 
     {
         title: "Typing Diploma Course",
+        img: "assets/typing-keys.jpg",
 
         subtitle:
             "Typing Speed & Accuracy",
@@ -264,6 +268,7 @@ const courses = [
 
     {
         title: "Crash Computer Course",
+        img: "assets/tally-prime.jpg",
 
         subtitle:
             "Accounts • Design • Office Work",
@@ -310,6 +315,7 @@ const courses = [
 
     {
         title: "Marg ERP 9 Course",
+        img: "assets/marg-erp.jpg",
 
         subtitle:
             "Tally + Inventory + Business Solutions",
@@ -572,6 +578,12 @@ function renderCourseGrid() {
 
             return `
                 <article class="course-card reveal">
+                    ${
+                        course.img
+                            ? `<div class="course-thumb" style="background-image:url('${course.img}')" aria-hidden="true"></div>`
+                            : ""
+                    }
+
 
                     ${
                         index === 0
