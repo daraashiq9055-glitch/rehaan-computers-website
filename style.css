@@ -3047,3 +3047,83 @@ body.admin-page {
     }
     .hero-content h1 span { filter: drop-shadow(0 2px 10px rgba(0,0,0,0.95)) drop-shadow(0 1px 2px rgba(0,0,0,0.9)); }
 }
+
+/* ============ v7: PASSPORT PHOTO UPLOAD ============ */
+.photo-upload{display:grid;grid-template-columns:190px minmax(0,1fr);gap:20px;align-items:center;justify-items:stretch;margin:18px 0 6px}
+.photo-box{position:relative;align-self:center;width:100%;max-width:190px;aspect-ratio:1/1;border:1.5px dashed rgba(212,168,83,.45);border-radius:16px;background:rgba(212,168,83,.05);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:border-color .3s,background .3s,box-shadow .3s}
+.photo-box:hover,.photo-box:focus-visible{border-color:#D4A853;background:rgba(212,168,83,.1);box-shadow:0 0 30px rgba(212,168,83,.12);outline:none}
+.photo-box.drag{border-color:#F6D98C;background:rgba(212,168,83,.14)}
+.photo-box.has-photo{border-style:solid}
+.photo-box img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+.photo-box[aria-busy="true"] img{opacity:.55}
+.photo-prompt{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;color:var(--gold,#D4A853);padding:14px}
+.photo-prompt svg{opacity:.9}
+.photo-prompt b{font-size:.82rem;letter-spacing:.06em;text-transform:uppercase;color:var(--gold,#D4A853)}
+.photo-prompt small{font-size:.72rem;color:var(--muted,#9c9382);letter-spacing:.02em}
+.photo-box.has-photo .photo-prompt{display:none}
+.photo-remove{position:absolute;top:8px;right:8px;z-index:2;width:26px;height:26px;border-radius:50%;border:1px solid rgba(246,217,140,.4);background:rgba(10,8,4,.78);color:#F6D98C;font-size:.78rem;line-height:1;cursor:pointer;transition:.25s}
+.photo-remove:hover{background:#D4A853;color:#141414}
+.photo-help b{display:block;font-family:var(--font-display,'Cormorant Garamond',Georgia,serif);color:var(--gold,#D4A853);font-size:1.02rem;letter-spacing:.04em;margin-bottom:6px}
+.photo-help p{margin:0;font-size:.8rem;line-height:1.65;color:var(--muted,#9c9382)}
+@media(max-width:640px){.photo-upload{grid-template-columns:140px minmax(0,1fr);gap:14px}.photo-box{max-width:140px}}
+
+/* ============ v7: COURSE MODAL SYLLABUS ============ */
+.detail-syllabus{margin:22px 0 0;border:1px solid rgba(212,168,83,.16);border-radius:14px;background:rgba(212,168,83,.04);overflow:hidden}
+.syllabus-module+.syllabus-module{border-top:1px solid rgba(212,168,83,.12)}
+.syllabus-module summary{display:flex;align-items:center;gap:12px;list-style:none;cursor:pointer;padding:13px 16px;transition:background .3s}
+.syllabus-module summary::-webkit-details-marker{display:none}
+.syllabus-module summary:hover{background:rgba(212,168,83,.07)}
+.syllabus-module[open] summary{background:rgba(212,168,83,.06)}
+.syllabus-num{font-size:.72rem;color:#F6D98C;letter-spacing:.12em;min-width:1.8em}
+.syllabus-title{flex:1;font-size:.92rem;color:var(--ivory,#f3ead6);letter-spacing:.04em;text-transform:uppercase}
+.syllabus-plus{color:var(--gold,#D4A853);font-size:1rem;transition:transform .3s}
+.syllabus-module[open] .syllabus-plus{transform:rotate(45deg)}
+.syllabus-topics{display:flex;flex-wrap:wrap;gap:8px;padding:4px 16px 15px 44px;margin:0}
+.syllabus-topics li{list-style:none;font-size:.76rem;color:var(--muted,#a89e8a);border:1px solid rgba(212,168,83,.18);border-radius:999px;padding:4px 11px;background:rgba(0,0,0,.25)}
+.course-syllabus{margin:10px 0 0}
+.course-syllabus summary{cursor:pointer;list-style:none;font-size:.76rem;letter-spacing:.1em;text-transform:uppercase;color:var(--gold,#D4A853);padding:8px 0}
+.course-syllabus summary::-webkit-details-marker{display:none}
+.syllabus-modules{margin:6px 0 14px;padding:0;list-style:none;counter-reset:none}
+.syllabus-modules li{display:flex;gap:10px;align-items:baseline;font-size:.8rem;line-height:1.6;color:var(--muted,#9c9382);padding:5px 0;border-bottom:1px dashed rgba(212,168,83,.12)}
+.syllabus-modules li:last-child{border-bottom:none}
+.syllabus-modules li span{font-size:.68rem;color:#F6D98C;letter-spacing:.1em;min-width:1.8em}
+
+/* ============ v7: ₹100 PAYMENT STEP MODAL ============ */
+.payment-modal{position:fixed;inset:0;z-index:130;display:flex;align-items:center;justify-content:center;padding:18px;background:rgba(6,5,2,.82);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);animation:payFade .35s ease both}
+.payment-modal[hidden]{display:none}
+@keyframes payFade{from{opacity:0}to{opacity:1}}
+.payment-sheet{position:relative;width:min(560px,100%);max-height:calc(100vh - 36px);overflow-y:auto;border-radius:22px;padding:34px 30px 28px;background:linear-gradient(165deg,#191307 0%,#100d06 55%,#151006 100%);border:1px solid rgba(212,168,83,.4);box-shadow:0 0 0 1px rgba(246,217,140,.06) inset,0 40px 90px rgba(0,0,0,.7),0 0 80px rgba(212,168,83,.1);animation:payRise .5s cubic-bezier(.22,1,.36,1) both}
+@keyframes payRise{from{transform:translateY(30px) scale(.97);opacity:0}to{transform:none;opacity:1}}
+.payment-close{position:absolute;top:14px;right:16px;background:none;border:1px solid rgba(212,168,83,.3);color:#F6D98C;width:34px;height:34px;border-radius:50%;font-size:1.15rem;line-height:1;cursor:pointer;transition:.25s}
+.payment-close:hover{background:rgba(212,168,83,.14);transform:rotate(90deg)}
+.payment-kicker{display:block;font-size:.7rem;letter-spacing:.34em;color:var(--gold,#D4A853);margin-bottom:10px}
+.payment-sheet h3{font-family:var(--font-display,'Cormorant Garamond',Georgia,serif);font-size:clamp(1.5rem,3.4vw,2rem);color:#F6D98C;margin:0 0 10px;line-height:1.25}
+.payment-sheet p{font-size:.86rem;line-height:1.7;color:var(--muted,#9c9382);margin:0 0 16px}
+.payment-sheet p b{color:#F6D98C;font-weight:600}
+.payment-upi{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid rgba(212,168,83,.32);border-radius:14px;padding:13px 16px;background:rgba(212,168,83,.06);margin-bottom:16px}
+.payment-upi span{font-size:.68rem;letter-spacing:.26em;text-transform:uppercase;color:var(--muted,#8d8574)}
+.payment-upi strong{font-size:1rem;letter-spacing:.04em;color:#F6D98C;font-weight:600}
+.payment-copy{margin-left:auto;background:rgba(212,168,83,.14);border:1px solid rgba(212,168,83,.4);color:#F6D98C;border-radius:999px;padding:5px 14px;font-size:.74rem;letter-spacing:.08em;cursor:pointer;transition:.25s}
+.payment-copy:hover{background:#D4A853;color:#141414}
+.payment-actions{display:grid;gap:10px;margin-top:18px}
+.payment-paid-btn{width:100%}
+.payment-alt-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.payment-alt{background:transparent;border:1px solid rgba(212,168,83,.3);color:var(--muted,#a89e8a);border-radius:12px;padding:11px 12px;font-size:.78rem;letter-spacing:.04em;cursor:pointer;transition:.25s}
+.payment-alt:hover{border-color:#D4A853;color:#F6D98C;background:rgba(212,168,83,.06)}
+.payment-note{margin:14px 0 0!important;font-size:.72rem!important;line-height:1.7;color:rgba(156,147,130,.85)!important}
+@media(max-width:560px){.payment-sheet{padding:28px 20px 22px}.payment-alt-row{grid-template-columns:1fr}}
+
+/* ============ v7: ADMIN DASHBOARD (Approve · Fee · Photo) ============ */
+.application-actions .approve-application-btn{background:linear-gradient(135deg,#F6D98C,#C89A3B 60%,#F6D98C);border:1px solid rgba(246,217,140,.6);color:#141414;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:.78rem;letter-spacing:.02em;transition:.25s;box-shadow:0 0 12px rgba(212,168,83,.25)}
+.application-actions .approve-application-btn:hover{filter:brightness(1.12);transform:translateY(-1px)}
+.application-actions .approve-application-btn:disabled{opacity:.45;filter:grayscale(.5);cursor:default;transform:none}
+.application-actions .mark-paid-btn{background:rgba(103,192,124,.14);border:1px solid rgba(103,192,124,.45);color:#8fd6a3;padding:5px 11px;border-radius:6px;cursor:pointer;font-size:.78rem;transition:.25s}
+.application-actions .mark-paid-btn:hover{background:rgba(103,192,124,.3);color:#eafff1}
+.application-actions .mark-paid-btn:disabled{background:rgba(103,192,124,.32);color:#eafff1;border-color:#67c07c}
+.admission-entry{display:flex;align-items:center;gap:6px}
+.admission-entry span{font-size:.66rem;letter-spacing:.18em;text-transform:uppercase;color:#8d8574;white-space:nowrap}
+.admission-entry input{width:88px;background:rgba(0,0,0,.35);border:1px solid rgba(212,168,83,.3);color:#F6D98C;border-radius:6px;padding:5px 8px;font-size:.8rem;letter-spacing:.08em;text-align:center}
+.admission-entry input:focus{outline:none;border-color:#D4A853;box-shadow:0 0 0 3px rgba(212,168,83,.12)}
+.application-status.status-approved{background:rgba(103,192,124,.16);color:#a5e2b4;border-color:rgba(103,192,124,.4);box-shadow:0 0 14px rgba(103,192,124,.15)}
+.application-field-photo{width:100%;margin-top:2px}
+.application-field-photo img{width:74px;height:74px;object-fit:cover;border-radius:10px;border:1px solid rgba(212,168,83,.4);display:block;box-shadow:0 6px 18px rgba(0,0,0,.4)}

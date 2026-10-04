@@ -24,6 +24,7 @@ import {
     doc,
     getDoc,
     deleteDoc,
+    updateDoc,
     query,
     orderBy
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
@@ -59,6 +60,20 @@ const EMAILJS_SERVICE_ID = "service_52jdh14";
 
 const EMAILJS_ADMIN_TEMPLATE = "template_ubj4sw3";
 const EMAILJS_APPLICANT_TEMPLATE = "template_ka7zy85";
+
+/* Create this template in the EmailJS dashboard (it may include:
+   to_email={{to_email}}, subject "Your Rehaan Computers admission is approved",
+   body with {{student_name}}, {{admission_number}}, {{course}}, {{batch}}, {{note}})
+   then paste its template id here. */
+const EMAILJS_APPROVAL_TEMPLATE = "template_rehaan_approval";
+
+/* Both addresses receive the new-application notification when the
+   EmailJS admin template's To field is set to {{to_email}}. */
+const ADMISSION_NOTIFY_EMAILS =
+    "daraashiq9055@gmail.com,rehanbhat881@gmail.com";
+
+const UPI_ID = "rehaancomputers@upi";
+const ADMISSION_FEE = 100;
 
 
 if (window.emailjs) {
@@ -267,6 +282,71 @@ const courses = [
 
 
     {
+        title: "Tally Prime with GST — Detailed Course",
+        img: "assets/tally-prime.jpg",
+        subtitle: "Complete Accounting & GST Training",
+        duration: "3 Months",
+        level: "Beginner → Job-Ready",
+        certificate: "Professional Certificate",
+        category: "Accounting",
+        overview:
+            "Our most detailed accounting programme — from Tally Prime basics to GST invoicing, inventory, payroll and final accounts, taught module by module on live company data.",
+        syllabus: [
+            { module: "1. Accounting Foundations", items: [
+                "Computer basics for accountants",
+                "Accounting terms, ledgers & the three golden rules",
+                "Tally Prime interface, menus & data-entry speed" ] },
+            { module: "2. Company Setup", items: [
+                "Company creation, alteration & security control",
+                "Groups, ledgers & master creation",
+                "Opening balances & F11 features" ] },
+            { module: "3. Vouchers — All Types", items: [
+                "Receipt, Payment, Contra & Journal",
+                "Purchase, Sales, Debit & Credit Notes",
+                "Order processing, inventory vouchers & shortcut keys" ] },
+            { module: "4. Inventory Management", items: [
+                "Stock groups, stock items & units",
+                "Godowns, batching & manufacturing dates",
+                "Purchase orders, re-order levels & stock reports" ] },
+            { module: "5. GST Accounting", items: [
+                "GST concepts, registration & HSN/SAC codes",
+                "CGST / SGST / IGST vouchers & tax invoices",
+                "Credit notes, advances & e-way bill basics",
+                "GSTR-1 & GSTR-3B preparation practice" ] },
+            { module: "6. Payroll & TDS", items: [
+                "Employees, pays, earnings & deductions",
+                "Payroll register & salary vouchers",
+                "TDS basics & deduction entries" ] },
+            { module: "7. Final Accounts & Reports", items: [
+                "Day book, ledger, trial balance & journals",
+                "Balance sheet & profit/loss analysis",
+                "Cash flow, ratio analysis & interest calc",
+                "Backup, restore, export to Excel & printing" ] }
+        ],
+        learn: [
+            "Company Setup",
+            "All Voucher Types",
+            "Inventory & GST",
+            "Payroll & TDS",
+            "Final Accounts",
+            "Reports, Backup & Excel Export"
+        ],
+        practical:
+            "Students create their own company and complete billing sets, GST return practice, a full payroll month and final accounts on real business data.",
+        who:
+            "Students, graduates, shopkeepers and anyone aiming for an accounting or computer-operator job.",
+        skills: [
+            "Vouchers",
+            "GST Invoicing",
+            "Inventory",
+            "Payroll",
+            "Final Accounts",
+            "GSTR-1 & 3B"
+        ]
+    },
+
+
+    {
         title: "Crash Computer Course",
         img: "assets/tally-prime.jpg",
 
@@ -418,6 +498,16 @@ function formatDate(value) {
 
     if (!value) {
         return "—";
+    }
+
+    if (value && typeof value === "object") {
+
+        if (typeof value.toDate === "function") {
+            value = value.toDate();
+        } else if (typeof value.seconds === "number") {
+            value = value.seconds * 1000 + (value.nanoseconds || 0) / 1e6;
+        }
+
     }
 
     const date = new Date(value);
@@ -618,7 +708,7 @@ function renderCourseGrid() {
                         </div>
 
                         <p class="course-start">
-                            Classes start <b>1 October</b> — Morning, Afternoon &amp; Evening batches
+                            Admission fee <b>₹100</b> — Morning, Afternoon &amp; Evening batches
                         </p>
 
                     </div>
@@ -946,6 +1036,28 @@ function updateCourseModal() {
     }
 
 
+    const syllabusBox =
+        getElement("detailSyllabus");
+
+    if (syllabusBox) {
+
+        syllabusBox.innerHTML =
+            (course.syllabus || [])
+                .map(
+                    section => `
+                        <div class="syllabus-module">
+                            <h5>${escapeHTML(section.module)}</h5>
+                            <ul>
+                                ${section.items.map(item => `<li>${escapeHTML(item)}</li>`).join("")}
+                            </ul>
+                        </div>
+                    `
+                )
+                .join("");
+
+    }
+
+
     if (practical) {
         practical.textContent =
             course.practical;
@@ -1265,6 +1377,16 @@ function initPhoneInputs() {
 
 function validateApplication(data) {
 
+    if (!data.photoUploaded) {
+
+        return {
+            valid: false,
+            message: "Please upload the student's passport-size photograph in the square box at the top of the form."
+        };
+
+    }
+
+
     if (!data.fullName || data.fullName.length < 2) {
 
         return {
@@ -1551,7 +1673,8 @@ async function submitApplication(event) {
         attendancePassword,
         confirmAttendancePassword,
         message,
-        agreement
+        agreement,
+        photoUploaded: Boolean(studentPhotoDataUrl)
 
     };
 
@@ -1698,6 +1821,13 @@ async function submitApplication(event) {
 
             message,
 
+            photo: studentPhotoDataUrl || "",
+
+            payment: {
+                status: "awaiting",
+                amount: ADMISSION_FEE
+            },
+
             status: "New",
 
             createdAt
@@ -1705,10 +1835,11 @@ async function submitApplication(event) {
         };
 
 
-        await addDoc(
-            collection(db, "applications"),
-            applicationData
-        );
+        const applicationDocRef =
+            await addDoc(
+                collection(db, "applications"),
+                applicationData
+            );
 
 
         /*
@@ -1716,6 +1847,8 @@ async function submitApplication(event) {
          */
 
         const emailParams = {
+
+            to_email: ADMISSION_NOTIFY_EMAILS,
 
             student_name: fullName,
 
@@ -1837,7 +1970,7 @@ async function submitApplication(event) {
          */
 
         let successMessage =
-            "Application submitted successfully. Our team will contact you soon. To complete your admission, please visit the center with 2 passport-size photographs and a photocopy of your Aadhar card.";
+            "Application submitted successfully. Now complete the ₹100 admission fee to block your seat — then visit the centre with 2 passport-size photographs and a photocopy of your Aadhaar card.";
 
 
         if (
@@ -1865,6 +1998,11 @@ async function submitApplication(event) {
             "success",
             successMessage
         );
+
+
+        if (applicationDocRef) {
+            openPaymentStep(applicationDocRef.id);
+        }
 
 
         form.reset();
@@ -1923,6 +2061,575 @@ async function submitApplication(event) {
 
         submitButton.textContent =
             "Submit Application";
+
+    }
+
+}
+
+
+/* =========================================================
+   PASSPORT PHOTO UPLOAD (student form)
+========================================================= */
+
+let studentPhotoDataUrl = "";
+
+
+function setStudentPhoto(dataUrl) {
+
+    studentPhotoDataUrl = dataUrl || "";
+
+    const box = getElement("photoBox");
+    const preview = getElement("photoPreview");
+    const prompt = getElement("photoPrompt");
+    const remove = getElement("photoRemove");
+
+    if (!preview || !prompt) {
+        return;
+    }
+
+    if (studentPhotoDataUrl) {
+
+        preview.src = studentPhotoDataUrl;
+        preview.hidden = false;
+        prompt.hidden = true;
+
+        if (remove) {
+            remove.hidden = false;
+        }
+
+        box?.classList.add("has-photo");
+
+    } else {
+
+        preview.removeAttribute("src");
+        preview.hidden = true;
+        prompt.hidden = false;
+
+        if (remove) {
+            remove.hidden = true;
+        }
+
+        box?.classList.remove("has-photo");
+
+    }
+
+}
+
+
+function handlePhotoFile(file) {
+
+    if (!file || !/^image\//.test(file.type)) {
+
+        showFormMessage(
+            "error",
+            "Please choose an image file (JPG or PNG)."
+        );
+
+        return;
+
+    }
+
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+
+        const img = new Image();
+
+        img.onload = () => {
+
+            const SIZE = 360;
+            const canvas = document.createElement("canvas");
+            canvas.width = SIZE;
+            canvas.height = SIZE;
+
+            const ctx = canvas.getContext("2d");
+            ctx.fillStyle = "#f4efe2";
+            ctx.fillRect(0, 0, SIZE, SIZE);
+
+            const side = Math.min(img.width, img.height);
+
+            ctx.drawImage(
+                img,
+                (img.width - side) / 2,
+                (img.height - side) / 2,
+                side,
+                side,
+                0,
+                0,
+                SIZE,
+                SIZE
+            );
+
+            let quality = 0.82;
+            let dataUrl = canvas.toDataURL("image/jpeg", quality);
+
+            while (dataUrl.length > 380000 && quality > 0.4) {
+                quality -= 0.1;
+                dataUrl = canvas.toDataURL("image/jpeg", quality);
+            }
+
+            if (dataUrl.length > 500000) {
+
+                showFormMessage(
+                    "error",
+                    "That photo is too large to upload — please retake it in good light and try again."
+                );
+
+                return;
+
+            }
+
+            setStudentPhoto(dataUrl);
+
+        };
+
+        img.onerror = () => showFormMessage(
+            "error",
+            "Could not read that image. Please try another photo."
+        );
+
+        img.src = reader.result;
+
+    };
+
+    reader.readAsDataURL(file);
+
+}
+
+
+function initPhotoUpload() {
+
+    const box = getElement("photoBox");
+    const input = getElement("studentPhoto");
+    const remove = getElement("photoRemove");
+
+    if (!box || !input) {
+        return;
+    }
+
+    box.addEventListener("click", event => {
+
+        if (event.target === remove) {
+            return;
+        }
+
+        input.click();
+
+    });
+
+    box.addEventListener("keydown", event => {
+
+        if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault();
+            input.click();
+        }
+
+    });
+
+    box.addEventListener("dragover", event => event.preventDefault());
+
+    box.addEventListener("drop", event => {
+
+        event.preventDefault();
+
+        const file = event.dataTransfer?.files?.[0];
+
+        if (file) {
+            handlePhotoFile(file);
+        }
+
+    });
+
+    input.addEventListener("change", () => {
+
+        if (input.files && input.files[0]) {
+            handlePhotoFile(input.files[0]);
+        }
+
+    });
+
+    remove?.addEventListener("click", event => {
+
+        event.stopPropagation();
+        input.value = "";
+        setStudentPhoto("");
+
+    });
+
+}
+
+
+/* =========================================================
+   ₹100 ADMISSION FEE — PAYMENT STEP
+========================================================= */
+
+let paymentApplicationId = null;
+
+
+function openPaymentStep(appId) {
+
+    paymentApplicationId = appId;
+
+    const modal = getElement("paymentModal");
+
+    if (!modal) {
+        return;
+    }
+
+    const idEl = getElement("paymentAppId");
+
+    if (idEl) {
+        idEl.textContent = "#" + String(appId).slice(0, 8).toUpperCase();
+    }
+
+    const upi = getElement("upiIdText");
+
+    if (upi) {
+        upi.textContent = UPI_ID;
+    }
+
+    const ref = getElement("paymentReference");
+
+    if (ref) {
+        ref.value = "";
+    }
+
+    modal.hidden = false;
+
+    document.body.classList.add("modal-open");
+
+}
+
+
+function closePaymentStep() {
+
+    const modal = getElement("paymentModal");
+
+    if (modal) {
+        modal.hidden = true;
+    }
+
+    document.body.classList.remove("modal-open");
+
+}
+
+
+async function recordPayment(status, extra = {}) {
+
+    if (!paymentApplicationId) {
+        closePaymentStep();
+        return;
+    }
+
+    try {
+
+        await updateDoc(
+            doc(
+                db,
+                "applications",
+                paymentApplicationId
+            ),
+            {
+                payment: {
+                    status,
+                    amount: ADMISSION_FEE,
+                    ...extra,
+                    updatedAt: new Date().toISOString()
+                }
+            }
+        );
+
+    } catch (error) {
+
+        console.error("Payment update failed:", error);
+
+    }
+
+    closePaymentStep();
+
+    if (status === "claimed") {
+
+        showFormMessage(
+            "info",
+            "Payment reference saved with your application. The institute will verify the ₹100 admission fee and confirm your admission."
+        );
+
+    } else if (status === "at_centre") {
+
+        showFormMessage(
+            "info",
+            "Noted — please pay the ₹100 admission fee at the centre when you visit for document verification."
+        );
+
+    } else {
+
+        showFormMessage(
+            "info",
+            "You can complete the ₹100 admission fee at the centre any time before approval."
+        );
+
+    }
+
+}
+
+
+function initPaymentStep() {
+
+    const modal = getElement("paymentModal");
+
+    if (!modal) {
+        return;
+    }
+
+    getElement("payPaidBtn")?.addEventListener(
+        "click",
+        () => {
+
+            const ref =
+                (getElement("paymentReference")?.value || "").trim();
+
+            recordPayment("claimed", {
+                mode: "upi",
+                reference: ref,
+                verified: false
+            });
+
+        }
+    );
+
+    getElement("payCentreBtn")?.addEventListener(
+        "click",
+        () => recordPayment("at_centre", {
+            mode: "cash",
+            verified: false
+        })
+    );
+
+    getElement("paymentLaterBtn")?.addEventListener(
+        "click",
+        () => recordPayment("pending", { verified: false })
+    );
+
+    getElement("paymentClose")?.addEventListener(
+        "click",
+        () => recordPayment("pending", { verified: false })
+    );
+
+    getElement("copyUpiBtn")?.addEventListener(
+        "click",
+        () => {
+
+            navigator.clipboard?.writeText(UPI_ID)
+                .then(() => {
+
+                    const button = getElement("copyUpiBtn");
+
+                    if (button) {
+                        button.textContent = "Copied ✓";
+                        setTimeout(() => {
+                            if (button) {
+                                button.textContent = "Copy";
+                            }
+                        }, 1500);
+                    }
+
+                })
+                .catch(() => {});
+
+        }
+    );
+
+}
+
+
+/* =========================================================
+   ADMIN: ADMISSION NUMBER, APPROVE & FEE VERIFICATION
+========================================================= */
+
+function paymentLabel(payment) {
+
+    const p = payment || {};
+
+    if (p.status === "paid") {
+        return "PAID ₹100 ✓" + (p.reference ? " • Ref " + p.reference : "");
+    }
+
+    if (p.status === "claimed") {
+        return "Claimed online — verify" + (p.reference ? " • Ref " + p.reference : "");
+    }
+
+    if (p.status === "at_centre") {
+        return "Will pay ₹100 at centre";
+    }
+
+    return "Pending (₹100)";
+
+}
+
+
+async function approveApplication(applicationId, data, button) {
+
+    if (!window.confirm(
+        "Approve this application?\n\n" +
+        "Student: " + (data.fullName || "Unnamed") + "\n\n" +
+        "Only approve AFTER the student has visited the centre and completed formalities (2 photographs + Aadhaar photocopy)."
+    )) {
+        return;
+    }
+
+    const card = button.closest(".application-card");
+
+    const admissionNumber =
+        (
+            card?.querySelector(".admission-no-input")?.value || ""
+        ).trim() ||
+        button.dataset.nextAdmission ||
+        "";
+
+    button.disabled = true;
+    button.textContent = "Approving...";
+
+    try {
+
+        await updateDoc(
+            doc(
+                db,
+                "applications",
+                applicationId
+            ),
+            {
+                status: "Approved",
+                admissionNumber,
+                approvedAt: new Date().toISOString()
+            }
+        );
+
+
+        /*
+         * Notify the student their admission is approved.
+         * Needs EMAILJS_APPROVAL_TEMPLATE — failures are
+         * logged but never block the approval itself.
+         */
+
+        try {
+
+            if (window.emailjs && data.email) {
+
+                await emailjs.send(
+                    EMAILJS_SERVICE_ID,
+                    EMAILJS_APPROVAL_TEMPLATE,
+                    {
+                        to_email: data.email,
+                        student_name: data.fullName || "Student",
+                        admission_number: admissionNumber,
+                        course: data.coursePreference || "the selected course",
+                        batch: data.batch || "As allotted",
+                        institute: "Rehaan Computers, Charangam, Beerwah",
+                        note: "Congratulations — your admission has been approved. Please report as per your batch timing."
+                    }
+                );
+
+            }
+
+        } catch (emailError) {
+
+            console.warn(
+                "Approval email not sent. Create the EmailJS approval template and set EMAILJS_APPROVAL_TEMPLATE.",
+                emailError
+            );
+
+        }
+
+
+        await loadApplications();
+
+    } catch (error) {
+
+        window.alert(
+            "Could not approve this application.\n\n" +
+            (error.message || "Firestore denied the update.")
+        );
+
+        button.disabled = false;
+        button.textContent = "Approve";
+
+    }
+
+}
+
+
+async function markFeePaid(applicationId, data, button) {
+
+    if (button) {
+        button.disabled = true;
+        button.textContent = "Saving...";
+    }
+
+    try {
+
+        await updateDoc(
+            doc(
+                db,
+                "applications",
+                applicationId
+            ),
+            {
+                payment: {
+                    status: "paid",
+                    amount: ADMISSION_FEE,
+                    mode: data?.payment?.mode || "cash",
+                    reference: data?.payment?.reference || "",
+                    verified: true,
+                    updatedAt: new Date().toISOString()
+                }
+            }
+        );
+
+        await loadApplications();
+
+    } catch (error) {
+
+        window.alert(
+            "Could not mark the fee as paid.\n\n" +
+            (error.message || "Firestore denied the update.")
+        );
+
+        if (button) {
+            button.disabled = false;
+            button.textContent = "Mark Fee Paid";
+        }
+
+    }
+
+}
+
+
+async function saveAdmissionNumber(applicationId, input) {
+
+    try {
+
+        await updateDoc(
+            doc(
+                db,
+                "applications",
+                applicationId
+            ),
+            {
+                admissionNumber: input.value.trim()
+            }
+        );
+
+        input.classList.add("saved");
+
+        setTimeout(
+            () => input.classList.remove("saved"),
+            1500
+        );
+
+    } catch (error) {
+
+        console.error("Admission number save failed:", error);
 
     }
 
@@ -2191,6 +2898,28 @@ async function loadApplications() {
         list.innerHTML = "";
 
 
+        let maxAdmission = 0;
+
+        snapshot.forEach(entry => {
+
+            const match = String(
+                entry.data().admissionNumber || ""
+            ).match(/(\d+)/);
+
+            if (match) {
+                maxAdmission = Math.max(
+                    maxAdmission,
+                    parseInt(match[1], 10)
+                );
+            }
+
+        });
+
+
+        const nextAdmission =
+            String(maxAdmission + 1).padStart(3, "0");
+
+
         snapshot.forEach(
             (applicationSnapshot, index) => {
 
@@ -2227,7 +2956,11 @@ async function loadApplications() {
 
                         </div>
 
-                        <span class="application-status">
+                        <span class="application-status ${
+                            data.status === "Approved"
+                                ? "status-approved"
+                                : ""
+                        }">
                             ${escapeHTML(
                                 data.status || "New"
                             )}
@@ -2301,6 +3034,26 @@ async function loadApplications() {
                         )}
 
                         ${adminField(
+                            "Admission No",
+                            data.admissionNumber ||
+                                "Not issued yet"
+                        )}
+
+                        ${adminField(
+                            "Admission Fee",
+                            paymentLabel(data.payment)
+                        )}
+
+                        <div class="application-field application-field-photo">
+                            <span>Uploaded Photo</span>
+                            ${
+                                /^data:image\//.test(data.photo || "")
+                                    ? `<img class="application-photo" src="${data.photo}" alt="Applicant photo">`
+                                    : "<strong>—</strong>"
+                            }
+                        </div>
+
+                        ${adminField(
                             "Submission Date",
                             formatDate(data.createdAt)
                         )}
@@ -2331,8 +3084,93 @@ async function loadApplications() {
 
                         </button>
 
+                        <button
+                            type="button"
+                            class="approve-application-btn"
+                            data-application-id="${escapeHTML(id)}"
+                            data-next-admission="${nextAdmission}"
+                            ${
+                                data.status === "Approved"
+                                    ? "disabled"
+                                    : ""
+                            }>
+
+                            ${
+                                data.status === "Approved"
+                                    ? "✓ Approved"
+                                    : "Approve"
+                            }
+
+                        </button>
+
+                        <button
+                            type="button"
+                            class="mark-paid-btn"
+                            data-application-id="${escapeHTML(id)}"
+                            ${
+                                data.payment?.status === "paid"
+                                    ? "disabled"
+                                    : ""
+                            }>
+
+                            ${
+                                data.payment?.status === "paid"
+                                    ? "✓ Fee Paid"
+                                    : "Mark Fee Paid"
+                            }
+
+                        </button>
+
+                        <label class="admission-entry">
+                            <span>Admission No</span>
+                            <input
+                                type="text"
+                                class="admission-no-input"
+                                data-application-id="${escapeHTML(id)}"
+                                maxlength="10"
+                                value="${escapeHTML(
+                                    data.admissionNumber || ""
+                                )}"
+                                placeholder="${nextAdmission}">
+                        </label>
+
                     </div>
                 `;
+
+
+                card.querySelector(
+                    ".approve-application-btn"
+                )?.addEventListener(
+                    "click",
+                    event => approveApplication(
+                        id,
+                        data,
+                        event.currentTarget
+                    )
+                );
+
+
+                card.querySelector(
+                    ".mark-paid-btn"
+                )?.addEventListener(
+                    "click",
+                    event => markFeePaid(
+                        id,
+                        data,
+                        event.currentTarget
+                    )
+                );
+
+
+                card.querySelector(
+                    ".admission-no-input"
+                )?.addEventListener(
+                    "change",
+                    event => saveAdmissionNumber(
+                        id,
+                        event.currentTarget
+                    )
+                );
 
 
                 list.appendChild(card);
@@ -2845,6 +3683,10 @@ function initMainWebsite() {
     initAttendanceUI();
 
     initPhoneInputs();
+
+    initPhotoUpload();
+
+    initPaymentStep();
 
     initApplicationForm();
 
