@@ -61,14 +61,7 @@ const EMAILJS_SERVICE_ID = "service_52jdh14";
 const EMAILJS_ADMIN_TEMPLATE = "template_ubj4sw3";
 const EMAILJS_APPLICANT_TEMPLATE = "template_ka7zy85";
 
-/* optional student approval mail */
 const EMAILJS_APPROVAL_TEMPLATE = "template_rehaan_approval";
-
-const ADMISSION_NOTIFY_EMAIL =
-    "daraashiq9055@gmail.com";
-
-const ADMISSION_CC_EMAILS =
-    "rehanbhat881@gmail.com";
 
 const UPI_ID = "rehaancomputers@upi";
 const ADMISSION_FEE = 100;
@@ -1846,9 +1839,7 @@ async function submitApplication(event) {
 
         const emailParams = {
 
-            to_email: ADMISSION_NOTIFY_EMAIL,
-
-            cc_email: ADMISSION_CC_EMAILS,
+            // recipients handled by the EmailJS template
 
             student_name: fullName,
 
