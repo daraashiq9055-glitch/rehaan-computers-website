@@ -1,0 +1,212 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /*
+     * ADMIN ACCESS
+     *
+     * Each administrator must have:
+     * admins/{THEIR_FIREBASE_UID}
+     *
+     * with:
+     * {
+     *   uid: "THEIR_FIREBASE_UID",
+     *   isAdmin: true
+     * }
+     */
+
+    match /admins/{adminUid} {
+
+      // An authenticated user can only read their own valid admin record.
+      allow get: if
+        request.auth != null
+        && request.auth.uid == adminUid
+        && resource.data.uid == request.auth.uid
+        && resource.data.isAdmin == true;
+
+      // Admin records cannot be created, edited or deleted
+      // from the website.
+      allow create, update, delete: if false;
+
+      allow list: if false;
+    }
+
+
+    /*
+     * APPLICATIONS
+     */
+
+    match /applications/{applicationId} {
+
+      /*
+       * Public application fields.
+       *
+       * Only these fields may be submitted by a non-admin.
+       * This prevents a public user from injecting privileged
+       * fields such as admissionNumber, approvedAt, channel,
+       * or arbitrary admin fields.
+       */
+      function hasOnlyPublicFields(d) {
+        return d.keys().hasOnly([
+          "fullName",
+          "parentName",
+          "phone",
+          "guardianPhone",
+          "email",
+          "dob",
+          "qualification",
+          "address",
+          "coursePreference",
+          "batch",
+          "source",
+          "message",
+          "photo",
+          "attendanceSetup",
+          "attendanceEmail",
+          "attendanceUid",
+          "payment",
+          "status",
+          "createdAt"
+        ]);
+      }
+
+
+      /*
+       * Validate an optional string field.
+       *
+       * The field may be absent. If present, it must be a string
+       * within the specified length range.
+       */
+      function strLen(d, key, minLen, maxLen) {
+        return !(key in d)
+          || (
+            d[key] is string
+            && d[key].size() >= minLen
+            && d[key].size() <= maxLen
+          );
+      }
+
+
+      /*
+       * The public website currently creates a payment object
+       * with status "awaiting".
+       *
+       * Public users must not be able to create a paid/verified
+       * payment record.
+       */
+      function isPublicPayment(d) {
+        return d.payment is map
+          && d.payment.keys().hasOnly([
+            "status",
+            "amount"
+          ])
+          && d.payment.status == "awaiting"
+          && d.payment.amount is number
+          && d.payment.amount >= 0
+          && d.payment.amount <= 100000;
+      }
+
+
+      /*
+       * Hardened public application creation.
+       */
+      function isPublicApplicationCreate(d) {
+
+        return hasOnlyPublicFields(d)
+
+          // Public applications must always start as New.
+          && d.get("status", "") == "New"
+
+          // Payment, if present, must be the harmless
+          // "awaiting" payment state used by the website.
+          && (!("payment" in d) || isPublicPayment(d))
+
+          // Required fields.
+          && d.fullName is string
+          && d.fullName.size() >= 2
+          && d.fullName.size() <= 120
+
+          && d.phone is string
+          && d.phone.size() == 10
+
+          && d.coursePreference is string
+          && d.coursePreference.size() >= 1
+          && d.coursePreference.size() <= 120
+
+          // Optional/user-provided fields.
+          && strLen(d, "parentName", 0, 120)
+          && strLen(d, "guardianPhone", 0, 20)
+          && strLen(d, "email", 0, 254)
+          && strLen(d, "dob", 0, 24)
+          && strLen(d, "qualification", 0, 64)
+          && strLen(d, "address", 0, 300)
+          && strLen(d, "batch", 0, 40)
+          && strLen(d, "source", 0, 120)
+          && strLen(d, "message", 0, 5000)
+          && strLen(d, "photo", 0, 800000)
+          && strLen(d, "attendanceSetup", 0, 16)
+          && strLen(d, "attendanceEmail", 0, 254)
+          && strLen(d, "attendanceUid", 0, 128)
+
+          // The current website writes createdAt as an ISO string.
+          && strLen(d, "createdAt", 0, 40);
+      }
+
+
+      /*
+       * Only authorized administrators can read applications.
+       */
+      allow read: if
+        request.auth != null
+        && get(
+          /databases/$(database)/documents/admins/$(request.auth.uid)
+        ).data.isAdmin == true
+        && get(
+          /databases/$(database)/documents/admins/$(request.auth.uid)
+        ).data.uid == request.auth.uid;
+
+
+      /*
+       * Public users can create only a properly validated
+       * "New" application.
+       *
+       * Administrators can create applications for offline
+       * walk-in enrollment.
+       */
+      allow create: if
+        (
+          request.auth != null
+          && get(
+            /databases/$(database)/documents/admins/$(request.auth.uid)
+          ).data.isAdmin == true
+          && get(
+            /databases/$(database)/documents/admins/$(request.auth.uid)
+          ).data.uid == request.auth.uid
+        )
+        || isPublicApplicationCreate(request.resource.data);
+
+
+      /*
+       * Only authorized administrators can edit or delete
+       * applications.
+       */
+      allow update, delete: if
+        request.auth != null
+        && get(
+          /databases/$(database)/documents/admins/$(request.auth.uid)
+        ).data.isAdmin == true
+        && get(
+          /databases/$(database)/documents/admins/$(request.auth.uid)
+        ).data.uid == request.auth.uid;
+    }
+
+
+    /*
+     * Everything else is denied.
+     */
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
