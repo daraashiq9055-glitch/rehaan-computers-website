@@ -67,10 +67,21 @@ const EMAILJS_APPLICANT_TEMPLATE = "template_ka7zy85";
    then paste its template id here. */
 const EMAILJS_APPROVAL_TEMPLATE = "template_rehaan_approval";
 
-/* Both addresses receive the new-application notification when the
-   EmailJS admin template's To field is set to {{to_email}}. */
-const ADMISSION_NOTIFY_EMAILS =
-    "daraashiq9055@gmail.com,rehanbhat881@gmail.com";
+/*
+ * New-application notification goes to every institute admin.
+ * In the EmailJS admin template (template_ubj4sw3) set the
+ * recipients as:
+ *
+ *     To  = {{to_email}}
+ *     CC  = {{cc_email}}
+ *
+ * Add more CC addresses separated by commas if an admin joins later.
+ */
+const ADMISSION_NOTIFY_EMAIL =
+    "daraashiq9055@gmail.com";
+
+const ADMISSION_CC_EMAILS =
+    "rehanbhat881@gmail.com";
 
 const UPI_ID = "rehaancomputers@upi";
 const ADMISSION_FEE = 100;
@@ -1848,7 +1859,9 @@ async function submitApplication(event) {
 
         const emailParams = {
 
-            to_email: ADMISSION_NOTIFY_EMAILS,
+            to_email: ADMISSION_NOTIFY_EMAIL,
+
+            cc_email: ADMISSION_CC_EMAILS,
 
             student_name: fullName,
 
