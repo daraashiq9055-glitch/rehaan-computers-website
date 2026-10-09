@@ -1,0 +1,6 @@
+# Local development copy only (wrangler dev reads .dev.vars — gitignored).
+RAZORPAY_KEY_ID=
+RAZORPAY_KEY_SECRET=
+RAZORPAY_WEBHOOK_SECRET=
+FIREBASE_SERVICE_ACCOUNT=
+EMAILJS_PRIVATE_KEY=

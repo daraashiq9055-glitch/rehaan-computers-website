@@ -61,6 +61,7 @@ service cloud.firestore {
           "batch",
           "source",
           "message",
+          "paymentToken",
           "photo",
           "attendanceSetup",
           "attendanceEmail",
@@ -115,8 +116,10 @@ service cloud.firestore {
 
         return hasOnlyPublicFields(d)
 
-          // Public applications must always start as New.
-          && d.get("status", "") == "New"
+          // Public applications start as a payment draft
+          // (or legacy "New" until the new site deploys).
+          && (d.get("status", "") == "New"
+              || d.get("status", "") == "Pending Payment")
 
           // Payment, if present, must be the harmless
           // "awaiting" payment state used by the website.
@@ -144,6 +147,7 @@ service cloud.firestore {
           && strLen(d, "batch", 0, 40)
           && strLen(d, "source", 0, 120)
           && strLen(d, "message", 0, 5000)
+          && strLen(d, "paymentToken", 16, 64)
           && strLen(d, "photo", 0, 800000)
           && strLen(d, "attendanceSetup", 0, 16)
           && strLen(d, "attendanceEmail", 0, 254)
@@ -185,6 +189,9 @@ service cloud.firestore {
           ).data.uid == request.auth.uid
         )
         || isPublicApplicationCreate(request.resource.data);
+
+
+
 
 
       /*

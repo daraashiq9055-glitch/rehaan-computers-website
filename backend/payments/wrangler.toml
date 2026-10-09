@@ -1,0 +1,20 @@
+name = "rehaan-razorpay-test"
+main = "rehaan-payments.worker.mjs"
+compatibility_date = "2026-01-01"
+
+[vars]
+RAZORPAY_KEY_ID = "rzp_test_Tl8B7vCw0jS3IA"
+FIREBASE_PROJECT_ID = "rehaan-computers"
+RZP_APP_NAME = "Rehaan Computers"
+ALLOWED_ORIGIN = "https://rehaan-computers.web.app,https://rehaan-computers--razorpay-test-378w6ulb.web.app"
+EMAILJS_SERVICE_ID = "service_52jdh14"
+EMAILJS_PUBLIC_KEY = "YRae0-hRcye59NaRL"
+EMAILJS_ADMIN_TEMPLATE = "template_ubj4sw3"
+EMAILJS_APPLICANT_TEMPLATE = "template_ka7zy85"
+FEE_Paise = 10000
+FEE_CURRENCY = "INR"
+MAX_AGE_MINUTES = 10080
+
+# Secrets — set with `wrangler secret put NAME` (never stored here or in Git):
+#   RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET,
+#   FIREBASE_SERVICE_ACCOUNT, EMAILJS_PRIVATE_KEY
