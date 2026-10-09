@@ -67,7 +67,7 @@ const UPI_ID = "rehaancomputers@upi";
 const ADMISSION_FEE = 100;
 
 const PAYMENTS_API_BASE =
-    "https://rehaan-razorpay-test.daraashiq9055.workers.dev";
+    "https://rehaan-razorpay-live.daraashiq9055.workers.dev";
 
 const PENDING_STORAGE_KEY = "rehaan-pending-admission";
 
