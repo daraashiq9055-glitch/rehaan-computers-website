@@ -4,16 +4,14 @@
 ========================================================= */
 
 import {
-    initializeApp,
-    getApps
+    initializeApp
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js";
 
 import {
     getAuth,
     signInWithEmailAndPassword,
     signOut,
-    onAuthStateChanged,
-    createUserWithEmailAndPassword
+    onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js";
 
 import {
@@ -703,17 +701,11 @@ function renderCourseGrid() {
                             <span>${escapeHTML(course.certificate)}</span>
                         </div>
 
-                        <p class="course-start">
-                            Admission fee <b>₹100</b> — Morning, Afternoon &amp; Evening batches
-                        </p>
-
                     </div>
 
                     <div class="course-card-footer">
 
-                        <strong class="course-fee">
-                            ₹999/-
-                        </strong>
+                        <strong class="course-fee" title="Admission Fee" aria-label="₹100 Admission Fee">₹100</strong>
 
                         <div class="course-card-actions">
 
@@ -866,7 +858,7 @@ function populateCourseSelect() {
         option.value = course.title;
 
         option.textContent =
-            `${course.title} — ₹999/-`;
+            `${course.title}`;
 
         select.appendChild(option);
 
@@ -1199,142 +1191,6 @@ function initCourseModal() {
 
 
 /* =========================================================
-   ATTENDANCE AUTH
-========================================================= */
-
-let attendanceApp = null;
-let attendanceAuth = null;
-
-
-function getAttendanceAuth() {
-
-    if (!attendanceAuth) {
-
-        const existingApps =
-            getApps();
-
-        const existingAttendanceApp =
-            existingApps.find(
-                item => item.name === "attendanceApp"
-            );
-
-
-        attendanceApp =
-            existingAttendanceApp ||
-            initializeApp(
-                firebaseConfig,
-                "attendanceApp"
-            );
-
-
-        attendanceAuth =
-            getAuth(attendanceApp);
-
-    }
-
-
-    return attendanceAuth;
-
-}
-
-
-/* =========================================================
-   ATTENDANCE UI
-========================================================= */
-
-function updateAttendanceFields() {
-
-    const selected =
-        document.querySelector(
-            'input[name="attendanceSetup"]:checked'
-        );
-
-
-    const fields =
-        getElement("attendancePasswordFields");
-
-    const email =
-        getElement("attendanceEmail");
-
-    const password =
-        getElement("attendancePassword");
-
-    const confirm =
-        getElement("confirmAttendancePassword");
-
-
-    if (!selected || !fields) {
-        return;
-    }
-
-
-    const setup =
-        selected.value === "setup";
-
-
-    if (setup) {
-
-        fields.classList.remove(
-            "attendance-hidden"
-        );
-
-        if (email) {
-            email.required = true;
-        }
-
-        if (password) {
-            password.required = true;
-        }
-
-        if (confirm) {
-            confirm.required = true;
-        }
-
-    } else {
-
-        fields.classList.add(
-            "attendance-hidden"
-        );
-
-        if (email) {
-            email.required = false;
-        }
-
-        if (password) {
-            password.required = false;
-        }
-
-        if (confirm) {
-            confirm.required = false;
-        }
-
-    }
-
-}
-
-
-function initAttendanceUI() {
-
-    document
-        .querySelectorAll(
-            'input[name="attendanceSetup"]'
-        )
-        .forEach(radio => {
-
-            radio.addEventListener(
-                "change",
-                updateAttendanceFields
-            );
-
-        });
-
-
-    updateAttendanceFields();
-
-}
-
-
-/* =========================================================
    INPUT CLEANING
 ========================================================= */
 
@@ -1496,43 +1352,6 @@ function validateApplication(data) {
     }
 
 
-    if (data.attendanceSetup === "setup") {
-
-        if (!isValidEmail(data.attendanceEmail)) {
-
-            return {
-                valid: false,
-                message: "Please enter a valid attendance email."
-            };
-
-        }
-
-
-        if (data.attendancePassword.length < 6) {
-
-            return {
-                valid: false,
-                message: "Attendance password must be at least 6 characters."
-            };
-
-        }
-
-
-        if (
-            data.attendancePassword !==
-            data.confirmAttendancePassword
-        ) {
-
-            return {
-                valid: false,
-                message: "Attendance passwords do not match."
-            };
-
-        }
-
-    }
-
-
     return {
         valid: true
     };
@@ -1630,20 +1449,6 @@ async function submitApplication(event) {
     const address =
         getElement("address").value.trim();
 
-    const attendanceSetup =
-        document.querySelector(
-            'input[name="attendanceSetup"]:checked'
-        )?.value || "skip";
-
-    const attendanceEmail =
-        getElement("attendanceEmail").value.trim();
-
-    const attendancePassword =
-        getElement("attendancePassword").value;
-
-    const confirmAttendancePassword =
-        getElement("confirmAttendancePassword").value;
-
     const message =
         getElement("message").value.trim();
 
@@ -1664,10 +1469,6 @@ async function submitApplication(event) {
         batch,
         source,
         address,
-        attendanceSetup,
-        attendanceEmail,
-        attendancePassword,
-        confirmAttendancePassword,
         message,
         agreement,
         photoUploaded: Boolean(studentPhotoDataUrl)
@@ -1716,84 +1517,7 @@ async function submitApplication(event) {
     );
 
 
-    let attendanceUser = null;
-
-
     try {
-
-        /*
-         * Create attendance account first when requested.
-         *
-         * This uses the SECONDARY Firebase Auth instance,
-         * so the main/admin Firebase session is not replaced.
-         */
-
-        if (
-            attendanceSetup === "setup"
-        ) {
-
-            try {
-
-                const attendanceAuthInstance =
-                    getAttendanceAuth();
-
-
-                const credentials =
-                    await createUserWithEmailAndPassword(
-                        attendanceAuthInstance,
-                        attendanceEmail,
-                        attendancePassword
-                    );
-
-
-                attendanceUser =
-                    credentials.user;
-
-            } catch (attendanceError) {
-
-                console.error(
-                    "Attendance account error:",
-                    attendanceError
-                );
-
-
-                let message =
-                    "Could not create the attendance account.";
-
-
-                if (
-                    attendanceError.code ===
-                    "auth/email-already-in-use"
-                ) {
-
-                    message =
-                        "That attendance email is already registered. Please use another email.";
-
-                } else if (
-                    attendanceError.code ===
-                    "auth/invalid-email"
-                ) {
-
-                    message =
-                        "The attendance email is invalid.";
-
-                } else if (
-                    attendanceError.code ===
-                    "auth/weak-password"
-                ) {
-
-                    message =
-                        "The attendance password is too weak.";
-
-                }
-
-
-                throw new Error(message);
-
-            }
-
-        }
-
 
         /*
          * Save application to Firestore.
@@ -1829,18 +1553,6 @@ async function submitApplication(event) {
             coursePreference,
             batch,
             source,
-            attendanceSetup,
-
-            attendanceEmail:
-                attendanceSetup === "setup"
-                    ? attendanceEmail
-                    : "",
-
-            attendanceUid:
-                attendanceUser
-                    ? attendanceUser.uid
-                    : "",
-
             message,
 
             photo: studentPhotoDataUrl || "",
@@ -1874,8 +1586,7 @@ async function submitApplication(event) {
 
         pendingDraft = {
             appId: applicationDocRef ? applicationDocRef.id : "",
-            token: paymentToken,
-            attendanceSetup
+            token: paymentToken
         };
 
 
@@ -2293,17 +2004,35 @@ function resetApplicationForm() {
 
     setStudentPhoto("");
 
-    const setupRadio =
-        document.querySelector(
-            'input[name="attendanceSetup"][value="setup"]'
-        );
+}
 
-    if (setupRadio) {
-        setupRadio.checked = true;
-    }
 
-    updateAttendanceFields();
+function closePaymentSuccessDialog() {
+    const dialog = getElement("paymentSuccessModal");
+    if (!dialog || dialog.hidden) return;
+    dialog.hidden = true;
+    document.body.classList.remove("modal-open");
+}
 
+function showPaymentSuccessDialog() {
+    const dialog = getElement("paymentSuccessModal");
+    if (!dialog) return;
+    dialog.hidden = false;
+    document.body.classList.add("modal-open");
+    getElement("paymentSuccessDone")?.focus();
+}
+
+function initPaymentSuccessDialog() {
+    const dialog = getElement("paymentSuccessModal");
+    if (!dialog) return;
+    getElement("paymentSuccessClose")?.addEventListener("click", closePaymentSuccessDialog);
+    getElement("paymentSuccessDone")?.addEventListener("click", closePaymentSuccessDialog);
+    dialog.addEventListener("click", event => {
+        if (event.target === dialog) closePaymentSuccessDialog();
+    });
+    document.addEventListener("keydown", event => {
+        if (event.key === "Escape" && !dialog.hidden) closePaymentSuccessDialog();
+    });
 }
 
 
@@ -2317,7 +2046,9 @@ function markSubmittedLocally(message) {
 
     resetApplicationForm();
 
-    const box = getElement("formMessage");
+    showPaymentSuccessDialog();
+
+    const box = getElement("applicationMessage");
 
     box?.scrollIntoView({ behavior: "smooth", block: "center" });
 
@@ -2371,15 +2102,6 @@ function finalizeAfterPayment(appId, token) {
 }
 
 
-function attendanceNote() {
-
-    return pendingDraft && pendingDraft.attendanceSetup === "setup"
-        ? " Your attendance account has also been created — keep these credentials safe."
-        : "";
-
-}
-
-
 async function payWithRazorpay(appId) {
 
     if (paymentState === "opening" || paymentState === "verifying") {
@@ -2426,7 +2148,6 @@ async function payWithRazorpay(appId) {
 
             markSubmittedLocally(
                 "Admission Application Submitted Successfully — your ₹100 payment was already verified." +
-                attendanceNote() +
                 " Visit the centre with 2 passport-size photographs and a photocopy of your Aadhaar card."
             );
 
@@ -2480,7 +2201,6 @@ async function payWithRazorpay(appId) {
 
                         markSubmittedLocally(
                             "Admission Application Submitted Successfully — ₹100 payment verified." +
-                            attendanceNote() +
                             " Visit the centre with 2 passport-size photographs and a photocopy of your Aadhaar card."
                         );
 
@@ -2496,8 +2216,7 @@ async function payWithRazorpay(appId) {
                         if (okSoon) {
 
                             markSubmittedLocally(
-                                "Admission Application Submitted Successfully — ₹100 payment verified." +
-                                attendanceNote()
+                                "Admission Application Submitted Successfully — ₹100 payment verified."
                             );
 
                         } else {
@@ -2532,8 +2251,7 @@ async function payWithRazorpay(appId) {
                         paymentState = "done";
 
                         markSubmittedLocally(
-                            "Admission Application Submitted Successfully — ₹100 payment verified." +
-                            attendanceNote()
+                            "Admission Application Submitted Successfully — ₹100 payment verified."
                         );
 
                     } else {
@@ -2804,7 +2522,6 @@ async function initPaymentResume() {
 
         markSubmittedLocally(
             "Admission Application Submitted Successfully — your ₹100 payment was verified." +
-            attendanceNote() +
             " Visit the centre with 2 passport-size photographs and a photocopy of your Aadhaar card."
         );
 
@@ -3762,7 +3479,6 @@ function openAdminDetails(applicationId) {
                 ${adminField("Date of Birth", data.dob)}
                 ${adminField("Qualification", data.qualification)}
                 ${adminField("Course", data.coursePreference || data.course)}
-                ${adminField("Attendance Setup", data.attendanceSetup === "setup" ? "Requested" : "Skipped")}
                 ${adminField("Source", data.source)}
                 ${adminField("Approved On", data.approvedAt ? formatDate(data.approvedAt) : "—")}
                 ${adminField("Address", data.address, true)}
@@ -4034,9 +3750,6 @@ function openAddStudentModal() {
                 coursePreference: course,
                 batch: modal.querySelector("#addBatch").value,
                 source: "Institute — offline enrolment",
-                attendanceSetup: "skip",
-                attendanceEmail: "",
-                attendanceUid: "",
                 message: value("addNote"),
                 photo: photoData,
                 admissionNumber,
@@ -4595,11 +4308,11 @@ function initMainWebsite() {
 
     initCourseModal();
 
-    initAttendanceUI();
-
     initPhoneInputs();
 
     initPhotoUpload();
+
+    initPaymentSuccessDialog();
 
     initPaymentStep();
 
@@ -4622,3 +4335,4 @@ document.addEventListener(
 
     }
 );
+/* rc-wording-only-v1-20261009 */
