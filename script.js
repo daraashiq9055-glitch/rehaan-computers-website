@@ -3052,7 +3052,9 @@ async function openTuitionReminder(id, data, bill) {
     }
 }
 async function recordMonthlyTuition(id, data) {
-    const bill = tuitionPeriod(data);
+    const upcoming = tuitionPeriod(data);
+    const overdue = overdueMonthlyTuition(data);
+    const bill = overdue ? {key: overdue.key, paid: MONTHLY_TUITION_FEE - overdue.balance} : upcoming;
     if (!bill) return;
     const answer = window.prompt(
         "Monthly tuition Rs. " + MONTHLY_TUITION_FEE +
