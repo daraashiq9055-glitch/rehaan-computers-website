@@ -3187,6 +3187,7 @@ function adminEnsureToolbar() {
             <div class="admin-tabs" role="tablist">
                 <button type="button" class="admin-tab is-active" data-tab="new">New Applications</button>
                 <button type="button" class="admin-tab" data-tab="enrolled">Enrolled Students</button>
+                <button type="button" class="admin-tab" data-tab="fees">💳 Fee Management</button>
                 <button type="button" class="admin-tab" data-tab="all">All Records</button>
             </div>
             <div class="admin-tools">
@@ -3231,8 +3232,8 @@ function adminFilteredApps() {
 
     if (adminState.tab === "new") {
         arr = arr.filter(a => !adminIsEnrolled(a.data));
-    } else if (adminState.tab === "enrolled") {
-        arr = arr.filter(a => adminIsEnrolled(a.data));
+    } else if (adminState.tab === "enrolled" || adminState.tab === "fees") {
+        arr = arr.filter(a => adminIsEnrolled(a.data) && (adminState.tab !== "fees" || Boolean(a.data.admissionNumber)));
     }
 
     if (adminState.course) {
@@ -3255,6 +3256,71 @@ function adminFilteredApps() {
 
 }
 
+
+
+/* Premium admin-only monthly fee dashboard. This is a view of existing
+   Firestore applications, not a new publicly readable collection. */
+function renderFeeManagement(list, entries) {
+    const money = n => "₹" + Number(n).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+    const report = entries.map(entry => {
+        const current = tuitionPeriod(entry.data);
+        const overdue = overdueMonthlyTuition(entry.data);
+        // The old ledger is kept separate from the one-time ₹100 admission payment.
+        const dueKey = overdue ? overdue.key : current?.key;
+        const fees = entry.data.monthlyFees || {};
+        const paid = dueKey ? Number(fees[dueKey] || 0) : 0;
+        const outstanding = Math.max(0, MONTHLY_TUITION_FEE - paid);
+        return { ...entry, current, overdue, dueKey, paid, outstanding,
+            eligibleReminder: Boolean(current && current.diff === 3 &&
+                current.remaining > 0 && !current.sent) };
+    });
+    const active = report.filter(x => x.current);
+    const received = active.reduce((sum, x) => sum + x.paid, 0);
+    const balance = active.reduce((sum, x) => sum + x.outstanding, 0);
+    const reminders = active.filter(x => x.eligibleReminder).length;
+    const overdue = active.filter(x => x.overdue).length;
+    list.innerHTML = \`
+      <section class="rc-fees">
+        <div class="rc-fees-top">
+          <div><p class="rc-eyebrow">REHAAN COMPUTERS · ADMIN ONLY</p>
+          <h2>Fee Management</h2><p>₹999 monthly tuition · due on admission anniversary · 5-day grace period</p></div>
+          <span class="rc-fees-tag">Manual WhatsApp reminders</span>
+        </div>
+        <div class="rc-fees-kpis">
+          <div><small>Students with billing date</small><strong>\${active.length}</strong></div>
+          <div><small>Received for displayed dues</small><strong>\${money(received)}</strong></div>
+          <div><small>Outstanding for displayed dues</small><strong>\${money(balance)}</strong></div>
+          <div><small>Reminders ready / overdue</small><strong>\${reminders} / \${overdue}</strong></div>
+        </div>
+        <div class="rc-fees-heading"><strong>Student Fee Register</strong><span>Only enrolled students with admission numbers</span></div>
+        <div class="rc-fees-rows">
+          \${report.length ? report.map(x => \`
+            <div class="rc-fee-row">
+              <div class="rc-fee-identity">
+                <b>\${escapeHTML(x.data.fullName || "Unnamed Student")}</b>
+                <small>ADM \${escapeHTML(String(x.data.admissionNumber || ""))} · \${escapeHTML(x.data.coursePreference || "Course not set")}</small>
+              </div>
+              <div class="rc-fee-amount">
+                <b>\${x.dueKey ? money(x.outstanding) : "Date needed"}</b>
+                <small>\${x.dueKey ? "Due " + x.dueKey : "Set admission date"} · \${x.dueKey && x.outstanding === 0 ? "Paid" : x.overdue ? (x.overdue.review ? "Cancellation review" : "Overdue") : "Upcoming"}</small>
+              </div>
+              <div class="rc-fee-actions">
+                \${x.current ? \`<button type="button" data-fee-pay="\${escapeHTML(x.id)}">Record Payment</button>\` : ""}
+                \${x.eligibleReminder ? \`<button type="button" class="rc-reminder" data-fee-wa="\${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 WhatsApp</button>\` : ""}
+              </div>
+            </div>\`).join("") : '<p class="rc-fees-empty">No enrolled students match the current search and filters.</p>'}
+        </div>
+        <p class="rc-fees-footnote">Only press “reminder sent” after you actually send the message in WhatsApp. No group will receive a student’s private fee details.</p>
+      </section>\`;
+    list.querySelectorAll("[data-fee-pay]").forEach(button => button.addEventListener("click", () => {
+        const entry = report.find(x => x.id === button.dataset.feePay);
+        if (entry) recordMonthlyTuition(entry.id, entry.data);
+    }));
+    list.querySelectorAll("[data-fee-wa]").forEach(button => button.addEventListener("click", () => {
+        const entry = report.find(x => x.id === button.dataset.feeWa);
+        if (entry && entry.current) openTuitionReminder(entry.id, entry.data, entry.current);
+    }));
+}
 
 function renderAdminList() {
 
@@ -3296,6 +3362,10 @@ function renderAdminList() {
 
     }
 
+    if (adminState.tab === "fees") {
+        renderFeeManagement(list, adminFilteredApps());
+        return;
+    }
     const rows = adminFilteredApps();
 
     if (!rows.length) {
