@@ -3525,7 +3525,7 @@ function openAdminDetails(applicationId) {
                     ["paid", "Paid — verified"]
                 ].map(opt => `<option value="${opt[0]}" ${((data.payment && data.payment.status) || "pending") === opt[0] ? "selected" : ""}>${opt[1]}</option>`).join("")}</select></label>
                 <label class="admin-edit-wide">Admin Note (private)<input class="admin-edit-note" type="text" value="${escapeHTML(data.adminNote || "")}"></label>
-                <label class="admin-edit-wide">Record Status<select class="admin-edit-status"><option ${data.status !== "Approved" ? "selected" : ""}>New</option><option ${data.status === "Approved" ? "selected" : ""}>Approved</option></select></label>
+                <label class="admin-edit-wide">Record Status<select class="admin-edit-status"><option ${data.status === "New" ? "selected" : ""}>New</option><option ${data.status === "Approved" ? "selected" : ""}>Approved</option><option ${data.status === "Cancelled" ? "selected" : ""}>Cancelled</option></select></label>
             </div>
             <button type="button" class="admin-save-btn">Save Changes</button>
             <p class="admin-modal-msg" hidden></p>
@@ -3557,6 +3557,15 @@ function openAdminDetails(applicationId) {
             })
         };
 
+        if (patch.status === "Cancelled" && data.status !== "Cancelled") {
+            const overdue = overdueMonthlyTuition(data);
+            if (!overdue || !overdue.review) {
+                window.alert("Cancellation review is available only after a monthly fee is overdue by more than five days.");
+                return;
+            }
+            if (!window.confirm("Cancel admission for " + (data.fullName || "this student") + "? Confirm the fee ledger, payment receipts and any agreed extension first. The record will be retained.")) return;
+            patch.cancelledAt = new Date().toISOString();
+        }
         if (patch.status === "Approved" && data.status !== "Approved") {
             patch.approvedAt = new Date().toISOString();
         }
