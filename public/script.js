@@ -3317,7 +3317,7 @@ function renderFeeManagement(list, entries) {
               </div>
             </div>`).join("") : '<p class="rc-fees-empty">No enrolled students match the current search and filters.</p>'}
         </div>
-        <p class="rc-fees-footnote">Fee reminders appear exactly 3 days before each student’s monthly due date. Record payments here to keep balances accurate. The 5-day grace period is followed by admin review.</p>
+        <p class="rc-fees-footnote">Monthly fee is ₹999. Recorded payments reduce the outstanding balance; for example, ₹500 paid leaves ₹499 due. The 🔔 WhatsApp button appears only 3 days before an unpaid due date.</p>
       </section>`;
     const feeFilter = list.querySelector("#rcFeeFilter");
     feeFilter.value = adminState.feeFilter;
@@ -3445,7 +3445,7 @@ function renderAdminList() {
                 <div class="admission-entry"><span>Adm No</span><input class="admission-no-input" type="text" maxlength="10" placeholder="${nextAdm}" value="${escapeHTML(data.admissionNumber || "")}" data-application-id="${escapeHTML(id)}"></div>
                 <button type="button" class="mark-paid-btn" data-act="fee" ${paid ? "disabled" : ""}>${paid ? "✓ Fee Paid" : "Mark Fee Paid"}</button>
                 <button type="button" class="approve-application-btn" data-act="approve" data-next-admission="${nextAdm}" ${approved ? "disabled" : ""}>${approved ? "✓ Approved" : "Approve"}</button>
-                ${tuition ? `<button type="button" class="admin-ghost-btn rc-monthly-action" data-act="monthly-fee" title="View and record monthly tuition payment">💳 Monthly Fee</button>` : ""}
+                ${tuition ? `<button type="button" class="admin-ghost-btn rc-monthly-action" data-act="monthly-fee" title="Record or update this student’s monthly fee payment">💳 Manage Fee</button>` : ""}
                 ${tuition && tuition.diff === 3 && tuition.remaining > 0 && !tuition.sent
                   ? `<button type="button" class="admin-ghost-btn rc-reminder-action" data-act="monthly-reminder" title="Open WhatsApp reminder for this student's unpaid monthly fee" aria-label="WhatsApp fee reminder for ${escapeHTML(data.fullName || "student")}">🔔 WhatsApp</button>` : ""}
                 <button type="button" class="admin-ghost-btn" data-act="details">Details</button>
