@@ -3025,8 +3025,20 @@ function tuitionWhatsAppMessage(data, bill) {
         "Thank you, Rehaan Computers"
     ].join("\n");
 }
+function actionableFeeReminder(data) {
+    const upcoming = tuitionPeriod(data);
+    const overdue = overdueMonthlyTuition(data);
+    if (overdue) {
+        const sent = Boolean((data.feeReminders || {})[overdue.key]);
+        if (!sent && overdue.balance > 0) return {
+            key: overdue.key, remaining: overdue.balance, diff: -overdue.daysLate, sent: false
+        };
+    }
+    return upcoming && upcoming.diff <= 3 && upcoming.diff >= 0 &&
+        upcoming.remaining > 0 && !upcoming.sent ? upcoming : null;
+}
 async function openTuitionReminder(id, data, bill) {
-    if (bill.diff !== 3 || bill.remaining <= 0 || bill.sent) return;
+    if (!bill || bill.diff > 3 || bill.remaining <= 0 || bill.sent) return;
     const digits = String(data.phone || "").replace(/\D/g, "");
     if (!/^\d{10}$/.test(digits)) {
         window.alert("Student phone must contain 10 digits.");
@@ -3317,8 +3329,8 @@ function renderFeeManagement(list, entries) {
         const paid = dueKey ? Number(fees[dueKey] || 0) : 0;
         const outstanding = Math.max(0, MONTHLY_TUITION_FEE - paid);
         return { ...entry, current, overdue, dueKey, paid, outstanding,
-            eligibleReminder: Boolean(current && current.diff === 3 &&
-                current.remaining > 0 && !current.sent) };
+            reminder: actionableFeeReminder(entry.data),
+            eligibleReminder: Boolean(actionableFeeReminder(entry.data)) };
     });
     const active = report.filter(x => x.current);
     const received = active.reduce((sum, x) => sum + x.paid, 0);
@@ -3358,11 +3370,11 @@ function renderFeeManagement(list, entries) {
               </div>
               <div class="rc-fee-actions">
                 ${x.current ? `<button type="button" data-fee-pay="${escapeHTML(x.id)}">Record Payment</button>` : ""}
-                ${x.eligibleReminder ? `<button type="button" class="rc-reminder" data-fee-wa="${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 WhatsApp</button>` : ""}
+                ${x.eligibleReminder ? `<button type="button" class="rc-reminder" data-fee-wa="${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 WhatsApp · ${escapeHTML(x.data.phone || "")}</button>` : ""}
               </div>
             </div>`).join("") : '<p class="rc-fees-empty">No enrolled students match the current search and filters.</p>'}
         </div>
-        <p class="rc-fees-footnote">Monthly fee is ₹999. Recorded payments reduce the outstanding balance; for example, ₹500 paid leaves ₹499 due. The 🔔 WhatsApp button appears only 3 days before an unpaid due date.</p>
+        <p class="rc-fees-footnote">Monthly fee is ₹999. Recorded payments reduce the outstanding balance; for example, ₹500 paid leaves ₹499 due. The 🔔 WhatsApp button appears during the final 3 days before an unpaid due date or when overdue.</p>
       </section>`;
     const feeFilter = list.querySelector("#rcFeeFilter");
     feeFilter.value = adminState.feeFilter;
@@ -3373,7 +3385,7 @@ function renderFeeManagement(list, entries) {
     }));
     list.querySelectorAll("[data-fee-wa]").forEach(button => button.addEventListener("click", () => {
         const entry = report.find(x => x.id === button.dataset.feeWa);
-        if (entry && entry.current) openTuitionReminder(entry.id, entry.data, entry.current);
+        if (entry && entry.reminder) openTuitionReminder(entry.id, entry.data, entry.reminder);
     }));
 }
 
@@ -3453,6 +3465,7 @@ function renderAdminList() {
         const paid = Boolean(data.payment && data.payment.status === "paid");
         const tuition = tuitionPeriod(data);
         const overdueTuition = overdueMonthlyTuition(data);
+        const actionableReminder = actionableFeeReminder(data);
 
         const card = document.createElement("article");
 
@@ -3480,7 +3493,7 @@ function renderAdminList() {
                 <div class="row-meta">
                     <span>${escapeHTML(data.coursePreference || data.course || "—")}</span>
                     <span>· ${escapeHTML(data.batch || "—")}</span>
-                    <span class="row-phone">${escapeHTML(data.phone || "—")}</span>
+                    ${actionableReminder ? `<button type="button" class="rc-phone-reminder" data-act="phone-reminder" title="Open WhatsApp reminder for unpaid fee">📱 ${escapeHTML(data.phone || "—")}</button>` : `<span class="row-phone">${escapeHTML(data.phone || "—")}</span>`}
                     <span class="fee-chip ${paid ? "fee-ok" : "fee-pending"}">₹${ADMISSION_FEE}: ${escapeHTML(paymentLabel(data.payment))}</span>
                     ${tuition ? `<span class="fee-chip ${tuition.remaining === 0 ? "fee-ok" : "fee-pending"}">Monthly ₹${MONTHLY_TUITION_FEE}: ${tuition.remaining === 0 ? "Paid" : "₹" + tuition.remaining + " due " + tuition.key}</span>` : ""}
                     ${overdueTuition ? `<span class="fee-chip fee-pending">${overdueTuition.review ? "⚠ Cancellation review: " : "Overdue: "}₹${overdueTuition.balance} from ${overdueTuition.key} (${overdueTuition.daysLate} days). Admin decision required.</span>` : ""}
@@ -3491,7 +3504,7 @@ function renderAdminList() {
                 <button type="button" class="mark-paid-btn" data-act="fee" ${paid ? "disabled" : ""}>${paid ? "✓ Fee Paid" : "Mark Fee Paid"}</button>
                 <button type="button" class="approve-application-btn" data-act="approve" data-next-admission="${nextAdm}" ${approved ? "disabled" : ""}>${approved ? "✓ Approved" : "Approve"}</button>
                 ${tuition ? `<button type="button" class="admin-ghost-btn rc-monthly-action" data-act="monthly-fee" title="Record or update this student’s monthly fee payment">💳 Manage Fee</button>` : ""}
-                ${tuition && tuition.diff === 3 && tuition.remaining > 0 && !tuition.sent
+                ${actionableReminder
                   ? `<button type="button" class="admin-ghost-btn rc-reminder-action" data-act="monthly-reminder" title="Open WhatsApp reminder for this student's unpaid monthly fee" aria-label="WhatsApp fee reminder for ${escapeHTML(data.fullName || "student")}">🔔 WhatsApp</button>` : ""}
                 <button type="button" class="admin-ghost-btn" data-act="details">Details</button>
                 <button type="button" class="delete-application-btn" data-application-id="${escapeHTML(id)}">Delete</button>
@@ -3521,6 +3534,7 @@ function renderAdminList() {
             }
         );
 
+        card.querySelector('[data-act="phone-reminder"]')?.addEventListener("click", () => openTuitionReminder(id, data, actionableReminder));
         card.querySelector('[data-act="monthly-fee"]')?.addEventListener(
             "click", () => recordMonthlyTuition(id, data)
         );
