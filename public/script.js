@@ -1560,7 +1560,7 @@ async function submitApplication(event) {
             guardianPhone,
             email,
             dob,
-            aadhaarLast4,
+            ...(aadhaarLast4 ? { aadhaarLast4 } : {}),
             qualification,
             address,
             coursePreference,
