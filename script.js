@@ -3279,7 +3279,7 @@ function renderFeeManagement(list, entries) {
     const balance = active.reduce((sum, x) => sum + x.outstanding, 0);
     const reminders = active.filter(x => x.eligibleReminder).length;
     const overdue = active.filter(x => x.overdue).length;
-    list.innerHTML = \`
+    list.innerHTML = `
       <section class="rc-fees">
         <div class="rc-fees-top">
           <div><p class="rc-eyebrow">REHAAN COMPUTERS · ADMIN ONLY</p>
@@ -3287,31 +3287,31 @@ function renderFeeManagement(list, entries) {
           <span class="rc-fees-tag">Manual WhatsApp reminders</span>
         </div>
         <div class="rc-fees-kpis">
-          <div><small>Students with billing date</small><strong>\${active.length}</strong></div>
-          <div><small>Received for displayed dues</small><strong>\${money(received)}</strong></div>
-          <div><small>Outstanding for displayed dues</small><strong>\${money(balance)}</strong></div>
-          <div><small>Reminders ready / overdue</small><strong>\${reminders} / \${overdue}</strong></div>
+          <div><small>Students with billing date</small><strong>${active.length}</strong></div>
+          <div><small>Received for displayed dues</small><strong>${money(received)}</strong></div>
+          <div><small>Outstanding for displayed dues</small><strong>${money(balance)}</strong></div>
+          <div><small>Reminders ready / overdue</small><strong>${reminders} / ${overdue}</strong></div>
         </div>
         <div class="rc-fees-heading"><strong>Student Fee Register</strong><span>Only enrolled students with admission numbers</span></div>
         <div class="rc-fees-rows">
-          \${report.length ? report.map(x => \`
+          ${report.length ? report.map(x => `
             <div class="rc-fee-row">
               <div class="rc-fee-identity">
-                <b>\${escapeHTML(x.data.fullName || "Unnamed Student")}</b>
-                <small>ADM \${escapeHTML(String(x.data.admissionNumber || ""))} · \${escapeHTML(x.data.coursePreference || "Course not set")}</small>
+                <b>${escapeHTML(x.data.fullName || "Unnamed Student")}</b>
+                <small>ADM ${escapeHTML(String(x.data.admissionNumber || ""))} · ${escapeHTML(x.data.coursePreference || "Course not set")}</small>
               </div>
               <div class="rc-fee-amount">
-                <b>\${x.dueKey ? money(x.outstanding) : "Date needed"}</b>
-                <small>\${x.dueKey ? "Due " + x.dueKey : "Set admission date"} · \${x.dueKey && x.outstanding === 0 ? "Paid" : x.overdue ? (x.overdue.review ? "Cancellation review" : "Overdue") : "Upcoming"}</small>
+                <b>${x.dueKey ? money(x.outstanding) : "Date needed"}</b>
+                <small>${x.dueKey ? "Due " + x.dueKey : "Set admission date"} · ${x.dueKey && x.outstanding === 0 ? "Paid" : x.overdue ? (x.overdue.review ? "Cancellation review" : "Overdue") : "Upcoming"}</small>
               </div>
               <div class="rc-fee-actions">
-                \${x.current ? \`<button type="button" data-fee-pay="\${escapeHTML(x.id)}">Record Payment</button>\` : ""}
-                \${x.eligibleReminder ? \`<button type="button" class="rc-reminder" data-fee-wa="\${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 WhatsApp</button>\` : ""}
+                ${x.current ? `<button type="button" data-fee-pay="${escapeHTML(x.id)}">Record Payment</button>` : ""}
+                ${x.eligibleReminder ? `<button type="button" class="rc-reminder" data-fee-wa="${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 WhatsApp</button>` : ""}
               </div>
-            </div>\`).join("") : '<p class="rc-fees-empty">No enrolled students match the current search and filters.</p>'}
+            </div>`).join("") : '<p class="rc-fees-empty">No enrolled students match the current search and filters.</p>'}
         </div>
         <p class="rc-fees-footnote">Only press “reminder sent” after you actually send the message in WhatsApp. No group will receive a student’s private fee details.</p>
-      </section>\`;
+      </section>`;
     list.querySelectorAll("[data-fee-pay]").forEach(button => button.addEventListener("click", () => {
         const entry = report.find(x => x.id === button.dataset.feePay);
         if (entry) recordMonthlyTuition(entry.id, entry.data);
