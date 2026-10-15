@@ -2954,7 +2954,8 @@ const adminState = {
     apps: [],
     tab: "new",
     query: "",
-    course: ""
+    course: "",
+    feeFilter: "all"
 };
 
 
@@ -3279,6 +3280,12 @@ function renderFeeManagement(list, entries) {
     const balance = active.reduce((sum, x) => sum + x.outstanding, 0);
     const reminders = active.filter(x => x.eligibleReminder).length;
     const overdue = active.filter(x => x.overdue).length;
+    const filtered = report.filter(x => adminState.feeFilter === "all" ||
+        (adminState.feeFilter === "reminders" && x.eligibleReminder) ||
+        (adminState.feeFilter === "overdue" && Boolean(x.overdue)) ||
+        (adminState.feeFilter === "paid" && x.dueKey && x.outstanding === 0) ||
+        (adminState.feeFilter === "partial" && x.paid > 0 && x.outstanding > 0) ||
+        (adminState.feeFilter === "unpaid" && x.dueKey && x.paid === 0));
     list.innerHTML = `
       <section class="rc-fees">
         <div class="rc-fees-top">
@@ -3292,9 +3299,9 @@ function renderFeeManagement(list, entries) {
           <div><small>Outstanding for displayed dues</small><strong>${money(balance)}</strong></div>
           <div><small>Reminders ready / overdue</small><strong>${reminders} / ${overdue}</strong></div>
         </div>
-        <div class="rc-fees-heading"><strong>Student Fee Register</strong><span>Only enrolled students with admission numbers</span></div>
+        <div class="rc-fees-heading"><strong>Student Fee Register</strong><label>Filter <select id="rcFeeFilter" aria-label="Filter monthly fees"><option value="all">All</option><option value="paid">Paid</option><option value="partial">Partially paid</option><option value="unpaid">Unpaid</option><option value="reminders">Reminders due</option><option value="overdue">Overdue</option></select></label></div>
         <div class="rc-fees-rows">
-          ${report.length ? report.map(x => `
+          ${filtered.length ? filtered.map(x => `
             <div class="rc-fee-row">
               <div class="rc-fee-identity">
                 <b>${escapeHTML(x.data.fullName || "Unnamed Student")}</b>
@@ -3302,7 +3309,7 @@ function renderFeeManagement(list, entries) {
               </div>
               <div class="rc-fee-amount">
                 <b>${x.dueKey ? money(x.outstanding) : "Date needed"}</b>
-                <small>${x.dueKey ? "Due " + x.dueKey : "Set admission date"} · ${x.dueKey && x.outstanding === 0 ? "Paid" : x.overdue ? (x.overdue.review ? "Cancellation review" : "Overdue") : "Upcoming"}</small>
+                <small>${x.dueKey ? "Due " + x.dueKey : "Set admission date"} · ${x.dueKey && x.outstanding === 0 ? "Paid" : x.overdue ? (x.overdue.review ? "Cancellation review" : "Overdue") : x.paid > 0 ? "Partial" : "Upcoming"}</small><small>History: ${escapeHTML(Object.entries(x.data.monthlyFees || {}).sort(([a],[b]) => b.localeCompare(a)).slice(0, 3).map(([d,amt]) => d + " ₹" + amt).join(" · ") || "No payments recorded")}</small>
               </div>
               <div class="rc-fee-actions">
                 ${x.current ? `<button type="button" data-fee-pay="${escapeHTML(x.id)}">Record Payment</button>` : ""}
@@ -3312,6 +3319,9 @@ function renderFeeManagement(list, entries) {
         </div>
         <p class="rc-fees-footnote">Only press “reminder sent” after you actually send the message in WhatsApp. No group will receive a student’s private fee details.</p>
       </section>`;
+    const feeFilter = list.querySelector("#rcFeeFilter");
+    feeFilter.value = adminState.feeFilter;
+    feeFilter.addEventListener("change", event => { adminState.feeFilter = event.target.value; renderAdminList(); });
     list.querySelectorAll("[data-fee-pay]").forEach(button => button.addEventListener("click", () => {
         const entry = report.find(x => x.id === button.dataset.feePay);
         if (entry) recordMonthlyTuition(entry.id, entry.data);
