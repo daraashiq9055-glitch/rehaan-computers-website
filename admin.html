@@ -44,6 +44,25 @@
 .admin-page .rc-monthly-action:hover{background:#3a2d1b;border-color:#dbb570}
 .admin-page .rc-reminder-action{background:#17392d;border:1px solid #438267;border-radius:10px;color:#b6f3cb;padding:10px 14px;font-weight:700}
 </style>
+<style>
+/* Premium monthly fee payment panel */
+.admin-page .rc-payment-modal{background:linear-gradient(145deg,#1c1d21,#101114);border:1px solid #735b35;color:#f6eedc;max-width:560px;border-radius:20px;box-shadow:0 24px 80px #0009}
+.admin-page .rc-payment-modal h3{color:#f6e4bf;font-size:25px;margin:8px 0}
+.admin-page .rc-pay-eyebrow{color:#d9ae65;letter-spacing:1.7px;font-weight:750;font-size:11px}
+.admin-page .rc-pay-subtitle,.admin-page .rc-pay-help{color:#bcb8b0;font-size:13px;line-height:1.55}
+.admin-page .rc-pay-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin:22px 0}
+.admin-page .rc-pay-stats>div{background:#252528;border:1px solid #4a4338;border-radius:12px;padding:14px 10px;display:flex;flex-direction:column;gap:10px}
+.admin-page .rc-pay-stats span{font-size:11px;color:#bbb2a3}
+.admin-page .rc-pay-stats strong{font-size:19px;color:#f1d69e;overflow-wrap:anywhere}
+.admin-page .rc-pay-stats .rc-pay-due{color:#f0bc7d}
+.admin-page .rc-payment-form{display:flex;flex-direction:column;gap:13px}
+.admin-page .rc-payment-form label{display:flex;flex-direction:column;gap:7px;color:#eee0c7;font-weight:650;font-size:13px}
+.admin-page .rc-payment-form input{background:#111215;color:#f8f1e6;border:1px solid #927042;border-radius:9px;padding:13px;font-size:17px;width:100%;box-sizing:border-box}
+.admin-page .rc-pay-preview{color:#c8c0b0;margin:0}.admin-page .rc-pay-preview strong{color:#b8edc8}
+.admin-page .rc-payment-form .admin-save-btn{background:linear-gradient(110deg,#d6ae69,#b68b4a);color:#18130c;border:0;border-radius:10px;font-weight:750;padding:13px;cursor:pointer}
+.admin-page .rc-payment-form .admin-save-btn:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:580px){.admin-page .rc-pay-stats{grid-template-columns:1fr}.admin-page .rc-pay-stats>div{flex-direction:row;justify-content:space-between;align-items:center}}
+</style>
 </head>
 
 <body class="admin-page">
