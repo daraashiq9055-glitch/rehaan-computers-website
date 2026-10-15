@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Rehaan Computers — WhatsApp Reminder Test</title>
+<style>
+:root{color-scheme:dark}body{font:16px system-ui,Arial;background:#101114;color:#f6ead5;margin:0;padding:28px}
+main{max-width:550px;margin:5vh auto;padding:27px;background:#1d1e21;border:1px solid #967446;border-radius:18px}
+small{color:#d5ae6c;letter-spacing:2px}h1{font-size:24px}p{color:#c9c0b4;line-height:1.6}
+label{display:block;margin:20px 0 7px}input{width:100%;padding:13px;background:#111;border:1px solid #a88b58;color:white;border-radius:9px;box-sizing:border-box;font-size:18px}
+pre{white-space:pre-wrap;word-break:break-word;font:14px/1.6 system-ui;background:#292723;padding:16px;border-radius:12px}
+button{width:100%;padding:14px;background:#d8ad62;color:#18130c;border:none;border-radius:9px;font-weight:700;cursor:pointer}button:disabled{opacity:.5}
+.err{color:#ffb6aa}
+</style></head><body><main>
+<small>REHAAN COMPUTERS · LOCAL TEST ONLY</small><h1>3-Day WhatsApp Reminder Test</h1>
+<p>This page does not connect to Firebase, modify payments or contact students automatically. Enter only a WhatsApp number you own. Clicking opens a drafted message in WhatsApp; you decide whether to send.</p>
+<label for="number">Your own 10-digit Indian WhatsApp number</label>
+<input id="number" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="Enter your test number">
+<p><b>Test Student · TEST001</b><br>Monthly fee ₹999 · Paid ₹500 · Outstanding ₹499<br>Simulated reminder: today · Due in 3 days</p>
+<pre id="preview"></pre>
+<button type="button" id="open">Open WhatsApp with pre-filled reminder ↗</button>
+<p id="error" class="err" role="status"></p>
+</main><script>
+const today = new Date();
+const parts = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(today);
+const field = t => Number(parts.find(p=>p.type===t).value);
+const due = new Date(Date.UTC(field("year"),field("month")-1,field("day")+3));
+const label = new Intl.DateTimeFormat("en-GB",{timeZone:"UTC",day:"2-digit",month:"long",year:"numeric"}).format(due);
+const message = ["Dear Test Student,","","Monthly fee reminder from Rehaan Computers, Charangam, Beerwah.","Admission No: TEST001","Outstanding Fee: Rs. 499","Due Date: "+label,"","Please pay by the due date. If already paid, please contact the institute.","Thank you, Rehaan Computers"].join("\n");
+document.getElementById("preview").textContent=message;
+document.getElementById("open").addEventListener("click",()=>{
+ const number=document.getElementById("number").value.trim();
+ const error=document.getElementById("error");error.textContent="";
+ if(!/^[6-9][0-9]{9}$/.test(number)){error.textContent="Enter your own valid 10-digit Indian mobile number.";return;}
+ const link="https://wa.me/91"+number+"?text="+encodeURIComponent(message);
+ const opened=window.open(link,"_blank");
+ if(opened)opened.opener=null;
+ else error.textContent="Pop-up blocked. Allow pop-ups for this page and try again.";
+});
+</script></body></html>
