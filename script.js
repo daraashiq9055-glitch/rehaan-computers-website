@@ -2992,6 +2992,25 @@ function tuitionPeriod(data, today = indiaCalendarDate()) {
     return { key, due, diff, paid, remaining: Math.max(0, MONTHLY_TUITION_FEE - paid),
         sent: Boolean((data.feeReminders || {})[key]) };
 }
+function overdueMonthlyTuition(data, today = indiaCalendarDate()) {
+    if (!adminIsEnrolled(data) || !data.admissionNumber || data.enrolmentStatus === "Cancelled") return null;
+    const joined = data.admissionDate || data.approvedAt;
+    if (!joined || !/^\d{4}-\d{2}-\d{2}/.test(joined)) return null;
+    const [year, month, day] = joined.slice(0, 10).split("-").map(Number);
+    if (!year || month < 1 || month > 12 || day < 1 || day > 31) return null;
+    const now = new Date(Date.UTC(today.year, today.month - 1, today.day));
+    let due = monthDayDate(year, month + 1, day);
+    let oldest = null;
+    for (let i = 0; i < 240 && due < now; i++) {
+        const key = due.toISOString().slice(0, 10);
+        const received = Number((data.monthlyFees || {})[key] || 0);
+        const balance = Math.max(0, MONTHLY_TUITION_FEE - received);
+        const daysLate = Math.round((now.getTime() - due.getTime()) / 86400000);
+        if (balance > 0 && !oldest) oldest = { key, balance, daysLate, review: daysLate > 5 };
+        due = monthDayDate(due.getUTCFullYear(), due.getUTCMonth() + 2, day);
+    }
+    return oldest;
+}
 function tuitionWhatsAppMessage(data, bill) {
     return [
         "Dear " + data.fullName + ",",
@@ -3306,6 +3325,7 @@ function renderAdminList() {
         const approved = adminIsEnrolled(data);
         const paid = Boolean(data.payment && data.payment.status === "paid");
         const tuition = tuitionPeriod(data);
+        const overdueTuition = overdueMonthlyTuition(data);
 
         const card = document.createElement("article");
 
@@ -3336,6 +3356,7 @@ function renderAdminList() {
                     <span class="row-phone">${escapeHTML(data.phone || "—")}</span>
                     <span class="fee-chip ${paid ? "fee-ok" : "fee-pending"}">₹${ADMISSION_FEE}: ${escapeHTML(paymentLabel(data.payment))}</span>
                     ${tuition ? `<span class="fee-chip ${tuition.remaining === 0 ? "fee-ok" : "fee-pending"}">Monthly ₹${MONTHLY_TUITION_FEE}: ${tuition.remaining === 0 ? "Paid" : "₹" + tuition.remaining + " due " + tuition.key}</span>` : ""}
+                    ${overdueTuition ? `<span class="fee-chip fee-pending">${overdueTuition.review ? "⚠ Cancellation review: " : "Overdue: "}₹${overdueTuition.balance} from ${overdueTuition.key} (${overdueTuition.daysLate} days). Admin decision required.</span>` : ""}
                 </div>
             </div>
             <div class="row-actions">
