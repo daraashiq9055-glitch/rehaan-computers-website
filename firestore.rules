@@ -61,6 +61,8 @@ service cloud.firestore {
           "batch",
           "source",
           "message",
+          "paymentToken",
+          "aadhaarLast4",
           "photo",
           "attendanceSetup",
           "attendanceEmail",
@@ -115,8 +117,9 @@ service cloud.firestore {
 
         return hasOnlyPublicFields(d)
 
-          // Public applications must always start as New.
-          && d.get("status", "") == "New"
+          // Public applications may start as New or Pending Payment.
+          && (d.get("status", "") == "New"
+              || d.get("status", "") == "Pending Payment")
 
           // Payment, if present, must be the harmless
           // "awaiting" payment state used by the website.
@@ -144,6 +147,10 @@ service cloud.firestore {
           && strLen(d, "batch", 0, 40)
           && strLen(d, "source", 0, 120)
           && strLen(d, "message", 0, 5000)
+          && strLen(d, "paymentToken", 16, 64)
+          && strLen(d, "aadhaarLast4", 4, 4)
+          && (!("aadhaarLast4" in d)
+              || d.aadhaarLast4.matches("^[0-9]{4}$"))
           && strLen(d, "photo", 0, 800000)
           && strLen(d, "attendanceSetup", 0, 16)
           && strLen(d, "attendanceEmail", 0, 254)
