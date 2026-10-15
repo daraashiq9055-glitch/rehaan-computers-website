@@ -1194,142 +1194,6 @@ function initCourseModal() {
 
 
 /* =========================================================
-   ATTENDANCE AUTH
-========================================================= */
-
-let attendanceApp = null;
-let attendanceAuth = null;
-
-
-function getAttendanceAuth() {
-
-    if (!attendanceAuth) {
-
-        const existingApps =
-            getApps();
-
-        const existingAttendanceApp =
-            existingApps.find(
-                item => item.name === "attendanceApp"
-            );
-
-
-        attendanceApp =
-            existingAttendanceApp ||
-            initializeApp(
-                firebaseConfig,
-                "attendanceApp"
-            );
-
-
-        attendanceAuth =
-            getAuth(attendanceApp);
-
-    }
-
-
-    return attendanceAuth;
-
-}
-
-
-/* =========================================================
-   ATTENDANCE UI
-========================================================= */
-
-function updateAttendanceFields() {
-
-    const selected =
-        document.querySelector(
-            'input[name="attendanceSetup"]:checked'
-        );
-
-
-    const fields =
-        getElement("attendancePasswordFields");
-
-    const email =
-        getElement("attendanceEmail");
-
-    const password =
-        getElement("attendancePassword");
-
-    const confirm =
-        getElement("confirmAttendancePassword");
-
-
-    if (!selected || !fields) {
-        return;
-    }
-
-
-    const setup =
-        selected.value === "setup";
-
-
-    if (setup) {
-
-        fields.classList.remove(
-            "attendance-hidden"
-        );
-
-        if (email) {
-            email.required = true;
-        }
-
-        if (password) {
-            password.required = true;
-        }
-
-        if (confirm) {
-            confirm.required = true;
-        }
-
-    } else {
-
-        fields.classList.add(
-            "attendance-hidden"
-        );
-
-        if (email) {
-            email.required = false;
-        }
-
-        if (password) {
-            password.required = false;
-        }
-
-        if (confirm) {
-            confirm.required = false;
-        }
-
-    }
-
-}
-
-
-function initAttendanceUI() {
-
-    document
-        .querySelectorAll(
-            'input[name="attendanceSetup"]'
-        )
-        .forEach(radio => {
-
-            radio.addEventListener(
-                "change",
-                updateAttendanceFields
-            );
-
-        });
-
-
-    updateAttendanceFields();
-
-}
-
-
-/* =========================================================
    INPUT CLEANING
 ========================================================= */
 
@@ -1495,43 +1359,6 @@ function validateApplication(data) {
     }
 
 
-    if (data.attendanceSetup === "setup") {
-
-        if (!isValidEmail(data.attendanceEmail)) {
-
-            return {
-                valid: false,
-                message: "Please enter a valid attendance email."
-            };
-
-        }
-
-
-        if (data.attendancePassword.length < 6) {
-
-            return {
-                valid: false,
-                message: "Attendance password must be at least 6 characters."
-            };
-
-        }
-
-
-        if (
-            data.attendancePassword !==
-            data.confirmAttendancePassword
-        ) {
-
-            return {
-                valid: false,
-                message: "Attendance passwords do not match."
-            };
-
-        }
-
-    }
-
-
     return {
         valid: true
     };
@@ -1631,20 +1458,6 @@ async function submitApplication(event) {
     const address =
         getElement("address").value.trim();
 
-    const attendanceSetup =
-        document.querySelector(
-            'input[name="attendanceSetup"]:checked'
-        )?.value || "skip";
-
-    const attendanceEmail =
-        getElement("attendanceEmail").value.trim();
-
-    const attendancePassword =
-        getElement("attendancePassword").value;
-
-    const confirmAttendancePassword =
-        getElement("confirmAttendancePassword").value;
-
     const message =
         getElement("message").value.trim();
 
@@ -1666,10 +1479,6 @@ async function submitApplication(event) {
         batch,
         source,
         address,
-        attendanceSetup,
-        attendanceEmail,
-        attendancePassword,
-        confirmAttendancePassword,
         message,
         agreement,
         photoUploaded: Boolean(studentPhotoDataUrl)
@@ -1705,84 +1514,7 @@ async function submitApplication(event) {
     );
 
 
-    let attendanceUser = null;
-
-
     try {
-
-        /*
-         * Create attendance account first when requested.
-         *
-         * This uses the SECONDARY Firebase Auth instance,
-         * so the main/admin Firebase session is not replaced.
-         */
-
-        if (
-            attendanceSetup === "setup"
-        ) {
-
-            try {
-
-                const attendanceAuthInstance =
-                    getAttendanceAuth();
-
-
-                const credentials =
-                    await createUserWithEmailAndPassword(
-                        attendanceAuthInstance,
-                        attendanceEmail,
-                        attendancePassword
-                    );
-
-
-                attendanceUser =
-                    credentials.user;
-
-            } catch (attendanceError) {
-
-                console.error(
-                    "Attendance account error:",
-                    attendanceError
-                );
-
-
-                let message =
-                    "Could not create the attendance account.";
-
-
-                if (
-                    attendanceError.code ===
-                    "auth/email-already-in-use"
-                ) {
-
-                    message =
-                        "That attendance email is already registered. Please use another email.";
-
-                } else if (
-                    attendanceError.code ===
-                    "auth/invalid-email"
-                ) {
-
-                    message =
-                        "The attendance email is invalid.";
-
-                } else if (
-                    attendanceError.code ===
-                    "auth/weak-password"
-                ) {
-
-                    message =
-                        "The attendance password is too weak.";
-
-                }
-
-
-                throw new Error(message);
-
-            }
-
-        }
-
 
         /*
          * Save application to Firestore.
@@ -1806,18 +1538,6 @@ async function submitApplication(event) {
             coursePreference,
             batch,
             source,
-            attendanceSetup,
-
-            attendanceEmail:
-                attendanceSetup === "setup"
-                    ? attendanceEmail
-                    : "",
-
-            attendanceUid:
-                attendanceUser
-                    ? attendanceUser.uid
-                    : "",
-
             message,
 
             photo: studentPhotoDataUrl || "",
@@ -1868,16 +1588,6 @@ async function submitApplication(event) {
             batch,
 
             address,
-
-            attendance_setup:
-                attendanceSetup === "setup"
-                    ? "Account requested"
-                    : "Skipped",
-
-            attendance_email:
-                attendanceSetup === "setup"
-                    ? attendanceEmail
-                    : "Not applicable",
 
             source:
                 source || "Not specified",
@@ -4518,7 +4228,6 @@ function initMainWebsite() {
 
     initCourseModal();
 
-    initAttendanceUI();
 
     initPhoneInputs();
 
