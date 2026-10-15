@@ -13,6 +13,32 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
 <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <link rel="stylesheet" href="style.css">
+<style>
+/* Fee Management premium black/gold — scoped to this admin module. */
+.rc-fees{background:#111215;color:#f5f2ec;border:1px solid #474035;border-radius:19px;padding:22px;margin:18px 0;font-family:inherit;box-shadow:0 15px 45px #00000018}
+.rc-fees-top{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;flex-wrap:wrap}
+.rc-fees-top h2{color:#f7f1df;margin:4px 0 8px;font-size:clamp(22px,3vw,30px)}
+.rc-fees-top p{color:#bcb8af;font-size:13px;margin:0}
+.rc-fees .rc-eyebrow{color:#d5aa5d;font-weight:750;letter-spacing:1.8px;font-size:10px}
+.rc-fees-tag{border:1px solid #8a683a;border-radius:100px;padding:7px 11px;color:#e8c780;font-size:11px}
+.rc-fees-kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:23px 0}
+.rc-fees-kpis>div{background:#1e2023;border:1px solid #373634;border-radius:13px;padding:16px;display:flex;flex-direction:column;gap:11px}
+.rc-fees-kpis small,.rc-fee-row small{color:#bcb8af;font-size:11px}
+.rc-fees-kpis strong{color:#f6e5c1;font-size:clamp(19px,2vw,25px);overflow-wrap:anywhere}
+.rc-fees-heading{display:flex;justify-content:space-between;gap:12px;align-items:center;color:#f8edda;margin:13px 0}
+.rc-fees-heading span{font-size:11px;color:#a8a49e}
+.rc-fees-rows{border:1px solid #383736;border-radius:14px;overflow:hidden}
+.rc-fee-row{display:grid;grid-template-columns:minmax(140px,2fr) minmax(115px,1fr) minmax(125px,1.25fr);gap:10px;align-items:center;padding:16px;border-bottom:1px solid #383736;background:#1b1c1f}
+.rc-fee-row:last-child{border-bottom:0}
+.rc-fee-identity,.rc-fee-amount{display:flex;flex-direction:column;gap:6px}
+.rc-fee-identity b{color:#f8f4ec;font-size:14px}
+.rc-fee-amount b{color:#efd294;font-size:15px}
+.rc-fee-actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.rc-fee-actions button{cursor:pointer;border:1px solid #61533d;background:#29251f;border-radius:9px;padding:9px 11px;color:#f4dbad;font-size:12px;font-weight:650}
+.rc-fee-actions button.rc-reminder{background:#17392d;color:#b6f3cb;border-color:#438267}
+.rc-fees-empty,.rc-fees-footnote{padding:16px;color:#bcb8af;font-size:12px}
+@media(max-width:740px){.rc-fees{padding:12px}.rc-fees-kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.rc-fee-row{grid-template-columns:1fr 1fr}.rc-fee-actions{grid-column:1/-1;justify-content:flex-start}.rc-fees-heading{align-items:flex-start;flex-direction:column}}
+</style>
 </head>
 
 <body class="admin-page">
