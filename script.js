@@ -2984,9 +2984,7 @@ function tuitionPeriod(data, today = indiaCalendarDate()) {
     // The first monthly tuition installment is due one month after admission.
     let due = monthDayDate(year, month + 1, day);
     while (due < now) {
-        const next = monthDayDate(due.getUTCFullYear(), due.getUTCMonth() + 2, day);
-        if (next > now) break;
-        due = next;
+        due = monthDayDate(due.getUTCFullYear(), due.getUTCMonth() + 2, day);
     }
     const key = due.toISOString().slice(0, 10);
     const diff = Math.round((due.getTime() - now.getTime()) / 86400000);
@@ -3017,7 +3015,8 @@ async function openTuitionReminder(id, data, bill) {
     const url = "https://wa.me/91" + digits + "?text=" +
         encodeURIComponent(tuitionWhatsAppMessage(data, bill));
     // User gesture opens WhatsApp; this does NOT prove a message was sent.
-    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    const opened = window.open(url, "_blank");
+    if (opened) opened.opener = null;
     if (!opened) {
         window.alert("Pop-up blocked. Please allow WhatsApp pop-ups for this site.");
         return;
