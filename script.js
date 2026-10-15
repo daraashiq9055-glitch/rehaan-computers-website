@@ -3093,7 +3093,7 @@ async function recordMonthlyTuition(id, data) {
     form.addEventListener("submit", async event => {
         event.preventDefault();
         const added = Number(amount.value);
-        if (!Number.isFinite(added) || added <= 0 || added > remaining || !/^\\d+(?:\\.\\d{1,2})?$/.test(amount.value)) {
+        if (!Number.isFinite(added) || added <= 0 || added > remaining || !/^\d+(?:\.\d{1,2})?$/.test(amount.value)) {
             status.hidden = false; status.className = "admin-modal-msg err";
             status.textContent = "Enter a valid new payment between ₹0.01 and ₹" + remaining + ".";
             return;
