@@ -706,9 +706,7 @@ function renderCourseGrid() {
 
                     <div class="course-card-footer">
 
-                        <strong class="course-fee">
-                            ₹999/-
-                        </strong>
+                        <strong class="course-fee">Explore Course</strong>
 
                         <div class="course-card-actions">
 
@@ -861,7 +859,7 @@ function populateCourseSelect() {
         option.value = course.title;
 
         option.textContent =
-            `${course.title} — ₹999/-`;
+            course.title;
 
         select.appendChild(option);
 
