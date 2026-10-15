@@ -1682,16 +1682,6 @@ async function submitApplication(event) {
 
 
         if (
-            attendanceSetup === "setup"
-        ) {
-
-            successMessage +=
-                " Your attendance account has also been created — keep these credentials safe.";
-
-        }
-
-
-        if (
             !adminEmailResult.success ||
             !applicantEmailResult.success
         ) {
@@ -1719,23 +1709,7 @@ async function submitApplication(event) {
         setStudentPhoto("");
 
 
-        /*
-         * Restore the default attendance option
-         * after form reset.
-         */
 
-        const setupRadio =
-            document.querySelector(
-                'input[name="attendanceSetup"][value="setup"]'
-            );
-
-
-        if (setupRadio) {
-            setupRadio.checked = true;
-        }
-
-
-        updateAttendanceFields();
 
 
         submitButton.disabled = false;
