@@ -3040,7 +3040,7 @@ function actionableFeeReminder(data) {
 async function openTuitionReminder(id, data, bill) {
     if (!bill || bill.diff > 3 || bill.remaining <= 0 || bill.sent) return;
     const digits = String(data.phone || "").replace(/\D/g, "");
-    if (!/^\d{10}$/.test(digits)) {
+    if (!/^[6-9]\d{9}$/.test(digits)) {
         window.alert("Student phone must contain 10 digits.");
         return;
     }
@@ -3363,6 +3363,7 @@ function renderFeeManagement(list, entries) {
               <div class="rc-fee-identity">
                 <b>${escapeHTML(x.data.fullName || "Unnamed Student")}</b>
                 <small>ADM ${escapeHTML(String(x.data.admissionNumber || ""))} · ${escapeHTML(x.data.coursePreference || "Course not set")}</small>
+                ${x.eligibleReminder ? `<button type="button" class="rc-fee-phone" data-fee-wa="${escapeHTML(x.id)}" title="Open WhatsApp with saved phone">📱 ${escapeHTML(x.data.phone || "")} · WhatsApp</button>` : `<small>${escapeHTML(x.data.phone || "")}</small>`}
               </div>
               <div class="rc-fee-amount">
                 <b>${x.dueKey ? money(x.outstanding) : "Date needed"}</b>
@@ -3370,7 +3371,7 @@ function renderFeeManagement(list, entries) {
               </div>
               <div class="rc-fee-actions">
                 ${x.current ? `<button type="button" data-fee-pay="${escapeHTML(x.id)}">Record Payment</button>` : ""}
-                ${x.eligibleReminder ? `<button type="button" class="rc-reminder" data-fee-wa="${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 WhatsApp · ${escapeHTML(x.data.phone || "")}</button>` : ""}
+                ${x.eligibleReminder ? `<button type="button" class="rc-reminder" data-fee-wa="${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 Send reminder</button>` : ""}
               </div>
             </div>`).join("") : '<p class="rc-fees-empty">No enrolled students match the current search and filters.</p>'}
         </div>
