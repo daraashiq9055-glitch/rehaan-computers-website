@@ -3052,32 +3052,77 @@ async function openTuitionReminder(id, data, bill) {
         }
     }
 }
+
 async function recordMonthlyTuition(id, data) {
     const upcoming = tuitionPeriod(data);
     const overdue = overdueMonthlyTuition(data);
-    const bill = overdue ? {key: overdue.key, paid: MONTHLY_TUITION_FEE - overdue.balance} : upcoming;
-    if (!bill) return;
-    const answer = window.prompt(
-        "Monthly tuition Rs. " + MONTHLY_TUITION_FEE +
-        "\nDue: " + bill.key +
-        "\nAlready recorded: Rs. " + bill.paid +
-        "\nEnter TOTAL amount received for this due date (0 to 999):",
-        String(bill.paid)
-    );
-    if (answer === null) return;
-    if (!/^\d+(?:\.\d{1,2})?$/.test(answer) || Number(answer) > MONTHLY_TUITION_FEE) {
-        window.alert("Enter a valid total between Rs. 0 and Rs. 999.");
-        return;
-    }
-    if (!window.confirm("Confirm Rs. " + answer + " total received for " + data.fullName + " (" + bill.key + ")?")) return;
-    try {
-        await updateDoc(doc(db, "applications", id), {
-            ["monthlyFees." + bill.key]: Number(answer)
-        });
-        await loadApplications();
-    } catch (error) {
-        window.alert("Monthly fee update failed: " + (error.message || error));
-    }
+    const bill = overdue ? { key: overdue.key, paid: MONTHLY_TUITION_FEE - overdue.balance } : upcoming;
+    if (!bill) { window.alert("Set a valid admission date before recording monthly fees."); return; }
+    const existing = Math.max(0, Number(bill.paid) || 0);
+    const remaining = Math.max(0, MONTHLY_TUITION_FEE - existing);
+    const modal = adminCreateModal("rcTuitionModal", `
+      <div class="admin-modal-card rc-payment-modal">
+        <button type="button" class="admin-modal-close" aria-label="Close">×</button>
+        <p class="rc-pay-eyebrow">REHAAN COMPUTERS · FEE MANAGEMENT</p>
+        <h3>Record Monthly Payment</h3>
+        <p class="rc-pay-subtitle">${escapeHTML(data.fullName || "Student")} · ADM ${escapeHTML(String(data.admissionNumber || ""))} · Due ${escapeHTML(bill.key)}</p>
+        <div class="rc-pay-stats">
+          <div><span>Monthly fee</span><strong>₹${MONTHLY_TUITION_FEE}</strong></div>
+          <div><span>Already received</span><strong>₹${existing}</strong></div>
+          <div><span>Outstanding</span><strong class="rc-pay-due">₹${remaining}</strong></div>
+        </div>
+        <form id="rcPaymentForm" class="rc-payment-form">
+          <label>New payment amount (₹)
+            <input id="rcPaymentAmount" type="number" min="0.01" max="${remaining}" step="0.01" value="${remaining}" required>
+          </label>
+          <p class="rc-pay-preview">After payment: <strong id="rcPaymentBalance">₹0 remaining</strong></p>
+          <button class="admin-save-btn" type="submit" ${remaining === 0 ? "disabled" : ""}>Confirm & Record Payment</button>
+          <p class="admin-modal-msg" id="rcPaymentMessage" hidden></p>
+        </form>
+        <p class="rc-pay-help">This amount will be ADDED to payments already received, not replace them. ₹100 admission fee is separate.</p>
+      </div>`);
+    const form = modal.querySelector("#rcPaymentForm");
+    const amount = modal.querySelector("#rcPaymentAmount");
+    const balance = modal.querySelector("#rcPaymentBalance");
+    const status = modal.querySelector("#rcPaymentMessage");
+    const submit = form.querySelector('button[type="submit"]');
+    amount.addEventListener("input", () => {
+        const added = Number(amount.value) || 0;
+        balance.textContent = "₹" + Math.max(0, remaining - added).toFixed(2) + " remaining";
+    });
+    form.addEventListener("submit", async event => {
+        event.preventDefault();
+        const added = Number(amount.value);
+        if (!Number.isFinite(added) || added <= 0 || added > remaining || !/^\d+(?:\.\d{1,2})?$/.test(amount.value)) {
+            status.hidden = false; status.className = "admin-modal-msg err";
+            status.textContent = "Enter a valid new payment between ₹0.01 and ₹" + remaining + ".";
+            return;
+        }
+        if (!window.confirm("Record an additional ₹" + added + " for " + (data.fullName || "student") + "?")) return;
+        submit.disabled = true;
+        try {
+            // Re-read just before writing to guard against stale admin screens.
+            const latestSnap = await getDoc(doc(db, "applications", id));
+            if (!latestSnap.exists()) throw new Error("Student record no longer exists.");
+            const latest = latestSnap.data();
+            if (!adminIsEnrolled(latest) || !latest.admissionNumber) throw new Error("Student is no longer enrolled.");
+            const currentlyPaid = Math.max(0, Number((latest.monthlyFees || {})[bill.key] || 0));
+            if (currentlyPaid !== existing) throw new Error("Payment record changed. Close this window, refresh and try again.");
+            if (currentlyPaid + added > MONTHLY_TUITION_FEE) throw new Error("Payment exceeds remaining balance.");
+            const total = Math.round((currentlyPaid + added) * 100) / 100;
+            await updateDoc(doc(db, "applications", id), {
+                ["monthlyFees." + bill.key]: total
+            });
+            status.hidden = false; status.className = "admin-modal-msg ok";
+            status.textContent = "Payment saved. Total received ₹" + total + ", remaining ₹" + (MONTHLY_TUITION_FEE - total) + ".";
+            await loadApplications();
+            setTimeout(() => { modal.hidden = true; }, 1300);
+        } catch (error) {
+            status.hidden = false; status.className = "admin-modal-msg err";
+            status.textContent = "Payment not saved: " + (error.message || error);
+            submit.disabled = false;
+        }
+    });
 }
 
 const ADMIN_QUALIFICATIONS = [
