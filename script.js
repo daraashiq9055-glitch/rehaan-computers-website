@@ -1398,6 +1398,10 @@ function validateApplication(data) {
     }
 
 
+    if (data.aadhaarLast4 && !/^[0-9]{4}$/.test(data.aadhaarLast4)) {
+        return { valid: false, message: "Enter only the last 4 Aadhaar digits, or leave blank." };
+    }
+
     if (!isValidPhone(data.phone)) {
 
         return {
@@ -1601,6 +1605,8 @@ async function submitApplication(event) {
     const phone =
         getElement("phone").value.trim();
 
+    const aadhaarLast4 = getElement("aadhaarLast4").value.trim();
+
     const guardianPhone =
         getElement("guardianPhone").value.trim();
 
@@ -1652,6 +1658,7 @@ async function submitApplication(event) {
         parentName,
         phone,
         guardianPhone,
+        aadhaarLast4,
         email,
         dob,
         qualification,
@@ -1791,6 +1798,7 @@ async function submitApplication(event) {
             parentName,
             phone,
             guardianPhone,
+            aadhaarLast4,
             email,
             dob,
             qualification,
