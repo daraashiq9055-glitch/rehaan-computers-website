@@ -1,0 +1,3 @@
+# Monthly fee reminders
+
+Monthly tuition ₹999; due on each student's admission-date anniversary, with month-end clamping. Reminder available on the admitted student's admin card exactly three days before due date only when a balance is outstanding. Clicking opens WhatsApp to the saved student's phone with their name, admission number, balance, and due date prefilled; admin sends manually. No further reminder for the same billing period. Five-day grace period; cancellation requires admin review. Aadhaar last four digits in offline admission only. Student financial details must not appear in group notifications.
