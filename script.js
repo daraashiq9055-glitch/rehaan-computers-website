@@ -2958,6 +2958,107 @@ const adminState = {
 };
 
 
+
+/* Admin-only monthly tuition tracking. The ₹100 admission fee is separate.
+ * Billing begins one month after admission, using the same day (clamped for shorter months).
+ * All day comparisons use local India calendar dates, not UTC milliseconds.
+ */
+const MONTHLY_TUITION_FEE = 999;
+function indiaCalendarDate(date = new Date()) {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+        timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit"
+    }).formatToParts(date);
+    const part = key => Number(parts.find(item => item.type === key).value);
+    return { year: part("year"), month: part("month"), day: part("day") };
+}
+function monthDayDate(year, month, day) {
+    return new Date(Date.UTC(year, month - 1, Math.min(day, new Date(Date.UTC(year, month, 0)).getUTCDate())));
+}
+function tuitionPeriod(data, today = indiaCalendarDate()) {
+    if (!adminIsEnrolled(data) || !data.admissionNumber || data.enrolmentStatus === "Cancelled") return null;
+    const joined = data.admissionDate || data.approvedAt;
+    if (!joined || !/^\d{4}-\d{2}-\d{2}/.test(joined)) return null;
+    const [year, month, day] = joined.slice(0, 10).split("-").map(Number);
+    if (!year || !month || !day || month > 12 || day > 31) return null;
+    const now = new Date(Date.UTC(today.year, today.month - 1, today.day));
+    // The first monthly tuition installment is due one month after admission.
+    let due = monthDayDate(year, month + 1, day);
+    while (due < now) {
+        const next = monthDayDate(due.getUTCFullYear(), due.getUTCMonth() + 2, day);
+        if (next > now) break;
+        due = next;
+    }
+    const key = due.toISOString().slice(0, 10);
+    const diff = Math.round((due.getTime() - now.getTime()) / 86400000);
+    const paid = Number((data.monthlyFees || {})[key] || 0);
+    return { key, due, diff, paid, remaining: Math.max(0, MONTHLY_TUITION_FEE - paid),
+        sent: Boolean((data.feeReminders || {})[key]) };
+}
+function tuitionWhatsAppMessage(data, bill) {
+    return [
+        "Dear " + data.fullName + ",",
+        "",
+        "Monthly fee reminder from Rehaan Computers, Charangam, Beerwah.",
+        "Admission No: " + data.admissionNumber,
+        "Outstanding Fee: Rs. " + bill.remaining,
+        "Due Date: " + bill.key.split("-").reverse().join("-"),
+        "",
+        "Please pay by the due date. If already paid, please contact the institute.",
+        "Thank you, Rehaan Computers"
+    ].join("\n");
+}
+async function openTuitionReminder(id, data, bill) {
+    if (bill.diff !== 3 || bill.remaining <= 0 || bill.sent) return;
+    const digits = String(data.phone || "").replace(/\D/g, "");
+    if (!/^\d{10}$/.test(digits)) {
+        window.alert("Student phone must contain 10 digits.");
+        return;
+    }
+    const url = "https://wa.me/91" + digits + "?text=" +
+        encodeURIComponent(tuitionWhatsAppMessage(data, bill));
+    // User gesture opens WhatsApp; this does NOT prove a message was sent.
+    const opened = window.open(url, "_blank", "noopener,noreferrer");
+    if (!opened) {
+        window.alert("Pop-up blocked. Please allow WhatsApp pop-ups for this site.");
+        return;
+    }
+    if (window.confirm("WhatsApp opened. Only click OK after you have actually pressed Send in WhatsApp. Mark this month's single reminder as sent?")) {
+        try {
+            await updateDoc(doc(db, "applications", id), {
+                ["feeReminders." + bill.key]: new Date().toISOString()
+            });
+            await loadApplications();
+        } catch (error) {
+            window.alert("Reminder status was not saved: " + (error.message || error));
+        }
+    }
+}
+async function recordMonthlyTuition(id, data) {
+    const bill = tuitionPeriod(data);
+    if (!bill) return;
+    const answer = window.prompt(
+        "Monthly tuition Rs. " + MONTHLY_TUITION_FEE +
+        "\nDue: " + bill.key +
+        "\nAlready recorded: Rs. " + bill.paid +
+        "\nEnter TOTAL amount received for this due date (0 to 999):",
+        String(bill.paid)
+    );
+    if (answer === null) return;
+    if (!/^\d+(?:\.\d{1,2})?$/.test(answer) || Number(answer) > MONTHLY_TUITION_FEE) {
+        window.alert("Enter a valid total between Rs. 0 and Rs. 999.");
+        return;
+    }
+    if (!window.confirm("Confirm Rs. " + answer + " total received for " + data.fullName + " (" + bill.key + ")?")) return;
+    try {
+        await updateDoc(doc(db, "applications", id), {
+            ["monthlyFees." + bill.key]: Number(answer)
+        });
+        await loadApplications();
+    } catch (error) {
+        window.alert("Monthly fee update failed: " + (error.message || error));
+    }
+}
+
 const ADMIN_QUALIFICATIONS = [
     "5th", "6th", "7th", "8th", "9th", "10th",
     "11th", "12th", "Diploma", "ITI",
@@ -3205,6 +3306,7 @@ function renderAdminList() {
 
         const approved = adminIsEnrolled(data);
         const paid = Boolean(data.payment && data.payment.status === "paid");
+        const tuition = tuitionPeriod(data);
 
         const card = document.createElement("article");
 
@@ -3234,12 +3336,16 @@ function renderAdminList() {
                     <span>· ${escapeHTML(data.batch || "—")}</span>
                     <span class="row-phone">${escapeHTML(data.phone || "—")}</span>
                     <span class="fee-chip ${paid ? "fee-ok" : "fee-pending"}">₹${ADMISSION_FEE}: ${escapeHTML(paymentLabel(data.payment))}</span>
+                    ${tuition ? `<span class="fee-chip ${tuition.remaining === 0 ? "fee-ok" : "fee-pending"}">Monthly ₹${MONTHLY_TUITION_FEE}: ${tuition.remaining === 0 ? "Paid" : "₹" + tuition.remaining + " due " + tuition.key}</span>` : ""}
                 </div>
             </div>
             <div class="row-actions">
                 <div class="admission-entry"><span>Adm No</span><input class="admission-no-input" type="text" maxlength="10" placeholder="${nextAdm}" value="${escapeHTML(data.admissionNumber || "")}" data-application-id="${escapeHTML(id)}"></div>
                 <button type="button" class="mark-paid-btn" data-act="fee" ${paid ? "disabled" : ""}>${paid ? "✓ Fee Paid" : "Mark Fee Paid"}</button>
                 <button type="button" class="approve-application-btn" data-act="approve" data-next-admission="${nextAdm}" ${approved ? "disabled" : ""}>${approved ? "✓ Approved" : "Approve"}</button>
+                ${tuition ? `<button type="button" class="admin-ghost-btn" data-act="monthly-fee" title="Record monthly tuition payment">₹ Monthly</button>` : ""}
+                ${tuition && tuition.diff === 3 && tuition.remaining > 0 && !tuition.sent
+                  ? `<button type="button" class="admin-ghost-btn" data-act="monthly-reminder" title="Open WhatsApp reminder for this student's unpaid monthly fee" aria-label="WhatsApp fee reminder for ${escapeHTML(data.fullName || "student")}">🔔 WhatsApp</button>` : ""}
                 <button type="button" class="admin-ghost-btn" data-act="details">Details</button>
                 <button type="button" class="delete-application-btn" data-application-id="${escapeHTML(id)}">Delete</button>
             </div>
@@ -3268,6 +3374,12 @@ function renderAdminList() {
             }
         );
 
+        card.querySelector('[data-act="monthly-fee"]')?.addEventListener(
+            "click", () => recordMonthlyTuition(id, data)
+        );
+        card.querySelector('[data-act="monthly-reminder"]')?.addEventListener(
+            "click", () => openTuitionReminder(id, data, tuition)
+        );
         card.querySelector('[data-act="details"]')?.addEventListener(
             "click",
             () => openAdminDetails(id)
@@ -3373,6 +3485,7 @@ function openAdminDetails(applicationId) {
                 ${adminField("Guardian Phone", data.guardianPhone)}
                 ${adminField("Email", data.email)}
                 ${adminField("Date of Birth", data.dob)}
+                ${adminField("Aadhaar Last 4", data.aadhaarLast4 ? "XXXX XXXX " + data.aadhaarLast4 : "—")}
                 ${adminField("Qualification", data.qualification)}
                 ${adminField("Course", data.coursePreference || data.course)}
                 ${adminField("Attendance Setup", data.attendanceSetup === "setup" ? "Requested" : "Skipped")}
@@ -3531,6 +3644,8 @@ function openAddStudentModal() {
                 <label>Phone *<input id="addPhone" type="tel" inputmode="numeric" maxlength="10" autocomplete="off"></label>
                 <label>Email<input id="addEmail" type="email" autocomplete="off"></label>
                 <label>Date of Birth<input id="addDob" type="date"></label>
+                <label>Aadhaar last 4 digits (optional)<input id="addAadhaarLast4" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" autocomplete="off" placeholder="Last 4 only"></label>
+                <label>Admission Date *<input id="addAdmissionDate" type="date" required></label>
                 <label>Qualification<select id="addQual"><option value="">—</option>${ADMIN_QUALIFICATIONS.map(q => `<option>${q}</option>`).join("")}</select></label>
                 <label>Course *<select id="addCourse">${courseOptions}</select></label>
                 <label>Batch<select id="addBatch"><option>Morning</option><option>Afternoon</option><option>Evening</option></select></label>
@@ -3543,6 +3658,8 @@ function openAddStudentModal() {
         </div>
     `);
 
+    const todayIndia = indiaCalendarDate();
+    modal.querySelector("#addAdmissionDate").value = `${todayIndia.year}-${String(todayIndia.month).padStart(2, "0")}-${String(todayIndia.day).padStart(2, "0")}`;
     const box = modal.querySelector("#addPhotoBox");
     const input = modal.querySelector("#addPhotoInput");
     const img = modal.querySelector("#addPhotoImg");
@@ -3601,6 +3718,18 @@ function openAddStudentModal() {
         const fullName = value("addName");
         const phone = value("addPhone");
         const admissionNumber = value("addAdm");
+        const aadhaarLast4 = value("addAadhaarLast4");
+        const admissionDate = value("addAdmissionDate");
+        if (aadhaarLast4 && !/^\d{4}$/.test(aadhaarLast4)) {
+            msg.hidden = false; msg.className = "admin-modal-msg err";
+            msg.textContent = "Enter exactly 4 Aadhaar digits or leave the field blank.";
+            return;
+        }
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(admissionDate)) {
+            msg.hidden = false; msg.className = "admin-modal-msg err";
+            msg.textContent = "Choose the student admission date.";
+            return;
+        }
 
         if (fullName.length < 2) {
             msg.hidden = false; msg.className = "admin-modal-msg err";
@@ -3653,6 +3782,10 @@ function openAddStudentModal() {
                 message: value("addNote"),
                 photo: photoData,
                 admissionNumber,
+                admissionDate,
+                aadhaarLast4,
+                monthlyFees: {},
+                feeReminders: {},
                 status: "Approved",
                 channel: "offline",
                 approvedAt: nowIso,
