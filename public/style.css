@@ -2895,7 +2895,7 @@ body.admin-page {
 
     @media (hover: hover) {
         .hero-photo {
-            background-attachment: fixed; /* desktop parallax feel */
+            background-attachment: scroll; /* avoid desktop scroll jank */
         }
     }
 
@@ -3309,3 +3309,4 @@ body.admin-page {
  font-size:15px;font-weight:800;
 }
 .payment-success-done:hover {filter:brightness(1.08);}
+\n/* Performance: avoid costly backdrop repaints while scrolling on desktop. */\n@media (min-width: 900px) {\n  .admin-modal, .admin-lightbox, .payment-modal { backdrop-filter: none; -webkit-backdrop-filter: none; }\n}\n@media (prefers-reduced-motion: reduce) { html { scroll-behavior:auto; } .reveal { transition:none!important; } }\n
