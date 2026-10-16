@@ -3089,7 +3089,8 @@ function tuitionWhatsAppMessage(data, bill) {
         "Outstanding Fee: Rs. " + bill.remaining,
         "Due Date: " + bill.key.split("-").reverse().join("-"),
         "",
-        "Please pay by the due date. If already paid, please contact the institute.",
+        "Please pay by the due date. For fee payment, contact 6006433125.",
+        "If you have already paid, please contact the institute.",
         "Thank you, Rehaan Computers"
     ].join("\n");
 }
