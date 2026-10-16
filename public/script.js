@@ -3716,7 +3716,8 @@ function openAdminDetails(applicationId) {
     const modal = adminCreateModal("adminDetailsModal", `
         <div class="admin-modal-card">
             <button type="button" class="admin-modal-close" aria-label="Close">×</button>
-            <span class="admin-modal-kicker">FULL APPLICATION · EDIT</span>
+            <span class="admin-modal-kicker">STUDENT DETAILS</span>
+            <button type="button" class="admin-ghost-btn admin-toggle-edit" aria-label="Edit student details" title="Edit student details" style="position:absolute;top:20px;right:65px;font-size:20px" >✎</button>
             <div class="admin-details-top">
                 ${/^data:image\//.test(data.photo || "")
                     ? `<button type="button" class="row-photo zoomable admin-details-photo" data-photo-zoom aria-label="View full photo"><img src="${data.photo}" alt="Applicant photo"></button>`
@@ -3742,6 +3743,7 @@ function openAdminDetails(applicationId) {
                 ${adminField("Message", data.message, true)}
                 ${adminField("Admission Fee", paymentLabel(data.payment), true)}
             </div>
+            <div class="admin-edit-fields" hidden>
             <div class="admin-edit-row">
 <label>Full Name<input class="edit-fullName" value="${escapeHTML(data.fullName || "")}"></label>
 <label>Parent / Guardian<input class="edit-parentName" value="${escapeHTML(data.parentName || "")}"></label>
@@ -3770,7 +3772,9 @@ function openAdminDetails(applicationId) {
                 <label class="admin-edit-wide">Admin Note (private)<input class="admin-edit-note" type="text" value="${escapeHTML(data.adminNote || "")}"></label>
                 <label class="admin-edit-wide">Record Status<select class="admin-edit-status"><option ${data.status === "New" ? "selected" : ""}>New</option><option ${data.status === "Approved" ? "selected" : ""}>Approved</option><option ${data.status === "Cancelled" ? "selected" : ""}>Cancelled</option></select></label>
             </div>
-            <button type="button" class="admin-save-btn">Save Changes</button>
+            <button type="button" class="admin-save-btn admin-save-edits">Save Changes</button>
+            </div>
+            ${data.channel === "offline" && data.status === "Approved" ? '<button type="button" class="admin-ghost-btn admin-send-admission" style="margin-top:14px">Send Admission Confirmation on WhatsApp ↗</button>' : ""}
             <p class="admin-modal-msg" hidden></p>
         </div>
     `);
@@ -3780,6 +3784,16 @@ function openAdminDetails(applicationId) {
         () => openAdminPhotoViewer(data.fullName, data.photo, data.admissionNumber)
     );
 
+    const editGroup = modal.querySelector(".admin-edit-fields");
+    modal.querySelector(".admin-toggle-edit").addEventListener("click", () => {
+        editGroup.hidden = !editGroup.hidden;
+        modal.querySelector(".admin-toggle-edit").textContent = editGroup.hidden ? "✎" : "✕";
+    });
+    modal.querySelector(".admin-send-admission")?.addEventListener("click", () => openAdmissionWhatsApp({
+        ...data,
+        coursePreference: data.coursePreference || data.course || "",
+        admissionDate: (data.admissionDate || data.approvedAt || "").slice(0, 10)
+    }));
     let updatedPhoto = null;
     modal.querySelector(".edit-photo").addEventListener("change", event => {
         const file = event.target.files && event.target.files[0];
@@ -3789,17 +3803,23 @@ function openAdminDetails(applicationId) {
             modal.querySelector(".edit-photo-notice").textContent = "Cropped replacement ready to save.";
         });
     });
-    modal.querySelector(".admin-save-btn").addEventListener("click", async () => {
+    modal.querySelector(".admin-save-edits").addEventListener("click", async () => {
 
-        const btn = modal.querySelector(".admin-save-btn");
+        const btn = modal.querySelector(".admin-save-edits");
         const msg = modal.querySelector(".admin-modal-msg");
 
         const feeVal = modal.querySelector(".admin-edit-fee").value;
 
         const getValue = name => modal.querySelector(".edit-" + name).value.trim();
-        if (getValue("fullName").length < 2 || !/^\\d{10}$/.test(getValue("phone"))) {
+        const newName = getValue("fullName");
+        const newPhone = getValue("phone");
+        if (newName !== (data.fullName || "") && newName.length < 2) {
             msg.hidden = false; msg.className = "admin-modal-msg err";
-            msg.textContent = "Enter a valid full name and 10-digit phone number."; return;
+            msg.textContent = "Name must contain at least two characters."; return;
+        }
+        if (newPhone !== (data.phone || "") && newPhone && !/^[0-9]{10}$/.test(newPhone)) {
+            msg.hidden = false; msg.className = "admin-modal-msg err";
+            msg.textContent = "Edited phone number must contain exactly 10 digits."; return;
         }
         const patch = {
             fullName: getValue("fullName"),
@@ -3819,13 +3839,18 @@ function openAdminDetails(applicationId) {
             batch: modal.querySelector(".admin-edit-batch").value,
             adminNote: modal.querySelector(".admin-edit-note").value.trim(),
             status: modal.querySelector(".admin-edit-status").value,
-            payment: Object.assign({}, data.payment || {}, {
-                status: feeVal,
-                amount: ADMISSION_FEE,
-                verified: feeVal === "paid",
-                updatedAt: new Date().toISOString()
-            })
         };
+        // Only write fields that actually changed, preserving payment metadata and unrelated records.
+        for (const key of Object.keys(patch)) {
+            if (key !== "photo" && patch[key] === (data[key] ?? "")) delete patch[key];
+        }
+        if (feeVal !== ((data.payment && data.payment.status) || "pending")) {
+            patch.payment = {...(data.payment || {}), status: feeVal, amount: ADMISSION_FEE,
+                verified: feeVal === "paid", updatedAt: new Date().toISOString()};
+        }
+        if (!Object.keys(patch).length) {
+            msg.hidden = false; msg.className = "admin-modal-msg ok"; msg.textContent = "No changes to save."; return;
+        }
 
         if (patch.status === "Cancelled" && data.status !== "Cancelled") {
             const overdue = overdueMonthlyTuition(data);
