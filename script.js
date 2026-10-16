@@ -3743,6 +3743,22 @@ function openAdminDetails(applicationId) {
                 ${adminField("Admission Fee", paymentLabel(data.payment), true)}
             </div>
             <div class="admin-edit-row">
+<label>Full Name<input class="edit-fullName" value="${escapeHTML(data.fullName || "")}"></label>
+<label>Parent / Guardian<input class="edit-parentName" value="${escapeHTML(data.parentName || "")}"></label>
+<label>Student Phone<input class="edit-phone" maxlength="10" value="${escapeHTML(data.phone || "")}"></label>
+<label>Guardian Phone<input class="edit-guardianPhone" value="${escapeHTML(data.guardianPhone || "")}"></label>
+<label>Email<input type="email" class="edit-email" value="${escapeHTML(data.email || "")}"></label>
+<label>Date of Birth<input type="date" class="edit-dob" value="${escapeHTML(data.dob || "")}"></label>
+<label>Gender<select class="edit-gender"><option value="">Not specified</option><option value="male" ${data.gender === "male" ? "selected" : ""}>Male</option><option value="female" ${data.gender === "female" ? "selected" : ""}>Female</option></select></label>
+<label>Roll No<input class="edit-rollNumber" value="${escapeHTML(data.rollNumber || data.admissionNumber || "")}"></label>
+<label>Admission Date<input type="date" class="edit-admissionDate" value="${escapeHTML((data.admissionDate || "").slice(0,10))}"></label>
+<label>Course<input class="edit-coursePreference" value="${escapeHTML(data.coursePreference || "")}"></label>
+<label>Qualification<input class="edit-qualification" value="${escapeHTML(data.qualification || "")}"></label>
+<label class="admin-edit-wide">Address<input class="edit-address" value="${escapeHTML(data.address || "")}"></label>
+<label class="admin-edit-wide">Replace Photo (optional)<input class="edit-photo" type="file" accept="image/jpeg,image/png"></label>
+<p class="admin-modal-hint edit-photo-notice">The existing photograph is kept unless you choose a replacement.</p>
+</div>
+<div class="admin-edit-row">
                 <label>Admission No<input class="admin-edit-adm" type="text" maxlength="10" value="${escapeHTML(data.admissionNumber || "")}" placeholder="${nextAdmissionNumber()}"></label>
                 <label>Batch<select class="admin-edit-batch">${["Morning", "Afternoon", "Evening"].concat(data.batch && !["Morning", "Afternoon", "Evening"].includes(data.batch) ? [data.batch] : []).map(b => `<option ${data.batch === b ? "selected" : ""}>${escapeHTML(b)}</option>`).join("")}</select></label>
                 <label>Fee Status<select class="admin-edit-fee">${[
@@ -3764,6 +3780,16 @@ function openAdminDetails(applicationId) {
         () => openAdminPhotoViewer(data.fullName, data.photo, data.admissionNumber)
     );
 
+    let updatedPhoto = null;
+    modal.querySelector(".edit-photo").addEventListener("change", event => {
+        const file = event.target.files && event.target.files[0];
+        if (!file) return;
+        processPassportPhoto(file, (error, url) => {
+            if (error) { window.alert(error); return; }
+            updatedPhoto = url;
+            modal.querySelector(".edit-photo-notice").textContent = "Replacement photo ready to save.";
+        });
+    });
     modal.querySelector(".admin-save-btn").addEventListener("click", async () => {
 
         const btn = modal.querySelector(".admin-save-btn");
@@ -3771,7 +3797,25 @@ function openAdminDetails(applicationId) {
 
         const feeVal = modal.querySelector(".admin-edit-fee").value;
 
+        const getValue = name => modal.querySelector(".edit-" + name).value.trim();
+        if (getValue("fullName").length < 2 || !/^\\d{10}$/.test(getValue("phone"))) {
+            msg.hidden = false; msg.className = "admin-modal-msg err";
+            msg.textContent = "Enter a valid full name and 10-digit phone number."; return;
+        }
         const patch = {
+            fullName: getValue("fullName"),
+            parentName: getValue("parentName"),
+            phone: getValue("phone"),
+            guardianPhone: getValue("guardianPhone"),
+            email: getValue("email"),
+            dob: getValue("dob"),
+            gender: getValue("gender"),
+            rollNumber: getValue("rollNumber"),
+            admissionDate: getValue("admissionDate") || data.admissionDate || "",
+            coursePreference: getValue("coursePreference"),
+            qualification: getValue("qualification"),
+            address: getValue("address"),
+            ...(updatedPhoto ? {photo: updatedPhoto} : {}),
             admissionNumber: modal.querySelector(".admin-edit-adm").value.trim(),
             batch: modal.querySelector(".admin-edit-batch").value,
             adminNote: modal.querySelector(".admin-edit-note").value.trim(),
