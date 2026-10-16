@@ -540,6 +540,20 @@
 </div>
 </div>
 
+<!-- Shown only after the payment Worker verifies and finalizes the ₹100 admission payment. -->
+<div id="paymentSuccessModal" class="payment-success-modal" hidden role="presentation">
+  <div class="payment-success-card" role="dialog" aria-modal="true" aria-labelledby="paymentSuccessTitle" aria-describedby="paymentSuccessDescription">
+    <button type="button" class="payment-success-close" id="paymentSuccessClose" aria-label="Close payment confirmation">×</button>
+    <div class="payment-success-check" aria-hidden="true">✓</div>
+    <span class="payment-success-kicker">PAYMENT VERIFIED</span>
+    <h2 id="paymentSuccessTitle">Payment Successful!</h2>
+    <p class="payment-success-amount">₹100 Received</p>
+    <p id="paymentSuccessDescription">Your admission fee has been securely verified. Your application has been submitted to Rehaan Computers.</p>
+    <p class="payment-success-hint">Please visit the institute with two passport-size photographs and your Aadhaar photocopy to complete admission formalities.</p>
+    <button type="button" id="paymentSuccessDone" class="payment-success-done">Done</button>
+  </div>
+</div>
+
 <!-- REAL TOOLS SHOWCASE -->
 <section id="tools" class="section tools-section">
 <div class="container">
