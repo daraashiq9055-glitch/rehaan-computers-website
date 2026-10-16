@@ -3881,6 +3881,43 @@ function studentAvatarPlaceholder(data, extraClass = "") {
     return '<div class="row-photo row-photo-empty student-silhouette ' + extraClass + '" title="' + label + '" role="img" aria-label="' + label + '"><svg viewBox="0 0 48 48" width="36" height="36" aria-hidden="true" focusable="false">' + shape + '</svg></div>';
 }
 
+function admissionWhatsAppMessage(student) {
+    return [
+        "*REHAAN COMPUTERS*",
+        "Charangam, Beerwah",
+        "",
+        "*OFFICIAL ADMISSION CONFIRMATION*",
+        "",
+        "Dear " + student.fullName + ",",
+        "",
+        "We are pleased to confirm that your admission at Rehaan Computers has been successfully registered.",
+        "",
+        "*Student Name:* " + student.fullName,
+        "*Admission No.:* " + student.admissionNumber,
+        "*Roll No.:* " + (student.rollNumber || student.admissionNumber),
+        "*Course:* " + student.coursePreference,
+        "*Batch:* " + student.batch,
+        "*Admission Date:* " + student.admissionDate,
+        "*Admission Status:* Confirmed",
+        "",
+        "Your monthly course fee is Rs. 999. Please keep your admission number for future reference.",
+        "For monthly fee payments: *6006433125*.",
+        "",
+        "We look forward to supporting your learning journey.",
+        "",
+        "*Admissions Department*",
+        "*Rehaan Computers*"
+    ].join("\n");
+}
+function openAdmissionWhatsApp(student) {
+    const phone = String(student.phone || "").replace(/\D/g, "");
+    if (!/^[6-9]\d{9}$/.test(phone)) { window.alert("A valid 10-digit student phone is required."); return; }
+    const url = "https://wa.me/91" + phone + "?text=" + encodeURIComponent(admissionWhatsAppMessage(student));
+    const tab = window.open(url, "_blank");
+    if (tab) tab.opener = null;
+    else window.alert("Please allow pop-ups to open the WhatsApp admission confirmation.");
+}
+
 function openAddStudentModal() {
 
     let photoData = "";
@@ -3917,7 +3954,7 @@ function openAddStudentModal() {
                 <label>Qualification<select id="addQual"><option value="">—</option>${ADMIN_QUALIFICATIONS.map(q => `<option>${q}</option>`).join("")}</select></label>
                 <label>Course *<select id="addCourse">${courseOptions}</select></label>
                 <label>Batch<select id="addBatch"><option>Morning</option><option>Afternoon</option><option>Evening</option></select></label>
-                <label>Admission No *<input id="addAdm" type="text" maxlength="10" value="${nextAdmissionNumber()}"></label>
+                <label>Roll No (optional)<input id="addRoll" type="text" maxlength="20" placeholder="Defaults to admission no."></label>\n                <label>Admission No *<input id="addAdm" type="text" maxlength="10" value="${nextAdmissionNumber()}"></label>
                 <label class="admin-edit-wide">Address<input id="addAddress" type="text" autocomplete="off"></label>
                 <label class="admin-edit-wide">Note (fee receipt, remarks…)<input id="addNote" type="text" autocomplete="off"></label>
             </div>
@@ -4051,6 +4088,7 @@ function openAddStudentModal() {
                 photo: photoData,
                 gender: value("addGender"),
                 admissionNumber,
+                rollNumber: value("addRoll") || admissionNumber,
                 admissionDate,
                 aadhaarLast4,
                 monthlyFees: {},
@@ -4072,9 +4110,22 @@ function openAddStudentModal() {
             msg.hidden = false;
             msg.className = "admin-modal-msg ok";
             msg.textContent = "Student saved to the register ✓";
+            const wa = document.createElement("button");
+            wa.type = "button";
+            wa.className = "admin-save-btn";
+            wa.style.marginTop = "12px";
+            wa.textContent = "Send admission confirmation on WhatsApp ↗";
+            wa.addEventListener("click", () => openAdmissionWhatsApp({
+                fullName, phone, admissionNumber,
+                rollNumber: value("addRoll") || admissionNumber,
+                coursePreference: course,
+                batch: modal.querySelector("#addBatch").value,
+                admissionDate
+            }));
+            msg.insertAdjacentElement("afterend", wa);
 
             await loadApplications();
-            setTimeout(() => { modal.hidden = true; }, 1000);
+            // Keep the confirmation action visible until the administrator closes the modal.
 
         } catch (error) {
 
