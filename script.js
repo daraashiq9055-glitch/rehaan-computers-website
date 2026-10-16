@@ -3082,16 +3082,32 @@ function overdueMonthlyTuition(data, today = indiaCalendarDate()) {
 }
 function tuitionWhatsAppMessage(data, bill) {
     return [
-        "Dear " + data.fullName + ",",
+        "*REHAAN COMPUTERS*",
+        "Charangam, Beerwah",
         "",
-        "Monthly fee reminder from Rehaan Computers, Charangam, Beerwah.",
-        "Admission No: " + data.admissionNumber,
-        "Outstanding Fee: Rs. " + bill.remaining,
-        "Due Date: " + bill.key.split("-").reverse().join("-"),
+        "*MONTHLY FEE REMINDER*",
         "",
-        "Please pay your outstanding fee directly to this payment number: 6006433125.",
-        "If you have already paid, please contact the institute.",
-        "Thank you, Rehaan Computers"
+        "Dear " + (data.fullName || "Student") + ",",
+        "",
+        "Greetings from Rehaan Computers.",
+        "This is a gentle reminder regarding your pending monthly course fee.",
+        "",
+        "*Student Name:* " + (data.fullName || "Student"),
+        "*Admission No.:* " + (data.admissionNumber || "—"),
+        "*Outstanding Fee:* Rs. " + bill.remaining,
+        "*Due Date:* " + bill.key.split("-").reverse().join("-"),
+        "",
+        "Kindly clear your outstanding fee on or before the due date.",
+        "",
+        "*PAYMENT NUMBER: 6006433125*",
+        "You may pay directly to this number.",
+        "",
+        "If you have already paid, kindly disregard this reminder and share your payment confirmation for verification.",
+        "",
+        "Thank you for your cooperation.",
+        "",
+        "*Accounts Department*",
+        "*Rehaan Computers*"
     ].join("\n");
 }
 function actionableFeeReminder(data) {
@@ -3546,7 +3562,7 @@ function renderAdminList() {
 
         const photoCell = /^data:image\//.test(data.photo || "")
             ? `<button type="button" class="row-photo zoomable" data-photo-zoom aria-label="View full photo of ${escapeHTML(data.fullName || "applicant")}"><img src="${data.photo}" alt="Applicant photo"></button>`
-            : `<div class="row-photo row-photo-empty" title="No uploaded photo">${escapeHTML(String(data.fullName || "?").trim().slice(0, 1).toUpperCase())}</div>`;
+            : studentAvatarPlaceholder(data);
 
         card.innerHTML = `
             ${photoCell}
@@ -3704,7 +3720,7 @@ function openAdminDetails(applicationId) {
             <div class="admin-details-top">
                 ${/^data:image\//.test(data.photo || "")
                     ? `<button type="button" class="row-photo zoomable admin-details-photo" data-photo-zoom aria-label="View full photo"><img src="${data.photo}" alt="Applicant photo"></button>`
-                    : '<div class="row-photo row-photo-empty admin-details-photo">?</div>'}
+                    : studentAvatarPlaceholder(data, "admin-details-photo")}
                 <div>
                     <h3>${escapeHTML(data.fullName || "Unnamed Applicant")}</h3>
                     <p>${data.admissionNumber ? "Admission No " + escapeHTML(String(data.admissionNumber)) : "No admission number yet"} · ${data.channel === "offline" ? "Added offline by admin" : "Online application"} · Applied ${escapeHTML(formatDate(data.createdAt))}</p>
@@ -3854,6 +3870,17 @@ function adminCreateModal(id, inner) {
    Fee is recorded as PAID ₹100 (received at centre).
 ========================================================= */
 
+function studentAvatarPlaceholder(data, extraClass = "") {
+    const gender = data.channel === "offline" ? String(data.gender || "").toLowerCase() : "";
+    const shape = gender === "female"
+        ? '<path d="M9 39V25c0-12 6-19 15-19s15 7 15 19v14l-7-5v-9c0-5-3-9-8-9s-8 4-8 9v9z" fill="currentColor" opacity=".82"/><ellipse cx="24" cy="25" rx="9" ry="11" fill="currentColor"/><path d="M7 45c1-10 8-15 17-15s16 5 17 15z" fill="currentColor"/>'
+        : gender === "male"
+        ? '<path d="M13 20c0-9 5-14 11-14 9 0 13 6 12 14l-3-4-5-4-6 2-7 6z" fill="currentColor"/><ellipse cx="24" cy="25" rx="10" ry="11" fill="currentColor"/><path d="M6 45c1-10 8-15 18-15s17 5 18 15z" fill="currentColor"/>'
+        : '<circle cx="24" cy="20" r="11" fill="currentColor"/><path d="M5 45c1-11 8-17 19-17s18 6 19 17z" fill="currentColor"/>';
+    const label = gender === "female" ? "Female silhouette (no uploaded photo)" : gender === "male" ? "Male silhouette (no uploaded photo)" : "No uploaded photo";
+    return '<div class="row-photo row-photo-empty student-silhouette ' + extraClass + '" title="' + label + '" role="img" aria-label="' + label + '"><svg viewBox="0 0 48 48" width="36" height="36" aria-hidden="true" focusable="false">' + shape + '</svg></div>';
+}
+
 function openAddStudentModal() {
 
     let photoData = "";
@@ -3880,6 +3907,7 @@ function openAddStudentModal() {
             </div>
             <div class="admin-form-grid">
                 <label>Full Name *<input id="addName" type="text" autocomplete="off"></label>
+                <label>Gender (for photo placeholder)<select id="addGender"><option value="">Not specified</option><option value="male">Male</option><option value="female">Female</option></select></label>
                 <label>Parent / Guardian<input id="addGuardian" type="text" autocomplete="off"></label>
                 <label>Phone *<input id="addPhone" type="tel" inputmode="numeric" maxlength="10" autocomplete="off"></label>
                 <label>Email<input id="addEmail" type="email" autocomplete="off"></label>
@@ -4021,6 +4049,7 @@ function openAddStudentModal() {
                 attendanceUid: "",
                 message: value("addNote"),
                 photo: photoData,
+                gender: value("addGender"),
                 admissionNumber,
                 admissionDate,
                 aadhaarLast4,
