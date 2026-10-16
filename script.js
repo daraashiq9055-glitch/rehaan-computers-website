@@ -3119,11 +3119,11 @@ function actionableFeeReminder(data) {
             key: overdue.key, remaining: overdue.balance, diff: -overdue.daysLate, sent: false
         };
     }
-    return upcoming && upcoming.diff <= 3 && upcoming.diff >= 0 &&
+    return upcoming && upcoming.diff <= 5 && upcoming.diff >= 0 &&
         upcoming.remaining > 0 && !upcoming.sent ? upcoming : null;
 }
 async function openTuitionReminder(id, data, bill) {
-    if (!bill || bill.diff > 3 || bill.remaining <= 0 || bill.sent) return;
+    if (!bill || bill.diff > 5 || bill.remaining <= 0 || bill.sent) return;
     const digits = String(data.phone || "").replace(/\D/g, "");
     if (!/^[6-9]\d{9}$/.test(digits)) {
         window.alert("Student phone must contain 10 digits.");
@@ -3460,7 +3460,7 @@ function renderFeeManagement(list, entries) {
               </div>
             </div>`).join("") : '<p class="rc-fees-empty">No enrolled students match the current search and filters.</p>'}
         </div>
-        <p class="rc-fees-footnote">Monthly fee is ₹999. Recorded payments reduce the outstanding balance; for example, ₹500 paid leaves ₹499 due. The 🔔 WhatsApp button appears during the final 3 days before an unpaid due date or when overdue.</p>
+        <p class="rc-fees-footnote">Monthly fee is ₹999. Recorded payments reduce the outstanding balance; for example, ₹500 paid leaves ₹499 due. The 🔔 WhatsApp button appears during the final 5 days before an unpaid due date or when overdue.</p>
       </section>`;
     const feeFilter = list.querySelector("#rcFeeFilter");
     feeFilter.value = adminState.feeFilter;
