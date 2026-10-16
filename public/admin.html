@@ -151,11 +151,15 @@ const hideDashboard = document.createElement("style");
 hideDashboard.textContent = "#adminDashboard{display:none!important}";
 document.head.appendChild(hideDashboard);
 
-// if the browser restores the page from the Back button, reload it fresh
+// Avoid a disruptive full reload when returning from another app or history.
+// A restored admin page still requires a fresh sign-in for security.
 window.addEventListener("pageshow", event => {
-    if (event.persisted) {
-        window.location.reload();
-    }
+    if (!event.persisted) return;
+    const dashboard = document.getElementById("adminDashboard");
+    const login = document.getElementById("adminLoginCard");
+    if (dashboard) dashboard.style.display = "none";
+    if (login) login.style.display = "block";
+    signOut(auth).catch(error => console.error("Session reset failed:", error));
 });
 
 const auth = getAuth(getApps()[0]);
