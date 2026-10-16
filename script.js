@@ -3784,10 +3784,9 @@ function openAdminDetails(applicationId) {
     modal.querySelector(".edit-photo").addEventListener("change", event => {
         const file = event.target.files && event.target.files[0];
         if (!file) return;
-        processPassportPhoto(file, (error, url) => {
-            if (error) { window.alert(error); return; }
+        openStudentCropper(file, url => {
             updatedPhoto = url;
-            modal.querySelector(".edit-photo-notice").textContent = "Replacement photo ready to save.";
+            modal.querySelector(".edit-photo-notice").textContent = "Cropped replacement ready to save.";
         });
     });
     modal.querySelector(".admin-save-btn").addEventListener("click", async () => {
@@ -3925,6 +3924,40 @@ function studentAvatarPlaceholder(data, extraClass = "") {
     return '<div class="row-photo row-photo-empty student-silhouette ' + extraClass + '" title="' + label + '" role="img" aria-label="' + label + '"><svg viewBox="0 0 48 48" width="36" height="36" aria-hidden="true" focusable="false">' + shape + '</svg></div>';
 }
 
+function openStudentCropper(file, onDone) {
+    if (!file || !/^image\/(jpeg|jpg|png)$/.test(file.type || "")) { window.alert("Choose a JPG or PNG photograph."); return; }
+    const image = new Image(), url = URL.createObjectURL(file);
+    image.onerror = () => { URL.revokeObjectURL(url); window.alert("Could not open image."); };
+    image.onload = () => {
+        URL.revokeObjectURL(url);
+        const modal = adminCreateModal("adminCropModal", `
+          <div class="admin-modal-card" style="max-width:480px">
+            <button type="button" class="admin-modal-close" aria-label="Cancel">×</button>
+            <h3>Crop student photograph</h3><p>Preview a square profile photograph. Adjust zoom and position, then apply.</p>
+            <canvas id="photoCropCanvas" width="360" height="360" style="display:block;width:min(100%,360px);margin:12px auto;border-radius:10px"></canvas>
+            <label>Zoom<input id="cropZoom" type="range" min="1" max="3" step=".02" value="1" style="width:100%"></label>
+            <label>Left / right<input id="cropX" type="range" min="0" max="100" value="50" style="width:100%"></label>
+            <label>Up / down<input id="cropY" type="range" min="0" max="100" value="50" style="width:100%"></label>
+            <button type="button" class="admin-save-btn" id="applyStudentCrop">Use this crop</button>
+          </div>`);
+        const canvas = modal.querySelector("#photoCropCanvas"), context = canvas.getContext("2d");
+        const zoom = modal.querySelector("#cropZoom"), x = modal.querySelector("#cropX"), y = modal.querySelector("#cropY");
+        const paint = () => {
+            const side = Math.min(image.width,image.height)/Number(zoom.value);
+            context.drawImage(image,(image.width-side)*Number(x.value)/100,(image.height-side)*Number(y.value)/100,side,side,0,0,360,360);
+        };
+        [zoom,x,y].forEach(el => el.addEventListener("input",paint));
+        paint();
+        modal.querySelector("#applyStudentCrop").addEventListener("click", () => {
+            let q=.82, result=canvas.toDataURL("image/jpeg",q);
+            while(result.length>380000 && q>.4){q-=.1; result=canvas.toDataURL("image/jpeg",q);}
+            if(result.length>500000){window.alert("Cropped photo is too large.");return;}
+            modal.hidden=true;onDone(result);
+        });
+    };
+    image.src=url;
+}
+
 function admissionWhatsAppMessage(student) {
     return [
         "*REHAAN COMPUTERS*",
@@ -4042,17 +4075,7 @@ function openAddStudentModal() {
     input.addEventListener("change", () => {
         const file = input.files && input.files[0];
         if (!file) return;
-        processPassportPhoto(file, (error, url) => {
-            if (error) {
-                showPhoto("");
-                const msg = modal.querySelector("#addMsg");
-                msg.hidden = false;
-                msg.className = "admin-modal-msg err";
-                msg.textContent = error;
-                return;
-            }
-            showPhoto(url);
-        });
+        openStudentCropper(file, showPhoto);
         input.value = "";
     });
     remove.addEventListener("click", () => showPhoto(""));
