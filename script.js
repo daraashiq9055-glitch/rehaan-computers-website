@@ -2611,21 +2611,6 @@ function initPaymentStep() {
     const modal = getElement("paymentModal");
     if (!modal) return;
 
-    // Both choices keep the server-side application Pending Payment.
-    // Public Firestore rules prohibit changing an application to paid.
-    // Retain pendingDraft in localStorage so Razorpay can be resumed.
-    getElement("payCentreBtn")?.addEventListener("click", () => {
-        closePaymentStep();
-        showFormMessage("info",
-            "Your application remains pending. Please pay ₹100 at the institute. The fee is not marked paid until verified by the institute.");
-    });
-
-    getElement("paymentLaterBtn")?.addEventListener("click", () => {
-        closePaymentStep();
-        showFormMessage("info",
-            "Your application remains pending. Return to this browser to complete the ₹100 Razorpay payment. No payment has been recorded.");
-    });
-
     getElement("paymentClose")?.addEventListener("click", () => {
         closePaymentStep();
         showFormMessage("info",
