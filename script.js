@@ -2608,106 +2608,31 @@ async function initPaymentResume() {
 
 
 function initPaymentStep() {
-
     const modal = getElement("paymentModal");
+    if (!modal) return;
 
-    if (!modal) {
-        return;
-    }
+    // Both choices keep the server-side application Pending Payment.
+    // Public Firestore rules prohibit changing an application to paid.
+    // Retain pendingDraft in localStorage so Razorpay can be resumed.
+    getElement("payCentreBtn")?.addEventListener("click", () => {
+        closePaymentStep();
+        showFormMessage("info",
+            "Your application remains pending. Please pay ₹100 at the institute. The fee is not marked paid until verified by the institute.");
+    });
 
-    getElement("payPaidBtn")?.addEventListener(
-        "click",
-        () => {
+    getElement("paymentLaterBtn")?.addEventListener("click", () => {
+        closePaymentStep();
+        showFormMessage("info",
+            "Your application remains pending. Return to this browser to complete the ₹100 Razorpay payment. No payment has been recorded.");
+    });
 
-            chooseOfflinePayment(
-                "Noted — you will pay the ₹100 admission fee at the centre. You will not receive a paid confirmation until the institute verifies it."
-            );
-
-        }
-    );
-
-    getElement("payCentreBtn")?.addEventListener(
-        "click",
-        () => chooseOfflinePayment(
-            "Noted — please pay the ₹100 admission fee at the centre when you visit for document verification."
-        )
-    );
-
-    getElement("paymentLaterBtn")?.addEventListener(
-        "click",
-        () => chooseOfflinePayment(
-            "Your application stays pending — you can complete the ₹100 payment online later from this page, or at the centre."
-        )
-    );
-
-    getElement("paymentClose")?.addEventListener(
-        "click",
-        () => {
-
-            closePaymentStep();
-
-            showFormMessage(
-                "info",
-                "No payment yet — your details are saved. You can continue the ₹100 payment any time from this page."
-            );
-
-        }
-    );
+    getElement("paymentClose")?.addEventListener("click", () => {
+        closePaymentStep();
+        showFormMessage("info",
+            "Your application remains pending. No payment has been recorded.");
+    });
 
     initPaymentResume();
-
-    getElement("copyUpiBtn")?.addEventListener(
-        "click",
-        () => {
-
-            const finish = () => {
-
-                const button = getElement("copyUpiBtn");
-
-                if (button) {
-                    button.textContent = "Copied ✓";
-                    setTimeout(() => {
-                        if (button) {
-                            button.textContent = "Copy";
-                        }
-                    }, 1500);
-                }
-
-            };
-
-            const fallback = () => {
-
-                try {
-
-                    const area = document.createElement("textarea");
-                    area.value = UPI_ID;
-                    area.style.position = "fixed";
-                    area.style.opacity = "0";
-                    document.body.appendChild(area);
-                    area.select();
-                    document.execCommand("copy");
-                    area.remove();
-                    finish();
-
-                } catch (copyError) {
-                    /* clipboard unavailable — silently skip */
-                }
-
-            };
-
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-
-                navigator.clipboard.writeText(UPI_ID)
-                    .then(finish)
-                    .catch(fallback);
-
-            } else {
-                fallback();
-            }
-
-        }
-    );
-
 }
 
 
