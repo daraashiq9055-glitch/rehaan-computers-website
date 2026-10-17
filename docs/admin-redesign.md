@@ -261,3 +261,22 @@ choices and omission, Firestore permission rejection before order creation,
 order, and accepted verification followed by status reconciliation. Services are
 simulated, so passing results do not certify the deployed payment Worker,
 Razorpay settings or production Firestore rules.
+
+## Cloudinary preparation (not an upload integration)
+
+The active dashboard can now display standard HTTPS `res.cloudinary.com`
+raster-photo URLs stored in the existing `photo` field. Inline photographs
+continue to work. Register thumbnails, details, full-size viewer, CSV photo
+presence and JSON backup use the same validation. Other hosts, HTTP URLs,
+credentials, SVGs, query strings and HTML injection are rejected. This first
+step supports conventional JPG/PNG/WebP URLs, including signed delivery paths;
+it does not implement private-photo authorization or generate delivery tokens.
+
+Upload behavior has not changed: the form and offline/photo editor still save
+cropped inline photos. No existing images were migrated, no Cloudinary service
+was contacted and no payment code or Firestore rules were changed in this step.
+The Cloud Name is still required before wiring the account-specific upload
+path. A protected upload backend and appropriate student-photo access policy
+must be configured before enabling Cloudinary uploads; never put an API Secret
+in public JavaScript. The admin browser fixture covers Cloudinary thumbnails,
+details, viewer and backup with an intercepted image response only.

@@ -1454,7 +1454,7 @@ function renderAdminList() {
         card.dataset.applicationId = id;
 
         const photoCell = isSafePhoto(data.photo)
-            ? `<button type="button" class="row-photo zoomable" data-photo-zoom aria-label="View full photo of ${escapeHTML(data.fullName || "applicant")}"><img src="${data.photo}" alt="Applicant photo"></button>`
+            ? `<button type="button" class="row-photo zoomable" data-photo-zoom aria-label="View full photo of ${escapeHTML(data.fullName || "applicant")}"><img src="${escapeHTML(data.photo)}" alt="Applicant photo"></button>`
             : studentAvatarPlaceholder(data);
 
         card.innerHTML = `
@@ -1613,7 +1613,7 @@ function openAdminDetails(applicationId) {
             <button type="button" class="admin-ghost-btn admin-toggle-edit" aria-label="Edit student details" title="Edit student details" style="position:absolute;top:20px;right:65px;font-size:20px" >✎</button>
             <div class="admin-details-top">
                 ${isSafePhoto(data.photo)
-                    ? `<button type="button" class="row-photo zoomable admin-details-photo" data-photo-zoom aria-label="View full photo"><img src="${data.photo}" alt="Applicant photo"></button>`
+                    ? `<button type="button" class="row-photo zoomable admin-details-photo" data-photo-zoom aria-label="View full photo"><img src="${escapeHTML(data.photo)}" alt="Applicant photo"></button>`
                     : studentAvatarPlaceholder(data, "admin-details-photo")}
                 <div>
                     <h3>${escapeHTML(data.fullName || "Unnamed Applicant")}</h3>

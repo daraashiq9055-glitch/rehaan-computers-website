@@ -8,15 +8,17 @@ from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
 import json
+import base64
 import struct
 import zlib
 from playwright.sync_api import sync_playwright, expect
 
 ROOT = Path(__file__).resolve().parents[1]
 COURSE = 'One Year Computer Diploma Course'
+CLOUDINARY_PHOTO = 'https://res.cloudinary.com/test-cloud/image/upload/v123/test-student.jpg'
 FIXTURES = {
     'online': {'fullName':'Ayaan Malik','parentName':'Parent','phone':'9876543210','email':'ayaan@example.test','coursePreference':COURSE,'batch':'Morning','status':'New','createdAt':'2026-10-15T10:00:00Z','payment':{'status':'at_centre','amount':100,'providerId':'preserve'},'customLegacyField':{'keep':True},'attendanceEmail':'attendance@example.test','attendanceUid':'attendance-uid'},
-    'enrolled': {'fullName':'Sara Khan','phone':'9876543211','coursePreference':COURSE,'batch':'Evening','status':'Approved','admissionNumber':'001','admissionDate':'2026-01-01','approvedAt':'2026-01-01T10:00:00Z','channel':'offline','monthlyFees':{'2026-02-01':200},'feeReminders':{},'payment':{'status':'paid','amount':100},'createdAt':{'seconds':1767261600}},
+    'enrolled': {'photo':CLOUDINARY_PHOTO,'fullName':'Sara Khan','phone':'9876543211','coursePreference':COURSE,'batch':'Evening','status':'Approved','admissionNumber':'001','admissionDate':'2026-01-01','approvedAt':'2026-01-01T10:00:00Z','channel':'offline','monthlyFees':{'2026-02-01':200},'feeReminders':{},'payment':{'status':'paid','amount':100},'createdAt':{'seconds':1767261600}},
     'legacy': {'fullName':'Cloudinary Test Student','phone':'old','course':'Custom legacy course','batch':'Custom batch','customLegacyField':42},
     'unsafe': {'fullName':'<img src=x onerror=alert(1)>','phone':'9876543212','photo':'data:image/png;base64,xx" onerror="alert(1)','coursePreference':COURSE,'status':'Cancelled'},
 }
@@ -88,6 +90,8 @@ def run():
                 route.fulfill(status=200,content_type='application/javascript',body=MOCK,headers={'Access-Control-Allow-Origin':'*'})
             elif url.startswith('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/'):
                 route.fulfill(status=200,content_type='application/javascript',body='window.emailjs={init(){},async send(){window.__fixture.mailAttempted=true;}};')
+            elif url==CLOUDINARY_PHOTO:
+                route.fulfill(content_type='image/png',body=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1EAAAAASUVORK5CYII='))
             elif url.startswith(base): route.continue_()
             else:
                 external.append(url)
@@ -140,7 +144,17 @@ def run():
         expect(page.locator('.application-row')).to_have_count(4)
         assert page.evaluate('__fixture.writes.length')==0
         assert len(alerts)==0
-        assert page.locator('.application-row img').count()==0
+        assert page.locator('.application-row img').count()==1
+        remote=page.locator('[data-application-id=enrolled].application-row')
+        expect(remote.locator('img')).to_have_attribute('src',CLOUDINARY_PHOTO)
+        remote.locator('[data-photo-zoom]').click()
+        expect(page.locator('#adminPhotoViewer img')).to_have_attribute('src',CLOUDINARY_PHOTO)
+        page.locator('.admin-lightbox-close').click()
+        remote.locator('[data-act=details]').click()
+        expect(page.locator('#adminDetailsModal img')).to_have_attribute('src',CLOUDINARY_PHOTO)
+        page.locator('#adminDetailsModal .admin-modal-close').click()
+        assert page.evaluate('__fixture.records.enrolled.photo')==CLOUDINARY_PHOTO
+        passed('Cloudinary photo URL renders in register, full viewer and details without changing the record')
         passed('Failed sign-in, unauthorized account, legacy undated records and escaped student content')
         for section in ['students','admissions','courses','batches']:
             page.locator('#workspaceSummary [data-summary="'+section+'"]').click()
@@ -272,6 +286,7 @@ def run():
         with page.expect_download() as download: page.locator('#reportJson').click()
         backup=json.loads(Path(download.value.path()).read_text())
         assert len(backup['records'])==5
+        assert any(r['data'].get('photo')==CLOUDINARY_PHOTO for r in backup['records'])
         assert any(r['data'].get('customLegacyField')==42 for r in backup['records'])
         passed('Full CSV export and JSON backup retain legacy fields')
         page.locator('[data-section=settings]').click()

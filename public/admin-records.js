@@ -6,8 +6,18 @@ export function recordTime(value) {
     return Number.isFinite(time) ? time : 0;
 }
 
+export function isCloudinaryPhoto(value) {
+    // Standard raster delivery URLs only. No credentials, arbitrary hosts,
+    // HTML characters, query strings or transformations supplied as HTML.
+    return typeof value === "string" && value.length <= 2048
+        && /^https:\/\/res\.cloudinary\.com\/[A-Za-z0-9_-]+\/image\/(?:upload|private|authenticated)\/[A-Za-z0-9_.,!~():/+-]+\.(?:jpe?g|png|webp)$/.test(value);
+}
+
 export function isSafePhoto(value) {
-    return typeof value === "string" && /^data:image\/(?:jpeg|jpg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value);
+    return typeof value === "string" && (
+        /^data:image\/(?:jpeg|jpg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(value)
+        || isCloudinaryPhoto(value)
+    );
 }
 
 export function csvCell(value) {

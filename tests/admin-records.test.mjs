@@ -56,3 +56,30 @@ test('gender labels and edits allow all choices and preserve untouched legacy va
     assert.doesNotThrow(()=>validateChanges({}, {gender:''}));
     for (const gender of ['invalid',42,null]) assert.throws(()=>validateChanges({}, {gender}));
 });
+
+
+test('Cloudinary raster delivery URLs work alongside existing inline photos', () => {
+    for (const url of [
+        'https://res.cloudinary.com/test-cloud/image/upload/v123/student-123.jpg',
+        'https://res.cloudinary.com/test-cloud/image/upload/c_fill,w_360,h_360/v123/students/photo.png',
+        'https://res.cloudinary.com/test-cloud/image/authenticated/s--abc_123--/v123/student.webp',
+        'https://res.cloudinary.com/test-cloud/image/private/v123/student.jpeg',
+    ]) {
+        assert.ok(isSafePhoto(url),url);
+        assert.doesNotThrow(()=>validateChanges({}, {photo:url}));
+    }
+    for (const url of [
+        'http://res.cloudinary.com/test/image/upload/v1/photo.jpg',
+        'https://res.cloudinary.com.evil.test/test/image/upload/v1/photo.jpg',
+        'https://res.cloudinary.com@evil.test/test/image/upload/v1/photo.jpg',
+        'https://res.cloudinary.com/test/image/upload/v1/photo.svg',
+        'https://res.cloudinary.com/test/video/upload/v1/photo.jpg',
+        'https://res.cloudinary.com/test/image/upload/v1/photo.jpg" onerror="alert(1)',
+        'https://res.cloudinary.com/test/image/upload/v1/photo.jpg?redirect=evil',
+        'https://res.cloudinary.com/test/image/upload/v1/photo.jpg#fragment',
+        'https://res.cloudinary.com/test/image/upload/v1/photo.jpg\n',
+    ]) {
+        assert.ok(!isSafePhoto(url),url);
+        assert.throws(()=>validateChanges({}, {photo:url}));
+    }
+});
