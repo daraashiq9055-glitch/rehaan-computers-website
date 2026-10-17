@@ -26,6 +26,13 @@
 
 .location-section { padding: 80px 0; background: radial-gradient(ellipse at 20% 50%, #d6ad5506, transparent 60%), #0b0b0a; border-top: 1px solid #d6ad5522; }
 .location-layout { display: grid; grid-template-columns: .9fr 1.1fr; align-items: center; gap: 65px; }
+#location[hidden] { display: none; }
+.location-layout { position: relative; }
+.location-close { position: absolute; top: -52px; right: 0; display: inline-flex; align-items: center; gap: 6px; padding: 7px 12px; border: 1px solid #d6ad5545; border-radius: 999px; background: #17140e; color: #d6bd84; font: inherit; font-size: 14px; cursor: pointer; }
+.location-close span { font-size: 11px; }
+.location-close:hover { background: #2a2113; border-color: #d6ad55; }
+.location-close:focus-visible { outline: 2px solid #f2d38a; outline-offset: 4px; }
+#locationHeading:focus { outline: none; }
 .location-eyebrow { display: block; font-size: 10px; letter-spacing: .23em; font-weight: 700; color: #d6ad55; margin-bottom: 17px; }
 .location-copy h2 { margin: 0 0 20px; font: 500 clamp(32px, 4vw, 47px)/1.15 "Playfair Display", Georgia, serif; letter-spacing: -.8px; color: #f1e8d4; }
 .location-copy h2 em { color: #d6ad55; font-weight: 400; }
@@ -67,7 +74,7 @@
 @keyframes creator-name-shimmer { 50% { background-position: 100% 50%; } }
 @media (max-width: 1000px) { .location-layout { gap: 35px; } }
 @media (max-width: 760px) {
-    .location-section { padding: 50px 0; }
+    .location-section { padding: 68px 0 50px; }
     .location-layout { grid-template-columns: 1fr; gap: 30px; }
     .location-copy h2 { font-size: 36px; }
     .location-copy > p { max-width: none; }

@@ -156,43 +156,38 @@ visual module with no credential, database, or payment access.
 
 ## Public location and creator details
 
-The public page now includes a top Created by Dar Yasir badge that links to a
-styled footer creator credit, preserving the Managed by Dar Yasir attribution.
-A bottom location section has a browser-compatible Google Maps search button
-and a saved-pin link using the exact owner-supplied link: https://maps.app.goo.gl/oFssNm9peFexUEix7?g_st=awb .
-The embedded iframe is explicitly labeled as an area preview for Charangam,
-Beerwah; the restricted cloud proxy could not resolve the short URL to coordinates
-for an exact embedded pin. The saved-location links use the owner's URL verbatim.
-The map is lazy-loaded, and a visible external link remains available if the
-third-party embed cannot load. No Google API key or visitor location permission
-is required by this page.
+The public page includes a top Created by Dar Yasir badge linking to a styled
+footer creator credit, preserving the Managed by Dar Yasir attribution. Large
+pill-shaped Instagram, Facebook and Official Facebook Page links remain in the
+footer. The official page is https://www.facebook.com/share/14tvvFj3od1/ .
 
-Public changes are isolated to public/index.html and public/site-details.css,
-with matching root copies. Preserve all existing public assets and payment files
-when preparing any deployment. Test with:
+The location section is hidden initially. A normal click on the footer map link
+reveals it, loads the map iframe for the first time and scrolls to its heading.
+The footer toggle, Hide Map control and Escape key can close it. The embedded
+map uses the owner-supplied coordinates 34.026895, 74.643088 rather than an area
+search or app-style short link.
+
+Open Google Maps opens this standard browser directions link in a new tab:
+https://www.google.com/maps/dir/?api=1&destination=34.026895%2C74.643088&travelmode=driving&dir_action=navigate
+
+The origin is omitted so Maps can use the visitor's current location. Maps may
+need location permission or a manually selected start point. Google chooses its
+recommended driving route; the website does not guarantee the mathematically
+shortest route. A separate View Exact Pin link opens a coordinate search. No
+geolocation permission is requested by our website, and no Google API key is
+needed. Without JavaScript, the footer link opens directions directly.
+
+Public changes are scoped to public/index.html, public/site-details.css and
+public/site-details.js, with matching root copies. Existing public assets,
+admissions scripts, payment code and Firebase rules are preserved. Test with:
 
 ```sh
 python3 tests/site-details-browser.py
 python3 tests/admin-browser.py
 ```
 
-The site test mocks the map provider, fonts and Firebase. It verifies the link
-URL and new-tab behavior, creator navigation, layouts and existing course/form
-startup; it does not verify Google's live map rendering or the geographic pin.
-
-
-## Enlarged map and social buttons
-
-The primary map button and footer map button now use the standard Google Maps
-browser search URL for Rehaan Computers, Charangam, Beerwah, Kashmir. This avoids
-relying on the app-style short redirect for the main action. The exact shared-pin
-short URL remains available separately on the map card; the primary browser
-search is not a verified geographic pin.
-
-Map and footer social links are larger pill-shaped controls with visible labels,
-icons and keyboard focus indicators. The existing Instagram and Facebook links
-are retained. The third social link is Official Facebook Page, using exactly
-https://www.facebook.com/share/14tvvFj3od1/ . Links open in new tabs with noopener.
-The public browser suite verifies destination URLs, popup navigation, rounded
-button sizes, and responsive layouts. Its external destinations are mocked;
-live third-party service availability is not certified by these tests.
+The public test mocks Google Maps and verifies reveal/hide behavior, no map load
+before a click, exact destination parameters, popup behavior, keyboard controls,
+creator navigation, mobile/tablet/desktop layouts, existing course/form startup
+and the no-JavaScript fallback. It does not calculate routes or certify Google's
+live services. No student writes, payments, emails or message sends occur.
