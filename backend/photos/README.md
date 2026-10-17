@@ -135,3 +135,25 @@ simulated Cloudinary/Firestore responses. A dry-run bundles and validates
 configuration; it does not deploy, set secrets or prove account connectivity.
 No real student writes, image uploads, payments, emails or messages were made
 while implementing or testing this code.
+
+## Connection check before enabling student uploads
+
+A successful /health result confirms secret presence and the rate limiter only.
+It does not verify Cloudinary credentials/preset or the Firestore admin read.
+Update your local clone, start the preview server, sign in at
+http://localhost:8000/admin.html and open Settings → Test Cloudinary connection.
+Click Run connection test. The test works with enabled:false, so the current
+student photo-storage behavior does not change during verification.
+
+The test uploads one newly generated 360px JPEG using the signed-in admin's
+ID token, verifies that the photo service refuses an unauthenticated image read,
+then retrieves and decodes the image with the admin token. A successful result
+shows the generated image. It never creates/edits a student or payment record,
+opens checkout or sends messages. Each attempt may leave a private generated
+asset in Cloudinary; there is no automatic deletion. The check covers the photo
+service's signed-out access denial. Independently confirm authenticated delivery
+in the Cloudinary account before production activation, as described above.
+
+Report the on-screen result before changing enabled. Do not send API secrets,
+Firebase ID tokens or real student photos. A test failure leaves normal student
+upload behavior unchanged; use its error text to diagnose configuration.

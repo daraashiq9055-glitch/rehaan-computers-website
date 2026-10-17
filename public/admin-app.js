@@ -1,5 +1,5 @@
 import { photoStorageConfig } from "./photo-storage-config.js";
-import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js";
+import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto, testPhotoStorage } from "./photo-storage.js";
 let activePhotoMigration = null;
 
 // Admin features adapted from website-updates d738bb2. The public site keeps its existing script.
@@ -2616,10 +2616,11 @@ function updateWorkspace() {
             downloadFile(text,"rehaan-student-backup-" + new Date().toISOString().slice(0,10) + ".json","application/json");
         };
     } else if (workspaceSection === "settings") {
-        view.innerHTML = `<section class="workspace-card"><h2>Your workspace</h2><dl class="workspace-settings"><dt>Signed in as</dt><dd>${escapeHTML(auth.currentUser?.email || "Administrator")}</dd><dt>Firebase project</dt><dd>${escapeHTML(firebaseConfig.projectId)}</dd><dt>Student register</dt><dd>applications · ${apps.length} loaded records</dd><dt>Admission fee</dt><dd>₹${ADMISSION_FEE} · separate from monthly tuition</dd><dt>Monthly tuition</dt><dd>₹${MONTHLY_TUITION_FEE} · admission anniversary</dd><dt>Session</dt><dd>Memory only · sign-in required after reloading</dd></dl><div class="workspace-report-actions"><button class="admin-save-btn" id="settingsRefresh">Refresh student register</button><button class="admin-ghost-btn" id="settingsLogout">Sign out securely</button><a href="index.html" class="admin-ghost-btn">Visit public website ↗</a><button class="admin-ghost-btn" id="settingsMigratePhotos" ${photoStorageConfig.enabled ? "" : "disabled"}>Transfer existing photos to Cloudinary</button></div><p>${photoStorageConfig.enabled ? "Transferred photos stay visible in the register. Download a backup before starting." : "Cloudinary uploads will be available after the photo service is configured."}</p></section>`;
+        view.innerHTML = `<section class="workspace-card"><h2>Your workspace</h2><dl class="workspace-settings"><dt>Signed in as</dt><dd>${escapeHTML(auth.currentUser?.email || "Administrator")}</dd><dt>Firebase project</dt><dd>${escapeHTML(firebaseConfig.projectId)}</dd><dt>Student register</dt><dd>applications · ${apps.length} loaded records</dd><dt>Admission fee</dt><dd>₹${ADMISSION_FEE} · separate from monthly tuition</dd><dt>Monthly tuition</dt><dd>₹${MONTHLY_TUITION_FEE} · admission anniversary</dd><dt>Session</dt><dd>Memory only · sign-in required after reloading</dd></dl><div class="workspace-report-actions"><button class="admin-save-btn" id="settingsRefresh">Refresh student register</button><button class="admin-ghost-btn" id="settingsLogout">Sign out securely</button><a href="index.html" class="admin-ghost-btn">Visit public website ↗</a><button class="admin-ghost-btn" id="settingsTestPhotos">Test Cloudinary connection</button><button class="admin-ghost-btn" id="settingsMigratePhotos" ${photoStorageConfig.enabled ? "" : "disabled"}>Transfer existing photos to Cloudinary</button></div><p>${photoStorageConfig.enabled ? "Transferred photos stay visible in the register. Download a backup before starting." : "Cloudinary uploads will be available after the photo service is configured."}</p></section>`;
         getElement("settingsRefresh").onclick = loadApplications;
         getElement("settingsLogout").onclick = handleAdminLogout;
         getElement("settingsMigratePhotos").onclick = openPhotoMigration;
+        getElement("settingsTestPhotos").onclick = openPhotoConnectionTest;
     }
 }
 
@@ -2708,6 +2709,38 @@ function openPhotoMigration() {
             stop.hidden = true; modal._canClose = true;
             modal.querySelector(".admin-modal-close").disabled = false;
             if (verifiedAdminUid) await loadApplications();
+        }
+    };
+}
+
+
+function openPhotoConnectionTest() {
+    requireAdmin();
+    const modal = adminCreateModal("adminPhotoConnectionTest", `<div class="admin-modal-card">
+        <button type="button" class="admin-modal-close" aria-label="Close">×</button>
+        <h3>Test Cloudinary connection</h3>
+        <p>This stores one generated test image in Cloudinary and checks private viewing. No student record or payment is created.</p>
+        <button type="button" class="admin-save-btn" id="photoConnectionRun">Run connection test</button>
+        <p id="photoConnectionMessage" class="admin-modal-msg" role="status">Ready to test.</p>
+        <img id="photoConnectionPreview" alt="Generated connection test image" width="180" height="180" hidden>
+    </div>`);
+    const button = modal.querySelector("#photoConnectionRun"), message = modal.querySelector("#photoConnectionMessage"), preview = modal.querySelector("#photoConnectionPreview");
+    button.onclick = async () => {
+        if (button.disabled) return;
+        const uid = verifiedAdminUid;
+        requireAdmin(); button.disabled = true;
+        message.textContent = "Testing upload and private viewing…";
+        try {
+            const result = await testPhotoStorage(adminPhotoToken);
+            if (!button.isConnected || verifiedAdminUid !== uid) return;
+            preview.dataset.photoReference = result.photo;
+            preview.src = result.previewUrl; preview.hidden = false;
+            message.textContent = "Passed: upload and administrator viewing work; signed-out access is blocked. No student or payment record was created.";
+        } catch (error) {
+            if (button.isConnected && verifiedAdminUid === uid) {
+                message.textContent = "Test did not pass: " + (error.message || "Check your connection and try later.") + " Student uploads remain unchanged.";
+                button.disabled = false;
+            }
         }
     };
 }

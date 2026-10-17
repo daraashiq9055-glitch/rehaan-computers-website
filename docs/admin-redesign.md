@@ -333,3 +333,11 @@ signing, file/size/dimension limits, origin/rate checks, admin verification,
 restricted delivery paths, stale-session responses and upload retry caching.
 Cloudinary signature generation was also compared with official Node SDK 2.11.0.
 Wrangler 4.151.1 dry-run validated configuration/bundling; it did not deploy.
+
+A manual Settings → Test Cloudinary connection action now works while student
+Cloudinary uploads are disabled. It uploads a generated test image, checks
+signed-out service denial, fetches/decodes the image as an admin, and displays
+the result. It never writes student/payment records or starts checkout. The
+browser test simulates upload failure, denied admin viewing, unexpectedly public
+service access, and success in both feature configurations. A passing /health
+alone is not sufficient to enable student uploads.

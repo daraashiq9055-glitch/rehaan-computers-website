@@ -21,6 +21,9 @@ async function photoResponse(response) {
 }
 export async function storeStudentPhoto(dataUrl, getToken) {
     if (!dataUrl || !config.enabled || isPrivateStudentPhoto(dataUrl)) return dataUrl || '';
+    return uploadStudentPhoto(dataUrl, getToken);
+}
+async function uploadStudentPhoto(dataUrl, getToken) {
     if (!/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(dataUrl) || dataUrl.length > 500000) throw new Error('Choose a valid cropped JPG photograph.');
     if (uploaded.has(dataUrl)) return uploaded.get(dataUrl);
     const bytes = Uint8Array.from(atob(dataUrl.split(',')[1]),char => char.charCodeAt(0));
@@ -81,4 +84,37 @@ export function clearPhotoSession() {
             if (isPrivateStudentPhoto(image.dataset.photoReference)) image.removeAttribute('src');
         }
     }
+}
+
+
+export async function testPhotoStorage(getToken) {
+    if (typeof getToken !== 'function') throw new Error('Sign in as an administrator first.');
+    const epoch = generation;
+    const canvas = document.createElement('canvas'); canvas.width = 360; canvas.height = 360;
+    const context = canvas.getContext('2d');
+    context.fillStyle = '#17140d'; context.fillRect(0,0,360,360);
+    context.fillStyle = '#d9b565'; context.fillRect(24,24,312,312);
+    context.fillStyle = '#17140d'; context.font = 'bold 24px sans-serif';
+    context.fillText('Photo connection test',42,165);
+    context.font = '14px sans-serif'; context.fillText(crypto.randomUUID().slice(0,18),42,205);
+    const photo = await uploadStudentPhoto(canvas.toDataURL('image/jpeg',.82),getToken);
+    const address = serviceUrl('/photo')+'?photo='+encodeURIComponent(photo);
+    // Also verify that this service denies image reads without an admin token.
+    const anonymous = await fetch(address,{cache:'no-store',signal:AbortSignal.timeout(20000)});
+    if (anonymous.status !== 401) throw new Error('Private-access check failed. Keep Cloudinary uploads disabled.');
+    const token = await getToken();
+    const response = await photoResponse(await fetch(address,{
+        headers:{Authorization:`Bearer ${token}`},cache:'no-store',signal:AbortSignal.timeout(20000)
+    }));
+    if (response.headers.get('Content-Type')?.split(';')[0] !== 'image/jpeg') throw new Error('Photo service returned an unexpected image format.');
+    const blob = await response.blob();
+    if (epoch !== generation) throw new Error('Session changed. Sign in again before testing.');
+    const previewUrl = URL.createObjectURL(blob);
+    try {
+        const image = new Image(); image.src = previewUrl; await image.decode();
+        if (image.naturalWidth !== 360 || image.naturalHeight !== 360) throw new Error('Photo service returned an unexpected image size.');
+        if (epoch !== generation) throw new Error('Session changed. Sign in again before testing.');
+        objectUrls.add(previewUrl);
+        return {photo,previewUrl};
+    } catch (error) { URL.revokeObjectURL(previewUrl); throw error; }
 }
