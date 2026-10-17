@@ -86,6 +86,7 @@ public/admin-app.js
 public/admin-records.js
 public/admin-dashboard.css
 public/admin-gold.css
+public/admin-login-effects.js
 public/admin-fonts/
 ```
 
@@ -117,8 +118,8 @@ The login and workspace now use the public site's black/gold palette, bundled
 Inter and Playfair Display fonts, larger register text, and high-contrast tabs.
 The four summary cards navigate directly to students, pending applications,
 courses, and batches. Register tabs reset stale filters and support arrow keys,
-Home, and End. Passwords remain masked with no Show/Hide control. The floating
-emblem, orbiting gold ring and soft panel light honor reduced-motion preferences.
+Home, and End. Passwords remain masked with no Show/Hide control. The animated
+learning artwork and soft panel light honor reduced-motion preferences.
 Fonts are served locally with the admin assets, so they do not require Google
 Fonts network access. Preserve the included font license notices when copying.
 
@@ -138,3 +139,14 @@ python -m http.server 8000 --directory public
 
 Open the local admin page and use Ctrl+F5 to refresh cached styles. The preview
 still connects to the live Firebase project, so real data edits are real writes.
+
+
+## Learning-focused login artwork
+
+The login illustration now centers on learning: an open book, lesson cards, and a
+Learn / Practice / Grow path inside a laptop. Decorative animations include a
+floating laptop/book, moving lesson cards, a light path and a gentle mouse-driven
+tilt. The form stays stationary. A Pause Motion control pauses the decoration;
+reduced-motion device preferences disable it automatically. The password remains
+masked and there is no Show/Hide control. admin-login-effects.js is a standalone
+visual module with no credential, database, or payment access.

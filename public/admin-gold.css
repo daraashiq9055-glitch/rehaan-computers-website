@@ -392,6 +392,71 @@ footer { font-size: 12px; color: #b1a285; }
 @media (max-width: 420px) {
     .admin-tab svg { display: none; }
 }
+
+/* Learning workspace: digital lessons, an open book, and a Learn / Practice / Grow path. */
+.login-story { padding-top: 32px; }
+.login-story::before { background-size: 28px 28px; opacity: .7; }
+.login-story-copy h2 { font-family: "Inter", system-ui, sans-serif; font-size: 39px; font-weight: 650; letter-spacing: -1.8px; line-height: 1.2; }
+.login-story-copy h2 em { font-style: normal; font-weight: 450; background: linear-gradient(110deg, #f2d38a, #c79a41); background-clip: text; -webkit-background-clip: text; color: transparent; }
+.login-story-copy p { font-size: 13px; color: #b2a587; max-width: 360px; }
+.login-panel h1 { font-family: "Inter", system-ui, sans-serif; font-weight: 600; font-size: 38px; letter-spacing: -1.6px; }
+.login-machine { position: relative; width: calc(100% + 48px); margin: 23px -24px 12px; height: 300px; display: grid; place-items: center; perspective: 800px; }
+.machine-tilt { position: relative; z-index: 1; width: 100%; height: 100%; display: grid; place-items: center; transform: rotateX(var(--machine-x, 0deg)) rotateY(var(--machine-y, 0deg)); transition: transform .45s ease-out; }
+.machine-laptop { width: 100%; height: 100%; max-height: 100%; display: block; overflow: visible; animation: computer-float 6s ease-in-out infinite; filter: drop-shadow(0 16px 15px #0007); }
+.machine-aura { position: absolute; width: 84%; height: 70%; border-radius: 50%; background: radial-gradient(ellipse, #d6ad5518, #d6ad5508 40%, transparent 70%); filter: blur(15px); animation: computer-glow 6s ease-in-out infinite; }
+.machine-signal { stroke-dasharray: 12 88; stroke-dashoffset: 100; animation: circuit-flow 3.6s linear infinite; }
+.signal-two { animation-delay: -1.2s; }
+.signal-three { animation-delay: -2.4s; }
+.signal-four { animation-delay: -.6s; }
+.machine-scan { animation: screen-scan 7s ease-in-out infinite; }
+.machine-node { animation: node-pulse 3s ease-in-out infinite; }
+.node-two { animation-delay: -1.5s; }
+.machine-code { position: absolute; z-index: 2; width: 46px; height: 46px; display: grid; place-items: center; font: 500 17px "Inter", sans-serif; color: #d6b769; border: 1px solid #92723a70; border-radius: 12px; background: linear-gradient(135deg, #312718cc, #14120dd9); box-shadow: 0 10px 25px #0004, inset 0 1px #f2d38a0d; animation: code-float 5s ease-in-out infinite; }
+.code-left { left: 6%; top: 18%; transform: rotate(-9deg); }
+.code-right { right: 4%; bottom: 19%; animation-delay: -2.5s; }
+.machine-caption { position: absolute; bottom: -2px; color: #bba16b; font-size: 8px; letter-spacing: 3px; }
+.login-motion-toggle { position: relative; align-self: flex-end; border: 0; padding: 5px 0; font-size: 10px; color: #af9b71; background: transparent; box-shadow: none; margin-bottom: 13px; }
+.login-motion-toggle:hover:not(:disabled) { background: transparent; color: #eacb80; }
+.login-motion-toggle:disabled { opacity: .75; }
+.motion-paused .login-machine *, .motion-paused .login-panel::before { animation-play-state: paused !important; }
+.signed-in .login-machine *, .signed-in .login-panel::before { animation-play-state: paused !important; }
+@keyframes computer-float { 50% { transform: translateY(-10px) rotate(-.6deg); } }
+@keyframes computer-glow { 50% { opacity: .4; transform: scale(.93); } }
+@keyframes circuit-flow { to { stroke-dashoffset: -100; } }
+@keyframes screen-scan { 0%, 100% { transform: translateY(0); opacity: 0; } 12% { opacity: 1; } 85% { transform: translateY(190px); opacity: 1; } 95% { transform: translateY(190px); opacity: 0; } }
+@keyframes node-pulse { 50% { opacity: .25; } }
+@keyframes code-float { 50% { translate: 0 -10px; } }
+@media (max-width: 1000px) {
+    .login-machine { height: 270px; }
+    .login-story-copy h2 { font-size: 33px; }
+    .login-story-footer { gap: 8px; font-size: 7px; }
+}
+@media (max-width: 700px) {
+    .login-story { padding: 22px 24px 9px; }
+    .login-machine { display: grid; height: 160px; width: 270px; max-width: 100%; margin: 12px auto 0; }
+    .machine-laptop { max-height: 170px; }
+    .machine-code { width: 32px; height: 32px; border-radius: 8px; font-size: 13px; }
+    .machine-caption { display: none; }
+    .login-motion-toggle { font-size: 10px; margin: 0; }
+    .login-panel { padding-top: 25px; }
+    .login-panel h1 { font-size: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .login-machine *, .login-panel::before { animation: none !important; transition: none !important; }
+    .machine-signal { stroke-dasharray: none; opacity: .5; }
+    .machine-scan { display: none; }
+    .machine-tilt { transform: none; }
+}
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+.learning-book { transform-origin: 270px 160px; animation: learning-book-float 6s ease-in-out infinite; }
+.learning-page-lines { animation: learning-lines 4s ease-in-out infinite; }
+.learning-card { animation: lesson-card-float 5s ease-in-out infinite; }
+.lesson-card-two { animation-delay: -2.5s; }
+.node-three { animation-delay: -2s; }
+@keyframes learning-book-float { 50% { transform: translateY(-3px) rotate(-1deg); } }
+@keyframes learning-lines { 50% { opacity: .45; } }
+@keyframes lesson-card-float { 50% { transform: translateY(-5px); } }
+@media (prefers-reduced-motion: reduce) { .learning-book, .learning-page-lines, .learning-card { animation: none !important; } }
