@@ -86,3 +86,65 @@
     .creator-signature::after, .creator-name { animation: none; }
     .creator-top-badge, .location-primary, .location-secondary { transition: none; }
 }
+
+/* Large pill links match the existing rounded Admin Login control. */
+.location-actions .location-primary {
+    min-height: 52px;
+    min-width: 205px;
+    border-radius: 999px;
+    padding: 14px 24px;
+    font-size: 14px;
+}
+.site-footer .footer-location-link {
+    display: inline-flex;
+    justify-content: center;
+    gap: 9px;
+    border-radius: 999px;
+    border: 1px solid #b78e435c;
+    background: linear-gradient(120deg, #d6ad5517, #d6ad5505);
+    color: #efd28c;
+    padding: 12px 17px;
+    margin: 16px 0 10px;
+    min-height: 46px;
+    font-size: 12px;
+    font-weight: 600;
+    text-decoration: none;
+}
+.site-footer .footer-social-links { display: grid; gap: 11px; margin-top: 19px; }
+.site-footer .footer-social .footer-social-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    min-height: 48px;
+    padding: 8px 13px 8px 9px;
+    margin: 0;
+    border-radius: 999px;
+    border: 1px solid #b78e434a;
+    background: linear-gradient(110deg, #d6ad5510, #d6ad5503);
+    color: #e3cf9e;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1.5;
+    text-decoration: none;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+}
+.footer-link-icon { display: grid; place-items: center; flex-shrink: 0; width: 30px; height: 30px; border-radius: 50%; background: #d6ad5516; color: #e5c577; }
+.footer-link-icon svg { width: 16px; height: 16px; }
+.footer-social-link > .site-link-arrow { margin-left: auto; color: #b79b5e; }
+.site-footer .footer-social .footer-social-link:hover, .site-footer .footer-location-link:hover {
+    transform: none;
+    color: #f7dda1;
+    background: #d6ad551c;
+    border-color: #d6ad55;
+    box-shadow: 0 5px 22px #d6ad550d;
+}
+.footer-social-link:focus-visible { outline: 2px solid #f2d38a; outline-offset: 4px; }
+@media (max-width: 760px) {
+    .site-footer .footer-social { grid-column: 1 / -1; }
+    .site-footer .footer-social .footer-social-link { min-height: 51px; font-size: 13px; padding-right: 17px; }
+    .site-footer .footer-location-link { padding: 12px 13px; font-size: 11px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .site-footer .footer-social .footer-social-link { transition: none; }
+}

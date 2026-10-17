@@ -158,8 +158,8 @@ visual module with no credential, database, or payment access.
 
 The public page now includes a top Created by Dar Yasir badge that links to a
 styled footer creator credit, preserving the Managed by Dar Yasir attribution.
-A bottom location section has Google Maps buttons using the exact owner-supplied
-link: https://maps.app.goo.gl/oFssNm9peFexUEix7?g_st=awb .
+A bottom location section has a browser-compatible Google Maps search button
+and a saved-pin link using the exact owner-supplied link: https://maps.app.goo.gl/oFssNm9peFexUEix7?g_st=awb .
 The embedded iframe is explicitly labeled as an area preview for Charangam,
 Beerwah; the restricted cloud proxy could not resolve the short URL to coordinates
 for an exact embedded pin. The saved-location links use the owner's URL verbatim.
@@ -179,3 +179,20 @@ python3 tests/admin-browser.py
 The site test mocks the map provider, fonts and Firebase. It verifies the link
 URL and new-tab behavior, creator navigation, layouts and existing course/form
 startup; it does not verify Google's live map rendering or the geographic pin.
+
+
+## Enlarged map and social buttons
+
+The primary map button and footer map button now use the standard Google Maps
+browser search URL for Rehaan Computers, Charangam, Beerwah, Kashmir. This avoids
+relying on the app-style short redirect for the main action. The exact shared-pin
+short URL remains available separately on the map card; the primary browser
+search is not a verified geographic pin.
+
+Map and footer social links are larger pill-shaped controls with visible labels,
+icons and keyboard focus indicators. The existing Instagram and Facebook links
+are retained. The third social link is Official Facebook Page, using exactly
+https://www.facebook.com/share/14tvvFj3od1/ . Links open in new tabs with noopener.
+The public browser suite verifies destination URLs, popup navigation, rounded
+button sizes, and responsive layouts. Its external destinations are mocked;
+live third-party service availability is not certified by these tests.
