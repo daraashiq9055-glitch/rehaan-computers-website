@@ -205,13 +205,14 @@ the same options and readable labels. Untouched legacy values survive edits.
 Only application capture/validation and the optional-field allowlist changed;
 the Razorpay order, verification, resume and reconciliation implementation is
 unchanged. Cloudinary upload and an administrator-started existing-photo transfer
-are prepared separately below; they remain disabled until the service is configured.
+are described separately below. The preview is now enabled after the owner
+confirmed the live service connection test. Existing-photo transfer remains manual.
 
 100 student records is a modest Firestore dataset. The dashboard currently adds
 students individually; there is no bulk spreadsheet importer. Capacity depends
 on actual document sizes, reads/writes and the project's plan, rather than a
-100-student limit. Firestore's document limit is 1 MiB. This preview still stores
-cropped base64 images in documents; moving photos to Cloudinary can reduce
+100-student limit. Firestore's document limit is 1 MiB. Older records may still
+contain cropped base64 images; new preview uploads use Cloudinary, reducing
 Firestore document size and read traffic. Only photo URLs/public IDs should be
 stored in Firestore after a separately reviewed integration. Cloudinary API
 secrets must stay on a server, and photo access controls must reflect that
@@ -349,3 +350,11 @@ native HTTP requests (local provider fixtures), upload/private viewing and
 redirect rejection. It is an extra runtime check beyond unit mocks and dry-run
 bundling. Redeploy the separate photo Worker after pulling this fix; no new
 secrets, Firebase rules changes, Hosting deployment or data migration is needed.
+
+
+After the owner reported a successful live admin connection test, Cloudinary is
+now enabled in the preview configuration. New form photos, offline-entry photos
+and replacements store references. Existing photos stay visible and can be
+transferred through Settings after downloading the originals backup. No automatic
+migration or production Hosting deployment was performed. The live website keeps
+its currently deployed behavior until the frontend is explicitly published.

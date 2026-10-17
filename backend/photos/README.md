@@ -1,8 +1,10 @@
 # Rehaan student photo service
 
 Prepared for Cloudinary cloud `salatmdv`, signed preset `ml_default`.
-The public configuration ships **disabled**, preserving the current live flow
-until this separate service is deployed and checked. There is no payment Worker
+The preview configuration is now **enabled** after the owner reported a passing
+live admin upload/private-viewing check. This does not deploy the frontend or
+transfer existing photos automatically. For a different service/account, keep
+student uploads disabled until its connection test passes. There is no payment Worker
 change, Firestore schema migration or automatic frontend deployment.
 
 ## How photos work
@@ -189,3 +191,16 @@ disabled until the manual connection check passes.
 Failures now include a fixed PHOTO_* stage code without raw provider error text,
 credentials, photo bytes or Firebase tokens. Cloudinary HTTP rejection messages
 include only its status code and configuration guidance.
+
+
+## Current preview activation
+
+The owner confirmed both /health readiness and a passing Run connection test
+against the deployed service. The preview's root/public photo-storage-config.js
+now sets enabled:true for the existing service URL. Updating the local clone
+activates Cloudinary for new online/offline/replacement photos in that preview.
+The Settings transfer tool is also available; it is never started automatically.
+Use its original-photo backup before transferring. Payments and Firestore rules
+were not changed by activation. The owner still needs to publish the reviewed
+frontend separately for visitors to use it. Local previews use the live database,
+so manual saves/transfers are real writes even before a Hosting deployment.
