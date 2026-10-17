@@ -1,8 +1,10 @@
 # Admin workspace redesign
 
-This change affects only admin.html and its new admin-only assets. The public
-website's index.html, script.js, styles, Firebase project, and admissions
-collection are unchanged. There is no data migration or automatic database write.
+The dashboard redesign uses admin-only assets and the existing Firebase project
+and applications collection. Later public-page additions change index.html and
+add site-details.css for the map and creator credits. Public script.js, existing
+styles, payment code, Firebase configuration and rules are unchanged. There is
+no data migration or automatic database write.
 
 ## Feature baseline
 
@@ -146,7 +148,34 @@ still connects to the live Firebase project, so real data edits are real writes.
 The login illustration now centers on learning: an open book, lesson cards, and a
 Learn / Practice / Grow path inside a laptop. Decorative animations include a
 floating laptop/book, moving lesson cards, a light path and a gentle mouse-driven
-tilt. The form stays stationary. A Pause Motion control pauses the decoration;
-reduced-motion device preferences disable it automatically. The password remains
+tilt. The form stays stationary. The Pause Motion button has been removed at the owner's request;
+reduced-motion device preferences still disable the decoration automatically. The password remains
 masked and there is no Show/Hide control. admin-login-effects.js is a standalone
 visual module with no credential, database, or payment access.
+
+
+## Public location and creator details
+
+The public page now includes a top Created by Dar Yasir badge that links to a
+styled footer creator credit, preserving the Managed by Dar Yasir attribution.
+A bottom location section has Google Maps buttons using the exact owner-supplied
+link: https://maps.app.goo.gl/oFssNm9peFexUEix7?g_st=awb .
+The embedded iframe is explicitly labeled as an area preview for Charangam,
+Beerwah; the restricted cloud proxy could not resolve the short URL to coordinates
+for an exact embedded pin. The saved-location links use the owner's URL verbatim.
+The map is lazy-loaded, and a visible external link remains available if the
+third-party embed cannot load. No Google API key or visitor location permission
+is required by this page.
+
+Public changes are isolated to public/index.html and public/site-details.css,
+with matching root copies. Preserve all existing public assets and payment files
+when preparing any deployment. Test with:
+
+```sh
+python3 tests/site-details-browser.py
+python3 tests/admin-browser.py
+```
+
+The site test mocks the map provider, fonts and Firebase. It verifies the link
+URL and new-tab behavior, creator navigation, layouts and existing course/form
+startup; it does not verify Google's live map rendering or the geographic pin.

@@ -102,19 +102,14 @@ def run():
         expect(page.locator('#togglePassword')).to_have_count(0)
         expect(page.locator('#adminPassword')).to_have_attribute('type','password')
         expect(page.get_by_role('button',name='Show password')).to_have_count(0)
-        expect(page.locator('#loginMotionToggle')).to_be_disabled()
+        expect(page.locator('#loginMotionToggle')).to_have_count(0)
         page.emulate_media(reduced_motion='no-preference')
-        expect(page.locator('#loginMotionToggle')).to_be_enabled()
-        page.locator('#loginMotionToggle').click()
-        expect(page.locator('#loginMotionToggle')).to_have_attribute('aria-pressed','true')
-        expect(page.locator('.machine-laptop')).to_have_css('animation-play-state','paused')
-        page.locator('#loginMotionToggle').click()
         expect(page.locator('.machine-laptop')).to_have_css('animation-play-state','running')
         story=page.locator('.login-story').bounding_box()
         page.mouse.move(story['x']+100,story['y']+170)
         page.wait_for_function('document.querySelector(".login-story").style.getPropertyValue("--machine-y") !== "0deg" && document.querySelector(".login-story").style.getPropertyValue("--machine-y") !== ""')
         page.emulate_media(reduced_motion='reduce')
-        expect(page.locator('#loginMotionToggle')).to_be_disabled()
+        expect(page.locator('.machine-laptop')).to_have_css('animation-name','none')
         assert page.locator('.login-panel').bounding_box()['x'] > page.locator('.login-story').bounding_box()['x'] + 300
         assert page.locator('.login-panel').bounding_box()['y'] == page.locator('.login-story').bounding_box()['y']
         artifacts=ROOT/'tests'/'artifacts';artifacts.mkdir(exist_ok=True)
@@ -124,7 +119,7 @@ def run():
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
         page.screenshot(path=str(artifacts/'admin-login-mobile.png'),animations='disabled',full_page=True)
         page.set_viewport_size({'width':1440,'height':1100})
-        passed('Learning artwork, pointer tilt, pause/resume, reduced motion and masked password on desktop/mobile')
+        passed('Learning artwork, pointer tilt, no pause button, reduced motion and masked password on desktop/mobile')
         assert page.evaluate('__fixture.writes.length')==0
         passed('Dashboard hidden and no writes before authentication')
         def login(password='valid-password'):

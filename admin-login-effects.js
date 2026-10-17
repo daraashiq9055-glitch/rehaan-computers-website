@@ -1,9 +1,7 @@
 // Decorative login interactions only. No credentials, database or payment access.
 const card = document.getElementById("adminLoginCard");
 const story = card?.querySelector(".login-story");
-const toggle = document.getElementById("loginMotionToggle");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-let pausedByUser = false;
 let frame = 0;
 let pointer;
 
@@ -13,30 +11,19 @@ function resetTilt() {
 }
 
 function updateMotion() {
-    const paused = pausedByUser || reducedMotion.matches;
-    card?.classList.toggle("motion-paused", paused);
-    if (toggle) {
-        toggle.setAttribute("aria-pressed", String(paused));
-        toggle.textContent = paused ? "Motion paused" : "Pause motion";
-        toggle.disabled = reducedMotion.matches;
-        toggle.title = reducedMotion.matches ? "Motion is disabled by your device preference." : "Pause or resume decorative animation.";
-    }
-    if (paused) resetTilt();
+    card?.classList.toggle("motion-paused", reducedMotion.matches);
+    if (reducedMotion.matches) resetTilt();
 }
 
-toggle?.addEventListener("click", () => {
-    pausedByUser = !pausedByUser;
-    updateMotion();
-});
 reducedMotion.addEventListener("change", updateMotion);
 
 story?.addEventListener("pointermove", event => {
-    if (event.pointerType !== "mouse" || pausedByUser || reducedMotion.matches || document.body.classList.contains("signed-in")) return;
+    if (event.pointerType !== "mouse" || reducedMotion.matches || document.body.classList.contains("signed-in")) return;
     pointer = { x: event.clientX, y: event.clientY };
     if (frame) return;
     frame = requestAnimationFrame(() => {
         frame = 0;
-        if (!pointer || pausedByUser || reducedMotion.matches || document.body.classList.contains("signed-in")) return;
+        if (!pointer || reducedMotion.matches || document.body.classList.contains("signed-in")) return;
         const box = story.getBoundingClientRect();
         const x = Math.max(-.5, Math.min(.5, (pointer.x - box.left) / box.width - .5));
         const y = Math.max(-.5, Math.min(.5, (pointer.y - box.top) / box.height - .5));

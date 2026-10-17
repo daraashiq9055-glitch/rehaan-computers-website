@@ -1,0 +1,88 @@
+/* Creator credit and location additions; public forms and payment UI are untouched. */
+.topbar .creator-top-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 6px 11px;
+    border: 1px solid #d6ad5550;
+    border-radius: 999px;
+    color: #c7b78e;
+    background: linear-gradient(110deg, #d6ad5512, #d6ad5503);
+    font-size: 10px;
+    line-height: 1.5;
+    letter-spacing: .02em;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: border-color .2s, box-shadow .2s;
+}
+.topbar .creator-top-badge strong { color: #f2d38a; font-weight: 650; }
+.topbar .creator-top-badge svg { width: 13px; height: 13px; stroke-width: 1.6; }
+.topbar .creator-top-badge:hover { border-color: #d6ad55; box-shadow: 0 0 20px #d6ad5510; }
+.creator-top-badge:focus-visible, .location-section a:focus-visible, .footer-location-link:focus-visible, .creator-signature:focus {
+    outline: 2px solid #f2d38a;
+    outline-offset: 5px;
+}
+
+.location-section { padding: 80px 0; background: radial-gradient(ellipse at 20% 50%, #d6ad5506, transparent 60%), #0b0b0a; border-top: 1px solid #d6ad5522; }
+.location-layout { display: grid; grid-template-columns: .9fr 1.1fr; align-items: center; gap: 65px; }
+.location-eyebrow { display: block; font-size: 10px; letter-spacing: .23em; font-weight: 700; color: #d6ad55; margin-bottom: 17px; }
+.location-copy h2 { margin: 0 0 20px; font: 500 clamp(32px, 4vw, 47px)/1.15 "Playfair Display", Georgia, serif; letter-spacing: -.8px; color: #f1e8d4; }
+.location-copy h2 em { color: #d6ad55; font-weight: 400; }
+.location-copy > p { font-size: 14px; color: #aaa18e; line-height: 1.8; max-width: 390px; }
+.location-address { display: flex; align-items: center; gap: 15px; margin: 26px 0; }
+.location-pin { display: grid; place-items: center; width: 44px; height: 48px; flex-shrink: 0; border: 1px solid #d6ad5540; border-radius: 11px; background: #d6ad550b; }
+.location-pin svg { width: 23px; height: 23px; fill: none; stroke: #e0bf70; stroke-width: 1.4; }
+.location-address strong { color: #f0dfb3; font-size: 14px; font-weight: 600; }
+.location-address p { margin: 5px 0 0; color: #b9aa8c; font-size: 13px; }
+.location-actions { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; }
+.location-primary, .location-secondary { display: inline-flex; justify-content: center; align-items: center; gap: 13px; border: 1px solid #d6ad5570; border-radius: 9px; padding: 12px 18px; text-decoration: none; font-size: 12px; font-weight: 650; transition: box-shadow .2s, background .2s, border-color .2s; }
+.location-primary { background: linear-gradient(110deg, #e9c779, #caa24e); color: #241b09; box-shadow: inset 0 1px #ffffff40; }
+.location-primary:hover { box-shadow: 0 6px 24px #d6ad5520; color: #171208; }
+.location-secondary { color: #d8c08d; background: #17140f; }
+.location-secondary:hover { background: #292114; border-color: #d6ad55; }
+.location-copy .location-help { font-size: 11px; margin-top: 17px; color: #93866b; }
+.location-map { overflow: hidden; border: 1px solid #d6ad5555; border-radius: 17px; background: #191710; box-shadow: 0 25px 70px #0004; }
+.location-map-heading { display: flex; align-items: center; gap: 8px; padding: 17px 18px; color: #d5bd83; font-size: 10px; letter-spacing: .07em; background: linear-gradient(100deg, #242014, #11110e); }
+.location-map-heading strong { font-size: 10px; font-weight: 650; }
+.location-map-heading > span:last-child { margin-left: auto; font-size: 10px; letter-spacing: 0; color: #b8ab8f; }
+.location-map-dot { width: 5px; height: 5px; border-radius: 50%; background: #d6ad55; box-shadow: 0 0 10px #d6ad5550; }
+.location-map iframe { width: 100%; height: 310px; border: 0; display: block; background: #e7e4d8; }
+.location-map-footer { display: flex; align-items: center; justify-content: space-between; gap: 15px; padding: 15px 18px; background: #12110d; color: #b4a47e; font-size: 10px; }
+.location-map-footer a { color: #edcd80; font-size: 11px; white-space: nowrap; }
+.site-link-arrow { width: 14px; height: 14px; flex-shrink: 0; vertical-align: middle; }
+.location-map-footer a, .site-footer .footer-location-link { display: inline-flex; align-items: center; gap: 5px; }
+#location, #creatorCredit { scroll-margin-top: 100px; }
+.site-footer .footer-location-link { color: #dbbe78; font-size: 12px; margin-top: 15px; }
+
+.site-footer .creator-signature { position: relative; display: flex; align-items: center; gap: 13px; border: 1px solid #9d77314d; border-radius: 12px; padding: 17px 14px; margin-top: 20px; background: linear-gradient(125deg, #d6ad5512, #d6ad5503 70%); box-shadow: inset 0 1px #f2d38a0a; max-width: 345px; overflow: hidden; }
+.creator-signature::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 10%, #f2d38a08 45%, transparent 65%); background-size: 220% 100%; animation: creator-sheen 9s linear infinite; }
+.creator-monogram { display: grid; place-items: center; flex-shrink: 0; width: 43px; height: 49px; border: 1px solid #b18c4555; border-radius: 8px; background: linear-gradient(140deg, #3c3018, #17140c); color: #e9c779; font: 21px Georgia, serif; letter-spacing: -1px; }
+.creator-signature-copy { display: flex; flex-direction: column; min-width: 0; gap: 4px; }
+.creator-kicker { font-size: 7px; letter-spacing: 1.6px; font-weight: 600; color: #bc9e61; }
+.creator-name { font: 500 25px/1.25 "Playfair Display", Georgia, serif; letter-spacing: -.3px; background: linear-gradient(110deg, #a78038, #f6d992, #c59c48, #f2d38a); background-size: 200% 100%; color: #e9c779; background-clip: text; -webkit-background-clip: text; -webkit-text-fill-color: transparent; animation: creator-name-shimmer 8s ease-in-out infinite; }
+.creator-caption { font-size: 9px; color: #a99b7c; line-height: 1.6; }
+.creator-spark { margin-left: auto; align-self: flex-start; width: 16px; height: 16px; flex-shrink: 0; fill: #d6ad5520; stroke: #d6ad5580; stroke-width: 1; }
+@keyframes creator-sheen { to { background-position: -220% 0; } }
+@keyframes creator-name-shimmer { 50% { background-position: 100% 50%; } }
+@media (max-width: 1000px) { .location-layout { gap: 35px; } }
+@media (max-width: 760px) {
+    .location-section { padding: 50px 0; }
+    .location-layout { grid-template-columns: 1fr; gap: 30px; }
+    .location-copy h2 { font-size: 36px; }
+    .location-copy > p { max-width: none; }
+    .location-map iframe { height: 285px; }
+    .topbar .creator-top-badge { font-size: 10px; padding: 5px 10px; }
+}
+@media (max-width: 420px) {
+    .location-map-heading { padding: 14px 12px; }
+    .location-map-heading > span:last-child { font-size: 9px; }
+    .location-map-footer { padding: 14px 12px; gap: 8px; font-size: 9px; }
+    .location-map-footer a { font-size: 10px; }
+    .location-actions { gap: 9px; }
+    .location-primary, .location-secondary { padding: 12px 13px; }
+}
+@media (prefers-reduced-motion: reduce) {
+    .creator-signature::after, .creator-name { animation: none; }
+    .creator-top-badge, .location-primary, .location-secondary { transition: none; }
+}
