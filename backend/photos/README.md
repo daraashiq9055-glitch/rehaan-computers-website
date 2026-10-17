@@ -157,3 +157,35 @@ in the Cloudinary account before production activation, as described above.
 Report the on-screen result before changing enabled. Do not send API secrets,
 Firebase ID tokens or real student photos. A test failure leaves normal student
 upload behavior unchanged; use its error text to diagnose configuration.
+
+## Cloudflare native fetch compatibility
+
+A runtime issue was reproduced in the first photo-service implementation:
+Cloudflare Workers rejects redirect:'error' before sending a native fetch.
+The service now uses redirect:'manual' for Firestore, Cloudinary upload and
+private delivery; non-success responses, including redirects, are rejected.
+Credentials are never forwarded to a redirected host. Node's fetch supports
+'error', so unit tests using injected responses did not expose this difference.
+
+Run the native runtime regression locally in one terminal:
+
+```sh
+npx --yes wrangler@4.151.1 dev tests/photo-worker-runtime.mjs --local --port 8898 --compatibility-date 2026-10-17
+```
+
+In another terminal:
+
+```sh
+curl http://localhost:8898/run
+```
+
+Expected: passed:true with admin verification, signed upload, private delivery
+and redirect rejection checks. All provider traffic is replaced with local HTTP
+fixtures; liveProviderRequests must be zero. Never deploy that test entry as the
+production Worker. After updating, redeploy only backend/photos/wrangler.toml;
+existing Worker secrets do not need to be entered again. Student uploads stay
+disabled until the manual connection check passes.
+
+Failures now include a fixed PHOTO_* stage code without raw provider error text,
+credentials, photo bytes or Firebase tokens. Cloudinary HTTP rejection messages
+include only its status code and configuration guidance.

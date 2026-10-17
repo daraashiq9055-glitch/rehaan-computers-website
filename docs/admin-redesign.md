@@ -341,3 +341,11 @@ the result. It never writes student/payment records or starts checkout. The
 browser test simulates upload failure, denied admin viewing, unexpectedly public
 service access, and success in both feature configurations. A passing /health
 alone is not sufficient to enable student uploads.
+
+The photo Worker now uses Cloudflare-supported manual redirect handling. The
+previous redirect:error option was reproduced as a runtime exception in Workers,
+even though Node accepted it. The added local Workers test exercises actual
+native HTTP requests (local provider fixtures), upload/private viewing and
+redirect rejection. It is an extra runtime check beyond unit mocks and dry-run
+bundling. Redeploy the separate photo Worker after pulling this fix; no new
+secrets, Firebase rules changes, Hosting deployment or data migration is needed.

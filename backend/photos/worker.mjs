@@ -65,7 +65,7 @@ async function authorizeAdmin(request, env, fetcher) {
     // The decoded UID is untrusted. Firestore verifies the token and deployed
     // rules authorize the read; no local JWT decoding grants access.
     const response = await fetcher(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/admins/${encodeURIComponent(uid)}`, {
-        headers: { Authorization: header }, redirect: 'error', signal: AbortSignal.timeout(10000)
+        headers: { Authorization: header }, redirect: 'manual', signal: AbortSignal.timeout(10000)
     });
     if (!response.ok) throw new HttpError(response.status === 401 ? 401 : 403, 'Administrator access required.');
     const data = await response.json();
@@ -79,6 +79,7 @@ export async function handleRequest(request, env, fetcher = fetch) {
     cors['Access-Control-Allow-Origin'] = origin;
     const json = (data, status=200) => Response.json(data, {status,headers:cors});
     if (request.method === 'OPTIONS') return new Response(null, {status:204,headers:{...cors,'Access-Control-Allow-Methods':'POST, GET, OPTIONS','Access-Control-Allow-Headers':'Content-Type, Authorization'}});
+    let stage = 'REQUEST';
     try {
         const url = new URL(request.url);
         if (url.pathname === '/health' && request.method === 'GET') return json({ok:true,configured:Boolean(env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET),uploadProtection:Boolean(env.PHOTO_UPLOAD_LIMITER)});
@@ -88,11 +89,14 @@ export async function handleRequest(request, env, fetcher = fetch) {
             // admissions need anonymous uploads, and this route is public.
             const ip = request.headers.get('CF-Connecting-IP');
             if (!ip || !env.PHOTO_UPLOAD_LIMITER) throw new HttpError(503, 'Photo upload protection is unavailable.');
+            stage = 'RATE_LIMIT';
             const limit = await env.PHOTO_UPLOAD_LIMITER.limit({key:ip});
             if (!limit.success) throw new HttpError(429, 'Too many photo uploads. Please wait a minute and try again.');
+            stage = 'ADMIN_VERIFICATION';
             if (request.headers.has('Authorization')) await authorizeAdmin(request, env, fetcher);
             if (request.headers.get('Content-Type')?.split(';')[0] !== 'image/jpeg') throw new HttpError(415, 'Choose a cropped JPG photograph.');
             if (Number(request.headers.get('Content-Length')) > MAX_BYTES) throw new HttpError(413, 'Photo is too large.');
+            stage = 'PHOTO_READ';
             const bytes = await limitedBytes(request, MAX_BYTES);
             if (bytes.length < 4 || bytes[0] !== 255 || bytes[1] !== 216 || bytes[2] !== 255 || bytes.at(-2) !== 255 || bytes.at(-1) !== 217) throw new HttpError(415, 'Invalid JPG photograph.');
             const dimensions = jpegDimensions(bytes);
@@ -101,21 +105,26 @@ export async function handleRequest(request, env, fetcher = fetch) {
             const params = { timestamp:String(Math.floor(Date.now()/1000)), upload_preset:env.CLOUDINARY_UPLOAD_PRESET || 'ml_default',
                 public_id:publicId,type:'authenticated',format:'jpg',
                 overwrite:'false',use_filename:'false',unique_filename:'true',transformation:'c_limit,w_360,h_360' };
+            stage = 'UPLOAD_SIGNING';
             const body = new FormData();
             for (const [key,value] of Object.entries(params)) body.append(key,value);
             body.append('api_key',env.CLOUDINARY_API_KEY);
             body.append('signature',await uploadSignature(params,env.CLOUDINARY_API_SECRET));
             body.append('file',new Blob([bytes],{type:'image/jpeg'}),'photo.jpg');
-            const response = await fetcher(`https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/image/upload`, {method:'POST',body,redirect:'error',signal:AbortSignal.timeout(25000)});
-            if (!response.ok) throw new HttpError(502, 'Photo storage could not accept the upload. Please try later.');
+            stage = 'CLOUDINARY_UPLOAD';
+            const response = await fetcher(`https://api.cloudinary.com/v1_1/${env.CLOUDINARY_CLOUD_NAME}/image/upload`, {method:'POST',body,redirect:'manual',signal:AbortSignal.timeout(25000)});
+            if (!response.ok) throw new HttpError(502, `Cloudinary rejected the upload (HTTP ${response.status}). ${response.status === 401 ? 'Check that the API Key and API Secret are a matching pair for this cloud.' : 'Check the signed preset and Cloudinary upload permissions.'}`);
+            stage = 'CLOUDINARY_RESPONSE';
             const data = await response.json();
             if (data.type !== 'authenticated' || data.resource_type !== 'image' || data.format !== 'jpg' || data.public_id !== publicId || !/^[0-9]{1,15}$/.test(String(data.version))) throw new HttpError(502, 'Photo storage returned an unexpected response.');
             return json({photo:`https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/authenticated/v${data.version}/${publicId}.jpg`});
         }
         if (url.pathname === '/photo' && request.method === 'GET') {
+            stage = 'ADMIN_VERIFICATION';
             await authorizeAdmin(request,env,fetcher);
             const path = privatePhotoPath(url.searchParams.get('photo'),env.CLOUDINARY_CLOUD_NAME);
-            const response = await fetcher(await deliveryUrl(path,env), {redirect:'error',signal:AbortSignal.timeout(15000)});
+            stage = 'PRIVATE_DELIVERY';
+            const response = await fetcher(await deliveryUrl(path,env), {redirect:'manual',signal:AbortSignal.timeout(15000)});
             if (!response.ok) throw new HttpError(502, 'Photograph is temporarily unavailable.');
             if (response.headers.get('Content-Type')?.split(';')[0] !== 'image/jpeg') throw new HttpError(502, 'Unexpected photo format.');
             const bytes = await limitedBytes(response,MAX_BYTES);
@@ -123,7 +132,10 @@ export async function handleRequest(request, env, fetcher = fetch) {
         }
         throw new HttpError(404,'Photo route not found.');
     } catch (error) {
-        return json({error:error instanceof HttpError ? error.message : 'Photo service is temporarily unavailable. Please try later.'},error instanceof HttpError ? error.status : 503);
+        // Return a fixed stage identifier, never an upstream exception body, token or secret.
+        const code = 'PHOTO_' + stage;
+        const message = error instanceof HttpError ? error.message : 'Photo service could not complete this step.';
+        return json({error:message + ' (' + code + ')',code},error instanceof HttpError ? error.status : 503);
     }
 }
 export default {fetch(request, env) { return handleRequest(request, env); }};

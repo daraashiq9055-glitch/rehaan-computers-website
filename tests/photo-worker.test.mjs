@@ -18,7 +18,7 @@ test('anonymous upload is bounded, signed, private and never overwrites',async()
  let count=0;
  const res=await handleRequest(upload(),env,async(url,options)=>{
   count++;assert.equal(url,'https://api.cloudinary.com/v1_1/salatmdv/image/upload');
-  assert.equal(options.method,'POST');assert.equal(options.redirect,'error');
+  assert.equal(options.method,'POST');assert.equal(options.redirect,'manual');
   const body=options.body;const params=Object.fromEntries([...body].filter(([key])=>!['file','api_key','signature'].includes(key)));
   assert.equal(params.type,'authenticated');assert.equal(params.overwrite,'false');assert.equal(params.use_filename,'false');assert.equal(params.unique_filename,'true');assert.equal(params.upload_preset,'ml_default');
   assert.match(params.public_id,/^student-photos\/[a-f0-9-]{36}$/);assert.equal(params.folder,undefined);
@@ -76,7 +76,7 @@ test('admin token is verified by Firestore before a signed photo is fetched',asy
   const path=privatePhotoPath(photo,'salatmdv');
   const signature='PKyKIICL' // Reference: official Cloudinary Node SDK, type=authenticated, version=123.;
   assert.equal(url,`https://res.cloudinary.com/salatmdv/image/authenticated/s--${signature}--/${path}`);
-  assert.equal(options.redirect,'error');
+  assert.equal(options.redirect,'manual');
   return new Response(jpeg,{headers:{'Content-Type':'image/jpeg'}});
  });
  assert.equal(result.status,200);assert.equal(calls.length,2);
@@ -112,4 +112,22 @@ test('health reports readiness without exposing credentials or contacting provid
   const result=await handleRequest(req('/health'),config,denyFetch);
   assert.deepEqual(await result.json(),{ok:true,configured:expected,uploadProtection:true});
  }
+});
+
+
+test('redirect responses are rejected without following another host',async()=>{
+ const result=await handleRequest(upload(),env,async(_url,options)=>{
+  assert.equal(options.redirect,'manual');
+  return new Response(null,{status:302,headers:{Location:'https://evil.example'}});
+ });
+ assert.equal(result.status,502);
+ const data=await result.json();assert.equal(data.code,'PHOTO_CLOUDINARY_UPLOAD');
+ assert.match(data.error,/HTTP 302/);
+});
+test('unexpected exceptions report a fixed stage, never provider text or secrets',async()=>{
+ const result=await handleRequest(upload(),env,async()=>{throw Error('test-secret Bearer private-token')});
+ assert.equal(result.status,503);
+ assert.deepEqual(await result.json(),{error:'Photo service could not complete this step. (PHOTO_CLOUDINARY_UPLOAD)',code:'PHOTO_CLOUDINARY_UPLOAD'});
+ const rate=await handleRequest(upload(),{...env,PHOTO_UPLOAD_LIMITER:{limit:async()=>{throw Error('test-secret')}}},denyFetch);
+ assert.equal((await rate.json()).code,'PHOTO_RATE_LIMIT');
 });
