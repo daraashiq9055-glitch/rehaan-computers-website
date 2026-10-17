@@ -75,7 +75,6 @@ def run(enabled=False):
     fixture_photo=private_photo if enabled else CLOUDINARY_PHOTO
     fixtures['enrolled']['photo']=fixture_photo
     photo_calls=[]
-    photo_test={"failure":None}
     assertions = []
     def passed(name):
         assertions.append(name)
@@ -99,17 +98,11 @@ def run(enabled=False):
                 photo_calls.append(url)
                 if '/upload' in url:
                     assert route.request.headers.get('authorization')=='Bearer test-admin-token'
-                    if photo_test['failure']=='upload':
-                        route.fulfill(status=503,content_type='application/json',body=json.dumps({'error':'Simulated upload unavailable'}),headers={'Access-Control-Allow-Origin':'*'});return
                     assert route.request.post_data_buffer[:3]==b'\xff\xd8\xff'
                     route.fulfill(content_type='application/json',body=json.dumps({'photo':private_photo}),headers={'Access-Control-Allow-Origin':'*'})
                 else:
                     assert '/photo?photo=' in url
-                    if 'authorization' not in route.request.headers and photo_test['failure']!='public':
-                        route.fulfill(status=401,content_type='application/json',body=json.dumps({'error':'Sign in as an administrator.'}),headers={'Access-Control-Allow-Origin':'*'});return
-                    if photo_test['failure']=='private':
-                        route.fulfill(status=403,content_type='application/json',body=json.dumps({'error':'Administrator access required.'}),headers={'Access-Control-Allow-Origin':'*'});return
-                    if photo_test['failure']!='public':assert route.request.headers.get('authorization')=='Bearer test-admin-token'
+                    assert route.request.headers.get('authorization')=='Bearer test-admin-token'
                     route.fulfill(content_type='image/jpeg',body=(ROOT/'tests/fixtures/photo-check.jpg').read_bytes(),headers={'Access-Control-Allow-Origin':'*'})
             elif url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):
                 route.fulfill(status=200,content_type='application/javascript',body=MOCK,headers={'Access-Control-Allow-Origin':'*'})
@@ -320,25 +313,8 @@ def run(enabled=False):
         passed('Full CSV export and JSON backup retain legacy fields')
         page.locator('[data-section=settings]').click()
         expect(page.locator('.workspace-settings')).to_contain_text('admin@example.test')
-        original_records=page.evaluate('__fixture.records')
-        original_writes=page.evaluate('__fixture.writes.length')
-        for failure in ['upload','private','public',None]:
-            photo_test['failure']=failure
-            page.locator('#settingsTestPhotos').click()
-            page.locator('#photoConnectionRun').click()
-            if failure:
-                expect(page.locator('#photoConnectionMessage')).to_contain_text('Test did not pass:')
-                expect(page.locator('#photoConnectionRun')).to_be_enabled()
-                expect(page.locator('#photoConnectionPreview')).to_be_hidden()
-            else:
-                expect(page.locator('#photoConnectionMessage')).to_contain_text('Passed:')
-                expect(page.locator('#photoConnectionPreview')).to_be_visible()
-                expect(page.locator('#photoConnectionPreview')).to_have_attribute('src',re.compile('^blob:'))
-                expect(page.locator('#photoConnectionRun')).to_be_disabled()
-            assert page.evaluate('__fixture.records')==original_records
-            assert page.evaluate('__fixture.writes.length')==original_writes
-            page.locator('#adminPhotoConnectionTest .admin-modal-close').click()
-        passed('Connection test checks real image decoding, upload/private/public-access failures, and never writes student/payment records')
+        expect(page.locator('#settingsTestPhotos')).to_have_count(0)
+        expect(page.get_by_role('button',name='Test Cloudinary connection')).to_have_count(0)
 
         if enabled:
             original_photo='data:image/png;base64,'+base64.b64encode(png).decode()

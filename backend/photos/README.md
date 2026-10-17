@@ -138,27 +138,18 @@ configuration; it does not deploy, set secrets or prove account connectivity.
 No real student writes, image uploads, payments, emails or messages were made
 while implementing or testing this code.
 
-## Connection check before enabling student uploads
+## Completed connection verification
 
-A successful /health result confirms secret presence and the rate limiter only.
-It does not verify Cloudinary credentials/preset or the Firestore admin read.
-Update your local clone, start the preview server, sign in at
-http://localhost:8000/admin.html and open Settings → Test Cloudinary connection.
-Click Run connection test. The test works with enabled:false, so the current
-student photo-storage behavior does not change during verification.
+The owner confirmed a successful live upload, authorized administrator viewing
+and signed-out service denial using the temporary Settings connection test.
+The owner also transferred all four existing inline photos after downloading the
+original backup. The temporary test button and generated-image helper have now
+been removed from the release frontend. Its generated Cloudinary test asset is
+not deleted automatically; student photos and the transfer/backup tools remain.
 
-The test uploads one newly generated 360px JPEG using the signed-in admin's
-ID token, verifies that the photo service refuses an unauthenticated image read,
-then retrieves and decodes the image with the admin token. A successful result
-shows the generated image. It never creates/edits a student or payment record,
-opens checkout or sends messages. Each attempt may leave a private generated
-asset in Cloudinary; there is no automatic deletion. The check covers the photo
-service's signed-out access denial. Independently confirm authenticated delivery
-in the Cloudinary account before production activation, as described above.
-
-Report the on-screen result before changing enabled. Do not send API secrets,
-Firebase ID tokens or real student photos. A test failure leaves normal student
-upload behavior unchanged; use its error text to diagnose configuration.
+The health endpoint checks configuration presence, not account credentials.
+Isolated Worker/client/browser tests remain available for future changes. Never
+paste API secrets, ID tokens, backups or student photographs into support logs.
 
 ## Cloudflare native fetch compatibility
 

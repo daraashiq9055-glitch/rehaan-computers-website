@@ -245,7 +245,7 @@ and access to Firebase's official emulator downloads, from the repository root:
 
 ```sh
 npm install --prefix /tmp/rehaan-rules-check --no-audit --no-fund --ignore-scripts firebase-tools@15.34.0 @firebase/rules-unit-testing@6.0.0 firebase@13.0.0
-NODE_PATH=/tmp/rehaan-rules-check/node_modules /tmp/rehaan-rules-check/node_modules/.bin/firebase emulators:exec --only firestore --project demo-rehaan-gender --config tests/firebase-emulator.json "node tests/firestore-gender.test.cjs"
+NODE_PATH=/tmp/rehaan-rules-check/node_modules /tmp/rehaan-rules-check/node_modules/.bin/firebase emulators:exec --only firestore --project demo-rehaan-gender --config firebase.emulator.json "node tests/firestore-gender.test.cjs"
 ```
 
 This command uses a demo project and localhost only. It does not need production
@@ -335,13 +335,11 @@ restricted delivery paths, stale-session responses and upload retry caching.
 Cloudinary signature generation was also compared with official Node SDK 2.11.0.
 Wrangler 4.151.1 dry-run validated configuration/bundling; it did not deploy.
 
-A manual Settings → Test Cloudinary connection action now works while student
-Cloudinary uploads are disabled. It uploads a generated test image, checks
-signed-out service denial, fetches/decodes the image as an admin, and displays
-the result. It never writes student/payment records or starts checkout. The
-browser test simulates upload failure, denied admin viewing, unexpectedly public
-service access, and success in both feature configurations. A passing /health
-alone is not sufficient to enable student uploads.
+The temporary Settings connection test was used to verify an actual upload,
+authorized admin viewing and signed-out denial. The owner confirmed success and
+transferred four existing photos after downloading the original backup. The test
+button and its client helper have now been removed for release. No student
+records, stored photos or backup/transfer controls were removed with the button.
 
 The photo Worker now uses Cloudflare-supported manual redirect handling. The
 previous redirect:error option was reproduced as a runtime exception in Workers,
@@ -358,3 +356,39 @@ and replacements store references. Existing photos stay visible and can be
 transferred through Settings after downloading the originals backup. No automatic
 migration or production Hosting deployment was performed. The live website keeps
 its currently deployed behavior until the frontend is explicitly published.
+
+
+## Frontend release verification and deployment
+
+The current live index.html, admin.html and script.js matched website-updates
+commit d738bb2 after normalizing Windows line endings. Existing public style.css
+and premium.css are unchanged, and the live admission payment implementation
+matches this release. Release checks passed: 29 Node tests, fee regression
+checks, 39 admin browser workflows (disabled/enabled storage), 17 admission/
+payment scenarios and six public-site smoke groups. All services are intercepted
+in browser tests; no real payments or student writes were used. Local asset
+references, module syntax and root/public mirrors were checked as well.
+
+The Firestore emulator config is now at the repository root because Firebase CLI
+rejects a rules path outside its config directory. Rules tests are still blocked
+by the official emulator download being unavailable in this environment. This
+release does not deploy or modify Firestore rules or the photo/payment Workers.
+
+The user authorized deployment after checks. The cloud workspace has no Firebase
+login; the attempted hosting-only deployment requires authentication. From the
+existing Windows clone, stop the local server, pull this branch, and run:
+
+```bat
+cd /d "%USERPROFILE%\rehaan-admin-preview"
+git pull --ff-only
+npx --yes firebase-tools@15.34.0 login
+npx --yes firebase-tools@15.34.0 deploy --only hosting --project rehaan-computers
+```
+
+Use the Firebase account that owns the project. The explicit hosting-only scope
+publishes public/ to rehaan-computers.web.app without changing the database,
+Firestore rules, Cloudinary credentials or either Worker. Keep the downloaded
+original-photo backup private. After deployment, verify the live homepage and
+admin assets, Cloudinary enablement and absence of the test button, then sign in
+to verify existing migrated photos. The workspace can perform read-only public
+checks once the owner's CLI reports Deployment complete.
