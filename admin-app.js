@@ -2447,9 +2447,6 @@ function clearAdminSession() {
     document.querySelectorAll(".admin-modal,.admin-lightbox").forEach(modal => modal.remove());
     getElement("adminLoginForm").reset();
     getElement("adminPassword").type = "password";
-    getElement("togglePassword").textContent = "Show";
-    getElement("togglePassword").setAttribute("aria-label", "Show password");
-    getElement("togglePassword").setAttribute("aria-pressed", "false");
     showAdminLogin();
 }
 
@@ -2482,14 +2479,6 @@ function setupWorkspace() {
             const destination = ["courses", "batches"].includes(card.dataset.summary) ? getElement("workspaceView") : getElement("registerPanel");
             destination.scrollIntoView({ behavior: "smooth", block: "start" });
         }
-    });
-    getElement("togglePassword").addEventListener("click", () => {
-        const input = getElement("adminPassword");
-        const visible = input.type === "password";
-        input.type = visible ? "text" : "password";
-        getElement("togglePassword").textContent = visible ? "Hide" : "Show";
-        getElement("togglePassword").setAttribute("aria-label", visible ? "Hide password" : "Show password");
-        getElement("togglePassword").setAttribute("aria-pressed", String(visible));
     });
     document.querySelectorAll("[data-section]").forEach(button => button.addEventListener("click", () => selectSection(button.dataset.section)));
     getElement("workspaceAdd").addEventListener("click", openAddStudentModal);

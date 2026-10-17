@@ -124,6 +124,7 @@ button.primary:hover:not(:disabled), .admin-save-btn:hover:not(:disabled), .appr
 .login-brand .mark { padding: 11px; font-size: 24px; }
 .login-brand small { display: block; margin-top: 8px; font-size: 9px; letter-spacing: 1.8px; color: #b7a987; }
 .login-art { width: 234px; height: 234px; position: relative; margin: 30px auto 25px; display: grid; place-items: center; }
+.login-art { animation: emblem-float 7s ease-in-out infinite; }
 .login-art > span {
     font: 76px Georgia, serif;
     letter-spacing: -8px;
@@ -135,8 +136,9 @@ button.primary:hover:not(:disabled), .admin-save-btn:hover:not(:disabled), .appr
     filter: drop-shadow(0 6px 22px #d6ad551b);
 }
 .login-art-ring { position: absolute; border-radius: 50%; border: 1px solid #d6ad5530; }
-.ring-one { inset: 18px; box-shadow: 0 0 45px #d6ad5507, inset 0 0 35px #d6ad5505; }
-.ring-two { inset: 0; border-style: dashed; border-color: #d6ad5525; animation: orbit-gold 100s linear infinite; }
+.ring-one { inset: 18px; box-shadow: 0 0 45px #d6ad5507, inset 0 0 35px #d6ad5505; animation: halo-glow 6s ease-in-out infinite; }
+.ring-two::after { content: ""; position: absolute; top: 50%; right: -3px; width: 6px; height: 6px; background: #eacb80; border-radius: 50%; box-shadow: 0 0 15px #d6ad5570; }
+.ring-two { inset: 0; border-style: dashed; border-color: #d6ad5525; animation: orbit-gold 38s linear infinite; }
 .ring-three { inset: 43px; border-color: #d6ad5540; background: radial-gradient(circle, #d6ad550d, transparent 75%); }
 .art-star { position: absolute; color: var(--gold); font-style: normal; font-size: 23px; }
 .star-one { top: 42px; right: 24px; animation: gold-breathe 5s ease-in-out infinite; }
@@ -149,7 +151,8 @@ button.primary:hover:not(:disabled), .admin-save-btn:hover:not(:disabled), .appr
 .login-capabilities { display: flex; flex-wrap: wrap; gap: 8px; margin: 23px 0 33px; }
 .login-capabilities span { color: #c9b78c; border: 1px solid #8d703633; padding: 6px 9px; border-radius: 5px; background: #d6ad5505; font-size: 9px; }
 .login-story-footer { position: relative; display: flex; justify-content: space-between; gap: 12px; border-top: 1px solid #8d70362a; padding-top: 18px; color: #aa9771; font-size: 8px; letter-spacing: 1px; }
-.login-panel { display: flex; flex-direction: column; justify-content: center; padding: 54px 50px 30px; background: radial-gradient(ellipse at top right, #d6ad5505, transparent 55%), #11110f; }
+.login-panel { position: relative; isolation: isolate; display: flex; flex-direction: column; justify-content: center; padding: 54px 50px 30px; background: radial-gradient(ellipse at top right, #d6ad5505, transparent 55%), #11110f; }
+.login-panel::before { content: ""; position: absolute; z-index: -1; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 15% 20%, #d6ad550d, transparent 60%); animation: panel-light 10s ease-in-out infinite alternate; }
 .login-access { display: flex; align-items: center; gap: 8px; letter-spacing: 2px; color: #ba9d62; font-size: 8px; margin-bottom: 30px; }
 .login-access > span { width: 5px; height: 5px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 13px #d6ad5570; }
 .admin-login-card h1 { font: 41px/1.2 "Playfair Display", Georgia, serif; letter-spacing: -1.2px; margin-bottom: 15px; color: #f2ebdc; }
@@ -160,8 +163,10 @@ button.primary:hover:not(:disabled), .admin-save-btn:hover:not(:disabled), .appr
 .admin-login-card .field input:focus { outline: none; border-color: #b6924c; box-shadow: 0 0 0 3px #d6ad550d; }
 .admin-login-card .field input::placeholder { color: #a2947b; }
 .password-control { display: block; position: relative; }
-.admin-login-card .password-control input { padding-right: 62px; }
-#togglePassword { position: absolute; right: 9px; top: 50%; transform: translateY(-50%); border: 0; background: none; color: #c9ad6d; font-size: 10px; padding: 7px 8px; }
+.admin-login-card .password-control input { padding-right: 14px; }
+/* Suppress browser-provided reveal controls where supported, too. */
+#adminPassword::-ms-reveal, #adminPassword::-ms-clear { display: none; }
+
 .admin-login-card form > button { margin-top: 5px; padding: 14px; border-radius: 8px; font-size: 12px; position: relative; overflow: hidden; }
 .admin-login-card form > button::after { content: ""; position: absolute; inset: -70% auto -70% -60%; width: 35%; transform: rotate(20deg); background: linear-gradient(90deg, transparent, #fff3, transparent); transition: left .65s ease; pointer-events: none; }
 .admin-login-card form > button:hover::after { left: 130%; }
@@ -336,6 +341,9 @@ input::placeholder, textarea::placeholder { color: #817766; }
 .admin-modal-kicker, .rc-eyebrow, .rc-pay-eyebrow { font-size: 10px; }
 footer { font-size: 12px; color: #b1a285; }
 
+@keyframes emblem-float { 50% { transform: translateY(-9px); } }
+@keyframes halo-glow { 50% { border-color: #d6ad5570; box-shadow: 0 0 45px #d6ad5518, inset 0 0 35px #d6ad550c; } }
+@keyframes panel-light { to { transform: translateY(35px); opacity: .25; } }
 @keyframes login-enter { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes orbit-gold { to { transform: rotate(360deg); } }
 @keyframes gold-breathe { 50% { opacity: .45; transform: scale(.85); } }

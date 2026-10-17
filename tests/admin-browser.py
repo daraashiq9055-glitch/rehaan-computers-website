@@ -100,10 +100,9 @@ def run():
         assert page.evaluate('document.fonts.check(\'500 32px "Playfair Display"\')')
         expect(page.locator('#adminDashboard')).to_be_hidden()
         page.locator('#adminPassword').fill('visibility-test')
-        page.locator('#togglePassword').click()
-        expect(page.locator('#adminPassword')).to_have_attribute('type','text')
-        page.locator('#togglePassword').click()
+        expect(page.locator('#togglePassword')).to_have_count(0)
         expect(page.locator('#adminPassword')).to_have_attribute('type','password')
+        expect(page.get_by_role('button',name='Show password')).to_have_count(0)
         assert page.locator('.login-panel').bounding_box()['x'] > page.locator('.login-story').bounding_box()['x'] + 300
         assert page.locator('.login-panel').bounding_box()['y'] == page.locator('.login-story').bounding_box()['y']
         artifacts=ROOT/'tests'/'artifacts';artifacts.mkdir(exist_ok=True)
@@ -117,6 +116,7 @@ def run():
         login('wrong-password')
         expect(page.locator('#adminLoginMessage')).to_contain_text('incorrect')
         expect(page.locator('#adminDashboard')).to_be_hidden()
+        expect(page.locator('#adminPassword')).to_have_attribute('type','password')
         page.evaluate('__fixture.authorized=false')
         login()
         expect(page.locator('#adminLoginMessage')).to_contain_text('No administrator record')

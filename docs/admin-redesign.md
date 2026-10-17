@@ -117,7 +117,8 @@ The login and workspace now use the public site's black/gold palette, bundled
 Inter and Playfair Display fonts, larger register text, and high-contrast tabs.
 The four summary cards navigate directly to students, pending applications,
 courses, and batches. Register tabs reset stale filters and support arrow keys,
-Home, and End. A show/hide password control and reduced-motion styles are included.
+Home, and End. Passwords remain masked with no Show/Hide control. The floating
+emblem, orbiting gold ring and soft panel light honor reduced-motion preferences.
 Fonts are served locally with the admin assets, so they do not require Google
 Fonts network access. Preserve the included font license notices when copying.
 
