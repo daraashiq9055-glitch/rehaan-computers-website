@@ -39,8 +39,11 @@ and all stored fields. There is intentionally no bulk restore/import button.
   reservation and reviewed rules/backend changes.
 - Saving offline enrolment requires explicit confirmation of receipt of the
   existing Rs.100 admission fee. Successful forms cannot be submitted twice.
-- Deletion requires two explicit confirmations, including typing the record's
-  admission number/name. There is no automatic deletion or cancellation.
+- Pending-application deletion uses a clear on-page confirmation. Enrolled records
+  additionally require typing their admission number/name. The same transaction
+  protects both flows; errors stay visible and cancellation keeps the record.
+  Record comparisons ignore map key order while detecting real data changes.
+  There is no automatic deletion or cancellation.
 - WhatsApp opens a personalized draft. A reminder is recorded only after the
   administrator confirms they pressed Send. There is no automatic messaging.
 - Approval email uses the existing EmailJS service and approval template name.
@@ -82,11 +85,13 @@ public/admin.html
 public/admin-app.js
 public/admin-records.js
 public/admin-dashboard.css
+public/admin-gold.css
+public/admin-fonts/
 ```
 
 Matching root copies are included because this repository keeps root/public
 mirrors; Firebase Hosting is configured to serve public. The deployment artifact
-prepared in /workspace/admin-redesign-overlay.zip contains only these four
+prepared in /workspace/admin-redesign-overlay.zip contains only these admin
 public/ assets. It is an overlay, not a full Hosting deployment folder.
 
 Before replacing the live dashboard, use a Firebase Hosting preview channel from
@@ -104,3 +109,31 @@ real student's data. Do not test email delivery using a student's address.
 
 No production deployment, live record read/write, email delivery, or WhatsApp
 message send has been performed as part of this implementation.
+
+
+## Gold design and navigation update
+
+The login and workspace now use the public site's black/gold palette, bundled
+Inter and Playfair Display fonts, larger register text, and high-contrast tabs.
+The four summary cards navigate directly to students, pending applications,
+courses, and batches. Register tabs reset stale filters and support arrow keys,
+Home, and End. A show/hide password control and reduced-motion styles are included.
+Fonts are served locally with the admin assets, so they do not require Google
+Fonts network access. Preserve the included font license notices when copying.
+
+The browser suite covers the pending record name Cloudinary Test Student in its
+isolated fixtures, including cancellation, denied deletion, a concurrently changed
+record and reordered Firestore maps. It does not delete the live record. If the
+live action is denied by deployed Firestore rules, the dashboard reports that
+error; this UI change does not bypass permissions or modify the deployed rules.
+
+For an existing Windows preview clone, stop the server with Ctrl+C, then run:
+
+```bat
+cd /d "%USERPROFILE%\rehaan-admin-preview"
+git pull --ff-only
+python -m http.server 8000 --directory public
+```
+
+Open the local admin page and use Ctrl+F5 to refresh cached styles. The preview
+still connects to the live Firebase project, so real data edits are real writes.

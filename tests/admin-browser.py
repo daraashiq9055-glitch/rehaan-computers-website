@@ -17,7 +17,7 @@ COURSE = 'One Year Computer Diploma Course'
 FIXTURES = {
     'online': {'fullName':'Ayaan Malik','parentName':'Parent','phone':'9876543210','email':'ayaan@example.test','coursePreference':COURSE,'batch':'Morning','status':'New','createdAt':'2026-10-15T10:00:00Z','payment':{'status':'at_centre','amount':100,'providerId':'preserve'},'customLegacyField':{'keep':True},'attendanceEmail':'attendance@example.test','attendanceUid':'attendance-uid'},
     'enrolled': {'fullName':'Sara Khan','phone':'9876543211','coursePreference':COURSE,'batch':'Evening','status':'Approved','admissionNumber':'001','admissionDate':'2026-01-01','approvedAt':'2026-01-01T10:00:00Z','channel':'offline','monthlyFees':{'2026-02-01':200},'feeReminders':{},'payment':{'status':'paid','amount':100},'createdAt':{'seconds':1767261600}},
-    'legacy': {'fullName':'Legacy Student','phone':'old','course':'Custom legacy course','batch':'Custom batch','customLegacyField':42},
+    'legacy': {'fullName':'Cloudinary Test Student','phone':'old','course':'Custom legacy course','batch':'Custom batch','customLegacyField':42},
     'unsafe': {'fullName':'<img src=x onerror=alert(1)>','phone':'9876543212','photo':'data:image/png;base64,xx" onerror="alert(1)','coursePreference':COURSE,'status':'Cancelled'},
 }
 MOCK = r'''
@@ -35,7 +35,8 @@ export const signInWithEmailAndPassword=async(_auth,email,password)=>{
 export const collection=(_db,name)=>({name});
 export const doc=(_db,col,id)=>({col,id});
 export const snapshot=(id,data)=>({id,exists:()=>data!==undefined,data:()=>structuredClone(data)});
-export const getDoc=async ref=>snapshot(ref.id,ref.col==='admins'?(state.authorized?{uid:'admin-uid',isAdmin:true}:undefined):state.records[ref.id]);
+const reordered = value => value && typeof value === 'object' && !Array.isArray(value) ? Object.fromEntries(Object.keys(value).reverse().map(key=>[key,reordered(value[key])])) : value;
+export const getDoc=async ref=>snapshot(ref.id,ref.col==='admins'?(state.authorized?{uid:'admin-uid',isAdmin:true}:undefined):(state.reorderReads?reordered(state.records[ref.id]):state.records[ref.id]));
 export const getDocs=async()=>{
  if(state.failRead)throw Object.assign(new Error('Read denied'),{code:'permission-denied'});
  const rows=Object.entries(state.records).map(([id,data])=>snapshot(id,data));
@@ -73,6 +74,7 @@ def run():
     with sync_playwright() as p:
         browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
         page=browser.new_page(viewport={'width':1440,'height':1100},accept_downloads=True)
+        page.emulate_media(reduced_motion='reduce')
         errors=[];alerts=[];external=[]
         page.on('pageerror',lambda error:errors.append(str(error)))
         def dialog_handler(dialog):
@@ -93,7 +95,19 @@ def run():
         page.route('**/*',route_handler)
         page.goto(base+'/admin.html')
         expect(page.locator('#adminLoginButton')).to_be_enabled()
+        page.evaluate('document.fonts.ready')
+        assert page.evaluate('document.fonts.check(\'500 14px "Inter"\')')
+        assert page.evaluate('document.fonts.check(\'500 32px "Playfair Display"\')')
         expect(page.locator('#adminDashboard')).to_be_hidden()
+        page.locator('#adminPassword').fill('visibility-test')
+        page.locator('#togglePassword').click()
+        expect(page.locator('#adminPassword')).to_have_attribute('type','text')
+        page.locator('#togglePassword').click()
+        expect(page.locator('#adminPassword')).to_have_attribute('type','password')
+        assert page.locator('.login-panel').bounding_box()['x'] > page.locator('.login-story').bounding_box()['x'] + 300
+        assert page.locator('.login-panel').bounding_box()['y'] == page.locator('.login-story').bounding_box()['y']
+        artifacts=ROOT/'tests'/'artifacts';artifacts.mkdir(exist_ok=True)
+        page.screenshot(path=str(artifacts/'admin-login-gold.png'),animations='disabled',full_page=True)
         assert page.evaluate('__fixture.writes.length')==0
         passed('Dashboard hidden and no writes before authentication')
         def login(password='valid-password'):
@@ -115,7 +129,24 @@ def run():
         assert len(alerts)==0
         assert page.locator('.application-row img').count()==0
         passed('Failed sign-in, unauthorized account, legacy undated records and escaped student content')
-        page.locator('#adminSearch').fill('Legacy')
+        for section in ['students','admissions','courses','batches']:
+            page.locator('#workspaceSummary [data-summary="'+section+'"]').click()
+            expect(page.locator('[data-section="'+section+'"]')).to_have_attribute('aria-current','page')
+            if section in ['courses','batches']:expect(page.locator('.workspace-directory')).to_be_visible()
+        page.locator('[data-section=overview]').click()
+        page.locator('#adminSearch').fill('unmatched')
+        for tab,count in [('new',2),('enrolled',1),('fees',1),('all',4)]:
+            page.locator('[data-tab="'+tab+'"]').click()
+            expect(page.locator('[data-tab="'+tab+'"]')).to_have_attribute('aria-selected','true')
+            expect(page.locator('#adminSearch')).to_have_value('')
+            expect(page.locator('.rc-fee-row' if tab=='fees' else '.application-row')).to_have_count(count)
+        passed('All four summary cards and register tabs navigate directly and reset stale filters')
+        page.locator('[data-tab="all"]').focus()
+        page.keyboard.press('ArrowLeft')
+        expect(page.locator('[data-tab="fees"]')).to_have_attribute('aria-selected','true')
+        page.keyboard.press('End')
+        expect(page.locator('[data-tab="all"]')).to_have_attribute('aria-selected','true')
+        page.locator('#adminSearch').fill('Cloudinary')
         expect(page.locator('.application-row')).to_have_count(1)
         page.locator('#adminSearch').fill('')
         page.locator('#adminCourseFilter').select_option(COURSE)
@@ -165,10 +196,10 @@ def run():
         expect(page.locator('.application-row')).to_have_count(4)
         passed('Conflicting edit rejected without overwriting another session')
         card.locator('[data-act=fee]').click()
-        expect(card.locator('[data-act=fee]')).to_be_disabled()
+        expect(card.locator('[data-act=fee]')).to_have_text('✓ Fee Paid')
         assert page.evaluate('__fixture.records.online.payment.providerId')=='preserve'
         card.locator('[data-act=approve]').click()
-        expect(card.locator('[data-act=approve]')).to_be_disabled()
+        expect(card.locator('[data-act=approve]')).to_have_text('✓ Approved')
         assert page.evaluate('__fixture.records.online.admissionNumber')=='002'
         assert page.evaluate('__fixture.mailAttempted')
         passed('Admission fee verification and approval preserve provider details')
@@ -231,6 +262,12 @@ def run():
         page.locator('[data-section=overview]').click()
         expect(page.locator('.application-row')).to_have_count(5)
         page.locator('[data-application-id=enrolled].application-row .delete-application-btn').click()
+        expect(page.locator('#adminDeleteModal')).to_be_visible()
+        page.locator('#deleteConfirmation').fill('wrong')
+        page.locator('#deleteConfirm').click()
+        expect(page.locator('#deleteMessage')).to_contain_text('exactly as shown')
+        page.locator('#deleteConfirmation').fill('001')
+        page.locator('#deleteConfirm').click()
         expect(page.locator('.application-row')).to_have_count(4)
         assert not page.evaluate('"enrolled" in __fixture.records')
         passed('Settings and explicitly confirmed record deletion in fixtures')
@@ -248,7 +285,32 @@ def run():
         page.evaluate('__fixture.failRead=false');page.locator('#refreshApplications').click()
         expect(page.locator('.application-row')).to_have_count(4)
         passed('Permission errors do not show false save success and refresh failures block writes')
-        artifacts=ROOT/'tests'/'artifacts';artifacts.mkdir(exist_ok=True)
+        page.locator('[data-summary=admissions]').click()
+        cloudinary=page.locator('[data-application-id=legacy].application-row')
+        cloudinary.locator('.delete-application-btn').click()
+        expect(page.locator('#adminDeleteModal')).to_contain_text('Cloudinary Test Student')
+        expect(page.locator('#deleteConfirmation')).to_have_count(0)
+        page.locator('#deleteCancel').click()
+        assert page.evaluate('"legacy" in __fixture.records')
+        cloudinary.locator('.delete-application-btn').click()
+        page.evaluate('__fixture.failWrite=true')
+        page.locator('#deleteConfirm').click()
+        expect(page.locator('#deleteMessage')).to_contain_text('Firebase denied')
+        assert page.evaluate('"legacy" in __fixture.records')
+        page.evaluate('__fixture.failWrite=false;__fixture.records.legacy.address="Changed elsewhere"')
+        page.locator('#deleteConfirm').click()
+        expect(page.locator('#deleteMessage')).to_contain_text('record changed')
+        assert page.evaluate('"legacy" in __fixture.records')
+        page.locator('#adminDeleteModal .admin-modal-close').click()
+        page.locator('#refreshApplications').click()
+        expect(cloudinary).to_be_visible()
+        page.evaluate('__fixture.reorderReads=true')
+        cloudinary.locator('.delete-application-btn').click();page.locator('#deleteConfirm').click()
+        expect(cloudinary).to_have_count(0)
+        expect(page.locator('[data-summary=admissions] strong')).to_have_text('0')
+        assert not page.evaluate('"legacy" in __fixture.records')
+        passed('Cloudinary pending-record deletion, cancel, denied permission, conflict protection and reordered Firestore fields')
+        page.locator('[data-section=overview]').click()
         page.screenshot(path=str(artifacts/'admin-desktop.png'),full_page=True)
         page.set_viewport_size({'width':390,'height':844})
         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')

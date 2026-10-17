@@ -1,5 +1,5 @@
 // Admin features adapted from website-updates d738bb2. The public site keeps its existing script.
-import { recordTime, isSafePhoto, csvCell, fieldValue, paymentPatch, assertUnchanged, validateChanges } from "./admin-records.js";
+import { recordTime, isSafePhoto, csvCell, fieldValue, paymentPatch, assertUnchanged, validateChanges, canonicalRecord } from "./admin-records.js";
 /* =========================================================
    REHAAN COMPUTERS
    MAIN WEBSITE + FIREBASE + ADMIN
@@ -869,7 +869,7 @@ function showAdminLogin() {
 
 
     if (loginCard) {
-        loginCard.style.display = "block";
+        loginCard.style.removeProperty("display");
     }
 
 }
@@ -1205,10 +1205,10 @@ function adminEnsureToolbar() {
         <div class="admin-stats" id="adminStats"></div>
         <div class="admin-toolbar">
             <div class="admin-tabs" role="tablist">
-                <button type="button" class="admin-tab" data-tab="new">New Applications</button>
-                <button type="button" class="admin-tab" data-tab="enrolled">Enrolled Students</button>
-                <button type="button" class="admin-tab" data-tab="fees">💳 Fee Management</button>
-                <button type="button" class="admin-tab is-active" data-tab="all">All Records</button>
+                <button type="button" class="admin-tab" data-tab="new">${workspaceIcon("admissions")}<span>New Applications</span></button>
+                <button type="button" class="admin-tab" data-tab="enrolled">${workspaceIcon("students")}<span>Enrolled Students</span></button>
+                <button type="button" class="admin-tab" data-tab="fees">${workspaceIcon("fees")}<span>Fee Management</span></button>
+                <button type="button" class="admin-tab is-active" data-tab="all">${workspaceIcon("reports")}<span>All Records</span></button>
             </div>
             <div class="admin-tools">
                 <input id="adminSearch" class="admin-search" type="search" placeholder="Search name, phone, email or admission no…" autocomplete="off">
@@ -1223,12 +1223,18 @@ function adminEnsureToolbar() {
     title.parentNode.insertBefore(bar, title.nextSibling);
 
     bar.querySelectorAll(".admin-tab").forEach(tab => {
-        tab.addEventListener("click", () => {
-            bar.querySelectorAll(".admin-tab").forEach(x => x.classList.remove("is-active"));
-            tab.classList.add("is-active");
-            adminState.tab = tab.dataset.tab;
-            workspaceSection = adminState.tab === "fees" ? "fees" : adminState.tab === "enrolled" ? "students" : "admissions";
-            renderAdminList();
+        tab.id = "registerTab-" + tab.dataset.tab;
+        tab.setAttribute("role", "tab");
+        tab.setAttribute("aria-controls", "applicationsList");
+        tab.addEventListener("click", () => openRegisterTab(tab.dataset.tab));
+        tab.addEventListener("keydown", event => {
+            const tabs = [...bar.querySelectorAll(".admin-tab")];
+            const current = tabs.indexOf(tab);
+            const target = event.key === "ArrowRight" ? (current + 1) % tabs.length : event.key === "ArrowLeft" ? (current - 1 + tabs.length) % tabs.length : event.key === "Home" ? 0 : event.key === "End" ? tabs.length - 1 : -1;
+            if (target < 0) return;
+            event.preventDefault();
+            openRegisterTab(tabs[target].dataset.tab);
+            tabs[target].focus();
         });
     });
 
@@ -2252,85 +2258,53 @@ function adminField(
    DELETE APPLICATION
 ========================================================= */
 
-async function deleteApplication(
-    applicationId,
-    button
-) {
-
-    if (!applicationId) {
-        return;
-    }
-
-
-    const confirmed =
-        window.confirm(
-            "Are you sure you want to permanently delete this application?"
-        );
-
-
-    if (!confirmed) {
-        return;
-    }
-
-
-    if (button) {
-
-        button.disabled = true;
-
-        button.textContent =
-            "Deleting...";
-
-    }
-
-
-    try {
-
-        await deleteDoc(
-            doc(
-                db,
-                "applications",
-                applicationId
-            )
-        );
-
-
-        await loadApplications();
-
-
-    } catch (error) {
-
-        console.error(
-            "Delete application error:",
-            error
-        );
-
-
-        window.alert(
-            "Could not delete this application.\n\n" +
-            (
-                error.message ||
-                "Firestore denied the delete request."
-            )
-        );
-
-
-        if (button) {
-
-            button.disabled = false;
-
-            button.textContent =
-                "Delete Application";
-
+function deleteApplication(applicationId) {
+    const entry = adminState.apps.find(record => record.id === applicationId);
+    if (!entry) return;
+    const enrolled = adminIsEnrolled(entry.data) || Boolean(entry.data.admissionNumber);
+    const confirmation = String(entry.data.admissionNumber || entry.data.fullName || applicationId);
+    const modal = adminCreateModal("adminDeleteModal", `
+        <div class="admin-modal-card delete-modal-card">
+            <button type="button" class="admin-modal-close" aria-label="Close">×</button>
+            <span class="admin-modal-kicker">REVIEW BEFORE DELETING</span>
+            <h3>Delete ${enrolled ? "student record" : "application"}?</h3>
+            <p><strong>${escapeHTML(entry.data.fullName || "Unnamed applicant")}</strong>${entry.data.admissionNumber ? " · ADM " + escapeHTML(String(entry.data.admissionNumber)) : ""}</p>
+            <p>This permanently removes this record and its saved fee history. Other students are not affected. This cannot be undone.</p>
+            <form id="adminDeleteForm">
+                ${enrolled ? `<label class="field">Type <strong>${escapeHTML(confirmation)}</strong> to confirm<input id="deleteConfirmation" autocomplete="off" required></label>` : '<p class="delete-pending-note">This application has not been enrolled. Confirm below to remove it from awaiting approval.</p>'}
+                <p id="deleteMessage" class="admin-modal-msg" role="alert" hidden></p>
+                <div class="delete-dialog-actions"><button type="button" id="deleteCancel">Keep record</button><button type="submit" class="danger-button" id="deleteConfirm">Delete permanently</button></div>
+            </form>
+        </div>`);
+    modal.querySelector("#deleteCancel").onclick = () => closeAdminModal(modal);
+    modal.querySelector("#adminDeleteForm").addEventListener("submit", async event => {
+        event.preventDefault();
+        const button = modal.querySelector("#deleteConfirm");
+        const message = modal.querySelector("#deleteMessage");
+        const input = modal.querySelector("#deleteConfirmation");
+        if (input && input.value.trim() !== confirmation) {
+            message.hidden = false;
+            message.className = "admin-modal-msg err";
+            message.textContent = "Enter the admission number or name exactly as shown above.";
+            input.focus();
+            return;
         }
-
-    }
-
+        if (button.disabled) return;
+        button.disabled = true;
+        button.textContent = "Deleting…";
+        try {
+            await deleteDoc(doc(db, "applications", applicationId));
+            closeAdminModal(modal);
+            await loadApplications();
+        } catch (error) {
+            message.hidden = false;
+            message.className = "admin-modal-msg err";
+            message.textContent = "Record kept. " + friendlyError(error);
+            button.disabled = false;
+            button.textContent = "Try deleting again";
+        }
+    });
 }
-
-
-/* =========================================================
-   ADMIN LOGIN
-========================================================= */
 
 async function handleAdminLogin(event) {
     event.preventDefault();
@@ -2439,14 +2413,12 @@ async function deleteDoc(reference) {
     requireAdmin();
     const original = adminState.apps.find(entry => entry.id === reference.id)?.data;
     if (!original) throw new Error("Refresh the register before deleting.");
-    const confirmation = String(original.admissionNumber || original.fullName || reference.id);
-    if (window.prompt("This permanently deletes the student record, including its saved fee history. Type " + confirmation + " to confirm:") !== confirmation) throw new Error("Deletion cancelled. The record was kept.");
     await runTransaction(db, async transaction => {
         requireAdmin();
         const snapshot = await transaction.get(reference);
         if (!snapshot.exists()) throw new Error("Record no longer exists. Refresh the register.");
         // Preserve records changed after the administrator reviewed them.
-        if (JSON.stringify(snapshot.data()) !== JSON.stringify(original)) throw new Error("The record changed. Refresh and review it before deleting.");
+        if (canonicalRecord(snapshot.data()) !== canonicalRecord(original)) throw new Error("The record changed. Refresh and review it before deleting.");
         transaction.delete(reference);
     });
 }
@@ -2474,6 +2446,10 @@ function clearAdminSession() {
     getElement("workspaceView").replaceChildren();
     document.querySelectorAll(".admin-modal,.admin-lightbox").forEach(modal => modal.remove());
     getElement("adminLoginForm").reset();
+    getElement("adminPassword").type = "password";
+    getElement("togglePassword").textContent = "Show";
+    getElement("togglePassword").setAttribute("aria-label", "Show password");
+    getElement("togglePassword").setAttribute("aria-pressed", "false");
     showAdminLogin();
 }
 
@@ -2492,7 +2468,29 @@ function selectSection(section) {
     getElement("menuToggle").setAttribute("aria-expanded", "false");
 }
 
+function openRegisterTab(tab) {
+    selectSection(tab === "fees" ? "fees" : tab === "enrolled" ? "students" : "admissions");
+    adminState.tab = tab;
+    renderAdminList();
+}
+
 function setupWorkspace() {
+    getElement("workspaceSummary").addEventListener("click", event => {
+        const card = event.target.closest("[data-summary]");
+        if (card && !card.disabled) {
+            selectSection(card.dataset.summary);
+            const destination = ["courses", "batches"].includes(card.dataset.summary) ? getElement("workspaceView") : getElement("registerPanel");
+            destination.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+    });
+    getElement("togglePassword").addEventListener("click", () => {
+        const input = getElement("adminPassword");
+        const visible = input.type === "password";
+        input.type = visible ? "text" : "password";
+        getElement("togglePassword").textContent = visible ? "Hide" : "Show";
+        getElement("togglePassword").setAttribute("aria-label", visible ? "Hide password" : "Show password");
+        getElement("togglePassword").setAttribute("aria-pressed", String(visible));
+    });
     document.querySelectorAll("[data-section]").forEach(button => button.addEventListener("click", () => selectSection(button.dataset.section)));
     getElement("workspaceAdd").addEventListener("click", openAddStudentModal);
     getElement("workspaceExport").addEventListener("click", exportAdminCsv);
@@ -2528,17 +2526,34 @@ function loadEmailService() {
     return emailServicePromise;
 }
 
+function workspaceIcon(name) {
+    const paths = {
+        students: '<path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/><circle cx="9" cy="7" r="4"/>',
+        admissions: '<rect x="4" y="4" width="16" height="17" rx="2"/><path d="M9 4V2h6v2M8 10h8M8 15h6"/>',
+        courses: '<path d="M12 5v16M12 5C8 2 4 3 2 4v15c3-1 6-1 10 2 4-3 7-3 10-2V4c-2-1-6-2-10 1Z"/>',
+        batches: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18M8 15h2M14 15h2"/>',
+        fees: '<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18M7 15h3"/>',
+        overview: '<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1Z"/>',
+        reports: '<path d="M4 20V10M10 20V4M16 20v-8M22 20H2"/>',
+        settings: '<path d="m10 2-.5 3-2 .9L5 4.5 2.5 9l2.3 1.8v2.4L2.5 15 5 19.5l2.5-1.4 2 .9.5 3h4l.5-3 2-.9 2.5 1.4 2.5-4.5-2.3-1.8v-2.4L21.5 9 19 4.5l-2.5 1.4-2-.9L14 2Z"/><circle cx="12" cy="12" r="3"/>',
+        plus: '<path d="M12 5v14M5 12h14"/>',
+        arrow: '<path d="M7 17 17 7M7 7h10v10"/>',
+        arrowRight: '<path d="M5 12h14m-5-5 5 5-5 5"/>'
+    };
+    return `<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${paths[name] || paths.admissions}</svg>`;
+}
+
 function updateWorkspace() {
     const apps = adminState.apps;
     const enrolled = apps.filter(entry => adminIsEnrolled(entry.data));
     const pending = apps.filter(entry => !["Approved", "Cancelled"].includes(entry.data.status));
     const distinct = key => new Set(enrolled.map(entry => key === "coursePreference" ? entry.data.coursePreference || entry.data.course : entry.data[key]).filter(Boolean)).size;
     getElement("workspaceSummary").innerHTML = [
-        [enrolled.length, "Enrolled students", "Approved admissions", "♙"],
-        [pending.length, "Awaiting approval", "Applications to review", "▤"],
-        [distinct("coursePreference"), "Courses with students", "From the student register", "▱"],
-        [distinct("batch"), "Batches with students", "Current assignments", "▦"]
-    ].map(([count,label,note,icon]) => `<article class="workspace-stat"><span class="workspace-stat-icon">${icon}</span><div><span>${label}</span><strong>${recordsLoaded ? count : "—"}</strong><small>${note}</small></div></article>`).join("");
+        [enrolled.length, "Enrolled students", "Approved admissions", "students", "students"],
+        [pending.length, "Awaiting approval", "Applications to review", "admissions", "admissions"],
+        [distinct("coursePreference"), "Courses with students", "Browse the course directory", "courses", "courses"],
+        [distinct("batch"), "Batches with students", "Browse batch assignments", "batches", "batches"]
+    ].map(([count,label,note,icon,target]) => `<button type="button" class="workspace-stat" data-summary="${target}" aria-label="Open ${label.toLowerCase()}${recordsLoaded ? ': ' + count : ''}" ${recordsLoaded ? "" : "disabled"}><span class="workspace-stat-icon" aria-hidden="true">${workspaceIcon(icon)}</span><span class="workspace-stat-body"><span class="workspace-stat-label">${label}</span><strong>${recordsLoaded ? count : "—"}</strong><small>${note}</small></span><span class="workspace-stat-arrow" aria-hidden="true">${workspaceIcon("arrow")}</span></button>`).join("");
     const titles = { overview: "Your institute, at a glance.", admissions: "Admission applications", students: "Enrolled students", fees: "Fees & payments", courses: "Course directory", batches: "Batch directory", reports: "Reports & exports", settings: "Workspace settings" };
     getElement("workspaceHeading").textContent = titles[workspaceSection];
     getElement("workspaceBreadcrumb").textContent = workspaceSection[0].toUpperCase() + workspaceSection.slice(1);
@@ -2550,7 +2565,9 @@ function updateWorkspace() {
         button.classList.toggle("active", active);
         if (active) button.setAttribute("aria-current", "page"); else button.removeAttribute("aria-current");
     });
-    document.querySelectorAll(".admin-tab").forEach(button => button.classList.toggle("is-active", button.dataset.tab === adminState.tab));
+    document.querySelectorAll(".admin-tab").forEach(button => { const active = button.dataset.tab === adminState.tab; button.classList.toggle("is-active", active); button.setAttribute("aria-selected", String(active)); button.tabIndex = active ? 0 : -1; });
+    getElement("applicationsList").setAttribute("role", "tabpanel");
+    getElement("applicationsList").setAttribute("aria-labelledby", "registerTab-" + adminState.tab);
     const directory = ["courses", "batches", "reports", "settings"].includes(workspaceSection);
     getElement("registerPanel").hidden = directory && recordsLoaded;
     getElement("workspaceView").hidden = !recordsLoaded || (!["overview"].includes(workspaceSection) && !directory);
@@ -2565,7 +2582,7 @@ function updateWorkspace() {
             return date.year === month.getUTCFullYear() && date.month === month.getUTCMonth() + 1;
         }).length }));
         const maximum = Math.max(1, ...points.map(point => point.count));
-        view.innerHTML = `<div class="workspace-overview"><section class="workspace-card"><div class="workspace-card-heading"><div><h2>Admissions overview</h2><p>Applications received in the last six months</p></div><span class="workspace-period">India time</span></div><div class="workspace-chart" role="img" aria-label="${escapeHTML(points.map(p => p.label + ' ' + p.count).join(', '))}">${points.map(point => `<div class="workspace-column"><div class="workspace-bar" style="height:${Math.max(1,point.count / maximum * 80)}%"><b>${point.count}</b></div><span>${point.label}</span></div>`).join("")}</div></section><section class="workspace-card"><h2>Quick actions</h2><p>Keep the day moving.</p><button class="workspace-quick" data-go="add"><span>＋</span><div><strong>Add offline student</strong><small>Register a walk-in admission</small></div><b>›</b></button><button class="workspace-quick" data-go="admissions"><span>▤</span><div><strong>Review applications</strong><small>${pending.length} awaiting approval</small></div><b>›</b></button><button class="workspace-quick" data-go="fees"><span>₹</span><div><strong>Manage fees</strong><small>Payments, balances and reminders</small></div><b>›</b></button></section></div>`;
+        view.innerHTML = `<div class="workspace-overview"><section class="workspace-card"><div class="workspace-card-heading"><div><h2>Admissions overview</h2><p>Applications received in the last six months</p></div><span class="workspace-period">India time</span></div><div class="workspace-chart" role="img" aria-label="${escapeHTML(points.map(p => p.label + ' ' + p.count).join(', '))}">${points.map(point => `<div class="workspace-column"><div class="workspace-bar" style="height:${Math.max(1,point.count / maximum * 80)}%"><b>${point.count}</b></div><span>${point.label}</span></div>`).join("")}</div></section><section class="workspace-card"><h2>Quick actions</h2><p>Keep the day moving.</p><button class="workspace-quick" data-go="add"><span>${workspaceIcon("plus")}</span><div><strong>Add offline student</strong><small>Register a walk-in admission</small></div><b>${workspaceIcon("arrowRight")}</b></button><button class="workspace-quick" data-go="admissions"><span>${workspaceIcon("admissions")}</span><div><strong>Review applications</strong><small>${pending.length} awaiting approval</small></div><b>${workspaceIcon("arrowRight")}</b></button><button class="workspace-quick" data-go="fees"><span>${workspaceIcon("fees")}</span><div><strong>Manage fees</strong><small>Payments, balances and reminders</small></div><b>${workspaceIcon("arrowRight")}</b></button></section></div>`;
         view.querySelectorAll("[data-go]").forEach(button => button.onclick = () => button.dataset.go === "add" ? openAddStudentModal() : selectSection(button.dataset.go));
     } else if (workspaceSection === "courses" || workspaceSection === "batches") {
         const isCourse = workspaceSection === "courses";
@@ -2573,7 +2590,7 @@ function updateWorkspace() {
         view.innerHTML = `<section class="workspace-card"><h2>${isCourse ? "Courses" : "Batch assignments"}</h2><p>View and manage students by ${isCourse ? "course" : "batch"}. Change assignments in the student's Details → Edit panel.</p><div class="workspace-directory">${names.map((name,index) => {
             const matches = apps.filter(entry => (isCourse ? (entry.data.coursePreference || entry.data.course) : entry.data.batch) === name);
             const catalog = isCourse ? courses.find(c => c.title === name) : null;
-            return `<article><span class="workspace-stat-icon">${isCourse ? "▱" : "▦"}</span><h3>${escapeHTML(name)}</h3><p>${catalog ? escapeHTML(catalog.duration + " · " + catalog.level) : "From the student register"}</p><strong>${matches.filter(entry => adminIsEnrolled(entry.data)).length} enrolled · ${matches.length} total</strong><button data-directory="${index}" ${matches.length ? "" : "disabled"}>View students →</button></article>`;
+            return `<article><span class="workspace-stat-icon">${workspaceIcon(isCourse ? "courses" : "batches")}</span><h3>${escapeHTML(name)}</h3><p>${catalog ? escapeHTML(catalog.duration + " · " + catalog.level) : "From the student register"}</p><strong>${matches.filter(entry => adminIsEnrolled(entry.data)).length} enrolled · ${matches.length} total</strong><button data-directory="${index}" ${matches.length ? "" : "disabled"}>View students →</button></article>`;
         }).join("")}</div></section>`;
         view.querySelectorAll("[data-directory]").forEach(button => button.onclick = () => {
             const name = names[Number(button.dataset.directory)];

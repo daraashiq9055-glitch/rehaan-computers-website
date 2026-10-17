@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { recordTime, isSafePhoto, csvCell, paymentPatch, assertUnchanged, validateChanges } from '../public/admin-records.js';
+import { recordTime, isSafePhoto, csvCell, paymentPatch, assertUnchanged, validateChanges, canonicalRecord } from '../public/admin-records.js';
 
 test('legacy dates and Firebase timestamps sort without dropping undated records', () => {
     assert.equal(recordTime({seconds: 100}), 100000);
@@ -28,6 +28,14 @@ test('concurrent changes to edited fields or ledger totals abort; unrelated upda
     assert.throws(() => assertUnchanged(original,{...original,fullName:'Someone else'}, {fullName:'Mine'}), /another session/);
     assert.throws(() => assertUnchanged(original,{...original,monthlyFees:{'2026-10-01':700}}, {'monthlyFees.2026-10-01':999}), /another session/);
     assert.doesNotThrow(() => assertUnchanged(original,{...original,address:'Changed elsewhere'}, {fullName:'Mine'}));
+});
+test('Firestore map key order does not produce false record conflicts', () => {
+    const a={fullName:'Cloudinary Test Student',payment:{status:'pending',amount:100},createdAt:{seconds:100,nanoseconds:2}};
+    const b={createdAt:{nanoseconds:2,seconds:100},payment:{amount:100,status:'pending'},fullName:'Cloudinary Test Student'};
+    assert.equal(canonicalRecord(a),canonicalRecord(b));
+    assert.doesNotThrow(()=>assertUnchanged(a,b,{payment:{status:'paid',amount:100}}));
+    assert.notEqual(canonicalRecord(a),canonicalRecord({...b,fullName:'Different student'}));
+    assert.notEqual(canonicalRecord({items:[1,2]}),canonicalRecord({items:[2,1]}));
 });
 test('single-field edits tolerate untouched legacy fields and reject invalid new values', () => {
     assert.doesNotThrow(() => validateChanges({phone:'legacy',status:'New'}, {address:'New address'}));

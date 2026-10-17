@@ -21,12 +21,19 @@ export function fieldValue(record, path) {
     return path.split(".").reduce((value, key) => value?.[key], record);
 }
 
+export function canonicalRecord(value) {
+    // Firestore map field order is not a change to the stored record.
+    return JSON.stringify(value, (_key, item) => item && typeof item === "object" && !Array.isArray(item)
+        ? Object.fromEntries(Object.keys(item).sort().map(key => [key, item[key]]))
+        : item);
+}
+
 export function paymentPatch(original, patch) {
     const result = { ...patch };
     if (patch.payment) {
         delete result.payment;
         for (const [key, value] of Object.entries(patch.payment)) {
-            if (JSON.stringify(value) !== JSON.stringify(original.payment?.[key])) result["payment." + key] = value;
+            if (canonicalRecord(value) !== canonicalRecord(original.payment?.[key])) result["payment." + key] = value;
         }
     }
     return result;
@@ -34,7 +41,7 @@ export function paymentPatch(original, patch) {
 
 export function assertUnchanged(original, latest, patch) {
     for (const path of Object.keys(patch)) {
-        if (JSON.stringify(fieldValue(original, path)) !== JSON.stringify(fieldValue(latest, path))) {
+        if (canonicalRecord(fieldValue(original, path)) !== canonicalRecord(fieldValue(latest, path))) {
             throw new Error("This record changed in another session. Close this window, refresh and try again. Your changes were not saved.");
         }
     }
