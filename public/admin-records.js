@@ -21,6 +21,11 @@ export function fieldValue(record, path) {
     return path.split(".").reduce((value, key) => value?.[key], record);
 }
 
+export function formatGender(value) {
+    const labels = { male: "Male", female: "Female", other: "Other", prefer_not_to_say: "Prefer not to say" };
+    return Object.hasOwn(labels, value) ? labels[value] : value || "Not specified";
+}
+
 export function canonicalRecord(value) {
     // Firestore map field order is not a change to the stored record.
     return JSON.stringify(value, (_key, item) => item && typeof item === "object" && !Array.isArray(item)
@@ -48,6 +53,7 @@ export function assertUnchanged(original, latest, patch) {
 }
 
 export function validateChanges(original, patch) {
+    if ("gender" in patch && !["", "male", "female", "other", "prefer_not_to_say"].includes(patch.gender)) throw new Error("Choose a gender from the list or leave it unspecified.");
     const limits = { fullName: 120, parentName: 120, email: 254, address: 300, message: 5000,
         coursePreference: 120, batch: 40, source: 120, qualification: 64, adminNote: 5000,
         admissionNumber: 20, rollNumber: 20, guardianPhone: 20 };

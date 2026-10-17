@@ -50,6 +50,7 @@ service cloud.firestore {
       function hasOnlyPublicFields(d) {
         return d.keys().hasOnly([
           "fullName",
+          "gender",
           "parentName",
           "phone",
           "guardianPhone",
@@ -138,6 +139,8 @@ service cloud.firestore {
           && d.coursePreference.size() <= 120
 
           // Optional/user-provided fields.
+          // Optional for older forms and records; this does not grant payment privileges.
+          && (!("gender" in d) || d.gender in ["", "male", "female", "other", "prefer_not_to_say"])
           && strLen(d, "parentName", 0, 120)
           && strLen(d, "guardianPhone", 0, 20)
           && strLen(d, "email", 0, 254)

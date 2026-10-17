@@ -191,3 +191,73 @@ before a click, exact destination parameters, popup behavior, keyboard controls,
 creator navigation, mobile/tablet/desktop layouts, existing course/form startup
 and the no-JavaScript fallback. It does not calculate routes or certify Google's
 live services. No student writes, payments, emails or message sends occur.
+
+## Optional gender and storage capacity
+
+The main form now offers Male, Female, Other and Prefer not to say. Leaving it
+blank omits the field from the new public record. Existing records need no
+migration. Active admin details, editing, offline admission and CSV export use
+the same options and readable labels. Untouched legacy values survive edits.
+Only application capture/validation and the optional-field allowlist changed;
+the Razorpay order, verification, resume and reconciliation implementation is
+unchanged. No Cloudinary integration or photo migration is included.
+
+100 student records is a modest Firestore dataset. The dashboard currently adds
+students individually; there is no bulk spreadsheet importer. Capacity depends
+on actual document sizes, reads/writes and the project's plan, rather than a
+100-student limit. Firestore's document limit is 1 MiB. This preview still stores
+cropped base64 images in documents; moving photos to Cloudinary can reduce
+Firestore document size and read traffic. Only photo URLs/public IDs should be
+stored in Firestore after a separately reviewed integration. Cloudinary API
+secrets must stay on a server, and photo access controls must reflect that
+student photographs are personal data. Do not assume an ordinary public image
+URL provides private access.
+
+### Production rollout gate
+
+The deployed rules have not been retrieved or verified. An existing allowlist
+that excludes gender will reject selected-gender applications before checkout.
+Compare the *currently deployed* Firestore rules and apply only these additions:
+add `"gender"` to public allowed keys, and add this optional value check:
+
+```text
+&& (!("gender" in d) || d.gender in ["", "male", "female", "other", "prefer_not_to_say"])
+```
+
+Keep the existing admin authorization and payment protections. Do not overwrite
+unknown production rules wholesale with this checkout. Verify the merged rules
+in an isolated emulator first, publish the reviewed rules before the frontend,
+and verify a controlled admission using a payment test environment. No rules,
+frontend or backend deployment and no live student/payment writes were made here.
+
+The emulator download was blocked by this environment's network proxy (403 from
+storage.googleapis.com), so the new rules tests remain **unexecuted**. They cover
+optional/valid/invalid gender values, public read/update/delete denial, forged
+paid/payment metadata rejection, privileged-field injection, and admin edits of
+legacy records while preserving the payment map. On a machine with Java 21+
+and access to Firebase's official emulator downloads, from the repository root:
+
+```sh
+npm install --prefix /tmp/rehaan-rules-check --no-audit --no-fund --ignore-scripts firebase-tools@15.34.0 @firebase/rules-unit-testing@6.0.0 firebase@13.0.0
+NODE_PATH=/tmp/rehaan-rules-check/node_modules /tmp/rehaan-rules-check/node_modules/.bin/firebase emulators:exec --only firestore --project demo-rehaan-gender --config tests/firebase-emulator.json "node tests/firestore-gender.test.cjs"
+```
+
+This command uses a demo project and localhost only. It does not need production
+credentials. The test refuses to run without the expected localhost emulator.
+
+Additional isolated regression checks:
+
+```sh
+python3 tests/admission-payment-browser.py
+node --test tests/admin-records.test.mjs
+node tests/admin-fees.test.cjs
+python3 tests/admin-browser.py
+python3 tests/site-details-browser.py
+```
+
+Admission tests intercept every external request. They exercise all gender
+choices and omission, Firestore permission rejection before order creation,
+₹100 checkout, verified success, cancellation/resume without creating a second
+order, and accepted verification followed by status reconciliation. Services are
+simulated, so passing results do not certify the deployed payment Worker,
+Razorpay settings or production Firestore rules.

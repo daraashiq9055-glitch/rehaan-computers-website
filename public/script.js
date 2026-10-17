@@ -1233,6 +1233,10 @@ function initPhoneInputs() {
 
 function validateApplication(data) {
 
+    if (data.gender && !["male", "female", "other", "prefer_not_to_say"].includes(data.gender)) {
+        return { valid: false, message: "Please choose a gender from the list, or leave it unselected." };
+    }
+
     if (!data.photoUploaded) {
 
         return {
@@ -1427,6 +1431,8 @@ async function submitApplication(event) {
     const fullName =
         getElement("fullName").value.trim();
 
+    const gender = getElement("gender")?.value || "";
+
     const parentName =
         getElement("parentName").value.trim();
 
@@ -1470,6 +1476,7 @@ async function submitApplication(event) {
     const data = {
 
         fullName,
+        gender,
         parentName,
         phone,
         guardianPhone,
@@ -1555,6 +1562,7 @@ async function submitApplication(event) {
         const applicationData = {
 
             fullName,
+            ...(gender ? { gender } : {}),
             parentName,
             phone,
             guardianPhone,

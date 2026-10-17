@@ -1,5 +1,5 @@
 // Admin features adapted from website-updates d738bb2. The public site keeps its existing script.
-import { recordTime, isSafePhoto, csvCell, fieldValue, paymentPatch, assertUnchanged, validateChanges, canonicalRecord } from "./admin-records.js";
+import { recordTime, isSafePhoto, csvCell, fieldValue, paymentPatch, assertUnchanged, validateChanges, canonicalRecord, formatGender } from "./admin-records.js";
 /* =========================================================
    REHAAN COMPUTERS
    MAIN WEBSITE + FIREBASE + ADMIN
@@ -1632,7 +1632,7 @@ function openAdminDetails(applicationId) {
                 ${adminField("Attendance Setup", data.attendanceSetup === "setup" ? "Requested" : "Skipped")}
                 ${adminField("Source", data.source)}
                 ${adminField("Batch", data.batch)}
-                ${adminField("Gender", data.gender)}
+                ${adminField("Gender", formatGender(data.gender))}
                 ${adminField("Roll Number", data.rollNumber)}
                 ${adminField("Admission Date", data.admissionDate)}
                 ${adminField("Attendance Email", data.attendanceEmail)}
@@ -1652,7 +1652,7 @@ function openAdminDetails(applicationId) {
 <label>Guardian Phone<input class="edit-guardianPhone" value="${escapeHTML(data.guardianPhone || "")}" maxlength="10"></label>
 <label>Email<input type="email" class="edit-email" value="${escapeHTML(data.email || "")}"></label>
 <label>Date of Birth<input type="date" class="edit-dob" value="${escapeHTML(data.dob || "")}"></label>
-<label>Gender<select class="edit-gender"><option value="">Not specified</option>${data.gender && !["male","female"].includes(data.gender) ? `<option value="${escapeHTML(data.gender)}" selected>${escapeHTML(data.gender)}</option>` : ""}<option value="male" ${data.gender === "male" ? "selected" : ""}>Male</option><option value="female" ${data.gender === "female" ? "selected" : ""}>Female</option></select></label>
+<label>Gender<select class="edit-gender"><option value="">Not specified</option>${data.gender && !["male","female","other","prefer_not_to_say"].includes(data.gender) ? `<option value="${escapeHTML(data.gender)}" selected>${escapeHTML(data.gender)}</option>` : ""}<option value="male" ${data.gender === "male" ? "selected" : ""}>Male</option><option value="female" ${data.gender === "female" ? "selected" : ""}>Female</option><option value="other" ${data.gender === "other" ? "selected" : ""}>Other</option><option value="prefer_not_to_say" ${data.gender === "prefer_not_to_say" ? "selected" : ""}>Prefer not to say</option></select></label>
 <label>Roll No<input class="edit-rollNumber" value="${escapeHTML(data.rollNumber || "")}"></label>
 <label>Admission Date<input type="date" class="edit-admissionDate" value="${escapeHTML((data.admissionDate || "").slice(0,10))}"></label>
 <label>Course<input class="edit-coursePreference" value="${escapeHTML(data.coursePreference || data.course || "")}"></label>
@@ -1959,7 +1959,7 @@ function openAddStudentModal() {
             </div>
             <div class="admin-form-grid">
                 <label>Full Name *<input id="addName" type="text" autocomplete="off"></label>
-                <label>Gender (for photo placeholder)<select id="addGender"><option value="">Not specified</option><option value="male">Male</option><option value="female">Female</option></select></label>
+                <label>Gender (optional)<select id="addGender"><option value="">Not specified</option><option value="male">Male</option><option value="female">Female</option><option value="other">Other</option><option value="prefer_not_to_say">Prefer not to say</option></select></label>
                 <label>Parent / Guardian<input id="addGuardian" type="text" autocomplete="off"></label>
                 <label>Phone *<input id="addPhone" type="tel" inputmode="numeric" maxlength="10" autocomplete="off"></label>
                 <label>Guardian Phone<input id="addGuardianPhone" type="tel" inputmode="numeric" maxlength="10" autocomplete="off"></label>
@@ -2198,7 +2198,7 @@ function exportAdminCsv() {
             isSafePhoto(d.photo) ? "yes" : "no",
             formatDate(d.createdAt),
             d.approvedAt ? formatDate(d.approvedAt) : "",
-            d.adminNote || "", d.guardianPhone, d.gender, d.rollNumber, d.admissionDate, d.address, d.message, d.source, d.attendanceSetup, d.attendanceEmail, d.attendanceUid, d.aadhaarLast4, JSON.stringify(d.monthlyFees || {}), JSON.stringify(d.feeReminders || {}), JSON.stringify(d.payment || {})
+            d.adminNote || "", d.guardianPhone, formatGender(d.gender), d.rollNumber, d.admissionDate, d.address, d.message, d.source, d.attendanceSetup, d.attendanceEmail, d.attendanceUid, d.aadhaarLast4, JSON.stringify(d.monthlyFees || {}), JSON.stringify(d.feeReminders || {}), JSON.stringify(d.payment || {})
         ].map(esc).join(","));
 
     });

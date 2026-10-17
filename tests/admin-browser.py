@@ -187,12 +187,14 @@ def run():
             return struct.pack('!I',len(data))+kind+data+struct.pack('!I',zlib.crc32(kind+data)&0xffffffff)
         png=b'\x89PNG\r\n\x1a\n'+png_chunk(b'IHDR',struct.pack('!2I5B',2,2,8,2,0,0,0))+png_chunk(b'IDAT',zlib.compress(b'\x00\x00\x80\x78\x00\x80\x78'*2))+png_chunk(b'IEND',b'')
         card.locator('[data-act=details]').click();page.locator('.admin-toggle-edit').click()
+        page.locator('.edit-gender').select_option('prefer_not_to_say')
         page.locator('.edit-photo').set_input_files({'name':'sample.png','mimeType':'image/png','buffer':png})
         expect(page.locator('#photoCropCanvas')).to_be_visible()
         page.locator('#applyStudentCrop').click()
         page.locator('.admin-save-edits').click()
         expect(page.locator('#adminDetailsModal .admin-modal-msg')).to_contain_text('Saved')
         page.wait_for_timeout(900)
+        assert page.evaluate('__fixture.records.online.gender')=='prefer_not_to_say'
         assert page.evaluate('__fixture.records.online.photo').startswith('data:image/jpeg;base64,')
         card.locator('[data-photo-zoom]').click()
         expect(page.locator('#adminPhotoViewer')).to_be_visible()
@@ -241,6 +243,7 @@ def run():
         page.locator('#addName').fill('Offline Test')
         page.locator('#addPhone').fill('9876543213')
         page.locator('#addGuardianPhone').fill('9876543214')
+        page.locator('#addGender').select_option('female')
         page.locator('#addCourse').select_option(COURSE)
         page.locator('#addAdm').fill('001')
         page.locator('#addSaveBtn').click()
@@ -264,6 +267,7 @@ def run():
         page.locator('[data-section=reports]').click()
         with page.expect_download() as download: page.locator('#reportCsv').click()
         csv=Path(download.value.path()).read_text(encoding='utf-8-sig')
+        assert 'Prefer not to say' in csv and 'Female' in csv
         assert 'Guardian Phone' in csv and 'Attendance UID' in csv and 'Monthly Fee Ledger' in csv
         with page.expect_download() as download: page.locator('#reportJson').click()
         backup=json.loads(Path(download.value.path()).read_text())

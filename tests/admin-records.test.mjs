@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { recordTime, isSafePhoto, csvCell, paymentPatch, assertUnchanged, validateChanges, canonicalRecord } from '../public/admin-records.js';
+import { recordTime, isSafePhoto, csvCell, paymentPatch, assertUnchanged, validateChanges, canonicalRecord, formatGender } from '../public/admin-records.js';
 
 test('legacy dates and Firebase timestamps sort without dropping undated records', () => {
     assert.equal(recordTime({seconds: 100}), 100000);
@@ -42,4 +42,17 @@ test('single-field edits tolerate untouched legacy fields and reject invalid new
     for (const patch of [{phone:'123'}, {email:'bad'}, {guardianPhone:'123'}, {aadhaarLast4:'12345'}, {dob:'2026-02-31'}, {admissionDate:'2999-01-01'}, {fullName:'A'}, {coursePreference:''}, {admissionNumber:'<script>'}]) assert.throws(() => validateChanges({},patch));
     assert.throws(() => validateChanges({}, {status:'Approved'}), /admission number/);
     assert.doesNotThrow(() => validateChanges({}, {fullName:'Valid Name',phone:'9876543210',coursePreference:'Diploma',admissionNumber:'RC/001',status:'Approved',dob:'2005-02-28'}));
+});
+
+
+test('gender labels and edits allow all choices and preserve untouched legacy values', () => {
+    for (const [value,label] of Object.entries({male:'Male',female:'Female',other:'Other',prefer_not_to_say:'Prefer not to say'})) {
+        assert.equal(formatGender(value),label);
+        assert.doesNotThrow(()=>validateChanges({}, {gender:value}));
+    }
+    assert.equal(formatGender(undefined),'Not specified');
+    assert.equal(formatGender('legacy'),'legacy');
+    assert.doesNotThrow(()=>validateChanges({gender:'legacy'}, {address:'Updated'}));
+    assert.doesNotThrow(()=>validateChanges({}, {gender:''}));
+    for (const gender of ['invalid',42,null]) assert.throws(()=>validateChanges({}, {gender}));
 });
