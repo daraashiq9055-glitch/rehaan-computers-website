@@ -1,3 +1,7 @@
+import { photoStorageConfig } from "./photo-storage-config.js";
+import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js";
+let activePhotoMigration = null;
+
 // Admin features adapted from website-updates d738bb2. The public site keeps its existing script.
 import { recordTime, isSafePhoto, csvCell, fieldValue, paymentPatch, assertUnchanged, validateChanges, canonicalRecord, formatGender } from "./admin-records.js";
 /* =========================================================
@@ -1454,7 +1458,7 @@ function renderAdminList() {
         card.dataset.applicationId = id;
 
         const photoCell = isSafePhoto(data.photo)
-            ? `<button type="button" class="row-photo zoomable" data-photo-zoom aria-label="View full photo of ${escapeHTML(data.fullName || "applicant")}"><img src="${escapeHTML(data.photo)}" alt="Applicant photo"></button>`
+            ? `<button type="button" class="row-photo zoomable" data-photo-zoom aria-label="View full photo of ${escapeHTML(data.fullName || "applicant")}"><img ${isPrivateStudentPhoto(data.photo) ? "" : `src="${escapeHTML(data.photo)}"`} alt="Applicant photo"></button>`
             : studentAvatarPlaceholder(data);
 
         card.innerHTML = `
@@ -1536,6 +1540,7 @@ function renderAdminList() {
         );
 
         list.appendChild(card);
+        if (isSafePhoto(data.photo)) displayStudentPhoto(card.querySelector("[data-photo-zoom] img"), data.photo, adminPhotoToken);
 
     });
 
@@ -1583,7 +1588,7 @@ function openAdminPhotoViewer(name, photoUrl, admissionNumber) {
 
     }
 
-    box.querySelector("img").src = photoUrl;
+    displayStudentPhoto(box.querySelector("img"), photoUrl, adminPhotoToken);
     box.querySelector("p").textContent =
         (name || "Applicant") +
         (admissionNumber ? "  ·  Admission No " + admissionNumber : "");
@@ -1613,7 +1618,7 @@ function openAdminDetails(applicationId) {
             <button type="button" class="admin-ghost-btn admin-toggle-edit" aria-label="Edit student details" title="Edit student details" style="position:absolute;top:20px;right:65px;font-size:20px" >✎</button>
             <div class="admin-details-top">
                 ${isSafePhoto(data.photo)
-                    ? `<button type="button" class="row-photo zoomable admin-details-photo" data-photo-zoom aria-label="View full photo"><img src="${escapeHTML(data.photo)}" alt="Applicant photo"></button>`
+                    ? `<button type="button" class="row-photo zoomable admin-details-photo" data-photo-zoom aria-label="View full photo"><img ${isPrivateStudentPhoto(data.photo) ? "" : `src="${escapeHTML(data.photo)}"`} alt="Applicant photo"></button>`
                     : studentAvatarPlaceholder(data, "admin-details-photo")}
                 <div>
                     <h3>${escapeHTML(data.fullName || "Unnamed Applicant")}</h3>
@@ -1699,6 +1704,7 @@ function openAdminDetails(applicationId) {
         coursePreference: data.coursePreference || data.course || "",
         admissionDate: (data.admissionDate || data.approvedAt || "").slice(0, 10)
     }));
+    if (isSafePhoto(data.photo)) displayStudentPhoto(modal.querySelector("[data-photo-zoom] img"), data.photo, adminPhotoToken);
     let updatedPhoto = null;
     modal.querySelector(".edit-photo").addEventListener("change", event => {
         const file = event.target.files && event.target.files[0];
@@ -1779,6 +1785,7 @@ function openAdminDetails(applicationId) {
 
         try {
 
+            if (updatedPhoto) patch.photo = await storeStudentPhoto(updatedPhoto, adminPhotoToken);
             await updateDoc(doc(db, "applications", applicationId), patch);
 
             msg.hidden = false;
@@ -1810,6 +1817,7 @@ function scheduleModalClose(modal, delay) {
 }
 
 function closeAdminModal(modal) {
+    if (modal._canClose === false) return;
     modal._generation++;
     modal.hidden = true;
     if (modal._returnFocus?.isConnected) modal._returnFocus.focus();
@@ -1836,7 +1844,10 @@ function adminCreateModal(id, inner) {
             else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
         });
     }
+    // A reused cropper must appear above the newer offline-student dialog.
+    document.body.appendChild(modal);
     modal._generation = (modal._generation || 0) + 1;
+    modal._canClose = true;
     modal._returnFocus = document.activeElement;
     modal.innerHTML = inner;
     modal.hidden = false;
@@ -2092,7 +2103,7 @@ function openAddStudentModal() {
                 attendanceEmail: "",
                 attendanceUid: "",
                 message: value("addNote"),
-                photo: photoData,
+                photo: await storeStudentPhoto(photoData, adminPhotoToken),
                 gender: value("addGender"),
                 admissionNumber,
                 rollNumber: value("addRoll") || admissionNumber,
@@ -2433,6 +2444,8 @@ function friendlyError(error) {
 }
 
 function clearAdminSession() {
+    clearPhotoSession();
+    if (activePhotoMigration) activePhotoMigration.stopped = true;
     verifiedAdminUid = null;
     loadSequence++;
     recordsLoaded = false;
@@ -2603,9 +2616,10 @@ function updateWorkspace() {
             downloadFile(text,"rehaan-student-backup-" + new Date().toISOString().slice(0,10) + ".json","application/json");
         };
     } else if (workspaceSection === "settings") {
-        view.innerHTML = `<section class="workspace-card"><h2>Your workspace</h2><dl class="workspace-settings"><dt>Signed in as</dt><dd>${escapeHTML(auth.currentUser?.email || "Administrator")}</dd><dt>Firebase project</dt><dd>${escapeHTML(firebaseConfig.projectId)}</dd><dt>Student register</dt><dd>applications · ${apps.length} loaded records</dd><dt>Admission fee</dt><dd>₹${ADMISSION_FEE} · separate from monthly tuition</dd><dt>Monthly tuition</dt><dd>₹${MONTHLY_TUITION_FEE} · admission anniversary</dd><dt>Session</dt><dd>Memory only · sign-in required after reloading</dd></dl><div class="workspace-report-actions"><button class="admin-save-btn" id="settingsRefresh">Refresh student register</button><button class="admin-ghost-btn" id="settingsLogout">Sign out securely</button><a href="index.html" class="admin-ghost-btn">Visit public website ↗</a></div></section>`;
+        view.innerHTML = `<section class="workspace-card"><h2>Your workspace</h2><dl class="workspace-settings"><dt>Signed in as</dt><dd>${escapeHTML(auth.currentUser?.email || "Administrator")}</dd><dt>Firebase project</dt><dd>${escapeHTML(firebaseConfig.projectId)}</dd><dt>Student register</dt><dd>applications · ${apps.length} loaded records</dd><dt>Admission fee</dt><dd>₹${ADMISSION_FEE} · separate from monthly tuition</dd><dt>Monthly tuition</dt><dd>₹${MONTHLY_TUITION_FEE} · admission anniversary</dd><dt>Session</dt><dd>Memory only · sign-in required after reloading</dd></dl><div class="workspace-report-actions"><button class="admin-save-btn" id="settingsRefresh">Refresh student register</button><button class="admin-ghost-btn" id="settingsLogout">Sign out securely</button><a href="index.html" class="admin-ghost-btn">Visit public website ↗</a><button class="admin-ghost-btn" id="settingsMigratePhotos" ${photoStorageConfig.enabled ? "" : "disabled"}>Transfer existing photos to Cloudinary</button></div><p>${photoStorageConfig.enabled ? "Transferred photos stay visible in the register. Download a backup before starting." : "Cloudinary uploads will be available after the photo service is configured."}</p></section>`;
         getElement("settingsRefresh").onclick = loadApplications;
         getElement("settingsLogout").onclick = handleAdminLogout;
+        getElement("settingsMigratePhotos").onclick = openPhotoMigration;
     }
 }
 
@@ -2620,3 +2634,80 @@ function downloadFile(text, name, type) {
 }
 
 await initAdminAuthentication();
+
+async function adminPhotoToken() {
+    requireAdmin();
+    return auth.currentUser.getIdToken();
+}
+
+
+async function cropExistingPhoto(photo) {
+    if (!/^data:image\/(?:jpeg|jpg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$/.test(photo)) throw new Error("This photograph needs a manual replacement.");
+    const image = new Image();
+    image.src = photo;
+    await image.decode();
+    const side = Math.min(image.naturalWidth, image.naturalHeight);
+    if (!side) throw new Error("This photograph could not be opened. The original has been kept.");
+    const canvas = document.createElement("canvas"); canvas.width = 360; canvas.height = 360;
+    const context = canvas.getContext("2d");
+    context.fillStyle = "#f4efe2"; context.fillRect(0, 0, 360, 360);
+    context.drawImage(image, (image.naturalWidth-side)/2, (image.naturalHeight-side)/2, side, side, 0, 0, 360, 360);
+    let quality = .82, crop = canvas.toDataURL("image/jpeg", quality);
+    while (crop.length > 380000 && quality > .4) { quality -= .1; crop = canvas.toDataURL("image/jpeg", quality); }
+    return crop;
+}
+
+function openPhotoMigration() {
+    requireAdmin();
+    if (!photoStorageConfig.enabled || activePhotoMigration) return;
+    const records = adminState.apps.map(entry => ({id:entry.id,data:structuredClone(entry.data)}));
+    const candidates = records.filter(entry => isSafePhoto(entry.data.photo) && entry.data.photo.startsWith("data:"));
+    const modal = adminCreateModal("adminPhotoMigration", `<div class="admin-modal-card">
+        <button type="button" class="admin-modal-close" aria-label="Close">×</button>
+        <h3>Transfer existing photos</h3>
+        <p>${candidates.length} stored photos can be transferred. They will stay visible in the dashboard. Student details and fee records are kept.</p>
+        <p>Download and keep the private backup first. It contains the original photos and all loaded records. Already linked photos are skipped.</p>
+        <div class="workspace-report-actions"><button type="button" class="admin-ghost-btn" id="photoMigrationBackup">Download original backup</button>
+        <button type="button" class="admin-save-btn" id="photoMigrationStart" disabled>Transfer ${candidates.length} photos</button>
+        <button type="button" class="admin-ghost-btn" id="photoMigrationStop" hidden>Stop after current photo</button></div>
+        <p class="admin-modal-msg" id="photoMigrationMessage" role="status">No records changed.</p></div>`);
+    const start = modal.querySelector("#photoMigrationStart"), stop = modal.querySelector("#photoMigrationStop"), backup = modal.querySelector("#photoMigrationBackup");
+    const message = modal.querySelector("#photoMigrationMessage");
+    backup.onclick = () => {
+        requireAdmin();
+        downloadFile(JSON.stringify({exportedAt:new Date().toISOString(),project:firebaseConfig.projectId,collection:"applications",records},null,2),"rehaan-original-photos-"+new Date().toISOString().slice(0,10)+".json","application/json");
+        start.disabled = !candidates.length;
+        message.textContent = "Backup download started. Keep that file safely before transferring photos.";
+    };
+    start.onclick = async () => {
+        if (activePhotoMigration) return;
+        const control = {stopped:false}; activePhotoMigration = control;
+        start.disabled = true; backup.disabled = true; stop.hidden = false; modal._canClose = false;
+        modal.querySelector(".admin-modal-close").disabled = true;
+        stop.onclick = () => { control.stopped = true; stop.disabled = true; };
+        let completed = 0;
+        try {
+            for (const entry of candidates) {
+                if (control.stopped) break;
+                requireAdmin();
+                message.textContent = `Transferring photo ${completed+1} of ${candidates.length}…`;
+                const crop = await cropExistingPhoto(entry.data.photo);
+                const photo = await storeStudentPhoto(crop, adminPhotoToken);
+                if (control.stopped) break;
+                if (adminState.apps.find(record => record.id === entry.id)?.data.photo !== entry.data.photo) throw new Error("A photograph changed during transfer. Refresh and review it before continuing.");
+                await updateDoc(doc(db,"applications",entry.id),{photo});
+                completed++;
+                message.textContent = `${completed} of ${candidates.length} photos transferred. Photos remain visible in the register.`;
+                if (completed < candidates.length) await new Promise(resolve => setTimeout(resolve,7000));
+            }
+            message.textContent = `${completed} photos transferred. ${control.stopped ? "Stopped; remaining originals are kept. Reopen this tool to continue." : "Finished. Original photos are retained in your downloaded backup."}`;
+        } catch (error) {
+            message.textContent = `${completed} photos transferred. Stopped: ${error.message || "Could not continue."} Untransferred photos are kept. Refresh and reopen this tool to continue.`;
+        } finally {
+            if (activePhotoMigration === control) activePhotoMigration = null;
+            stop.hidden = true; modal._canClose = true;
+            modal.querySelector(".admin-modal-close").disabled = false;
+            if (verifiedAdminUid) await loadApplications();
+        }
+    };
+}

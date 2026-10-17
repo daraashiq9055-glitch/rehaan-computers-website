@@ -22,7 +22,7 @@ SDK='''window.Razorpay=class{constructor(options){window.__checkout=options;} on
 class Quiet(SimpleHTTPRequestHandler):
  def log_message(self,*args):pass
 
-def run():
+def run(enabled=False):
  # Payment implementation must remain byte-identical to the preceding preview.
  before=subprocess.check_output(['git','show','HEAD:public/script.js'],cwd=ROOT,text=True)
  after=(ROOT/'public/script.js').read_text()
@@ -37,11 +37,19 @@ def run():
  try:
   with sync_playwright() as p:
    browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
-   for gender,mode in [('male','success'),('female','success'),('other','success'),('prefer_not_to_say','success'),('','success'),('female','denied'),('male','pending'),('female','reconcile')]:
-    context=browser.new_context(reduced_motion='reduce');unexpected=[];errors=[];calls=[]
+   for gender,mode in [('male','success'),('female','success'),('other','success'),('prefer_not_to_say','success'),('','success'),('female','denied'),('male','pending'),('female','reconcile')]+([('male','upload-failure')] if enabled else []):
+    context=browser.new_context(reduced_motion='reduce');unexpected=[];errors=[];calls=[];uploads=[]
+    stored_photo='https://res.cloudinary.com/salatmdv/image/authenticated/v123/student-photos/12345678-1234-4123-8123-123456789abc.jpg'
     def route_handler(route):
      url=route.request.url
-     if url.startswith(base):route.continue_()
+     if url==base+'/photo-storage-config.js':
+      route.fulfill(content_type='application/javascript',body='export const photoStorageConfig='+json.dumps({'enabled':enabled,'cloudName':'salatmdv','serviceUrl':'https://photos.example.test'})+';')
+     elif url=='https://photos.example.test/upload':
+      uploads.append(url)
+      assert route.request.post_data_buffer[:3]==b'\xff\xd8\xff'
+      assert route.request.headers.get('content-type')=='image/jpeg'
+      route.fulfill(status=503 if mode=='upload-failure' else 200,content_type='application/json',body=json.dumps({'error':'Photo service unavailable'} if mode=='upload-failure' else {'photo':stored_photo}),headers={'Access-Control-Allow-Origin':'*'})
+     elif url.startswith(base):route.continue_()
      elif url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):
       route.fulfill(content_type='application/javascript',body=MOCK,headers={'Access-Control-Allow-Origin':'*'})
      elif url.startswith('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/'):
@@ -67,8 +75,9 @@ def run():
     page.locator('#studentPhoto').set_input_files({'name':'fixture.png','mimeType':'image/png','buffer':png})
     expect(page.locator('#photoPreview')).to_be_visible()
     page.locator('#applicationSubmit').click()
-    if mode=='denied':
-     expect(page.locator('#applicationMessage')).to_contain_text('permissions')
+    if mode in ['denied','upload-failure']:
+     expect(page.locator('#applicationMessage')).to_contain_text('permissions' if mode=='denied' else 'Photo service unavailable')
+     expect(page.locator('#fullName')).to_have_value('Test Student')
      assert page.evaluate('__fixture.writes.length')==0 and not calls
      expect(page.locator('#applicationSubmit')).to_be_enabled()
     else:
@@ -77,7 +86,7 @@ def run():
      assert data.get('gender','')==gender
      if not gender:assert 'gender' not in data
      assert data['payment']=={'status':'awaiting','amount':100} and data['status']=='Pending Payment'
-     assert data['photo'].startswith('data:image/jpeg;base64,')
+     assert data['photo']==stored_photo if enabled else data['photo'].startswith('data:image/jpeg;base64,')
      pending=page.evaluate('JSON.parse(localStorage.getItem("rehaan-pending-admission"))')
      assert pending['appId']=='test-application' and pending['token']==data['paymentToken']
      page.locator('#razorpayPayBtn').click();page.wait_for_function('__fixture.checkoutOpened===true')
@@ -98,10 +107,13 @@ def run():
       assert page.evaluate('__fixture.writes.length')==1
       verify=next(body for endpoint,body in calls if endpoint=='verify')
       assert verify['razorpayOrderId']=='order_test' and verify['razorpaySignature']=='signature_test'
+    assert len(uploads)==(1 if enabled else 0),uploads
     assert not errors,errors
     assert not unexpected,unexpected
-    print(f'PASS: gender={gender or "omitted"}, {mode}; no live writes, emails or payments',flush=True)
+    print(f'PASS: cloudinary={enabled}, gender={gender or "omitted"}, {mode}; no live writes, emails or payments',flush=True)
     context.close()
    browser.close()
  finally:server.shutdown()
-if __name__=='__main__':run()
+if __name__=='__main__':
+ run()
+ run(True)

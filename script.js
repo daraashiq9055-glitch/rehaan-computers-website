@@ -1,3 +1,4 @@
+import { storeStudentPhoto } from "./photo-storage.js";
 /* =========================================================
    REHAAN COMPUTERS
    MAIN WEBSITE + FIREBASE + ADMIN
@@ -1559,6 +1560,8 @@ async function submitApplication(event) {
                 );
 
 
+        const storedPhoto = await storeStudentPhoto(studentPhotoDataUrl);
+
         const applicationData = {
 
             fullName,
@@ -1576,7 +1579,7 @@ async function submitApplication(event) {
             source,
             message,
 
-            photo: studentPhotoDataUrl || "",
+            photo: storedPhoto,
 
             payment: {
                 status: "awaiting",

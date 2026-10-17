@@ -9,6 +9,7 @@ from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
 import json
 import base64
+import re
 import struct
 import zlib
 from playwright.sync_api import sync_playwright, expect
@@ -31,7 +32,7 @@ export const onAuthStateChanged=(_auth,fn)=>{state.listeners.push(fn);queueMicro
 export const signOut=async()=>{state.auth.currentUser=null;state.listeners.forEach(fn=>fn(null))};
 export const signInWithEmailAndPassword=async(_auth,email,password)=>{
  if(password==='wrong-password')throw Object.assign(new Error('Invalid'),{code:'auth/invalid-credential'});
- state.auth.currentUser={uid:'admin-uid',email}; state.listeners.forEach(fn=>fn(state.auth.currentUser));
+ state.auth.currentUser={uid:'admin-uid',email,getIdToken:async()=> 'test-admin-token'}; state.listeners.forEach(fn=>fn(state.auth.currentUser));
  return {user:state.auth.currentUser};
 };
 export const collection=(_db,name)=>({name});
@@ -65,10 +66,15 @@ export const runTransaction=async(_db,fn)=>{
 class QuietHandler(SimpleHTTPRequestHandler):
     def log_message(self, *args): pass
 
-def run():
+def run(enabled=False):
     server = ThreadingHTTPServer(('127.0.0.1',0),partial(QuietHandler,directory=str(ROOT/'public')))
     Thread(target=server.serve_forever,daemon=True).start()
     base = f'http://127.0.0.1:{server.server_port}'
+    fixtures=json.loads(json.dumps(FIXTURES))
+    private_photo='https://res.cloudinary.com/salatmdv/image/authenticated/v123/student-photos/12345678-1234-4123-8123-123456789abc.jpg'
+    fixture_photo=private_photo if enabled else CLOUDINARY_PHOTO
+    fixtures['enrolled']['photo']=fixture_photo
+    photo_calls=[]
     assertions = []
     def passed(name):
         assertions.append(name)
@@ -83,10 +89,21 @@ def run():
             alerts.append(dialog.message)
             dialog.accept('001' if dialog.type=='prompt' else None)
         page.on('dialog',dialog_handler)
-        page.add_init_script('window.__fixture={records:'+json.dumps(FIXTURES)+',writes:[],listeners:[],authorized:true,auth:{currentUser:null,authStateReady:async()=>{}}}; window.open=(url)=>{window.__fixture.opened=url;return {opener:null}};')
+        page.add_init_script('window.__fixture={records:'+json.dumps(fixtures)+',writes:[],listeners:[],authorized:true,auth:{currentUser:null,authStateReady:async()=>{}}}; window.open=(url)=>{window.__fixture.opened=url;return {opener:null}};')
         def route_handler(route):
             url=route.request.url
-            if url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):
+            if url==base+'/photo-storage-config.js':
+                route.fulfill(content_type='application/javascript',body='export const photoStorageConfig='+json.dumps({'enabled':enabled,'cloudName':'salatmdv','serviceUrl':'https://photos.example.test'})+';')
+            elif url.startswith('https://photos.example.test/'):
+                photo_calls.append(url)
+                assert route.request.headers.get('authorization')=='Bearer test-admin-token'
+                if '/upload' in url:
+                    assert route.request.post_data_buffer[:3]==b'\xff\xd8\xff'
+                    route.fulfill(content_type='application/json',body=json.dumps({'photo':private_photo}),headers={'Access-Control-Allow-Origin':'*'})
+                else:
+                    assert '/photo?photo=' in url
+                    route.fulfill(content_type='image/jpeg',body=base64.b64decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aN1EAAAAASUVORK5CYII='),headers={'Access-Control-Allow-Origin':'*'})
+            elif url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):
                 route.fulfill(status=200,content_type='application/javascript',body=MOCK,headers={'Access-Control-Allow-Origin':'*'})
             elif url.startswith('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/'):
                 route.fulfill(status=200,content_type='application/javascript',body='window.emailjs={init(){},async send(){window.__fixture.mailAttempted=true;}};')
@@ -146,14 +163,14 @@ def run():
         assert len(alerts)==0
         assert page.locator('.application-row img').count()==1
         remote=page.locator('[data-application-id=enrolled].application-row')
-        expect(remote.locator('img')).to_have_attribute('src',CLOUDINARY_PHOTO)
+        expect(remote.locator('img')).to_have_attribute('src',re.compile('^blob:') if enabled else CLOUDINARY_PHOTO)
         remote.locator('[data-photo-zoom]').click()
-        expect(page.locator('#adminPhotoViewer img')).to_have_attribute('src',CLOUDINARY_PHOTO)
+        expect(page.locator('#adminPhotoViewer img')).to_have_attribute('src',re.compile('^blob:') if enabled else CLOUDINARY_PHOTO)
         page.locator('.admin-lightbox-close').click()
         remote.locator('[data-act=details]').click()
-        expect(page.locator('#adminDetailsModal img')).to_have_attribute('src',CLOUDINARY_PHOTO)
+        expect(page.locator('#adminDetailsModal img')).to_have_attribute('src',re.compile('^blob:') if enabled else CLOUDINARY_PHOTO)
         page.locator('#adminDetailsModal .admin-modal-close').click()
-        assert page.evaluate('__fixture.records.enrolled.photo')==CLOUDINARY_PHOTO
+        assert page.evaluate('__fixture.records.enrolled.photo')==fixture_photo
         passed('Cloudinary photo URL renders in register, full viewer and details without changing the record')
         passed('Failed sign-in, unauthorized account, legacy undated records and escaped student content')
         for section in ['students','admissions','courses','batches']:
@@ -209,7 +226,7 @@ def run():
         expect(page.locator('#adminDetailsModal .admin-modal-msg')).to_contain_text('Saved')
         page.wait_for_timeout(900)
         assert page.evaluate('__fixture.records.online.gender')=='prefer_not_to_say'
-        assert page.evaluate('__fixture.records.online.photo').startswith('data:image/jpeg;base64,')
+        assert page.evaluate('__fixture.records.online.photo')==private_photo if enabled else page.evaluate('__fixture.records.online.photo').startswith('data:image/jpeg;base64,')
         card.locator('[data-photo-zoom]').click()
         expect(page.locator('#adminPhotoViewer')).to_be_visible()
         page.locator('.admin-lightbox-close').click()
@@ -258,6 +275,9 @@ def run():
         page.locator('#addPhone').fill('9876543213')
         page.locator('#addGuardianPhone').fill('9876543214')
         page.locator('#addGender').select_option('female')
+        if enabled:
+            page.locator('#addPhotoInput').set_input_files({'name':'offline.png','mimeType':'image/png','buffer':png})
+            page.locator('#applyStudentCrop').click()
         page.locator('#addCourse').select_option(COURSE)
         page.locator('#addAdm').fill('001')
         page.locator('#addSaveBtn').click()
@@ -267,6 +287,7 @@ def run():
         expect(page.locator('#addMsg')).to_contain_text('Student saved')
         expect(page.locator('#addSaveBtn')).to_be_disabled()
         assert page.evaluate('__fixture.records.offline_003.channel')=='offline'
+        if enabled:assert page.evaluate('__fixture.records.offline_003.photo')==private_photo
         assert page.evaluate('__fixture.records.offline_003.guardianPhone')=='9876543214'
         page.locator('#adminAddModal .admin-modal-close').click()
         passed('Offline enrolment, duplicate admission rejection and prevention of repeat saves')
@@ -286,11 +307,43 @@ def run():
         with page.expect_download() as download: page.locator('#reportJson').click()
         backup=json.loads(Path(download.value.path()).read_text())
         assert len(backup['records'])==5
-        assert any(r['data'].get('photo')==CLOUDINARY_PHOTO for r in backup['records'])
+        assert any(r['data'].get('photo')==fixture_photo for r in backup['records'])
         assert any(r['data'].get('customLegacyField')==42 for r in backup['records'])
         passed('Full CSV export and JSON backup retain legacy fields')
         page.locator('[data-section=settings]').click()
         expect(page.locator('.workspace-settings')).to_contain_text('admin@example.test')
+        if enabled:
+            original_photo='data:image/png;base64,'+base64.b64encode(png).decode()
+            page.evaluate("value=>{__fixture.records.legacy.photo=value;__fixture.records.legacy.payment={status:'paid',amount:100,providerId:'keep'};__fixture.records.legacy.monthlyFees={'2026-10-01':200}}",original_photo)
+            page.locator('#settingsRefresh').click()
+            expect(page.locator('#settingsMigratePhotos')).to_be_enabled()
+            original=page.evaluate('__fixture.records.legacy')
+            page.locator('#settingsMigratePhotos').click()
+            expect(page.locator('#photoMigrationStart')).to_be_disabled()
+            with page.expect_download() as downloaded:page.locator('#photoMigrationBackup').click()
+            originals=json.loads(Path(downloaded.value.path()).read_text())
+            assert any(record['id']=='legacy' and record['data']['photo']==original_photo for record in originals['records'])
+            page.evaluate('__fixture.failWrite=true')
+            page.locator('#photoMigrationStart').click()
+            expect(page.locator('#photoMigrationMessage')).to_contain_text('Stopped:')
+            assert page.evaluate('__fixture.records.legacy')==original
+            page.locator('#adminPhotoMigration .admin-modal-close').click()
+            page.evaluate('__fixture.failWrite=false')
+            page.locator('#settingsMigratePhotos').click()
+            with page.expect_download():page.locator('#photoMigrationBackup').click()
+            page.locator('#photoMigrationStart').click()
+            expect(page.locator('#photoMigrationMessage')).to_contain_text('1 photos transferred. Finished.')
+            updated=page.evaluate('__fixture.records.legacy')
+            assert updated['photo']==private_photo
+            assert updated['updatedBy']=='admin-uid'
+            for key in ['photo','updatedAt','updatedBy']:
+                updated.pop(key,None);original.pop(key,None)
+            assert updated==original
+            page.locator('#adminPhotoMigration .admin-modal-close').click()
+            passed('Existing-photo transfer backs up originals, preserves fees/metadata, handles denied writes and resumes')
+        else:
+            expect(page.locator('#settingsMigratePhotos')).to_be_disabled()
+
         page.locator('[data-section=overview]').click()
         expect(page.locator('.application-row')).to_have_count(5)
         page.locator('[data-application-id=enrolled].application-row .delete-application-btn').click()
@@ -359,9 +412,15 @@ def run():
         passed('Mobile layout, navigation and sign-out clear private UI')
         assert not errors, errors
         assert not external, external
+        if enabled:
+            assert any('/upload' in url for url in photo_calls)
+            assert any('/photo?photo=' in url for url in photo_calls)
+            assert page.locator('img[src^="blob:"]').count()==0
         passed('No uncaught JavaScript errors and no requests to live services')
         browser.close()
     server.shutdown()
     print(f'Completed {len(assertions)} browser workflow checks.')
 
-if __name__=='__main__':run()
+if __name__=='__main__':
+    run()
+    run(True)

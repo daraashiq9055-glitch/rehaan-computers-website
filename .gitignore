@@ -1,2 +1,7 @@
 tests/artifacts/
 __pycache__/
+
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.wrangler/

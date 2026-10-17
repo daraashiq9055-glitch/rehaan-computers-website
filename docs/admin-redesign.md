@@ -2,9 +2,10 @@
 
 The dashboard redesign uses admin-only assets and the existing Firebase project
 and applications collection. Later public-page additions change index.html and
-add site-details.css for the map and creator credits. Public script.js, existing
-styles, payment code, Firebase configuration and rules are unchanged. There is
-no data migration or automatic database write.
+add site-details.css for the map and creator credits. Optional gender changes
+application capture and its field allowlist. The separately configured Cloudinary
+integration changes photo storage only; payment logic and Firebase configuration
+are preserved. There is no automatic database write or migration on page load.
 
 ## Feature baseline
 
@@ -89,6 +90,8 @@ public/admin-records.js
 public/admin-dashboard.css
 public/admin-gold.css
 public/admin-login-effects.js
+public/photo-storage.js
+public/photo-storage-config.js
 public/admin-fonts/
 ```
 
@@ -104,8 +107,9 @@ dashboard. Download and securely store a JSON backup before any real record edit
 An authorized read-only check is still required: this workspace's outgoing proxy
 denied Firebase/Hosting requests, and no administrator login was supplied.
 
-Keep existing Firestore rules unchanged. No new rules file is deployed by this
-change. Confirm that the current deployed rules authorize admin reads/creates/
+Apply only the optional gender additions described below to existing rules.
+Cloudinary uses the existing photo field and needs no new Firestore permission.
+No rules file is deployed by this implementation. Confirm that the current deployed rules authorize admin reads/creates/
 updates/deletes; permission errors must be resolved before release. Validate any
 write against an emulator or a deliberately created test record, rather than a
 real student's data. Do not test email delivery using a student's address.
@@ -200,7 +204,8 @@ migration. Active admin details, editing, offline admission and CSV export use
 the same options and readable labels. Untouched legacy values survive edits.
 Only application capture/validation and the optional-field allowlist changed;
 the Razorpay order, verification, resume and reconciliation implementation is
-unchanged. No Cloudinary integration or photo migration is included.
+unchanged. Cloudinary upload and an administrator-started existing-photo transfer
+are prepared separately below; they remain disabled until the service is configured.
 
 100 student records is a modest Firestore dataset. The dashboard currently adds
 students individually; there is no bulk spreadsheet importer. Capacity depends
@@ -272,11 +277,59 @@ credentials, SVGs, query strings and HTML injection are rejected. This first
 step supports conventional JPG/PNG/WebP URLs, including signed delivery paths;
 it does not implement private-photo authorization or generate delivery tokens.
 
-Upload behavior has not changed: the form and offline/photo editor still save
-cropped inline photos. No existing images were migrated, no Cloudinary service
+With photo-storage-config.js left disabled, the form and offline/photo editor
+continue saving cropped inline photos. No existing images were migrated, no Cloudinary service
 was contacted and no payment code or Firestore rules were changed in this step.
-The Cloud Name is still required before wiring the account-specific upload
-path. A protected upload backend and appropriate student-photo access policy
+The account-specific service is now prepared for Cloud Name salatmdv and signed
+preset ml_default; see backend/photos/README.md for activation. A protected upload backend and appropriate student-photo access policy
 must be configured before enabling Cloudinary uploads; never put an API Secret
 in public JavaScript. The admin browser fixture covers Cloudinary thumbnails,
 details, viewer and backup with an intercepted image response only.
+
+
+## Signed Cloudinary photo storage and existing-photo transfer
+
+See [photo service setup](../backend/photos/README.md). The separate Worker is
+prepared for cloud salatmdv and signed preset ml_default. API key/secret stay in
+Worker secrets. New online applications, offline enrolment, replacement photos
+and the administrator-started transfer use the same service. Firestore's photo
+field stores an authenticated Cloudinary reference when enabled; the admission
+payment code is byte-identical to the preceding preview. Upload failure leaves
+the form/old record intact and does not create a payment order.
+
+Private photographs are served through the separate Worker after Firestore
+verifies the administrator's Firebase ID token and authorizes admins/{uid}.
+The browser receives a temporary object URL; signed Cloudinary delivery URLs
+and API credentials are never returned. Signing out revokes cached object URLs
+and prevents outstanding requests from repopulating the interface. Previously
+public Cloudinary URLs and inline photographs continue displaying as before;
+legacy public URLs are not made private retroactively.
+
+Settings has an existing-photo transfer action, available after storage is
+enabled. It requires downloading a full original JSON backup before transfer.
+Only valid inline raster photos are candidates; existing linked URLs are skipped.
+Each image is normalized to 360px JPEG, uploaded, then photo and standard audit fields are updated in
+a transaction that checks for concurrent changes. Fees, metadata and other
+student fields remain untouched. A failed image/write stops the batch. Reopening
+skips already transferred records, so a partial batch can resume. Requests are
+spaced seven seconds apart, so 100 photos take roughly 12 minutes plus upload
+latency. Keep the tab open. Stop after current photo cancels further work. Modal
+close is blocked while running; sign-out stops further writes. The original
+photos remain in the downloaded backup, rather than duplicated in Firestore.
+The interface continues displaying transferred photos through their references.
+
+Photo assets are not automatically deleted when replacing/deleting student
+records. Failed Firestore writes, abandoned forms and lost upload responses can
+leave unused private assets in Cloudinary. Keep backups and review asset
+retention separately; this implementation does not run a destructive cleanup.
+No existing student photos or records were migrated from this environment.
+
+The expanded admin test runs with Cloudinary disabled and simulated-enabled,
+including private viewing, offline upload, replacing photos, logout cleanup and
+migration backup/denied-write/resume while retaining fee/provider metadata.
+The admission test runs 17 scenarios across old and Cloudinary storage, including
+upload failure before application/order creation. Unit tests cover upload
+signing, file/size/dimension limits, origin/rate checks, admin verification,
+restricted delivery paths, stale-session responses and upload retry caching.
+Cloudinary signature generation was also compared with official Node SDK 2.11.0.
+Wrangler 4.151.1 dry-run validated configuration/bundling; it did not deploy.
