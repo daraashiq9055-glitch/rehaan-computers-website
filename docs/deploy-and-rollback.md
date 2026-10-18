@@ -1,16 +1,16 @@
 # Save, deploy and roll back the website
 
-## Mark cards / receipts release gate
+## Mark cards / receipts release
 
-The new integration is on `codex/admin-dashboard-redesign`, with code rollback branch
+The integration is on `codex/admin-dashboard-redesign`, with code rollback branch
 `backup/before-markcards-receipts-2026-10-18` at `3df4dea`.
-**Do not deploy this update yet:** the local real-SDK Firestore emulator check is
-pending an environment network change allowing `storage.googleapis.com`.
-See [mark-cards-and-receipts.md](mark-cards-and-receipts.md) for the completed tests,
-remaining check and exact command. No live database write is required for it.
-Once the check passes, deploy Hosting only using the steps below from your original
-`rehaan-admin-preview` folder, never the disconnected `rehaan-next-preview` folder.
-
+The local real-SDK Firestore emulator check has **passed**, using the verified
+Google Cloud SDK distribution of Firestore emulator 1.22.0. It confirmed the current
+rules deny public access and protect the new persistent marks and atomic receipts.
+See [mark-cards-and-receipts.md](mark-cards-and-receipts.md) for all validation details.
+Deploy Hosting only using the steps below from your original `rehaan-admin-preview`
+folder, never the disconnected `rehaan-next-preview` folder. No website deployment
+or live student/payment write was made during development.
 
 Nothing in these instructions restores student/payment data automatically.
 Deploy only Hosting. Do not deploy Firestore rules or either Worker as part of
@@ -48,6 +48,7 @@ file over newer payments. There is no automatic JSON restore button.
 ```bat
 cd /d "%USERPROFILE%\rehaan-admin-preview"
 git status --short
+git switch codex/admin-dashboard-redesign
 git pull --ff-only
 python -m http.server 8000 --directory public
 ```

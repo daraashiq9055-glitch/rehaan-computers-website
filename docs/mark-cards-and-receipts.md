@@ -51,7 +51,9 @@ The public admission form, gateway flow, photo worker, Cloudinary configuration,
 - New-feature browser tests: saved marks/receipts load in a fresh admin session, all original fields survive, denied writes create no receipt, A4/A5 PDF and PNG output works, WhatsApp addresses the saved mobile, 100 student fixtures are selectable, and desktop/mobile layouts fit.
 - Public payment regressions: 17 scenarios pass, including successful, denied, pending, reconciled and photo-upload failure flows. Site-details browser regressions: all 6 checks pass.
 
-The browser Firebase SDK is intercepted with isolated fixtures. No production services are written. The additional real-SDK Firestore emulator check is **pending**: this cloud environment's network policy returns HTTP 403 when downloading Google's emulator JAR from `storage.googleapis.com`. A domain addition was saved for environment review; it has not been claimed to be active. Deployment is held until this check runs.
+The browser Firebase SDK is intercepted with isolated fixtures. No production services are written. The additional **real-SDK Firestore emulator check passed** against the unchanged deployed rules: complete data preservation, mark persistence, atomic payment/receipt commits, duplicate retries, simultaneous admins, stale marks, public/non-admin denial and public privileged-field injection were verified.
+
+The default Firebase CLI emulator download remained blocked by the environment proxy, so the test used Google's official Cloud SDK registry distribution instead. The immutable image was `gcr.io/google.com/cloudsdktool/google-cloud-cli:589.0.0-emulators`, amd64 manifest `sha256:e0f1f4b18f4f3389022d8222f5bbbad6e53b585ec1f71602fe71af7b1c83a31f`. The layer SHA-256 was verified as `bed7b1871148a3d0f23b8995bba16ce043df9a16e5f18c6aed3eecf90e2f9fd9`, and the extracted JAR as `6262939c48d3d6b08495931706b8920399e57d5f5918e6af133a3d30cb3ae369`. The emulator reported **1.22.0**. TLS and digest verification were retained.
 
 ## Repeat the local checks
 
@@ -65,19 +67,27 @@ python3 tests/admission-payment-browser.py
 python3 tests/site-details-browser.py
 ```
 
-After applying the saved cloud network change, install isolated emulator-test dependencies and run the emulator (no production credentials required):
+For local real-SDK tests, install isolated dependencies and obtain the pinned official emulator (Python 3.11+, curl, Node and Java 21+):
 
 ```sh
 npm --cache /tmp/rehaan-npm-cache install --prefix /tmp/rehaan-feature-tests --package-lock=false --no-audit --no-fund @firebase/rules-unit-testing@5.0.0 firebase@12.2.1
-XDG_CONFIG_HOME=/tmp/rehaan-firebase-config FIREBASE_EMULATORS_PATH=/tmp/rehaan-firebase-emulators NODE_PATH=/tmp/rehaan-feature-tests/node_modules npm --cache /tmp/rehaan-npm-cache exec --yes --package firebase-tools@15.34.0 -- firebase emulators:exec --only firestore --project demo-rehaan-features --config firebase.emulator.json "node tests/firestore-gender.test.cjs && node tests/admin-features-emulator.mjs"
+python3 tests/setup-firestore-emulator.py
+java -Duser.language=en -cp /tmp/rehaan-firestore-emulator/cloud-firestore-emulator.jar com.google.cloud.datastore.emulator.firestore.CloudFirestore --host=127.0.0.1 --port=8088 --rules=firestore.rules --project_id=demo-rehaan-features
 ```
 
-The demo-project guard prevents the test script from running against live Firestore. Firebase CLI pins the emulator version/checksum; do not bypass TLS or checksum verification to obtain the JAR.
+Leave that process running, then in another shell from the repository root:
+
+```sh
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 NODE_PATH=/tmp/rehaan-feature-tests/node_modules node tests/firestore-gender.test.cjs
+FIRESTORE_EMULATOR_HOST=127.0.0.1:8088 NODE_PATH=/tmp/rehaan-feature-tests/node_modules node tests/admin-features-emulator.mjs
+```
+
+The setup helper retains a verified cache in the system temporary directory; it downloads the official registry layer only if needed. The demo-project/localhost guards prevent these tests from running against live Firestore. No production credentials are required.
 
 ## Backup, deployment and rollback
 
 `backup/before-markcards-receipts-2026-10-18` on GitHub preserves `3df4dea`, the working release before these additions. It is a code backup. Download a fresh private JSON backup from the live dashboard before deployment and keep it outside `public/`.
 
-After the pending emulator check passes, follow `docs/deploy-and-rollback.md` for a Hosting-only deployment from `codex/admin-dashboard-redesign`. Do not deploy the disconnected `preview/next-features-cmd-2026-10-18` branch, Firestore rules or either worker for this update.
+The emulator check has passed. Follow `docs/deploy-and-rollback.md` for a Hosting-only deployment from `codex/admin-dashboard-redesign`. Do not deploy the disconnected `preview/next-features-cmd-2026-10-18` branch, Firestore rules or either worker for this update.
 
 Hosting rollback to the prior release restores code without deleting new `markCard` or `feeReceipts` fields; the older dashboard ignores those fields and preserves them during normal field-specific edits. Do not restore an old full JSON backup over newer student payments. A rollback is not a data restore.
