@@ -76,6 +76,7 @@ def run(enabled=False):
     fixture_photo=private_photo if enabled else CLOUDINARY_PHOTO
     fixtures['enrolled']['photo']=fixture_photo
     photo_calls=[]
+    failed_photo_reads=[enabled]
     assertions = []
     def passed(name):
         assertions.append(name)
@@ -104,7 +105,9 @@ def run(enabled=False):
                 else:
                     assert '/photo?photo=' in url
                     assert route.request.headers.get('authorization')=='Bearer test-admin-token'
-                    route.fulfill(content_type='image/jpeg',body=(ROOT/'tests/fixtures/photo-check.jpg').read_bytes(),headers={'Access-Control-Allow-Origin':'*'})
+                    if failed_photo_reads[0]:
+                        failed_photo_reads[0]=False;route.fulfill(status=503,content_type='application/json',body='{}',headers={'Access-Control-Allow-Origin':'*'})
+                    else:route.fulfill(content_type='image/jpeg',body=(ROOT/'tests/fixtures/photo-check.jpg').read_bytes(),headers={'Access-Control-Allow-Origin':'*'})
             elif url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):
                 route.fulfill(status=200,content_type='application/javascript',body=MOCK,headers={'Access-Control-Allow-Origin':'*'})
             elif url.startswith('https://cdn.jsdelivr.net/npm/@emailjs/browser@4/'):
@@ -165,6 +168,8 @@ def run(enabled=False):
         assert len(alerts)==0
         assert page.locator('.application-row img').count()==1
         remote=page.locator('[data-application-id=enrolled].application-row')
+        if enabled:
+            expect(remote.locator('.rc-photo-status')).to_have_text('Retry photo');expect(remote.locator('img')).to_be_hidden();remote.locator('.rc-photo-status').click()
         expect(remote.locator('img')).to_have_attribute('src',re.compile('^blob:') if enabled else CLOUDINARY_PHOTO)
         remote.locator('[data-photo-zoom]').click()
         expect(page.locator('#adminPhotoViewer img')).to_have_attribute('src',re.compile('^blob:') if enabled else CLOUDINARY_PHOTO)
@@ -292,6 +297,9 @@ def run(enabled=False):
         if enabled:assert page.evaluate('__fixture.records.offline_003.photo')==private_photo
         assert page.evaluate('__fixture.records.offline_003.guardianPhone')=='9876543214'
         page.locator('#adminAddModal .admin-modal-close').click()
+        if enabled:
+            page.locator('[data-section=overview]').click()
+            row=page.locator('[data-application-id=offline_003].application-row');expect(row.locator('img')).to_be_visible();assert row.locator('img').get_attribute('src').startswith('blob:');assert sum('/photo?photo=' in url for url in photo_calls)==2
         passed('Offline enrolment, duplicate admission rejection and prevention of repeat saves')
         page.locator('[data-section=courses]').click()
         expect(page.locator('.workspace-directory article')).to_have_count(8)
@@ -345,6 +353,7 @@ def run(enabled=False):
                 updated.pop(key,None);original.pop(key,None)
             assert updated==original
             page.locator('#adminPhotoMigration .admin-modal-close').click()
+            expect(page.locator('#workspaceView')).to_contain_text('0 older inline photos');page.locator('#settingsMigratePhotos').click();expect(page.locator('#photoMigrationStart')).to_have_text('Transfer 0 photos');expect(page.locator('#photoMigrationStart')).to_be_disabled();page.locator('#adminPhotoMigration .admin-modal-close').click()
             passed('Existing-photo transfer backs up originals, preserves fees/metadata, handles denied writes and resumes')
         else:
             expect(page.locator('#settingsMigratePhotos')).to_be_disabled()

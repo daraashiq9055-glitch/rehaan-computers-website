@@ -6,6 +6,7 @@ import {
   monthLabel,
   validateCard,
   cardResult,
+  validateReceiptCorrection,
 } from "./admin-feature-model.js";
 import { receiptPNG, whatsappURL } from "./admin-receipt-image.js";
 let apps = [],
@@ -167,8 +168,18 @@ function receiptHTML(r = null) {
     `<div class="receipt-field${wide ? " full" : ""}"><span>${label}</span><b>${blank ? "" : e(value)}</b></div>`;
   return `<article class="receipt-paper"><div class="paper-brand"><div><h2>Rehaan Computers</h2><small>CHARANGAM · BEERWAH · KASHMIR</small></div><b>FEE RECEIPT</b></div><div class="receipt-meta"><span>Receipt no. <b>${blank ? "" : e(r.number)}</b></span><span>Date <b>${blank ? "" : dateLabel(r.date)}</b></span></div><div class="receipt-fields">${field("Student name", r?.student.name, true)}${field("Admission no.", r?.student.admission)}${field("Fee month", r ? monthLabel(r.period) : "")}${field("Course / programme", r?.student.course, true)}${field("Due date", r?.due)}${field("Monthly tuition", r ? money(r.billed) : "")}</div><div class="receipt-totals">${[
     ["RECEIVED NOW", r?.amount],
-    ["RECEIVED FOR THIS MONTH", r?.receivedAtIssue],
-    ["BALANCE AFTER PAYMENT", r?.balanceAtIssue],
+    [
+      r?.balanceBasis === "correction"
+        ? "TOTAL AT CORRECTION"
+        : "RECEIVED FOR THIS MONTH",
+      r?.receivedAtIssue,
+    ],
+    [
+      r?.balanceBasis === "correction"
+        ? "BALANCE AT CORRECTION"
+        : "BALANCE AFTER PAYMENT",
+      r?.balanceAtIssue,
+    ],
   ]
     .map(
       ([label, value]) =>
@@ -176,12 +187,12 @@ function receiptHTML(r = null) {
     )
     .join(
       "",
-    )}</div><div class="receipt-bottom"><p>Please retain this acknowledgement for your records.<br>₹100 admission fee is separate from monthly tuition.</p><div>AUTHORIZED SIGNATORY</div></div><p class="paper-proof">REHAAN COMPUTERS · ${blank ? "BLANK FORM FOR HANDWRITTEN DETAILS" : "FEE PAYMENT ACKNOWLEDGEMENT"}</p></article>`;
+    )}</div><div class="receipt-bottom"><p>Please retain this acknowledgement for your records.<br>₹100 admission fee is separate from monthly tuition.${r ? "<br>Recorded method: " + e(r.method) : ""}${r?.note ? "<br>Note: " + e(r.note) : ""}${r?.balanceRecordedAt ? "<br>Balance recorded: " + dateLabel(r.balanceRecordedAt.slice(0, 10)) : ""}</p><div>AUTHORIZED SIGNATORY</div></div><p class="paper-proof">REHAAN COMPUTERS · ${blank ? "BLANK FORM FOR HANDWRITTEN DETAILS" : "FEE PAYMENT ACKNOWLEDGEMENT"}</p></article>`;
 }
 export function openReceipt(receipt) {
   modal(
     "Payment receipt",
-    `<div class="rc-paper-stage">${receiptHTML(receipt)}</div><div class="rc-feature-actions"><button class="admin-save-btn" data-new="printReceipt" data-id="${receipt.id}">Print / Save PDF</button><button data-new="image" data-id="${receipt.id}">Download image</button><button data-new="whatsapp" data-id="${receipt.id}">WhatsApp receipt</button></div><p class="rc-feature-note">This receipt preserves the amount and balance when this payment was recorded.</p>`,
+    `<div class="rc-paper-stage">${receiptHTML(receipt)}</div><div class="rc-feature-actions"><button class="admin-save-btn" data-new="printReceipt" data-id="${receipt.id}">Print / Save PDF</button><button data-new="image" data-id="${receipt.id}">Download image</button><button data-new="whatsapp" data-id="${receipt.id}">WhatsApp receipt</button><button data-new="editReceipt" data-id="${receipt.id}">Edit / correct receipt</button><button data-new="receiptHistory" data-id="${receipt.id}">Correction history (${receipt.amendments?.length || 0})</button></div><p class="rc-feature-note">${receipt.balanceBasis === "correction" ? "Corrected receipt. The totals show the balance at the financial correction." : "This receipt preserves the amount and balance when this payment was recorded."}</p>`,
   );
 }
 export function receiptTools(list, records) {
@@ -204,7 +215,7 @@ async function whatsapp(receipt) {
   const phone = current?.data.phone || receipt.student.phone;
   const url = whatsappURL(
     phone,
-    `REHAAN COMPUTERS\nFee receipt: ${receipt.number}\nStudent: ${receipt.student.name}\nFee month: ${monthLabel(receipt.period)}\nPayment date: ${dateLabel(receipt.date)}\nAmount received: ${money(receipt.amount)}\nRemaining after payment: ${money(receipt.balanceAtIssue)}\n\nPlease retain this acknowledgement for your records.`,
+    `REHAAN COMPUTERS\nFee receipt: ${receipt.number}\nStudent: ${receipt.student.name}\nFee month: ${monthLabel(receipt.period)}\nPayment date: ${dateLabel(receipt.date)}\nAmount received: ${money(receipt.amount)}\n${receipt.balanceBasis === "correction" ? "Balance at correction" : "Remaining after payment"}: ${money(receipt.balanceAtIssue)}\n\nPlease retain this acknowledgement for your records.`,
   );
   const version = ++renderVersion;
   modal(
@@ -286,6 +297,96 @@ document.addEventListener("submit", async (event) => {
     }
   }
 });
+function editReceipt(receipt) {
+  const entry = (services.getRecords?.() || apps).find(
+    (a) => a.id === receipt.studentId,
+  );
+  if (!entry)
+    throw Error("Refresh the student register before correcting this receipt.");
+  const paid = Number(entry.data.monthlyFees?.[receipt.due] || 0);
+  const field = (key, label, value, max) =>
+    `<label>${label}<input name="${key}" value="${e(value)}" maxlength="${max}" required></label>`;
+  modal(
+    "Correct payment receipt",
+    `<p>${e(receipt.number)} · Due ${e(receipt.due)} · Monthly total currently ${money(Math.round(paid * 100))}</p><form id="rcReceiptEditForm" data-id="${receipt.id}" data-paid="${paid}" data-correction="${crypto.randomUUID().replaceAll("-", "")}"><div class="rc-receipt-edit-grid">${field("name", "Student name on receipt", receipt.student.name, 120)}${field("admission", "Admission number on receipt", receipt.student.admission, 20)}${field("course", "Course on receipt", receipt.student.course, 120)}<label>Payment date<input name="date" type="date" value="${receipt.date}" max="${indiaDate()}" required></label><label>Correct receipt amount (₹)<input name="amount" type="number" min="0.01" max="${receipt.billed / 100}" step="0.01" value="${receipt.amount / 100}" required></label><label>Recorded method<select name="method">${["Manually recorded", "Cash", "UPI", "Bank transfer"].map((method) => `<option ${receipt.method === method ? "selected" : ""}>${method}</option>`).join("")}</select></label><label class="rc-full">Receipt note (printed, optional)<input name="note" maxlength="160" value="${e(receipt.note || "")}"></label><label class="rc-full">Reason for correction (required, private history)<textarea name="reason" minlength="5" maxlength="500" required></textarea></label></div><p id="rcCorrectionPreview" class="rc-feature-note">Correcting the amount adjusts this due's monthly ledger by the difference. The original receipt values are retained in history. This does not charge or refund an online payment.</p><p class="rc-feature-note">Student profile, admission fee, due date, receipt number and other receipts stay unchanged. A zero/reversed payment requires separate review.</p><label class="rc-correction-confirm"><input type="checkbox" name="confirmed" required>I reviewed the correction and its effect on the monthly balance.</label><p id="rcReceiptEditStatus" role="status"></p><div class="rc-feature-actions"><button class="admin-save-btn" type="submit">Save correction with history</button><button type="button" data-new="openReceipt" data-id="${receipt.id}">Cancel</button></div></form>`,
+  );
+  const form = $("#rcReceiptEditForm");
+  form.querySelector("[name=amount]").addEventListener("input", () => {
+    const next = Number(form.elements.amount.value),
+      total = paid + next - receipt.amount / 100;
+    $("#rcCorrectionPreview").textContent =
+      `Amount change: ${money(Math.round((next - receipt.amount / 100) * 100))}. Monthly total after correction: ${money(Math.round(total * 100))}. Remaining: ${money(Math.round((receipt.billed / 100 - total) * 100))}. No online charge or refund is made.`;
+  });
+}
+function receiptHistory(receipt) {
+  const labels = [
+    ["Student name", (r) => r.student.name],
+    ["Admission number", (r) => r.student.admission],
+    ["Course", (r) => r.student.course],
+    ["Payment date", (r) => dateLabel(r.date)],
+    ["Recorded method", (r) => r.method],
+    ["Receipt note", (r) => r.note || "—"],
+    ["Receipt amount", (r) => money(r.amount)],
+    ["Monthly total on receipt", (r) => money(r.receivedAtIssue)],
+    ["Balance on receipt", (r) => money(r.balanceAtIssue)],
+  ];
+  modal(
+    "Receipt correction history",
+    `<p>${e(receipt.number)} · ${e(receipt.student.name)}</p>${
+      (receipt.amendments || [])
+        .map((item) => {
+          const time = new Intl.DateTimeFormat("en-IN", {
+            timeZone: "Asia/Kolkata",
+            dateStyle: "medium",
+            timeStyle: "short",
+          }).format(new Date(item.at));
+          return `<details class="rc-correction-history"><summary>${e(time)} IST · ${money(item.before.amount)} → ${money(item.after.amount)}</summary><p>Reason: ${e(item.reason)}<br>Administrator: ${e(item.by)}<br>Monthly total: ${money(item.ledgerBefore)} → ${money(item.ledgerAfter)}</p><div class="rc-history-scroll"><table><thead><tr><th>Receipt detail</th><th>Before</th><th>After</th></tr></thead><tbody>${labels.map(([label, value]) => `<tr><th>${e(label)}</th><td>${e(value(item.before))}</td><td>${e(value(item.after))}</td></tr>`).join("")}</tbody></table></div></details>`;
+        })
+        .join("") ||
+      "<p>No corrections have been made. Original receipt values are retained.</p>"
+    }<div class="rc-feature-actions"><button data-new="openReceipt" data-id="${receipt.id}">Back to receipt</button></div>`,
+  );
+}
+
+document.addEventListener("submit", async (event) => {
+  const form = event.target;
+  if (form.id !== "rcReceiptEditForm") return;
+  event.preventDefault();
+  if (saving) return;
+  const epoch = sessionEpoch,
+    receipt = receipts.find((r) => r.id === form.dataset.id),
+    controls = [...form.elements].filter((c) => !c.disabled);
+  try {
+    if (!form.elements.confirmed.checked)
+      throw Error("Review and confirm the correction first.");
+    const input = Object.fromEntries(new FormData(form));
+    validateReceiptCorrection(input);
+    saving = true;
+    controls.forEach((c) => (c.disabled = true));
+    $("#rcReceiptEditStatus").textContent = "Saving correction…";
+    const saved = await services.saveReceipt(
+      receipt,
+      input,
+      Number(form.dataset.paid),
+      form.dataset.correction,
+    );
+    if (epoch !== sessionEpoch || !form.isConnected) return;
+    syncReceipts(services.getRecords?.() || apps);
+    receipts = [...receipts.filter((r) => r.id !== saved.id), saved];
+    openReceipt(saved);
+  } catch (error) {
+    if (epoch === sessionEpoch && $("#rcReceiptEditStatus"))
+      $("#rcReceiptEditStatus").textContent =
+        "Correction not saved: " + error.message;
+  } finally {
+    if (epoch === sessionEpoch) {
+      saving = false;
+      controls.forEach((c) => {
+        if (c.isConnected) c.disabled = false;
+      });
+    }
+  }
+});
 document.addEventListener("click", async (event) => {
   const button = event.target.closest("[data-new]");
   if (!button || button.disabled || saving) return;
@@ -316,6 +417,8 @@ document.addEventListener("click", async (event) => {
     if (action === "image" && receipt) await image(receipt);
     if (action === "whatsapp" && receipt) await whatsapp(receipt);
     if (action === "openReceipt" && receipt) openReceipt(receipt);
+    if (action === "editReceipt" && receipt) editReceipt(receipt);
+    if (action === "receiptHistory" && receipt) receiptHistory(receipt);
     if (action === "blank")
       modal(
         "Blank receipt",

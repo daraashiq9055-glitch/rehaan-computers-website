@@ -768,3 +768,116 @@
     font-size: 5pt;
   }
 }
+/* Private-image status belongs to the existing photo controls. */
+.row-photo,
+.admin-details-photo {
+  position: relative;
+}
+.rc-photo-status {
+  display: block;
+  padding: 7px;
+  font-size: 10px;
+  line-height: 1.4;
+  color: #e5cb8e;
+  text-align: center;
+}
+.row-photo .rc-photo-status,
+.admin-details-photo .rc-photo-status {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #211c12;
+}
+.rc-photo-status[hidden] {
+  display: none !important;
+}
+.rc-photo-status[tabindex="0"] {
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.rc-receipt-edit-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 17px;
+}
+.rc-receipt-edit-grid label {
+  font-size: 12px;
+  color: #dfcda6;
+}
+.rc-receipt-edit-grid input,
+.rc-receipt-edit-grid select,
+.rc-receipt-edit-grid textarea {
+  width: 100%;
+  margin-top: 7px;
+  padding: 11px;
+  border: 1px solid #75613b;
+  border-radius: 6px;
+  background: #17150f;
+  color: #f3e7cb;
+  font: inherit;
+}
+.rc-receipt-edit-grid .rc-full {
+  grid-column: 1/-1;
+}
+.rc-receipt-edit-grid textarea {
+  min-height: 85px;
+  resize: vertical;
+}
+.rc-correction-confirm {
+  display: flex;
+  align-items: start;
+  gap: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.rc-correction-confirm input {
+  width: 17px;
+  flex-shrink: 0;
+}
+.rc-correction-history {
+  padding: 15px;
+  border: 1px solid #6e5830;
+  border-radius: 8px;
+  margin-top: 14px;
+  font-size: 12px;
+}
+.rc-correction-history summary {
+  cursor: pointer;
+  color: #e8ce91;
+}
+.rc-history-scroll {
+  overflow-x: auto;
+}
+.rc-correction-history table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  margin-top: 14px;
+}
+.rc-correction-history th,
+.rc-correction-history td {
+  padding: 10px;
+  border-bottom: 1px solid #6e5830;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: anywhere;
+}
+.rc-correction-history thead th {
+  color: #f3e7cb;
+  background: #292215;
+}
+.rc-correction-history tbody th {
+  font-weight: 500;
+  color: #dfcda6;
+}
+
+.rc-receipt-edit-grid input:disabled {
+  opacity: 0.6;
+}
+@media (max-width: 600px) {
+  .rc-receipt-edit-grid {
+    grid-template-columns: 1fr;
+  }
+}

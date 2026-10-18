@@ -67,6 +67,21 @@ def run():
   with page.expect_popup() as opened:page.locator('#rcOpenWhatsApp').click()
   opened.value.wait_for_load_state();opened.value.close();assert len(whatsapp)==1;page.locator('[data-new=close]').click()
   passed('Payment and receipt share one commit; repeat submission is blocked, and PNG/WhatsApp use saved receipt values and student mobile')
+  page.locator('[data-new=receipts]').click();page.locator('[data-new=openReceipt]').click();page.locator('[data-new=editReceipt]').click()
+  form=page.locator('#rcReceiptEditForm');form.locator('[name=amount]').fill('300');form.locator('[name=method]').select_option('Cash');form.locator('[name=note]').fill('Corrected after checking cash register');form.locator('[name=reason]').fill('Amount entered incorrectly');form.locator('[name=confirmed]').check()
+  expect(page.locator('#rcCorrectionPreview')).to_contain_text('₹499');form.locator('[type=submit]').click()
+  expect(page.locator('#rcFeatureDialog .receipt-totals')).to_contain_text('₹499');expect(page.locator('#rcFeatureDialog')).to_contain_text('Correction history (1)')
+  corrected=page.evaluate('structuredClone(__fixture.records.enrolled)');assert corrected['monthlyFees']['2026-02-01']==500;receipt=corrected['feeReceipts'][receipt['id']];assert receipt['amount']==30000 and receipt['amendments'][0]['before']['amount']==40000
+  for key,value in record.items():
+   if key not in ['monthlyFees','feeReceipts','updatedAt','updatedBy']:assert corrected[key]==value,key
+  page.locator('[data-new=printReceipt]').click();text=pdf(page,'corrected-receipt','receipt');assert 'Cash' in text and 'CORRECTION' in text and 'Corrected after checking cash register' in text
+  with page.expect_download() as downloaded:page.locator('[data-new=image]').click()
+  (OUT/'corrected-receipt-image.png').write_bytes(Path(downloaded.value.path()).read_bytes())
+  page.locator('[data-new=receiptHistory]').click();page.locator('.rc-correction-history summary').click();expect(page.locator('#rcFeatureDialog')).to_contain_text('Amount entered incorrectly');expect(page.locator('#rcFeatureDialog')).to_contain_text('admin-uid');page.locator('[data-new=openReceipt]').click()
+  page.locator('[data-new=whatsapp]').click();expect(page.locator('#rcShareImage')).to_be_visible();message=parse_qs(urlparse(page.locator('#rcOpenWhatsApp').get_attribute('href')).query)['text'][0];assert '₹300' in message and '₹499' in message and 'Balance at correction' in message;page.locator('[data-new=close]').click()
+  # A denied correction must preserve both ledger and receipt history.
+  page.locator('[data-new=receipts]').click();page.locator('[data-new=openReceipt]').click();page.locator('[data-new=editReceipt]').click();form=page.locator('#rcReceiptEditForm');form.locator('[name=amount]').fill('350');form.locator('[name=reason]').fill('Checking permission denial');form.locator('[name=confirmed]').check();page.evaluate('__fixture.failWrite=true');form.locator('[type=submit]').click();expect(page.locator('#rcReceiptEditStatus')).to_contain_text('not saved');assert page.evaluate('__fixture.records.enrolled')==corrected;page.evaluate('__fixture.failWrite=false');page.locator('[data-new=close]').click()
+  passed('Receipt edits atomically correct the monthly total, retain original amounts/reason/admin history, print/share revised values and preserve data on denied writes')
   persisted=page.evaluate('structuredClone(__fixture.records)');page.close();page=open_page(persisted)
   page.locator('[data-section=marks]').click();page.locator('#rcMarkStudent').select_option('enrolled');expect(page.locator('#rcMarkPreview')).to_contain_text('83.67%');expect(page.locator('#rcExamTitle')).to_have_value('Updated by other admin')
   page.locator('[data-section=fees]').click();expect(page.locator('[data-new=receipts]')).to_contain_text('(1)');page.locator('[data-new=receipts]').click();page.locator('[data-new=openReceipt]').click();expect(page.locator('#rcFeatureDialog .receipt-paper')).to_contain_text(receipt['number']);page.locator('[data-new=close]').click()

@@ -69,3 +69,13 @@ test('private viewer failures never expose the Cloudinary URL as a public fallba
   assert.equal(img.src,'');assert.match(img.alt,/unavailable/);
  }finally{globalThis.fetch=original;}
 });
+test('a freshly uploaded admin crop displays immediately without a second private request',async()=>{
+ const mod=await moduleFor();const original=globalThis.fetch;let calls=0;
+ globalThis.fetch=async(url)=>{calls++;assert.equal(url,'https://photos.example/upload');return Response.json({photo});};
+ try{await mod.storeStudentPhoto(crop,async()=>'admin-token');const img=image();assert.equal(await mod.displayStudentPhoto(img,photo,async()=>'admin-token'),true);assert.match(img.src,/^blob:/);assert.equal(img.dataset.photoState,'ready');assert.equal(calls,1);mod.clearPhotoSession();}finally{globalThis.fetch=original;}
+});
+test('public uploads never seed an administrator view and failed reads can be retried',async()=>{
+ const mod=await moduleFor();const original=globalThis.fetch;let reads=0;
+ globalThis.fetch=async url=>{if(url.endsWith('/upload'))return Response.json({photo});reads++;return reads===1?Response.json({error:'Temporary failure'},{status:503}):new Response(new Uint8Array([255,216,255,217]),{headers:{'Content-Type':'image/jpeg'}});};
+ try{await mod.storeStudentPhoto(crop);const img=image();assert.equal(await mod.displayStudentPhoto(img,photo,async()=>'admin-token'),false);assert.equal(img.dataset.photoState,'error');assert.equal(img.src,'');assert.equal(await mod.displayStudentPhoto(img,photo,async()=>'admin-token'),true);assert.equal(reads,2);assert.match(img.src,/^blob:/);mod.clearPhotoSession();}finally{globalThis.fetch=original;}
+});

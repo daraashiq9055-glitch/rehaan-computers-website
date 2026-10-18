@@ -165,3 +165,58 @@ export function makeReceipt({
     createdBy,
   };
 }
+
+export function validateReceiptCorrection(input) {
+  const text = (key, max, required = false, min = 2) => {
+    const value = String(input[key] ?? "").trim();
+    if (value.length > max || (required && value.length < min))
+      throw Error("Enter a valid " + key + " (up to " + max + " characters).");
+    return value;
+  };
+  const amountText = String(input.amount ?? "").trim();
+  if (!/^\d+(?:\.\d{1,2})?$/.test(amountText))
+    throw Error("Enter an amount with up to two decimal places.");
+  const amount = Math.round(Number(amountText) * 100);
+  if (!Number.isSafeInteger(amount) || amount <= 0 || amount > 99900)
+    throw Error("Receipt amount must be between ₹0.01 and ₹999.");
+  const date = text("date", 10, true),
+    time = new Date(date + "T00:00:00Z");
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+    !Number.isFinite(time.getTime()) ||
+    time.toISOString().slice(0, 10) !== date ||
+    date > indiaDate()
+  )
+    throw Error("Choose a valid payment date that is not in the future.");
+  const method = String(input.method || "");
+  if (!["Manually recorded", "Cash", "UPI", "Bank transfer"].includes(method))
+    throw Error("Choose a recorded payment method.");
+  const reason = text("reason", 500, true);
+  if (reason.length < 5)
+    throw Error(
+      "Describe the correction reason using at least five characters.",
+    );
+  return {
+    name: text("name", 120, true),
+    admission: text("admission", 20, true, 1),
+    course: text("course", 120, true),
+    date,
+    method,
+    note: text("note", 160),
+    reason,
+    amount,
+  };
+}
+export function receiptAuditSnapshot(receipt) {
+  return {
+    student: structuredClone(receipt.student),
+    date: receipt.date,
+    method: receipt.method,
+    note: receipt.note || "",
+    amount: receipt.amount,
+    receivedAtIssue: receipt.receivedAtIssue,
+    balanceAtIssue: receipt.balanceAtIssue,
+    revision: receipt.revision || 0,
+    balanceRecordedAt: receipt.balanceRecordedAt || receipt.createdAt,
+  };
+}

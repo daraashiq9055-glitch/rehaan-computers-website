@@ -105,8 +105,18 @@ export async function receiptPNG(receipt) {
   ctx.strokeRect(80, top, 1440, 144);
   const values = [
     ["RECEIVED NOW", receipt.amount],
-    ["RECEIVED FOR THIS MONTH", receipt.receivedAtIssue],
-    ["BALANCE AFTER PAYMENT", receipt.balanceAtIssue],
+    [
+      receipt.balanceBasis === "correction"
+        ? "TOTAL AT CORRECTION"
+        : "RECEIVED FOR THIS MONTH",
+      receipt.receivedAtIssue,
+    ],
+    [
+      receipt.balanceBasis === "correction"
+        ? "BALANCE AT CORRECTION"
+        : "BALANCE AFTER PAYMENT",
+      receipt.balanceAtIssue,
+    ],
   ];
   values.forEach(([label, value], i) => {
     const x = 107 + i * 480;
@@ -122,7 +132,7 @@ export async function receiptPNG(receipt) {
     muted,
   );
   text(
-    "Balance shown is the balance when this payment was recorded.",
+    `${receipt.balanceBasis === "correction" ? "Balance shown is the balance when this receipt was corrected." : "Balance shown is the balance when this payment was recorded."}`,
     80,
     950,
     16,
@@ -130,11 +140,17 @@ export async function receiptPNG(receipt) {
   );
   line(1140, 963, 1520, 963);
   text("AUTHORIZED SIGNATORY", 1190, 997, 14, muted);
+  if (receipt.note)
+    wrap("Note: " + receipt.note, 80, 986, 1000, 15, "Inter", 400);
   line(80, 1040, 1520, 1040);
   text("REHAAN COMPUTERS · FEE PAYMENT ACKNOWLEDGEMENT", 510, 1082, 15, muted);
-  const blob = await new Promise((resolve) =>
-    canvas.toBlob(resolve, "image/png"),
+  // Chrome can defer detached-canvas toBlob encoding indefinitely after a
+  // print/download cycle. Encode this fixed-size local canvas immediately.
+  const encoded = canvas.toDataURL("image/png");
+  if (!encoded.startsWith("data:image/png;base64,"))
+    throw Error("Could not create the image. Use Print / Save PDF.");
+  const bytes = Uint8Array.from(atob(encoded.split(",")[1]), (char) =>
+    char.charCodeAt(0),
   );
-  if (!blob) throw Error("Could not create the image. Use Print / Save PDF.");
-  return blob;
+  return new Blob([bytes], { type: "image/png" });
 }

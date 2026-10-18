@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {saveMarkCard,saveMonthlyPayment} from '../public/admin-feature-store.js';
+import {saveMarkCard,saveMonthlyPayment,correctReceipt} from '../public/admin-feature-store.js';
 import {validateCard,cardResult,indiaDate} from '../public/admin-feature-model.js';
 import {whatsappPhone,whatsappURL} from '../public/admin-receipt-image.js';
 const clone=v=>structuredClone(v);
@@ -16,3 +16,25 @@ test('denied commit, session change, cancellation, changed admission and excessi
 test('mark cards persist only their own fields, and stale saves are rejected without overwriting payments',async()=>{const h=harness(),before=h.data;const saved=await saveMarkCard({db:{},ref:{},runTransaction:h.runTransaction,assertSession:()=>{},actor:'admin',card:markInput(),expected:null});assert.equal(cardResult(saved).total,251);assert.equal(cardResult(saved).percentage,83.67);for(const key of Object.keys(before))assert.deepEqual(h.data[key],before[key]);await assert.rejects(saveMarkCard({db:{},ref:{},runTransaction:h.runTransaction,assertSession:()=>{},actor:'other-admin',card:{...markInput(),title:'Other test'},expected:null}),/another session/);assert.deepEqual(h.data.markCard,saved);});
 test('invalid marks, dates and subjects fail before a transaction; incomplete and component-failed results remain distinct',async()=>{let called=false;for(const bad of [{...markInput(),date:'2026-02-31'},{...markInput(),subjects:[{name:'Subject',max:100,marks:101}]},{...markInput(),subjects:[{name:'same',max:100,marks:90},{name:'Same',max:100,marks:90}]}]){await assert.rejects(saveMarkCard({runTransaction:()=>{called=true},card:bad}));}assert.equal(called,false);const incomplete=validateCard({...markInput(),subjects:[{name:'Test',max:100,marks:''}]});assert.equal(cardResult(incomplete).complete,false);const failed=validateCard({...markInput(),subjects:[{name:'Theory',max:100,marks:95},{name:'Practical',max:100,marks:28}]});assert.equal(cardResult(failed).passed,false);});
 test('WhatsApp accepts only valid saved Indian mobile numbers and encodes captions',()=>{for(const value of ['9999999991','+91 99999 99991','919999999991'])assert.equal(whatsappPhone(value),'919999999991');for(const value of ['','123','1234567890','9999999991?text=bad'])assert.equal(whatsappURL(value,'caption'),null);const url=new URL(whatsappURL('9999999991','₹400 & due'));assert.equal(url.pathname,'/919999999991');assert.equal(url.searchParams.get('text'),'₹400 & due');});
+
+const correction=(receipt,amount='300')=>({name:receipt.student.name,admission:receipt.student.admission,course:receipt.student.course,date:receipt.date,method:'Cash',amount,note:'Corrected entry',reason:'Amount entered incorrectly'});
+test('receipt amount correction updates the ledger atomically and retains original values plus reason/admin history',async()=>{
+ const h=harness(),receipt=await saveMonthlyPayment(payment(h));const before=h.data;
+ const result=await correctReceipt({db:{},ref:{},runTransaction:h.runTransaction,assertSession:()=>{},actor:'admin-two',receiptId:id1,correctionId:'c'.repeat(32),input:correction(receipt),expected:receipt,expectedPaid:600});
+ assert.equal(result.totalPaid,500);assert.equal(h.data.monthlyFees['2026-02-14'],500);assert.equal(result.receipt.amount,30000);assert.equal(result.receipt.balanceAtIssue,49900);assert.equal(result.receipt.balanceBasis,'correction');assert.equal(result.receipt.amendments[0].before.amount,40000);assert.equal(result.receipt.amendments[0].after.amount,30000);assert.equal(result.receipt.amendments[0].by,'admin-two');assert.equal(result.receipt.amendments[0].amountDelta,-10000);assert.deepEqual(h.data.payment,before.payment);assert.equal(h.data.photo,before.photo);assert.deepEqual(h.data.customLegacy,before.customLegacy);assert.equal(result.receipt.number,receipt.number);
+ const again=await correctReceipt({db:{},ref:{},runTransaction:h.runTransaction,assertSession:()=>{},actor:'admin-two',receiptId:id1,correctionId:'c'.repeat(32),input:correction(receipt),expected:receipt,expectedPaid:600});assert.deepEqual(again,result);assert.equal(h.data.monthlyFees['2026-02-14'],500);assert.equal(h.writes.length,2);
+});
+test('stale receipts, stale ledgers, denied writes, invalid corrections and overpayment leave both receipt and ledger unchanged',async()=>{
+ for(const mode of ['stale-receipt','stale-ledger','denied','overpay','invalid','no-reason']){
+  const h=harness(),receipt=await saveMonthlyPayment(payment(h));let input=correction(receipt),expected=receipt,paid=600;
+  if(mode==='stale-receipt')expected={...receipt,date:'2020-01-01'};
+  if(mode==='stale-ledger')paid=500;
+  if(mode==='denied')h.deny();
+  if(mode==='overpay'){const d=h.data;d.monthlyFees['2026-02-14']=999;h.data=d;paid=999;input.amount='500';}
+  if(mode==='invalid')input.amount='-1';if(mode==='no-reason')input.reason='';const before=h.data;
+  await assert.rejects(correctReceipt({db:{},ref:{},runTransaction:h.runTransaction,assertSession:()=>{},actor:'admin',receiptId:id1,correctionId:'d'.repeat(32),input,expected,expectedPaid:paid}));assert.deepEqual(h.data,before,mode);
+ }
+});
+test('text-only receipt correction records history without changing payment snapshots or any ledger amount',async()=>{
+ const h=harness(),receipt=await saveMonthlyPayment(payment(h));const result=await correctReceipt({db:{},ref:{},runTransaction:h.runTransaction,assertSession:()=>{},actor:'admin',receiptId:id1,correctionId:'e'.repeat(32),input:{...correction(receipt,'400'),name:'Corrected printed name'},expected:receipt,expectedPaid:600});assert.equal(result.receipt.student.name,'Corrected printed name');assert.equal(h.data.fullName,'Fixture Student');assert.equal(result.receipt.balanceAtIssue,receipt.balanceAtIssue);assert.equal(result.receipt.amendments[0].amountDelta,0);assert.equal(Object.hasOwn(h.writes.at(-1),'monthlyFees.2026-02-14'),false);
+});

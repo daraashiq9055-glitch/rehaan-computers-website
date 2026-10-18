@@ -1,5 +1,5 @@
 import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions} from "./admin-features.js";
-import {saveMarkCard,saveMonthlyPayment} from "./admin-feature-store.js";
+import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js";
 let activePhotoMigration = null;
@@ -1548,7 +1548,7 @@ function renderAdminList() {
         );
 
         list.appendChild(card);
-        if (isSafePhoto(data.photo)) displayStudentPhoto(card.querySelector("[data-photo-zoom] img"), data.photo, adminPhotoToken);
+        if (isSafePhoto(data.photo)) displayAdminPhoto(card.querySelector("[data-photo-zoom] img"), data.photo, adminPhotoToken);
 
     });
 
@@ -1596,7 +1596,7 @@ function openAdminPhotoViewer(name, photoUrl, admissionNumber) {
 
     }
 
-    displayStudentPhoto(box.querySelector("img"), photoUrl, adminPhotoToken);
+    displayAdminPhoto(box.querySelector("img"), photoUrl);
     box.querySelector("p").textContent =
         (name || "Applicant") +
         (admissionNumber ? "  ·  Admission No " + admissionNumber : "");
@@ -1712,7 +1712,7 @@ function openAdminDetails(applicationId) {
         coursePreference: data.coursePreference || data.course || "",
         admissionDate: (data.admissionDate || data.approvedAt || "").slice(0, 10)
     }));
-    if (isSafePhoto(data.photo)) displayStudentPhoto(modal.querySelector("[data-photo-zoom] img"), data.photo, adminPhotoToken);
+    if (isSafePhoto(data.photo)) displayAdminPhoto(modal.querySelector("[data-photo-zoom] img"), data.photo);
     let updatedPhoto = null;
     modal.querySelector(".edit-photo").addEventListener("change", event => {
         const file = event.target.files && event.target.files[0];
@@ -1949,6 +1949,29 @@ function openAdmissionWhatsApp(student) {
     const tab = window.open(url, "_blank");
     if (tab) tab.opener = null;
     else window.alert("Please allow pop-ups to open the WhatsApp admission confirmation.");
+}
+
+// Loading a private photo is separate from saving its Cloudinary reference.
+async function displayAdminPhoto(image,photo) {
+    if(!image)return;
+    const host=image.parentElement;
+    let status=host.querySelector('.rc-photo-status');
+    if(!status){
+        status=document.createElement('span');status.className='rc-photo-status';status.setAttribute('role','status');
+        image.insertAdjacentElement('afterend',status);
+        const retry=event=>{
+            if(image.dataset.photoState!=='error'||!(event.target===image||event.target===status||event.target===host))return;
+            event.preventDefault();event.stopImmediatePropagation();displayAdminPhoto(image,image.dataset.photoReference);
+        };
+        host.addEventListener('click',retry,true);
+        status.addEventListener('keydown',event=>{if(event.key==='Enter'||event.key===' '){event.preventDefault();displayAdminPhoto(image,image.dataset.photoReference);}});
+        image.addEventListener('error',()=>{image.dataset.photoState='error';image.hidden=true;status.hidden=false;status.textContent='Retry photo';status.tabIndex=0;});
+    }
+    image.hidden=true;status.hidden=false;status.textContent='Loading photo…';status.removeAttribute('tabindex');
+    const ready=await displayStudentPhoto(image,photo,adminPhotoToken);
+    if(!image.isConnected||!verifiedAdminUid||image.dataset.photoReference!==photo)return;
+    image.hidden=!ready;status.hidden=ready;
+    if(!ready){status.textContent='Retry photo';status.tabIndex=0;}
 }
 
 function openAddStudentModal() {
@@ -2627,7 +2650,7 @@ function updateWorkspace() {
             downloadFile(text,"rehaan-student-backup-" + new Date().toISOString().slice(0,10) + ".json","application/json");
         };
     } else if (workspaceSection === "settings") {
-        view.innerHTML = `<section class="workspace-card"><h2>Your workspace</h2><dl class="workspace-settings"><dt>Signed in as</dt><dd>${escapeHTML(auth.currentUser?.email || "Administrator")}</dd><dt>Firebase project</dt><dd>${escapeHTML(firebaseConfig.projectId)}</dd><dt>Student register</dt><dd>applications · ${apps.length} loaded records</dd><dt>Admission fee</dt><dd>₹${ADMISSION_FEE} · separate from monthly tuition</dd><dt>Monthly tuition</dt><dd>₹${MONTHLY_TUITION_FEE} · admission anniversary</dd><dt>Session</dt><dd>Memory only · sign-in required after reloading</dd></dl><div class="workspace-report-actions"><button class="admin-save-btn" id="settingsRefresh">Refresh student register</button><button class="admin-ghost-btn" id="settingsLogout">Sign out securely</button><a href="index.html" class="admin-ghost-btn">Visit public website ↗</a><button class="admin-ghost-btn" id="settingsMigratePhotos" ${photoStorageConfig.enabled ? "" : "disabled"}>Transfer existing photos to Cloudinary</button></div><p>${photoStorageConfig.enabled ? "Transferred photos stay visible in the register. Download a backup before starting." : "Cloudinary uploads will be available after the photo service is configured."}</p></section>`;
+        view.innerHTML = `<section class="workspace-card"><h2>Your workspace</h2><dl class="workspace-settings"><dt>Signed in as</dt><dd>${escapeHTML(auth.currentUser?.email || "Administrator")}</dd><dt>Firebase project</dt><dd>${escapeHTML(firebaseConfig.projectId)}</dd><dt>Student register</dt><dd>applications · ${apps.length} loaded records</dd><dt>Admission fee</dt><dd>₹${ADMISSION_FEE} · separate from monthly tuition</dd><dt>Monthly tuition</dt><dd>₹${MONTHLY_TUITION_FEE} · admission anniversary</dd><dt>Session</dt><dd>Memory only · sign-in required after reloading</dd></dl><div class="workspace-report-actions"><button class="admin-save-btn" id="settingsRefresh">Refresh student register</button><button class="admin-ghost-btn" id="settingsLogout">Sign out securely</button><a href="index.html" class="admin-ghost-btn">Visit public website ↗</a><button class="admin-ghost-btn" id="settingsMigratePhotos" ${photoStorageConfig.enabled ? "" : "disabled"}>Transfer existing photos to Cloudinary</button></div><p>${photoStorageConfig.enabled ? `New student photos upload directly to Cloudinary. ${apps.filter(entry=>isPrivateStudentPhoto(entry.data.photo)).length} photos are already linked. ${apps.filter(entry=>isSafePhoto(entry.data.photo)&&entry.data.photo.startsWith("data:")).length} older inline photos remain to transfer. A transfer count of 0 does not mean photos are missing. Download a backup before transferring older photos.` : "Cloudinary uploads will be available after the photo service is configured."}</p></section>`;
         getElement("settingsRefresh").onclick = loadApplications;
         getElement("settingsLogout").onclick = handleAdminLogout;
         getElement("settingsMigratePhotos").onclick = openPhotoMigration;
@@ -2644,7 +2667,14 @@ function downloadFile(text, name, type) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-configureAdditions({getRecords:()=>adminState.apps,saveMarks:async(id,card,expected)=>{
+configureAdditions({getRecords:()=>adminState.apps,saveReceipt:async(receipt,input,expectedPaid,correctionId)=>{
+    requireAdmin();const uid=verifiedAdminUid;
+    const result=await correctReceipt({db,ref:doc(db,"applications",receipt.studentId),runTransaction,
+        assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw new Error("Your session changed. Sign in again before correcting receipts.");},
+        actor:uid,receiptId:receipt.id,correctionId,input,expected:receipt,expectedPaid});
+    if(verifiedAdminUid!==uid)throw new Error("Correction saved. Sign in again to view it.");
+    await loadApplications();return result.receipt;
+},saveMarks:async(id,card,expected)=>{
     requireAdmin();const uid=verifiedAdminUid;
     const saved=await saveMarkCard({db,ref:doc(db,"applications",id),runTransaction,
         assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw new Error("Your session changed. Sign in and refresh before saving marks.");},
@@ -2686,7 +2716,7 @@ function openPhotoMigration() {
     const modal = adminCreateModal("adminPhotoMigration", `<div class="admin-modal-card">
         <button type="button" class="admin-modal-close" aria-label="Close">×</button>
         <h3>Transfer existing photos</h3>
-        <p>${candidates.length} stored photos can be transferred. They will stay visible in the dashboard. Student details and fee records are kept.</p>
+        <p>${candidates.length} older inline photos can be transferred. ${records.filter(entry=>isPrivateStudentPhoto(entry.data.photo)).length} photos are already linked to Cloudinary. They will stay visible in the dashboard. Student details and fee records are kept.</p>
         <p>Download and keep the private backup first. It contains the original photos and all loaded records. Already linked photos are skipped.</p>
         <div class="workspace-report-actions"><button type="button" class="admin-ghost-btn" id="photoMigrationBackup">Download original backup</button>
         <button type="button" class="admin-save-btn" id="photoMigrationStart" disabled>Transfer ${candidates.length} photos</button>

@@ -42,12 +42,20 @@ async function uploadStudentPhoto(dataUrl, getToken) {
     // Keep successful uploads for retrying a failed Firestore save, never to localStorage.
     // Retain only the latest crop instead of accumulating student photos in memory.
     uploaded.clear(); uploaded.set(dataUrl,data.photo);
+    // The authenticated admin already has the exact uploaded crop. Use its
+    // local object URL immediately instead of waiting for a second private GET.
+    // Public applicants never seed administrator viewing, and sign-out revokes it.
+    if (getToken) {
+        const url = URL.createObjectURL(new Blob([bytes],{type:'image/jpeg'}));
+        objectUrls.add(url); privateViews.set(data.photo,Promise.resolve(url));
+    }
     return data.photo;
 }
 export async function displayStudentPhoto(image, photo, getToken) {
-    if (!image) return;
+    if (!image) return false;
     image.dataset.photoReference = photo;
-    if (!isPrivateStudentPhoto(photo)) { image.src = photo; return; }
+    if (!isPrivateStudentPhoto(photo)) { image.src = photo; image.dataset.photoState='ready'; return true; }
+    image.dataset.photoState='loading';
     image.removeAttribute('src');
     const epoch = generation;
     try {
@@ -66,12 +74,15 @@ export async function displayStudentPhoto(image, photo, getToken) {
             privateViews.set(photo,pending);
         }
         const url = await pending;
-        if (epoch === generation && image.dataset.photoReference === photo) image.src = url;
+        if (epoch === generation && image.dataset.photoReference === photo) { image.src = url; image.alt = 'Student photograph'; image.dataset.photoState='ready'; return true; }
+        return false;
     } catch {
         privateViews.delete(photo);
         if (epoch === generation && image.dataset.photoReference === photo) {
-            image.alt = 'Photograph unavailable — refresh after checking your connection and sign-in.';
+            image.dataset.photoState='error';
+            image.alt = 'Photograph unavailable — select Retry photo to try again.';
         }
+        return false;
     }
 }
 export function clearPhotoSession() {
