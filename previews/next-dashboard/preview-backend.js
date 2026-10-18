@@ -1,0 +1,22 @@
+// This adapter intentionally has no network SDK, project credentials or persistence.
+import {indiaDate} from './model.js';
+const shifted=(months)=>{const [y,m,d]=indiaDate().split('-').map(Number);return new Date(Date.UTC(y,m-1+months,Math.min(d,28))).toISOString().slice(0,10);};
+function samples(){const course='One Year Computer Diploma Course',joined=shifted(-2),due=shifted(-1);return {
+ 'sample-ayaan':{fullName:'Ayaan Demo',parentName:'Sample guardian',phone:'',gender:'male',coursePreference:course,batch:'Morning',status:'Approved',admissionNumber:'DEMO/001',rollNumber:'01',admissionDate:joined,approvedAt:joined+'T10:00:00Z',channel:'offline',monthlyFees:{[due]:200},feeReminders:{},payment:{status:'paid',amount:100},createdAt:joined+'T10:00:00Z'},
+ 'sample-sara':{fullName:'Sara Demo',parentName:'Sample guardian',phone:'',gender:'female',coursePreference:course,batch:'Evening',status:'Approved',admissionNumber:'DEMO/002',rollNumber:'02',admissionDate:joined,approvedAt:joined+'T10:00:00Z',channel:'offline',monthlyFees:{},feeReminders:{},payment:{status:'paid',amount:100},createdAt:joined+'T11:00:00Z'},
+ 'sample-zoya':{fullName:'Zoya Application Demo',parentName:'Sample guardian',phone:'',gender:'female',coursePreference:course,batch:'Afternoon',status:'New',createdAt:indiaDate()+'T10:00:00Z',payment:{status:'awaiting',amount:100}}
+};}
+export const previewState={records:samples(),readonly:false,writes:[],failWrite:false,auth:{currentUser:null,authStateReady:async()=>{}},listeners:[]};
+export function replaceRecords(backup){previewState.records=Object.fromEntries(backup.records.map(r=>[r.id,structuredClone(r.data)]));previewState.readonly=true;previewState.writes=[];}
+export function resetRecords(){previewState.records=samples();previewState.readonly=false;previewState.writes=[];}
+export const initializeApp=()=>({}),getApps=()=>[],getAuth=()=>previewState.auth,getFirestore=()=>({}),inMemoryPersistence={};
+export const setPersistence=async()=>{};
+export const onAuthStateChanged=(_auth,fn)=>{previewState.listeners.push(fn);queueMicrotask(()=>fn(previewState.auth.currentUser));return ()=>{previewState.listeners=previewState.listeners.filter(v=>v!==fn);};};
+export const signOut=async()=>{previewState.auth.currentUser=null;previewState.listeners.forEach(fn=>fn(null));};
+export const signInWithEmailAndPassword=async()=>{const user={uid:'local-preview-admin',email:'preview@example.test',getIdToken:async()=>{throw Error('No live authentication exists in this preview.');}};previewState.auth.currentUser=user;previewState.listeners.forEach(fn=>fn(user));return {user};};
+export const collection=(_db,name)=>({name});export const doc=(_db,col,id)=>({col,id});
+const snap=(id,data)=>({id,exists:()=>data!==undefined,data:()=>structuredClone(data)});
+export async function getDoc(ref){if(ref.col==='admins')return snap(ref.id,{uid:'local-preview-admin',isAdmin:true});if(ref.col!=='applications')throw Error('Preview supports student records only.');return snap(ref.id,previewState.records[ref.id]);}
+export async function getDocs(ref){if(ref.name!=='applications')throw Error('Preview supports student records only.');const rows=Object.entries(previewState.records).map(([id,data])=>snap(id,data));return {empty:!rows.length,forEach:fn=>rows.forEach(fn)};}
+let queue=Promise.resolve();
+export function runTransaction(_db,fn){const job=queue.then(async()=>{if(previewState.readonly)throw Error('Private backup is read-only. Use sample records to test payment changes.');if(previewState.failWrite)throw Error('Simulated local write failure.');const staged=[];await fn({get:getDoc,update:(ref,data)=>staged.push({kind:'update',ref,data}),set:(ref,data)=>staged.push({kind:'set',ref,data}),delete:ref=>staged.push({kind:'delete',ref})});const next=structuredClone(previewState.records);for(const {kind,ref,data} of staged){if(ref.col!=='applications')throw Error('Preview cannot change that collection.');if(kind==='delete')delete next[ref.id];else if(kind==='set')next[ref.id]=structuredClone(data);else{if(!Object.hasOwn(next,ref.id))throw Error('Record no longer exists.');for(const [path,value] of Object.entries(data)){const parts=path.split('.');if(parts.some(k=>['__proto__','constructor','prototype'].includes(k)))throw Error('Invalid field path.');let obj=next[ref.id];for(const key of parts.slice(0,-1))obj=obj[key]??(obj[key]={});obj[parts.at(-1)]=structuredClone(value);}}}previewState.records=next;previewState.writes.push(...structuredClone(staged));});queue=job.catch(()=>{});return job;}
