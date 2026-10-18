@@ -25,7 +25,7 @@ export function createState() {
         {id:'demo-002',name:'Sara Demo',admission:'DEMO/002',roll:'RC-002',parent:'Sample guardian',phone:'',course:'Office Applications',batch:'Afternoon',gender:'female',joined:'2026-08-01',end:'2027-01-31',periods:[SAMPLE_PERIOD]},
         {id:'demo-003',name:'Zoya Demo',admission:'DEMO/003',roll:'RC-003',parent:'Sample guardian',phone:'',course:'Computer Diploma',batch:'Morning',gender:'female',joined:'2026-09-01',end:'2027-08-31',periods:[SAMPLE_PERIOD]}
     ];
-    const state = {students,payments:[],events:[],certificates:[],nextReceipt:1,nextCertificate:1,nextEvent:1,exam:{title:'Term assessment · October 2026',date:'2026-10-17',passPercent:33,subjects:SUBJECTS.map(name=>({name,max:100}))},scores:{'demo-001':[76,84,91],'demo-002':[95,92,96],'demo-003':[65,71,28]}};
+    const state = {students,payments:[],events:[],nextReceipt:1,nextEvent:1,exam:{title:'Term assessment · October 2026',date:'2026-10-17',passPercent:33,subjects:SUBJECTS.map(name=>({name,max:100}))},scores:{'demo-001':[76,84,91],'demo-002':[95,92,96],'demo-003':[65,71,28]}};
     recordPayment(state,{studentId:'demo-001',period:SAMPLE_PERIOD,amount:'200',date:'2026-10-05',method:'Cash',note:'Sample opening payment'});
     recordPayment(state,{studentId:'demo-002',period:SAMPLE_PERIOD,amount:'999',date:'2026-10-06',method:'UPI',note:'Sample opening payment'});
     return state;
@@ -87,18 +87,6 @@ export function updateScores(state,id,values) {
     const before=state.scores[id]||[];state.scores[id]=marks;
     logEvent(state,'academic','Assessment updated',state.students.find(student=>student.id===id).name,{Before:before.map(value=>value??'Unmarked').join(' / '),After:marks.map(value=>value??'Unmarked').join(' / ')});
     return examResult(state,id);
-}
-export function issueCertificate(state,id,approved) {
-    const student=state.students.find(student=>student.id===id);const result=examResult(state,id);
-    if (!student||!result.complete||!result.passed) throw Error('A certificate needs complete results and a pass in every subject.');
-    if (!approved) throw Error('Review the sample results and tick the approval box first.');
-    const fingerprint=JSON.stringify({exam:state.exam,result});
-    const existing=state.certificates.find(item=>item.student.id===id && item.fingerprint===fingerprint);
-    if (existing)return existing;
-    const certificate={number:'DEMO-CERT-'+String(state.nextCertificate++).padStart(4,'0'),student:structuredClone(student),result:structuredClone(result),exam:structuredClone(state.exam),date:indiaDate(),fingerprint};
-    state.certificates.push(certificate);
-    logEvent(state,'academic','Certificate prepared',student.name,{'Certificate':certificate.number,'Grade':result.grade,'Percentage':result.percentage+'%','Approval':'Sample administrator review'});
-    return certificate;
 }
 export function csvCell(value) { let text=String(value??'');if(/^[\s]*[=+@-]/.test(text))text="'"+text;return '"'+text.replace(/"/g,'""')+'"'; }
 export function parseCSV(text) {

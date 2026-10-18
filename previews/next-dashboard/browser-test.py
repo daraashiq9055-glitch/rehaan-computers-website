@@ -5,7 +5,7 @@ from http.server import ThreadingHTTPServer,SimpleHTTPRequestHandler
 from threading import Thread
 from urllib.parse import urlparse,parse_qs
 from playwright.sync_api import sync_playwright,expect
-import fitz
+import fitz,json,struct
 
 ROOT=Path(__file__).resolve().parent
 OUT=Path('/tmp/rehaan-next-preview-checks');OUT.mkdir(exist_ok=True)
@@ -32,15 +32,21 @@ def run():
   page=context.new_page();page.add_init_script('window.print=()=>{window.__printCalls=(window.__printCalls||0)+1};')
   page.on('pageerror',lambda error:errors.append(str(error)))
   page.on('dialog',lambda dialog:(dialogs.append(dialog.message),dialog.dismiss()))
-  page.goto(base+'/');expect(page.locator('h1')).to_have_text('A quieter kind of premium.')
+  page.goto(base+'/');expect(page.locator('h1')).to_have_text('Your institute, at a glance.')
   page.evaluate('document.fonts.ready')
   assert page.evaluate('document.fonts.check(\'500 14px "Inter"\')')
   assert page.evaluate('document.fonts.check(\'500 24px "Playfair"\')')
-  expect(page.locator('.stat').first).to_contain_text('3')
+  expect(page.locator('.dashboard-shortcuts .stat')).to_have_count(4)
+  assert page.locator('[data-doc-tab=certificate]').count()==0
   assert page.locator('[data-view=attendance]').count()==0
   assert page.locator('[data-view=roles]').count()==0
   page.screenshot(path=str(OUT/'overview-desktop.png'),full_page=True)
-  passed('Local fonts, premium overview, sample-data banner and excluded attendance/staff roles')
+  passed('Local fonts, gold workspace, four working shortcuts; attendance, roles and certificates excluded')
+  page.locator('[data-view=students]').click()
+  page.locator('[data-work=edit][data-id=demo-001]').click()
+  page.locator('[name=phone]').fill('9999999991')
+  page.locator('#studentForm [type=submit]').click()
+  expect(page.locator('#dialog')).not_to_be_visible()
   page.locator('[data-view=payments]').click()
   expect(page.locator('#paymentRows tr')).to_have_count(3)
   page.locator('#paymentSearch').fill('Ayaan');expect(page.locator('#paymentRows tr')).to_have_count(1)
@@ -60,13 +66,19 @@ def run():
    assert page.locator('#printArea').get_attribute('data-kind')==kind
    path=OUT/(name+'.pdf');page.pdf(path=str(path),prefer_css_page_size=True,print_background=True)
    doc=fitz.open(path);assert len(doc)==expected_pages,(name,len(doc));text=''.join(item.get_text() for item in doc)
-   doc[0].get_pixmap(matrix=fitz.Matrix(1.4,1.4)).save(OUT/(name+'.png'))
+   pix=doc[0].get_pixmap(matrix=fitz.Matrix(1.4,1.4));assert pix.pixel(0,0)==(255,255,255),(name,'Paper margins must remain white');pix.save(OUT/(name+'.png'))
    return doc,text
   doc,text=pdf('filled-receipt','receipt',1)
   assert 'Ayaan Demo' in text and 'DEMO-RC-0003' in text
   assert abs(doc[0].rect.width-595.28)<3 and abs(doc[0].rect.height-419.53)<3
   passed('Partial payment validates overpayment, records once and prints a filled A5 receipt with its own balance')
   page.locator('#dialog [data-action=whatsapp]').click()
+  expect(page.locator('#receiptShareImage')).to_be_visible()
+  with page.expect_download() as downloaded:page.locator('[data-action=receiptImage]').click()
+  png=Path(downloaded.value.path()).read_bytes();assert png.startswith(b'\x89PNG');assert struct.unpack('>II',png[16:24])==(1600,1160)
+  (OUT/'whatsapp-receipt.png').write_bytes(png)
+  page.screenshot(path=str(OUT/'whatsapp-image-screen.png'),full_page=True)
+  assert page.locator('#openWhatsApp').get_attribute('href').startswith('https://wa.me/919999999991?')
   message=page.locator('#whatsappText').input_value()
   assert 'Ayaan Demo' in message and 'October 2026' in message and '₹400' in message and '₹399' in message
   with page.expect_popup() as opened:page.locator('#openWhatsApp').click()
@@ -78,7 +90,7 @@ def run():
   with page.expect_download() as downloaded:page.locator('[data-action=reportCSV]').click()
   csv=Path(downloaded.value.path()).read_text(encoding='utf-8-sig');assert 'Ayaan Demo' in csv and '600.00' in csv and '399.00' in csv
   page.locator('[data-action=printReport]').click();pdf('monthly-report','report',1)
-  passed('WhatsApp opens only a filled draft; reports and CSV reconcile with sample payment totals')
+  passed('Receipt downloads as PNG; WhatsApp targets saved student number; reports and CSV reconcile')
   page.locator('[data-view=payments]').click();page.locator('[data-action=blank]').click()
   blank=page.locator('#dialog [data-document=blank-receipt]')
   expect(blank).not_to_contain_text('Ayaan');expect(blank).not_to_contain_text('October');expect(blank).not_to_contain_text('999')
@@ -111,31 +123,48 @@ def run():
   page.locator('[data-view=documents]').click();page.locator('[data-action=printMarks]').click();doc,text=pdf('mark-card','marks',1)
   assert 'Ayaan Demo' in text and '251' in text and '83.67%' in text
   assert abs(doc[0].rect.height-841.89)<3
-  page.locator('[data-doc-tab=certificate]').click()
-  expect(page.locator('[data-action=printCertificate]')).to_be_disabled()
-  page.locator('[data-action=issueCertificate]').click();expect(page.locator('#certificateMessage')).to_contain_text('tick the approval')
-  page.locator('#approveCertificate').check();page.locator('[data-action=issueCertificate]').click()
-  expect(page.locator('[data-action=printCertificate]')).to_be_enabled()
-  page.locator('[data-action=printCertificate]').click();doc,text=pdf('certificate','certificate',1)
-  assert 'Certificate of Achievement' in text and 'Ayaan Demo' in text and 'DEMO-CERT-0001' in text
-  assert abs(doc[0].rect.width-841.89)<3 and abs(doc[0].rect.height-595.28)<3
-  page.screenshot(path=str(OUT/'certificate-screen.png'),full_page=True)
+  assert 'Certificate of Achievement' not in page.locator('body').inner_text()
   page.locator('#documentStudent').select_option('demo-003')
-  expect(page.locator('[data-action=issueCertificate]')).to_be_disabled()
-  expect(page.locator('#view')).to_contain_text('below the sample pass mark')
+  expect(page.locator('.selection-card')).to_contain_text('Not passed')
   page.locator('[data-action=marks]').click();page.locator('[data-score="2"]').fill('80')
   page.locator('#marksForm [type=submit]').click()
-  expect(page.locator('[data-action=issueCertificate]')).to_be_enabled()
-  passed('Detailed A4 mark card, approval-gated landscape certificate and component-level pass rules')
+  expect(page.locator('.selection-card')).to_contain_text('Pass')
+  page.screenshot(path=str(OUT/'mark-card-screen.png'),full_page=True)
+  passed('Larger readable A4 mark card preserves its colours and applies component-level pass rules; no certificates')
   for width in [390,768,1500]:
    page.set_viewport_size({'width':width,'height':1000})
-   for section in ['overview','payments','import','activity','reports','assessments','documents']:
+   for section in ['overview','admissions','students','records','payments','courses','batches','settings','import','activity','reports','assessments','documents']:
     page.locator('[data-view='+section+']').click()
     assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,section)
   page.set_viewport_size({'width':390,'height':844});page.locator('[data-view=payments]').click();page.locator('[data-action=blank]').click()
   assert page.evaluate('document.documentElement.scrollWidth<=innerWidth')
   page.screenshot(path=str(OUT/'blank-receipt-mobile.png'),full_page=True)
   page.locator('#closeDialog').click();page.reload();page.locator('[data-view=payments]').click();expect(page.locator('#paymentRows tr')).to_have_count(3)
+  page.locator('[data-view=admissions]').click();page.locator('[data-work=delete]').click()
+  page.locator('[data-work=confirmDelete]').click();expect(page.locator('#view')).to_contain_text('No records match')
+  page.reload();page.locator('[data-view=admissions]').click();page.locator('[data-work=approve]').click();page.locator('[data-work=confirmApprove]').click()
+  page.locator('[data-view=students]').click();expect(page.locator('#view table tbody tr')).to_have_count(4)
+  page.locator('[data-work=add]').click();page.locator('[name=fullName]').fill('Offline Example');page.locator('[name=coursePreference]').fill('Computer Diploma');page.locator('[name=batch]').fill('Morning');page.locator('#studentForm [type=submit]').click()
+  expect(page.locator('#view table tbody tr')).to_have_count(5)
+  page.locator('[data-view=courses]').click();page.locator('[data-work=directory]').first.click();expect(page.locator('#registerCourse')).to_have_value('Computer Diploma')
+  page.reload();page.locator('[data-view=payments]').click();page.locator('[data-action=whatsapp]').first.click();expect(page.locator('#openWhatsApp')).to_be_disabled();page.locator('#closeDialog').click()
+  passed('Previous dashboard sections, filter directories, sample add/edit/approve/delete and missing-mobile protection work')
+  backup={'exportedAt':'2026-10-18T00:00:00Z','collection':'applications','project':'example','records':[{'id':'original-1','data':{'fullName':'Private Example <b>literal</b>','phone':'9999999992','status':'Approved','admissionNumber':'RC/101','coursePreference':'Computer Diploma','batch':'Morning','gender':'female','monthlyFees':{'2026-09-14':500.25,'2026-10-14':999},'payment':{'status':'paid','amount':100},'customField':{'keep':'all original details'}}}]}
+  page.locator('[data-view=settings]').click();page.locator('#backupFile').set_input_files({'name':'backup.json','mimeType':'application/json','buffer':json.dumps(backup).encode()})
+  expect(page.locator('#backupMessage')).to_contain_text('1 original records')
+  page.locator('[data-view=records]').click();expect(page.locator('#view table tbody tr')).to_have_count(1)
+  expect(page.locator('#view')).to_contain_text('Private Example <b>literal</b>');assert page.locator('#view table b').count()==0
+  assert page.locator('#view [data-work=edit]').count()==0
+  page.locator('[data-work=details]').click();expect(page.locator('#dialogBody')).to_contain_text('customField');expect(page.locator('#dialogBody')).to_contain_text('all original details');page.locator('#closeDialog').click()
+  page.locator('[data-view=payments]').click();expect(page.locator('#view')).to_contain_text('2026-09-14');expect(page.locator('#view')).to_contain_text('₹500.25');assert page.locator('[data-action=payment]').count()==0
+  page.locator('[data-view=reports]').click()
+  with page.expect_download() as downloaded:page.locator('[data-work=exportJSON]').click()
+  assert json.loads(Path(downloaded.value.path()).read_text())==backup
+  page.locator('[data-view=documents]').click();expect(page.locator('#view')).to_contain_text('Use sample records for this feature')
+  page.locator('[data-view=settings]').click();page.locator('#backupFile').set_input_files({'name':'bad.json','mimeType':'application/json','buffer':b'{broken'})
+  expect(page.locator('#backupMessage')).to_contain_text('not valid JSON');page.locator('[data-work=clearBackup]').click();expect(page.locator('#backupMessage')).to_contain_text('No private backup loaded')
+  page.locator('[data-view=records]').click();expect(page.locator('#view table tbody tr')).to_have_count(4)
+  passed('Local backup retains every original field and fee date/value, exports unchanged, escapes HTML and never enables payment writes')
   assert page.evaluate('localStorage.length')==0
   assert not errors,errors
   assert not external,external

@@ -1,10 +1,22 @@
-# Rehaan Computers: next dashboard features
+# Rehaan Computers: dashboard preview
 
-A working design preview with ivory paper, forest green, brass accents and locally bundled Inter / Playfair Display fonts. This branch does not implement these features in the live admin dashboard. All files are outside Firebase Hosting's `public` directory.
+A disconnected working preview of the previous dashboard sections plus proposed new tools. Charcoal and champagne gold match the institute website; receipts use warm yellow/gold stationery. Mark cards retain their light green/ivory colours with larger text. Certificates and attendance are excluded.
 
-## Open on Windows using CMD
+This branch does not deploy or replace the live dashboard. All preview files live outside Firebase Hosting's `public` directory. The original admin files, Firebase configuration, Firestore rules and backend are unchanged.
 
-Run these commands in a new CMD window. This uses a new folder, keeping your existing `rehaan-admin-preview` checkout separate.
+## Update an existing Windows preview
+
+In the CMD window running the server, press **Ctrl+C**, then run:
+
+```bat
+cd /d "%USERPROFILE%\rehaan-next-preview"
+git pull --ff-only
+python -m http.server 8001 --directory previews/next-dashboard
+```
+
+Leave CMD open. In your browser, open **http://localhost:8001/index.html** and press **Ctrl+F5**. Do not open `/admin.html`: that file belongs to the live dashboard, not this preview.
+
+## First-time setup
 
 ```bat
 cd /d "%USERPROFILE%"
@@ -13,77 +25,84 @@ cd rehaan-next-preview
 python -m http.server 8001 --directory previews/next-dashboard
 ```
 
-Leave that CMD window open. In your browser, enter:
+If Python's command is `py`, substitute `py -m http.server 8001 --directory previews/next-dashboard`. No login, build or Firebase deployment is needed.
 
-```
-http://localhost:8001
-```
+## Your previous dashboard sections
 
-No login or Firebase deployment is needed. To stop, press Ctrl+C in CMD. If Python's command is `py` on your computer, use `py -m http.server 8001 --directory previews/next-dashboard` instead.
+- **Overview:** four clickable main shortcuts for New Applications, Enrolled Students, Fee Management and All Records, plus add/export actions.
+- **Admissions:** review a fictional pending application, inspect all fields, edit, approve or delete with explicit confirmation. Approval does not verify payment.
+- **Students / All Records:** name/admission/phone search, course/batch/status filters, full details and sample profile edits. Add offline profiles with mobile, guardian, course, batch, qualification, gender and other familiar fields. Profile editing never changes payments.
+- **Courses / Batches:** directories open the matching filtered register.
+- **Settings:** load, switch or clear a private backup; inspect connection and data status.
+- **Reports:** sample monthly fee totals, CSV and print; in private-backup mode, export the original records without inventing a financial statement.
 
-To reopen later:
+These are preview implementations. Live authentication, email, photo transfer, payment verification and data writes remain in the existing admin dashboard.
 
-```bat
-cd /d "%USERPROFILE%\rehaan-next-preview"
-python -m http.server 8001 --directory previews/next-dashboard
-```
+## Load your previous student data privately
 
-To get later changes, stop the server and run `git pull --ff-only` from this folder before restarting it. Do not run a Firebase deploy for this preview.
+1. In the **live dashboard → Reports**, download **full JSON backup**. Your previously downloaded original photo-transfer backup also works, although it represents its export date.
+2. In this **local preview → Settings & private backup**, choose that `.json` file.
+3. Open **All Records**, **Students**, **Admissions**, **Courses**, **Batches** or **Fee Management**. Every original field is available through **Details**. Monthly fee dates and recorded amounts are shown exactly as stored; admission payment details remain separate.
+4. **Reports → Download JSON copy** exports the unchanged original backup. Register CSV exports common columns.
 
-## Things to try
+The file stays in browser memory. It is not uploaded, committed, persisted to localStorage or sent to a service. Reloading clears it. Choose Clear private data to return to the sample workspace.
 
-1. **Overview → Preview blank receipt.** Compare a single A5 landscape receipt with two blank receipts on one A4 sheet. Name, date, receipt number, month and amounts are blank for handwriting.
-2. **Payments & receipts → Ayaan Demo → Record payment.** Try ₹400. The new receipt shows ₹400 received now, ₹600 received in October and ₹399 remaining. Try ₹1000 first to see overpayment validation without changing the record. Open older receipts from the ledger to see their original balance at issue.
-3. **Filled receipt → WhatsApp draft.** Review the name, receipt reference, payment date, fee month, amount, current month total and current remaining balance. The link opens WhatsApp's recipient chooser with a draft. You must choose a recipient and send it yourself. Use only a test recipient while reviewing.
-4. **Import students → Try sample import.** Two rows are valid and one duplicates an existing admission number. Review the rows, tick the confirmation and import the valid sample profiles. No payments are imported. Opening fees are flagged for review.
-5. **Activity history.** Filter sample payment, import, assessment and certificate events. Open Details to see who performed the action, time, reference and recorded values. This is an in-memory demonstration, not a persistent production audit log.
-6. **Monthly reports.** Change month, inspect billed/received/outstanding totals, export CSV or print a report. The opening October data is ₹2,997 billed, ₹1,199 received and ₹1,798 outstanding. After the ₹400 example, received is ₹1,599 and outstanding ₹1,398.
-7. **Assessments.** Edit component marks. Unmarked components stay incomplete; a failed component prevents certificate preparation even when the overall percentage is high.
-8. **Mark cards & certificates.** Select a student, print the detailed A4 mark card, then select Certificate of achievement. Tick the review approval, prepare a sample certificate and print the landscape A4 document. Editing marks requires a fresh certificate review. Zoya's initial practical mark deliberately fails; edit it to explore eligibility.
+Private backup records are **read-only**. New sample tools use fictional records, reached through **Show sample workspace** in Settings. In backup mode, assessments/import/activity display an explanation and a button to switch to samples. No sample payments are applied to real records. Existing monthly totals are not individual receipt events, so the preview does not manufacture receipts or guess payment dates/current dues from them.
 
-Reloading the browser or clicking Reset sample data clears your preview changes.
+The parser accepts original `{collection:"applications", records:[{id,data}]}` backups, up to 32 MiB and 5,000 records. Duplicate IDs and malformed structures are rejected. Unknown fields, nested ledgers and photo references are retained. Embedded raster photos can display locally; private Cloudinary photos require the live administrator session and are not fetched here.
 
-## Printing and PDF
+## Yellow/gold payment receipts and WhatsApp images
 
-Click the print button inside the preview, rather than printing the dashboard itself. Choose a printer or Microsoft Print to PDF / Save as PDF. Use the requested paper size: A5 landscape for one receipt, A4 portrait for two receipts, reports and mark cards, A4 landscape for certificates. Turn off browser headers/footers and enable background graphics for the intended design. Use actual size / 100% where supported. Browser-generated PDFs were tested; physical printer margins depend on your printer.
+1. In **Students → Edit**, save the student's Indian mobile number. It can be a 10-digit mobile or include `+91`. No guardian number is silently substituted.
+2. In **Payments & receipts**, record a sample partial payment (for Ayaan, try ₹400). The receipt shows ₹400 received now, ₹600 received for October and ₹399 remaining after this payment. Overpayment and invalid amounts are rejected before changing state.
+3. Choose **WhatsApp receipt** to see a 1600 × 1160 PNG image with the same branding and fee details as the printed receipt.
+4. **Download receipt image**, then **Open student's WhatsApp**. The chat link targets the saved student mobile and fills a payment message. Attach the downloaded PNG and press Send yourself.
 
-Printed preview documents are labeled DESIGN PREVIEW. Blank receipts have room for a handwritten authorized signature; filled receipts retain the balance at the time of that payment. WhatsApp drafts deliberately label the latest balance as current.
+A WhatsApp URL cannot automatically attach a local file. The preview does not send messages, claim the image was delivered, or use the WhatsApp Business API. A missing/invalid saved mobile disables the chat button and offers Edit saved number. The current saved number is used, even for an older receipt; the receipt's student/fee snapshot remains historical.
 
-## CSV / Excel import
+The image and printed receipt preserve the balance at payment time. The accompanying WhatsApp message labels the latest month balance as current. Every generated preview receipt is marked as a design preview.
 
-Excel users: Save As **CSV UTF-8**, then upload the CSV file. Native `.xlsx` uploads are not supported in this prototype. Download the template in the Import students screen.
+**Blank receipts:** date, name, month, receipt number and amounts remain empty for handwriting. Print one A5 landscape receipt or two forms on A4 portrait.
 
-Required headers, in any order:
+## Mark cards
+
+**Assessments** edits sample component marks. **Mark cards** prints a detailed A4 statement with student/guardian, admission/roll, course/batch, assessment date, component marks, totals, percentage, grade, result and signatures. Text is slightly larger while retaining the previous paper colours. There is no certificate option.
+
+Sample rules: at least 33% in each component. A+ from 90%, A from 75%, B from 60%, C from 45%, D from 33%, subject to passing each component. A high total cannot override a failed subject. Blank marks keep the result incomplete. Real institute academic policies need confirmation before production integration.
+
+## Bulk import, activity and monthly reports
+
+- **Import students → Try sample CSV:** two valid rows and one duplicate. Review and confirm before adding; no payments are imported. Excel users must save as CSV UTF-8; native `.xlsx` is not supported.
+- **Activity history:** sample profile, application, payment, import and assessment changes with time, actor and details. This is in-memory demonstration history.
+- **Monthly reports:** sample billed/received/outstanding totals, student breakdown, CSV and printable report. Initial October totals are ₹2,997 billed, ₹1,199 received and ₹1,798 outstanding. After Ayaan's ₹400 example, received is ₹1,599 and outstanding ₹1,398.
+
+CSV headers:
 
 ```csv
 admission_number,name,phone,course,batch,gender
 DEMO/006,Example Student,9999900006,Computer Diploma,Morning,female
 ```
 
-Gender values: blank, `male`, `female`, `other`, `prefer_not_to_say`. A phone must contain exactly ten digits. Admission numbers must be unique, ignoring letter case. Files are limited to 2 MiB and 1,000 rows. Quoted fields, commas inside quotes and UTF-8 BOM are supported. Extra columns, including payment columns, are rejected. Invalid rows are explained and skipped; valid rows require explicit confirmation before adding. Exported CSV cells are protected against spreadsheet formula prefixes.
+Phone: exactly 10 digits. Gender: blank, `male`, `female`, `other`, `prefer_not_to_say`. Admission numbers are unique ignoring case. Files: up to 2 MiB / 1,000 rows. Quoted fields and UTF-8 BOM are supported. Invalid rows are explained and skipped; extra columns (including payments) are rejected. New profiles flag opening fees for review. CSV exports neutralize spreadsheet formula prefixes.
 
-## Deliberate preview limits
+## Printing
 
-- Fictional profiles only. Changes exist only in browser memory, with no localStorage persistence.
-- No Firebase, Firestore, Cloudinary, worker, payment gateway, SDK or account credentials are used. The CSP blocks application network connections; fonts are local. Only a user-clicked WhatsApp draft link leaves the preview.
-- No charge, refund, real student import, real receipt issuance or production record update takes place.
-- Monthly fee ₹999 and assessment rules are sample values. Production implementation must use each student's real fee schedule, balances, permissions and the institute's approved academic policy.
-- The certificate grade is A+ from 90%, A from 75%, B from 60%, C from 45%, D from 33%, and all components require at least 33%. It is a sample institute document.
-- Attendance and staff roles are outside the requested preview.
-- Integration into Manage Payment, persisted audit history, atomic payment writes, server-side authorization and live-data regression tests belong to a later implementation after design review.
+Use the preview's print button, select the indicated paper size, disable browser headers/footers and enable background graphics. A5 landscape: one receipt. A4 portrait: two receipts, reports and mark cards. Printer or Save as PDF both work through the browser dialog. Generated PDFs were checked for one-page layouts and white paper margins. Physical printer margins depend on the printer.
 
-## Validation
+## Safety and validation
 
-Pure model checks (Node 22 or later):
+No Firebase, Firestore, Cloudinary, worker, payment gateway, SDK or credentials are used by preview code. Its CSP blocks network connections, fonts are bundled locally, and only a deliberately clicked WhatsApp link leaves the preview. No charge, refund, live import, actual payment verification or production record update occurs. Everything resets on reload. Do not deploy this branch for a preview.
+
+Run model / backup / recipient validation:
 
 ```sh
-node --test previews/next-dashboard/model.test.mjs
+node --test previews/next-dashboard/model.test.mjs previews/next-dashboard/backup.test.mjs
 ```
 
-Browser checks use Python Playwright, Chromium at `/usr/bin/chromium`, and PyMuPDF:
+Browser checks require Python Playwright, Chromium at `/usr/bin/chromium` and PyMuPDF:
 
 ```sh
 python3 previews/next-dashboard/browser-test.py
 ```
 
-The browser suite blocks external services and all network writes, intercepts the WhatsApp draft, tests payments/imports/reports/academic documents, checks responsive sections, and generates print PDFs/screenshots under `/tmp/rehaan-next-preview-checks`. It does not contact the live site.
+The browser suite blocks nonlocal services and network writes, intercepts WhatsApp, verifies saved-number links and PNG generation, private backup preservation, familiar register actions, payment totals, CSV import, mark cards, A5/A4 printing and responsive sections. Synthetic artifacts go to `/tmp/rehaan-next-preview-checks`; no private backup is checked into Git.

@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {createState,recordPayment,billFor,reportFor,whatsappText,parseAmount,examResult,updateScores,issueCertificate,parseCSV,reviewImport,commitImport,csvCell,indiaDate,SAMPLE_PERIOD} from './model.js';
+import {createState,recordPayment,billFor,reportFor,whatsappText,parseAmount,examResult,updateScores,parseCSV,reviewImport,commitImport,csvCell,indiaDate,SAMPLE_PERIOD} from './model.js';
 const input=amount=>({studentId:'demo-001',period:SAMPLE_PERIOD,amount,date:indiaDate(),method:'Cash'});
 test('partial payment has a unique receipt, a frozen historical balance and an accurate current WhatsApp balance',()=>{
  const state=createState();const receipt=recordPayment(state,input('400'));
@@ -29,13 +29,10 @@ test('reports reconcile exactly with recorded monthly payments',()=>{
  assert.equal(report.received,159900);assert.equal(report.balance,139800);assert.equal(report.received+report.balance,report.billed);
  assert.deepEqual(reportFor(state,'2026-11'),{rows:[],billed:0,received:0,balance:0});
 });
-test('certificates require complete passing components and approval; revisions retain old snapshots',()=>{
+test('mark cards require complete components and distinguish component failure from the overall percentage',()=>{
  const state=createState();const result=examResult(state,'demo-003');assert.equal(result.percentage,54.67);assert.equal(result.passed,false);
- assert.throws(()=>issueCertificate(state,'demo-003',true));assert.throws(()=>issueCertificate(state,'demo-001',false));
- const first=issueCertificate(state,'demo-001',true);assert.equal(issueCertificate(state,'demo-001',true).number,first.number);
- const snapshot=structuredClone(first);updateScores(state,'demo-001',[80,85,95]);const revised=issueCertificate(state,'demo-001',true);
- assert.notEqual(first.number,revised.number);assert.deepEqual(first,snapshot);
- updateScores(state,'demo-001',[90,'',95]);assert.equal(examResult(state,'demo-001').complete,false);assert.throws(()=>issueCertificate(state,'demo-001',true));
+ updateScores(state,'demo-001',[80,85,95]);assert.equal(examResult(state,'demo-001').grade,'A');
+ updateScores(state,'demo-001',[90,'',95]);assert.equal(examResult(state,'demo-001').complete,false);
  const before=structuredClone(state);assert.throws(()=>updateScores(state,'demo-001',[90,101,95]));assert.deepEqual(state,before);
 });
 const header='admission_number,name,phone,course,batch,gender\n';
