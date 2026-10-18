@@ -110,3 +110,11 @@ The setup helper retains a verified cache in the system temporary directory; it 
 The emulator check has passed. Follow `docs/deploy-and-rollback.md` for a Hosting-only deployment from `codex/admin-dashboard-redesign`. Do not deploy the disconnected `preview/next-features-cmd-2026-10-18` branch, Firestore rules or either worker for this update.
 
 Hosting rollback to the prior release restores code without deleting new `markCard` or `feeReceipts` fields; the older dashboard ignores those fields and preserves them during normal field-specific edits. Do not restore an old full JSON backup over newer student payments. A rollback is not a data restore.
+
+## Sign-in compatibility after a Hosting update
+
+The 2026-10-18 correction release exposed a warm-browser-cache failure: a new `admin-app.js` could import a still-cached old `admin-feature-store.js` without the new `correctReceipt` export. The browser rejects the module graph before Firebase sign-in initializes. This exact error was reproduced locally; the live files themselves matched the release after normalizing Windows line endings, and the fresh live module graph initialized successfully using TLS-verified read-only downloads.
+
+The admin HTML now imports a versioned entry point, and all changed dependencies use the same release query. Increment this query throughout the changed admin module graph for future releases that change module contracts. Hosting sets `Cache-Control: no-cache` on `/admin**` and `/photo-storage*.js` so browsers revalidate these files. This header change does not modify database permissions or records. The entry HTML itself may still be cached from the previous policy during the first corrective update; open `admin.html?release=20261018-login-fix-1` or perform a hard refresh after deployment.
+
+Run `python3 tests/admin-release-browser.py` for the warm-cache regression. It serves obsolete module APIs at the original unversioned URLs and verifies that the versioned graph bypasses them, initializes sign-in and allows fixture admin login without record writes. Existing admin and feature browser suites also cover the versioned files.

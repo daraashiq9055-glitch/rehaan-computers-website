@@ -1,7 +1,7 @@
-import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions} from "./admin-features.js";
-import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js";
+import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions} from "./admin-features.js?v=20261018-login-fix-1";
+import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261018-login-fix-1";
 import { photoStorageConfig } from "./photo-storage-config.js";
-import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js";
+import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
 let activePhotoMigration = null;
 
 // Admin features adapted from website-updates d738bb2. The public site keeps its existing script.

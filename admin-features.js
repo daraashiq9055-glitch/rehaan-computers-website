@@ -7,8 +7,8 @@ import {
   validateCard,
   cardResult,
   validateReceiptCorrection,
-} from "./admin-feature-model.js";
-import { receiptPNG, whatsappURL } from "./admin-receipt-image.js";
+} from "./admin-feature-model.js?v=20261018-login-fix-1";
+import { receiptPNG, whatsappURL } from "./admin-receipt-image.js?v=20261018-login-fix-1";
 let apps = [],
   selected = "",
   receipts = [],
