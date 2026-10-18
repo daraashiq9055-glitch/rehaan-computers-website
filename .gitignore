@@ -11,3 +11,6 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 .firebase/
+
+# Standalone next-features preview output
+previews/next-dashboard/artifacts/
