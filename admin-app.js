@@ -1,3 +1,5 @@
+import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions} from "./admin-features.js";
+import {saveMarkCard,saveMonthlyPayment} from "./admin-feature-store.js";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js";
 let activePhotoMigration = null;
@@ -1027,6 +1029,8 @@ async function recordMonthlyTuition(id, data) {
     const overdue = overdueMonthlyTuition(data);
     const bill = overdue ? { key: overdue.key, paid: MONTHLY_TUITION_FEE - overdue.balance } : upcoming;
     if (!bill) { window.alert("Set a valid admission date before recording monthly fees."); return; }
+    const receiptId = crypto.randomUUID().replaceAll("-", "");
+    const paymentUid = verifiedAdminUid;
     const existing = Math.max(0, Number(bill.paid) || 0);
     const remaining = Math.max(0, MONTHLY_TUITION_FEE - existing);
     const modal = adminCreateModal("rcTuitionModal", `
@@ -1061,6 +1065,7 @@ async function recordMonthlyTuition(id, data) {
     });
     form.addEventListener("submit", async event => {
         event.preventDefault();
+        if (form.dataset.saved === "true" || form.dataset.pending === "true") return;
         const added = Number(amount.value);
         if (!Number.isFinite(added) || added <= 0 || added > remaining || !/^\d+(?:\.\d{1,2})?$/.test(amount.value)) {
             status.hidden = false; status.className = "admin-modal-msg err";
@@ -1068,29 +1073,31 @@ async function recordMonthlyTuition(id, data) {
             return;
         }
         if (!window.confirm("Record an additional ₹" + added + " for " + (data.fullName || "student") + "?")) return;
+        form.dataset.pending = "true";
         submit.disabled = true;
+        let receipt;
         try {
-            // Re-read just before writing to guard against stale admin screens.
-            const latestSnap = await getDoc(doc(db, "applications", id));
-            if (!latestSnap.exists()) throw new Error("Student record no longer exists.");
-            const latest = latestSnap.data();
-            if (!adminIsEnrolled(latest) || !latest.admissionNumber) throw new Error("Student is no longer enrolled.");
-            const currentlyPaid = Math.max(0, Number((latest.monthlyFees || {})[bill.key] || 0));
-            if (currentlyPaid !== existing) throw new Error("Payment record changed. Close this window, refresh and try again.");
-            if (currentlyPaid + added > MONTHLY_TUITION_FEE) throw new Error("Payment exceeds remaining balance.");
-            const total = Math.round((currentlyPaid + added) * 100) / 100;
-            await updateDoc(doc(db, "applications", id), {
-                ["monthlyFees." + bill.key]: total
-            });
-            status.hidden = false; status.className = "admin-modal-msg ok";
-            status.textContent = "Payment saved. Total received ₹" + total + ", remaining ₹" + (MONTHLY_TUITION_FEE - total) + ".";
-            await loadApplications();
-            scheduleModalClose(modal, 1300);
+            receipt = await saveMonthlyPayment({db,ref:doc(db,"applications",id),runTransaction,
+                assertSession:()=>{requireAdmin();if(verifiedAdminUid!==paymentUid)throw new Error("Your session changed. Sign in and refresh before recording payment.");},
+                actor:paymentUid,id,due:bill.key,amount:added,expectedPaid:existing,
+                expectedAdmission:data.admissionNumber,expectedJoined:data.admissionDate||data.approvedAt||"",receiptId});
         } catch (error) {
             status.hidden = false; status.className = "admin-modal-msg err";
             status.textContent = "Payment not saved: " + (error.message || error);
-            submit.disabled = false;
+            form.dataset.pending = "false"; submit.disabled = false;
+            return;
         }
+        // UI/refresh issues after a confirmed commit must never invite a repeat payment.
+        form.dataset.saved = "true";
+        if (verifiedAdminUid !== paymentUid || !modal.isConnected) return;
+        status.hidden = false; status.className = "admin-modal-msg ok";
+        status.textContent = "Payment saved. Total received ₹" + (receipt.receivedAtIssue/100) + ", remaining ₹" + (receipt.balanceAtIssue/100) + ".";
+        const receiptButton = document.createElement("button");
+        receiptButton.type="button";receiptButton.id="rcOpenSavedReceipt";receiptButton.className="admin-save-btn";
+        receiptButton.textContent="Print / WhatsApp receipt";
+        receiptButton.onclick=()=>{closeAdminModal(modal);openReceipt(receipt);};
+        form.appendChild(receiptButton);
+        await loadApplications();
     });
 }
 
@@ -1414,6 +1421,7 @@ function renderAdminList() {
 
     if (adminState.tab === "fees") {
         renderFeeManagement(list, adminFilteredApps());
+        receiptTools(list,adminState.apps);
         return;
     }
     const rows = adminFilteredApps();
@@ -2444,6 +2452,7 @@ function friendlyError(error) {
 }
 
 function clearAdminSession() {
+    resetAdditions();
     clearPhotoSession();
     if (activePhotoMigration) activePhotoMigration.stopped = true;
     verifiedAdminUid = null;
@@ -2556,7 +2565,7 @@ function updateWorkspace() {
         [distinct("coursePreference"), "Courses with students", "Browse the course directory", "courses", "courses"],
         [distinct("batch"), "Batches with students", "Browse batch assignments", "batches", "batches"]
     ].map(([count,label,note,icon,target]) => `<button type="button" class="workspace-stat" data-summary="${target}" aria-label="Open ${label.toLowerCase()}${recordsLoaded ? ': ' + count : ''}" ${recordsLoaded ? "" : "disabled"}><span class="workspace-stat-icon" aria-hidden="true">${workspaceIcon(icon)}</span><span class="workspace-stat-body"><span class="workspace-stat-label">${label}</span><strong>${recordsLoaded ? count : "—"}</strong><small>${note}</small></span><span class="workspace-stat-arrow" aria-hidden="true">${workspaceIcon("arrow")}</span></button>`).join("");
-    const titles = { overview: "Your institute, at a glance.", admissions: "Admission applications", students: "Enrolled students", fees: "Fees & payments", courses: "Course directory", batches: "Batch directory", reports: "Reports & exports", settings: "Workspace settings" };
+    const titles = { marks: "Student mark cards", overview: "Your institute, at a glance.", admissions: "Admission applications", students: "Enrolled students", fees: "Fees & payments", courses: "Course directory", batches: "Batch directory", reports: "Reports & exports", settings: "Workspace settings" };
     getElement("workspaceHeading").textContent = titles[workspaceSection];
     getElement("workspaceBreadcrumb").textContent = workspaceSection[0].toUpperCase() + workspaceSection.slice(1);
     getElement("workspaceProfile").textContent = auth.currentUser?.email || "Administrator";
@@ -2570,7 +2579,7 @@ function updateWorkspace() {
     document.querySelectorAll(".admin-tab").forEach(button => { const active = button.dataset.tab === adminState.tab; button.classList.toggle("is-active", active); button.setAttribute("aria-selected", String(active)); button.tabIndex = active ? 0 : -1; });
     getElement("applicationsList").setAttribute("role", "tabpanel");
     getElement("applicationsList").setAttribute("aria-labelledby", "registerTab-" + adminState.tab);
-    const directory = ["courses", "batches", "reports", "settings"].includes(workspaceSection);
+    const directory = ["courses", "batches", "reports", "settings", "marks"].includes(workspaceSection);
     getElement("registerPanel").hidden = directory && recordsLoaded;
     getElement("workspaceView").hidden = !recordsLoaded || (!["overview"].includes(workspaceSection) && !directory);
     if (!recordsLoaded) return;
@@ -2607,6 +2616,8 @@ function updateWorkspace() {
             } else adminState.batch = "";
             renderAdminList();
         });
+    } else if (workspaceSection === "marks") {
+        renderMarkCards(view,apps);
     } else if (workspaceSection === "reports") {
         view.innerHTML = `<section class="workspace-card"><h2>Export your register</h2><p>Download the loaded student records as CSV, or back up every stored field as JSON. Treat downloaded files as private student data.</p><div class="workspace-report-actions"><button class="admin-save-btn" id="reportCsv">Export all records (CSV)</button><button class="admin-ghost-btn" id="reportJson">Download full JSON backup</button></div><p>JSON includes the original document IDs, photographs, fee ledgers, reminder history and all other stored fields. This dashboard does not import or restore backups automatically.</p></section>`;
         getElement("reportCsv").onclick = () => { adminState.tab = "all"; adminState.query = ""; adminState.course = ""; adminState.batch = ""; exportAdminCsv(); };
@@ -2633,6 +2644,16 @@ function downloadFile(text, name, type) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
+configureAdditions({getRecords:()=>adminState.apps,saveMarks:async(id,card,expected)=>{
+    requireAdmin();const uid=verifiedAdminUid;
+    const saved=await saveMarkCard({db,ref:doc(db,"applications",id),runTransaction,
+        assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw new Error("Your session changed. Sign in and refresh before saving marks.");},
+        actor:uid,card,expected});
+    requireAdmin();if(verifiedAdminUid!==uid)throw new Error("Your session changed. Sign in again to view saved marks.");
+    const record=adminState.apps.find(entry=>entry.id===id);
+    if(record)record.data={...record.data,markCard:saved};
+    return saved;
+}});
 await initAdminAuthentication();
 
 async function adminPhotoToken() {

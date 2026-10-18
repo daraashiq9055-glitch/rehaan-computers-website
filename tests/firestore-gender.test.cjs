@@ -14,7 +14,7 @@ const {doc,setDoc,getDoc,updateDoc,deleteDoc}=require('firebase/firestore');
   }
   for(const gender of ['invalid',42,null,{},['male']]) await assertFails(setDoc(doc(db,'applications',String(++id)),{...base,gender}));
   for(const payment of [{status:'paid',amount:100},{status:'awaiting',amount:100,verified:true},{status:'awaiting',amount:100,providerId:'injected'}]) await assertFails(setDoc(doc(db,'applications',String(++id)),{...base,gender:'female',payment}));
-  for(const extra of [{admissionNumber:'001'},{channel:'offline'},{status:'Approved'},{unknown:'injected'}]) await assertFails(setDoc(doc(db,'applications',String(++id)),{...base,...extra}));
+  for(const extra of [{admissionNumber:'001'},{channel:'offline'},{status:'Approved'},{unknown:'injected'},{markCard:{title:'injected'}},{feeReceipts:{fake:{amount:100}}}]) await assertFails(setDoc(doc(db,'applications',String(++id)),{...base,...extra}));
   const existing=doc(db,'applications','1');
   await assertFails(getDoc(existing));await assertFails(updateDoc(existing,{gender:'male'}));await assertFails(deleteDoc(existing));
   await env.withSecurityRulesDisabled(async context=>setDoc(doc(context.firestore(),'admins','test-admin'),{uid:'test-admin',isAdmin:true}));

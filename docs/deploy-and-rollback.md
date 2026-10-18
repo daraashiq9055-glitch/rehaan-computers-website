@@ -1,5 +1,17 @@
 # Save, deploy and roll back the website
 
+## Mark cards / receipts release gate
+
+The new integration is on `codex/admin-dashboard-redesign`, with code rollback branch
+`backup/before-markcards-receipts-2026-10-18` at `3df4dea`.
+**Do not deploy this update yet:** the local real-SDK Firestore emulator check is
+pending an environment network change allowing `storage.googleapis.com`.
+See [mark-cards-and-receipts.md](mark-cards-and-receipts.md) for the completed tests,
+remaining check and exact command. No live database write is required for it.
+Once the check passes, deploy Hosting only using the steps below from your original
+`rehaan-admin-preview` folder, never the disconnected `rehaan-next-preview` folder.
+
+
 Nothing in these instructions restores student/payment data automatically.
 Deploy only Hosting. Do not deploy Firestore rules or either Worker as part of
 this frontend update.

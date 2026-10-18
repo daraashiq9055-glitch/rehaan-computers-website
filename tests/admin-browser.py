@@ -49,7 +49,7 @@ export const runTransaction=async(_db,fn)=>{
  if(state.failWrite)throw Object.assign(new Error('Write denied'),{code:'permission-denied'});
  const staged=[];
  const tx={get:getDoc,update:(ref,patch)=>staged.push(['update',ref,patch]),set:(ref,data)=>staged.push(['set',ref,data]),delete:ref=>staged.push(['delete',ref])};
- await fn(tx);
+ const result = await fn(tx);
  for(const [kind,ref,data] of staged){
   if(kind==='delete')delete state.records[ref.id];
   else if(kind==='set')state.records[ref.id]=structuredClone(data);
@@ -60,6 +60,7 @@ export const runTransaction=async(_db,fn)=>{
   }
   state.writes.push({kind,id:ref.id,data});
  }
+ return result;
 };
 '''
 
