@@ -1,6 +1,6 @@
 # Visitor homepage design preview
 
-This earlier alternative design was not selected. The launcher `python preview-home.py` now opens `previews/current-home/`, which improves the familiar current homepage. Use the manual server/address below only to revisit this earlier alternative.
+This earlier alternative design was not selected. The launcher `python preview-home.py` now opens the complete redesign in `previews/premium-home/`. Use the manual server/address below only to revisit this earlier alternative.
 
 This is a separate, disconnected design preview. Nothing under `public/`, the admin dashboard, the live admission form, Firebase rules, workers or payment services is changed. The seven course records were copied from the existing public course definitions. The photographs are existing website imagery, not new photographs of the institute.
 

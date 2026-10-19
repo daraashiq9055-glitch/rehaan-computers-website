@@ -1,5 +1,7 @@
 # Current homepage: small improvements preview
 
+This earlier small-change concept has been superseded by the complete redesign in `previews/premium-home/`. The shared launcher `python preview-home.py` now opens that complete version. To revisit this older page, serve the repository root manually and open `/previews/current-home/`.
+
 This preview keeps the current visitor website's black/gold identity, heading, background image, section order, about/process/tools/schedule/FAQ sections, full admission form layout, creator credit, map and social links. It replaces the rejected alternative homepage as the default local preview.
 
 Changes to try:
