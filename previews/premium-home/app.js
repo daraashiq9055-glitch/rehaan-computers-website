@@ -1,3 +1,4 @@
+import { initJourney } from "./journey.js";
 import { initMotion } from "./motion.js";
 import {
   courseSlug,
@@ -496,30 +497,6 @@ function renderSite() {
       .join(""),
   );
 }
-let demo = "excel",
-  demoComplete = false;
-function renderDemo(name = demo) {
-  demo = name;
-  demoComplete = false;
-  document.querySelectorAll("[data-demo]").forEach((button) => {
-    const active = button.dataset.demo === demo;
-    button.setAttribute("aria-selected", String(active));
-    button.tabIndex = active ? 0 : -1;
-  });
-  $("#workspaceDemo").setAttribute("aria-labelledby", "demo-" + name);
-  drawDemo();
-}
-function drawDemo() {
-  if (demo === "excel")
-    $("#workspaceDemo").innerHTML =
-      `<div class="sheet-formula"><b>fx</b><span>${demoComplete ? "=SUM(B2:B4)" : "Select the total. Try your first formula."}</span></div><table class="demo-sheet"><thead><tr><th>YOUR PRACTICE SHEET</th><th>VALUE</th></tr></thead><tbody><tr><td>Practice task 01</td><td>24</td></tr><tr><td>Practice task 02</td><td>36</td></tr><tr><td>Practice task 03</td><td>18</td></tr><tr class="sheet-total"><td>Total</td><td id="demoTotal">${demoComplete ? "78" : "—"}</td></tr></tbody></table><div class="demo-footer"><button data-action="demo-task">${demoComplete ? "Reset example" : "Calculate the total"}</button><p role="status">${demoComplete ? "24 + 36 + 18 = 78. A useful first formula." : "A small task. A practical beginning."}</p></div>`;
-  if (demo === "accounts")
-    $("#workspaceDemo").innerHTML =
-      `<div class="sheet-formula"><b>GST</b><span>A sample calculation. Not an institute fee.</span></div><div class="demo-account"><div><small>SAMPLE ITEM</small><strong>₹1,000</strong></div><div><small>EXAMPLE GST / 18%</small><strong>${demoComplete ? "₹180" : "—"}</strong></div><div><small>BASE + TAX</small><strong>${demoComplete ? "₹1,180" : "—"}</strong></div><div><small>YOUR LEARNING</small><strong style="font-size:14px">Accounting basics</strong></div></div><div class="demo-footer"><button data-action="demo-task">${demoComplete ? "Reset example" : "Add the sample GST"}</button><p role="status">${demoComplete ? "₹1,000 + ₹180 = ₹1,180." : "Learn how the numbers connect."}</p></div>`;
-  if (demo === "documents")
-    $("#workspaceDemo").innerHTML =
-      `<div class="sheet-formula"><b>Aa</b><span>Make a document easier to read.</span></div><div class="demo-document"><strong style="${demoComplete ? "text-align:center;text-transform:uppercase;letter-spacing:1px" : ""}">My first computer document</strong><span style="${demoComplete ? "display:block;border-top:1px solid #a18b5755;padding-top:9px" : ""}">Learning to create, format and organise a clear document is a useful everyday skill. A little practice makes a difference.</span></div><div class="demo-footer"><button data-action="demo-task">${demoComplete ? "Reset example" : "Format the heading"}</button><p role="status">${demoComplete ? "A centred heading and a clear divider." : "Small changes. Clearer documents."}</p></div>`;
-}
 const passage =
   "Practice builds confidence. Learn a little each day, type with care, and focus on accuracy before speed. Useful computer skills begin with simple steps.";
 let typingStart = 0,
@@ -632,13 +609,11 @@ document.addEventListener("keydown", (event) => {
   if (next === undefined) return;
   event.preventDefault();
   buttons[next].focus();
-  if (buttons[next].dataset.demo) renderDemo(buttons[next].dataset.demo);
-  else detailTab(buttons[next].dataset.detailTab);
+  detailTab(buttons[next].dataset.detailTab);
 });
 document.addEventListener("click", (event) => {
   const button = event.target.closest("button");
   if (!button || button.disabled) return;
-  if (button.dataset.demo) renderDemo(button.dataset.demo);
   if (button.hasAttribute("data-filter")) {
     filter = button.dataset.filter;
     cards();
@@ -727,10 +702,6 @@ document.addEventListener("click", (event) => {
     case "typing-course":
       openCourse(courses.findIndex((course) => course.category === "Typing"));
       break;
-    case "demo-task":
-      demoComplete = !demoComplete;
-      drawDemo();
-      break;
     case "admin-notice":
       toast(
         "The admin dashboard is unchanged. This is a visitor-side preview.",
@@ -746,8 +717,8 @@ document.addEventListener("click", (event) => {
   }
 });
 initMotion();
+initJourney();
 $("#year").textContent = new Date().getFullYear();
-renderDemo();
 Promise.all(
   ["courses.json", "site.json"].map((name) =>
     fetch(name, { cache: "no-store" }).then((response) => {

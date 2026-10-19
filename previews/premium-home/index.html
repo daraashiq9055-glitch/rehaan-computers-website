@@ -8,6 +8,7 @@
     <title>Rehaan Computers · Complete premium visitor preview</title>
     <link rel="stylesheet" href="premium.css" />
     <link rel="stylesheet" href="refinements.css" />
+    <link rel="stylesheet" href="journey.css" />
     <script type="module" src="app.js"></script>
     <link rel="icon" href="assets/rehaan-mark.svg" type="image/svg+xml" />
   </head>
@@ -237,71 +238,111 @@
             >
           </div>
         </div>
-        <div class="hero-art">
-          <div class="art-orbit" aria-hidden="true"></div>
-          <div class="workspace">
-            <div class="workspace-top">
-              <div class="window-dots"><i></i><i></i><i></i></div>
-              <span>YOUR LEARNING WORKSPACE</span
-              ><svg class="icon"><use href="#i-grid" /></svg>
+        <div
+          class="hero-journey"
+          role="region"
+          aria-label="Your learning journey"
+          aria-roledescription="carousel"
+        >
+          <div class="journey-halo" aria-hidden="true"></div>
+          <div class="journey-card">
+            <div class="journey-masthead">
+              <span class="journey-emblem" aria-hidden="true">✦</span
+              ><span>THE REHAAN WAY</span
+              ><span class="journey-edition">LEARN · PRACTISE · GROW</span>
             </div>
-            <div class="workspace-intro">
-              <span class="lesson-label">A SMALL START. A REAL SKILL.</span>
-              <h2>Learn by <em>doing.</em></h2>
-              <p>Try a task. See what changes.</p>
+            <div class="journey-photo">
+              <img
+                src="../../public/assets/hero-library.jpg"
+                alt="Two learners working together with a laptop and study notes"
+                width="1000"
+                height="1500"
+                fetchpriority="high"
+              />
+              <span class="journey-open"
+                ><i aria-hidden="true"></i>Admissions open all year</span
+              >
+              <div class="journey-photo-copy">
+                <span>A LITTLE CURIOSITY. A NEW POSSIBILITY.</span>
+                <h2>Your next chapter.<br /><em>Starts with a skill.</em></h2>
+              </div>
+              <span class="journey-photo-note">LEARNING IMAGERY</span>
             </div>
-            <div
-              class="workspace-tabs"
-              role="tablist"
-              aria-label="Interactive learning examples"
-            >
-              <button
-                role="tab"
-                id="demo-excel"
-                aria-controls="workspaceDemo"
-                aria-selected="true"
-                data-demo="excel"
+            <div class="journey-content">
+              <div class="journey-caption">
+                <span>YOUR LEARNING JOURNEY</span
+                ><span id="journeyCount">01 / 03</span>
+              </div>
+              <div
+                class="journey-stages"
+                role="group"
+                aria-label="Explore the learning journey"
               >
-                Spreadsheets</button
-              ><button
-                role="tab"
-                id="demo-accounts"
-                aria-controls="workspaceDemo"
-                aria-selected="false"
-                tabindex="-1"
-                data-demo="accounts"
-              >
-                Accounting</button
-              ><button
-                role="tab"
-                id="demo-documents"
-                aria-controls="workspaceDemo"
-                aria-selected="false"
-                tabindex="-1"
-                data-demo="documents"
-              >
-                Documents
-              </button>
-            </div>
-            <div
-              id="workspaceDemo"
-              role="tabpanel"
-              aria-labelledby="demo-excel"
-            ></div>
-            <div class="workspace-footer">
-              <span><i></i>Hands-on learning</span
-              ><span>EXAMPLE TASK · NO REAL ACCOUNTS</span>
+                <button
+                  type="button"
+                  data-journey="0"
+                  aria-pressed="true"
+                  aria-controls="journeyDetail"
+                >
+                  <span>01</span><strong>Choose</strong>
+                </button>
+                <button
+                  type="button"
+                  data-journey="1"
+                  aria-pressed="false"
+                  aria-controls="journeyDetail"
+                >
+                  <span>02</span><strong>Practise</strong>
+                </button>
+                <button
+                  type="button"
+                  data-journey="2"
+                  aria-pressed="false"
+                  aria-controls="journeyDetail"
+                >
+                  <span>03</span><strong>Grow</strong>
+                </button>
+              </div>
+              <div class="journey-detail" id="journeyDetail" aria-live="off">
+                <h3 id="journeyTitle">A starting point that fits you.</h3>
+                <p id="journeyDescription">
+                  New to computers or ready for your next skill? Explore seven
+                  learning paths and find a course for your goals.
+                </p>
+                <div class="journey-tags" id="journeyTags">
+                  <span>Beginner-friendly options</span
+                  ><span>Course guidance</span>
+                </div>
+              </div>
+              <div class="journey-progress" aria-hidden="true">
+                <span></span>
+              </div>
+              <div class="journey-footer">
+                <button class="journey-cta" data-action="finder">
+                  Find the right course for you
+                  <svg class="icon"><use href="#i-arrow" /></svg></button
+                ><button
+                  id="journeyMotion"
+                  class="journey-motion"
+                  type="button"
+                  aria-label="Pause learning journey"
+                  aria-pressed="false"
+                >
+                  <svg viewBox="0 0 20 20" aria-hidden="true">
+                    <path d="M7 5v10M13 5v10" />
+                  </svg>
+                </button>
+              </div>
             </div>
           </div>
-          <div class="art-note">
+          <div class="journey-assurance">
             <svg class="icon"><use href="#i-check" /></svg
             ><span
-              >Start as a beginner.<strong
-                >Build skills that stay with you.</strong
-              ></span
-            >
+              >Individual attention.<b>Practical skills, at your pace.</b></span
+            ><a href="#courses"
+              >Explore 07 courses <svg class="icon"><use href="#i-arrow" /></svg
+            ></a>
           </div>
-          <span class="art-caption">REAL TOOLS. USEFUL POSSIBILITIES.</span>
         </div>
       </section>
       <section class="facts wrap" aria-label="Institute at a glance">

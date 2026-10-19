@@ -41,10 +41,14 @@ def run():
             assert page.locator('#toolsGrid .tool').count()==4
             assert page.locator('#benefitsGrid .benefit').count()==4
             page.screenshot(path=str(OUT/'desktop.png'))
-            page.locator('[data-action=demo-task]').click();expect(page.locator('#demoTotal')).to_have_text('78')
-            page.locator('[data-demo=accounts]').click();page.locator('[data-action=demo-task]').click();expect(page.locator('#workspaceDemo')).to_contain_text('₹1,180')
-            page.locator('[data-demo=documents]').click();page.locator('[data-action=demo-task]').click();expect(page.locator('#workspaceDemo')).to_contain_text('centred heading')
-            print('PASS: complete content loads locally; all three interactive learning tasks work',flush=True)
+            expect(page.locator('#workspaceDemo')).to_have_count(0)
+            expect(page.locator('[data-demo]')).to_have_count(0)
+            expect(page.locator('#journeyTitle')).to_have_text('A starting point that fits you.')
+            page.locator('[data-journey="1"]').click();expect(page.locator('#journeyTitle')).to_have_text('Real practice. Personal guidance.')
+            page.locator('[data-journey="2"]').click();expect(page.locator('#journeyTitle')).to_have_text('Skills for your everyday future.')
+            page.locator('.journey-cta').click();expect(page.locator('#dialogContent')).to_contain_text('What would you like to achieve?')
+            page.locator('#dialogClose').click()
+            print('PASS: complete content and photo-led learning journey load; all stages and course-finder action work',flush=True)
 
             page.locator('[data-filter=accounting]').click();expect(page.locator('.course-card')).to_have_count(2)
             page.locator('[data-filter=typing]').click();expect(page.locator('.course-card')).to_have_count(1)
@@ -85,7 +89,7 @@ def run():
             print('PASS: shareable course routes, accessible detail tabs and complete valid multi-page brochure PDFs work',flush=True)
 
             for goal,experience,time,match in [('basics','new','short','Three Month'),('office','some','year','One Year'),('accounting','new','flexible','Tally Prime'),('typing','some','short','Typing Diploma')]:
-                page.locator('.hero [data-action=finder]').click()
+                page.locator('.hero-copy [data-action=finder]').click()
                 page.locator('[data-finder-value='+goal+']').click();page.locator('[data-finder-value='+experience+']').click();page.locator('[data-finder-value='+time+']').click()
                 expect(page.locator('.recommendation')).to_contain_text(match);page.locator('#dialogClose').click()
             page.locator('.course-card [data-action=course][data-id="4"]').click();page.locator('#dialogContent [data-action=enquiry]').click()
@@ -152,8 +156,8 @@ def run():
                 if width==390:
                     page.evaluate('scrollTo(0,0)');page.screenshot(path=str(OUT/'mobile.png'));page.locator('#courses').scroll_into_view_if_needed();page.screenshot(path=str(OUT/'mobile-courses.png'))
                 if width==1440:
-                    page.emulate_media(reduced_motion='no-preference');expect(page.locator('.art-note')).to_have_css('animation-name','gentle-float')
-                    page.emulate_media(reduced_motion='reduce');expect(page.locator('.art-note')).to_have_css('animation-name','none')
+                    page.emulate_media(reduced_motion='no-preference');page.locator('.hero-journey').scroll_into_view_if_needed();expect(page.locator('.journey-running .journey-progress > span')).to_have_css('animation-name','journey-time')
+                    page.emulate_media(reduced_motion='reduce');expect(page.locator('.journey-progress > span')).to_have_css('animation-name','none')
             assert not errors,errors
             assert not external,external
             assert not writes,writes

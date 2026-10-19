@@ -41,6 +41,21 @@ def run():
             page.locator('#brandMenuButton').click();page.locator('.hero h1').click();expect(page.locator('#brandMenu')).not_to_be_visible()
             print('PASS: new logo/favicons render; brand menu supports click, keyboard, Escape/outside close and a separate live admin sign-in link',flush=True)
 
+            page.locator('.hero-journey').scroll_into_view_if_needed();page.locator('.hero h1').click();page.mouse.move(0,0)
+            expect(page.locator('.hero-journey')).to_have_class(__import__('re').compile('journey-running'))
+            first=page.locator('#journeyCount').inner_text();page.clock.fast_forward(6600)
+            expect(page.locator('#journeyCount')).not_to_have_text(first)
+            page.locator('[data-journey="0"]').click();page.keyboard.press('ArrowRight');expect(page.locator('[data-journey="1"]')).to_be_focused()
+            expect(page.locator('#journeyCount')).to_have_text('02 / 03')
+            page.keyboard.press('End');expect(page.locator('#journeyCount')).to_have_text('03 / 03')
+            page.keyboard.press('Home');expect(page.locator('#journeyCount')).to_have_text('01 / 03')
+            page.locator('#journeyMotion').click();expect(page.locator('#journeyMotion')).to_have_attribute('aria-pressed','true')
+            page.locator('.hero h1').click();first=page.locator('#journeyCount').inner_text();page.clock.fast_forward(13200)
+            expect(page.locator('#journeyCount')).to_have_text(first)
+            page.locator('#journeyMotion').click();page.locator('.hero h1').click();page.clock.fast_forward(6600)
+            expect(page.locator('#journeyCount')).not_to_have_text(first)
+            print('PASS: new photo-led journey advances automatically, supports keyboard/manual stage selection and pause/resume',flush=True)
+
             expect(page.locator('.skills-track')).to_have_css('animation-name','skills-drift')
             expect(page.locator('.skills-run').first.locator(':scope > span')).to_have_count(10)
             expect(page.locator('.skills-run').nth(1)).to_have_attribute('aria-hidden','true')
@@ -73,6 +88,8 @@ def run():
             expect(page.locator('.experience-slide.is-active')).to_have_attribute('data-slide',selected)
             page.emulate_media(reduced_motion='reduce')
             expect(page.locator('#experiencePause')).to_be_disabled()
+            expect(page.locator('#journeyMotion')).to_be_disabled()
+            expect(page.locator('.journey-progress > span')).to_have_css('animation-name','none')
             expect(page.locator('.skills-track')).to_have_css('animation-name','none')
             expect(page.locator('.creator-credit strong')).to_have_css('animation-name','none')
             selected=page.locator('.experience-slide.is-active').get_attribute('data-slide');page.clock.fast_forward(12000)
@@ -93,11 +110,21 @@ def run():
             for width in [320,390,700,768,1024,1440]:
                 page.set_viewport_size({'width':width,'height':1000});page.goto(base+'/previews/premium-home/');expect(page.locator('.course-card')).to_have_count(7)
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+                stage_heights=[]
+                for stage in range(3):
+                    page.locator(f'[data-journey="{stage}"]').click()
+                    box=page.locator('.journey-card').bounding_box()
+                    stage_heights.append(box['height'])
+                    assert box['x']>=0 and box['x']+box['width']<=width,(width,stage,box)
+                    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,stage)
+                assert max(stage_heights)-min(stage_heights)<1,(width,stage_heights)
+                page.locator('[data-journey="0"]').click()
                 page.locator('#brandMenuButton').click();expect(page.locator('#brandMenu')).to_be_visible()
                 assert page.locator('#brandMenu').bounding_box()['x']+page.locator('#brandMenu').bounding_box()['width']<=width,('menu',width)
                 page.keyboard.press('Escape')
                 if width in [390,1440]:
                     page.evaluate('scrollTo(0,0)');page.screenshot(path=str(OUT/('mobile.png' if width==390 else 'desktop.png')))
+                    page.locator('.hero-journey').screenshot(path=str(OUT/('journey-mobile.png' if width==390 else 'journey-desktop.png')))
                     page.locator('.footer-main').scroll_into_view_if_needed();page.screenshot(path=str(OUT/('footer-mobile.png' if width==390 else 'footer-desktop.png')))
                     page.locator('#courses').scroll_into_view_if_needed();page.screenshot(path=str(OUT/('courses-mobile.png' if width==390 else 'courses-desktop.png')))
                 expect(page.locator('.footer-links')).to_have_count(3)

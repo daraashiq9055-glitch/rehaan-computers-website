@@ -12,7 +12,7 @@ git pull --ff-only
 python preview-home.py
 ```
 
-Keep CMD open. The launcher chooses a free localhost port, disables caching and opens this preview automatically. Look for **COMPLETE DESIGN PREVIEW** and the interactive **Your learning workspace** panel. If no tab opens, copy the printed URL exactly. No asterisks belong in a URL. `--no-browser` prints the address without opening a tab.
+Keep CMD open. The launcher chooses a free localhost port, disables caching and opens this preview automatically. Look for **COMPLETE DESIGN PREVIEW** and the photo-led **Your learning journey** feature. If no tab opens, copy the printed URL exactly. No asterisks belong in a URL. `--no-browser` prints the address without opening a tab.
 
 Manual alternative from the repository root:
 
@@ -34,7 +34,7 @@ Then open `http://localhost:8002/previews/premium-home/`.
 
 ## Features that work
 
-1. Interactive learning workspace: calculate a spreadsheet sum, add example GST and format a document heading. These are labelled sample tasks, not actual institute accounts.
+1. A photo-led learning journey replaces the spreadsheet/accounting/document workspace. An existing real learning photograph, three Choose / Practise / Grow stages, gold progress line and a course-finder action explain what visitors can expect. Stages advance every 6.5 seconds while visible, with manual and keyboard navigation. Motion pauses for keyboard focus, manual pause, hidden tabs and reduced-motion preferences. No invented student numbers, results or job guarantees are shown.
 2. Searchable seven-course catalogue, category/duration filters, empty states and saved-course view.
 3. Save courses across visits on the same browser. Only stable public course slugs are stored under `rehaan-visitor-saved-courses-v1`. Student/application fields and photos are never saved to browser storage.
 4. Compare two or three courses side by side; a fourth selection is blocked. Smaller screens use an inner horizontal table scroller.
@@ -66,6 +66,6 @@ python3 tests/premium-home-motion-browser.py
 
 The pure checks cover curriculum/field preservation, actual duration filtering, all goal/experience/time recommendations, typing calculations and PDF object offsets. Browser checks exercise all major interactions, parse downloaded multi-page PDFs, verify each Tally module, test both WhatsApp destinations through intercepted popups, traverse the complete form, check memory-only personal data, and cover six viewport widths. Live service requests and record writes are blocked by the test.
 
-The motion suite also checks the logo/menu, keyboard controls, the top skills line without a pause button, automatic slideshow advancement while hovered/focused, manual controls, reduced motion, seven distinct original course-image mappings and mobile containment. It does not navigate to the live administrator page.
+The motion suite checks the hero journey's timed advancement, pause/resume, keyboard navigation and course finder, along with the logo/menu, keyboard controls, the top skills line without a pause button, automatic slideshow advancement while hovered/focused, manual controls, reduced motion, seven distinct original course-image mappings and mobile containment. It does not navigate to the live administrator page.
 
 This preview is ready for design review, not production deployment. Approved elements must be integrated separately with the existing verified application/photo/payment flow, preserving its transaction and permission protections and rerunning payment/admission regressions before any Hosting release. Private application-status tracking remains a future backend feature.
