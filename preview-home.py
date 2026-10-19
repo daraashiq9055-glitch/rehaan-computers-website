@@ -33,9 +33,6 @@ def main():
         'previews/premium-home/courses.json',
         'previews/premium-home/site.json',
         'previews/premium-home/assets/rehaan-mark.svg',
-        'previews/premium-home/assets/course-learning.png',
-        'previews/premium-home/assets/course-accounting.png',
-        'previews/premium-home/assets/course-typing.png',
         'public/assets/hero-library.jpg',
         'public/admin-fonts/inter-latin-wght-normal.woff2',
     ]
@@ -49,7 +46,7 @@ def main():
         print('\nREHAAN COMPUTERS - COMPLETE PREMIUM VISITOR PREVIEW', flush=True)
         print('Look for: COMPLETE DESIGN PREVIEW and the interactive learning workspace.', flush=True)
         print('Try the course finder, comparison, PDF brochures, typing challenge and guided application.', flush=True)
-        print('New images: Courses > View new image samples. Click the Rehaan logo for the admin login option.', flush=True)
+        print('Look for the top moving skills line, individual course images and automatic guidance slideshow.', flush=True)
         print('\n' + url, flush=True)
         print('\nKeep this window open. Press Ctrl+C to stop.', flush=True)
         print('This preview cannot submit applications or payments.\n', flush=True)

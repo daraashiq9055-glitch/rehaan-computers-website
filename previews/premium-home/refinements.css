@@ -367,7 +367,7 @@ em {
   display: flex;
   align-items: center;
   gap: 28px;
-  padding-block: 22px;
+  padding-block: 12px;
   min-width: 0;
 }
 .skills-caption {
@@ -435,11 +435,9 @@ em {
   flex-shrink: 0;
 }
 .skills-line:hover .skills-track,
-.skills-line:focus-within .skills-track,
-.skills-line.is-paused .skills-track {
+.skills-line:focus-within .skills-track {
   animation-play-state: paused;
 }
-#skillsPause,
 #experiencePause {
   border: 1px solid #d8c08055;
   background: #11213c99;
@@ -614,70 +612,6 @@ button[aria-pressed="true"] > .pause-bars {
 .empty-state p {
   font-size: 13px;
   color: #bbcee8;
-}
-.course-art-preview {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 30px;
-  padding: 26px;
-  margin-top: 30px;
-  border: 1px solid #c9ac6c66;
-  border-radius: 12px;
-  background: linear-gradient(110deg, #264a722c, #d0ab5811);
-}
-.course-art-preview .eyebrow {
-  display: block;
-  font-size: 8px;
-  margin-bottom: 9px;
-}
-.course-art-preview h3 {
-  font-size: 18px;
-  color: #efdfbd;
-}
-.course-art-preview p {
-  font-size: 12px;
-  color: #b8cae3;
-  margin-top: 8px;
-  line-height: 1.9;
-}
-.course-art-preview .button {
-  flex-shrink: 0;
-}
-.image-sample-grid {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 24px;
-}
-.image-sample-grid figure {
-  margin: 0;
-  border: 1px solid #b0c8e340;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #0b192a;
-}
-.image-sample-grid img {
-  width: 100%;
-  height: auto;
-  aspect-ratio: 3/2;
-  object-fit: cover;
-}
-.image-sample-grid figcaption {
-  padding: 17px 20px;
-  color: #d4e0f3;
-  font-size: 13px;
-}
-.image-sample-grid figcaption strong {
-  display: block;
-  font: 23px var(--serif);
-  color: #f2d08b;
-  margin-bottom: 6px;
-}
-.image-sample-grid figcaption span {
-  display: block;
-  font-size: 12px;
-  line-height: 1.9;
-  color: #b7c9e4;
 }
 .experience-visual {
   height: 510px;
@@ -1430,9 +1364,6 @@ dialog h3 {
   .course-filters button {
     font-size: 11px;
   }
-  .course-art-preview {
-    padding: 23px;
-  }
   .experience-visual {
     height: 475px;
   }
@@ -1482,12 +1413,6 @@ dialog h3 {
   }
   .skills-caption {
     display: none;
-  }
-  .course-art-preview {
-    flex-wrap: wrap;
-  }
-  .course-art-preview .button {
-    margin-left: auto;
   }
   .admission-sidebar li span {
     font-size: 11px;
@@ -1659,10 +1584,6 @@ dialog h3 {
     width: 3px;
     height: 3px;
   }
-  #skillsPause {
-    width: 30px;
-    height: 30px;
-  }
   .section-heading .eyebrow {
     font-size: 9px;
   }
@@ -1720,27 +1641,6 @@ dialog h3 {
   }
   .catalogue-foot .text-link {
     font-size: 13px;
-  }
-  .course-art-preview {
-    display: block;
-    padding: 22px;
-    margin-top: 24px;
-  }
-  .course-art-preview h3 {
-    font-size: 18px;
-    line-height: 1.6;
-  }
-  .course-art-preview .eyebrow {
-    font-size: 7px;
-    letter-spacing: 1.1px;
-  }
-  .course-art-preview p {
-    font-size: 12px;
-  }
-  .course-art-preview .button {
-    font-size: 11px;
-    margin-top: 19px;
-    min-height: 44px;
   }
   .experience-visual {
     height: 365px;
@@ -2032,15 +1932,6 @@ dialog h3 {
   .enquiry-form textarea {
     font-size: 16px;
   }
-  .image-sample-grid figcaption {
-    padding: 16px;
-  }
-  .image-sample-grid figcaption strong {
-    font-size: 23px;
-  }
-  .image-sample-grid figcaption span {
-    font-size: 12px;
-  }
 }
 @media (max-width: 360px) {
   .brand {
@@ -2167,5 +2058,134 @@ dialog h3 {
   .creator-credit strong {
     -webkit-text-fill-color: currentColor;
     background: none;
+  }
+}
+
+/* Preserve the complete real accounting interfaces, rather than cropping menus. */
+.course-image.course-software {
+  background: #e3eaf0;
+}
+.course-image.course-software img {
+  object-fit: contain;
+  filter: none;
+  padding: 8px 8px 30px;
+}
+
+/* Larger pill links keep the footer's existing destinations easy to scan and tap. */
+.footer-main {
+  grid-template-columns: 1.25fr repeat(3, minmax(0, 1fr));
+  gap: 32px;
+}
+.footer-main > div.footer-links {
+  min-width: 0;
+  gap: 10px;
+}
+.footer-main > div.footer-links h3 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+.footer-main > div.footer-links > a:not(.brand),
+.footer-main > div.footer-links > button {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  border: 1px solid #d7bd7955;
+  border-radius: 999px;
+  padding: 11px 18px;
+  font-size: 14px;
+  line-height: 1.45;
+  font-weight: 500;
+  color: #e8edf6;
+  background: linear-gradient(115deg, #1a2c46, #101d31);
+  transition:
+    border-color 0.2s,
+    background-color 0.2s,
+    box-shadow 0.2s;
+}
+.footer-main > div.footer-links > a:not(.brand):hover,
+.footer-main > div.footer-links > button:hover {
+  color: #ffe7ac;
+  border-color: #e6bf6b;
+  background: linear-gradient(115deg, #2b3d55, #1a293d);
+  box-shadow: 0 4px 20px #0003;
+}
+.footer-main > div.footer-social > a {
+  padding: 8px 13px 8px 8px;
+  gap: 10px;
+  min-height: 54px;
+}
+.footer-social .social-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+}
+.social-logo svg {
+  width: 21px;
+  height: 21px;
+}
+.social-logo.instagram {
+  background: linear-gradient(35deg, #ffbc55, #d52d75 50%, #6657c8);
+  color: white;
+}
+.social-logo.facebook {
+  background: #1877f2;
+  color: white;
+}
+.social-logo.map {
+  background: #173d32;
+  color: #92e7bf;
+}
+.social-logo.map svg {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+.footer-social .link-arrow {
+  margin-left: auto;
+  flex-shrink: 0;
+  color: #e9c47d;
+  width: 14px;
+  height: 14px;
+}
+@media (max-width: 1100px) {
+  .footer-main {
+    grid-template-columns: 1.25fr 1fr 1fr;
+  }
+  .footer-main > div.footer-social {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .footer-main > div.footer-social h3 {
+    grid-column: 1 / -1;
+  }
+}
+@media (max-width: 700px) {
+  .footer-main {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 14px;
+  }
+  .footer-main > div.footer-links h3 {
+    font-size: 15px;
+  }
+  .footer-main > div.footer-links > a:not(.brand),
+  .footer-main > div.footer-links > button {
+    font-size: 13px;
+    padding: 11px 13px;
+    min-height: 52px;
+  }
+  .footer-main > div.footer-social > a {
+    padding: 8px;
+    gap: 8px;
+  }
+  .footer-social .social-logo {
+    width: 30px;
+    height: 30px;
+  }
+  .footer-social .link-arrow {
+    display: none;
   }
 }

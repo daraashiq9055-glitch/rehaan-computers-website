@@ -1,4 +1,4 @@
-"""Refined visitor design: brand access, motion controls and new local artwork."""
+"""Refined visitor design: brand access, top skills line and real course imagery."""
 from pathlib import Path
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
@@ -44,14 +44,13 @@ def run():
             expect(page.locator('.skills-track')).to_have_css('animation-name','skills-drift')
             expect(page.locator('.skills-run').first.locator(':scope > span')).to_have_count(10)
             expect(page.locator('.skills-run').nth(1)).to_have_attribute('aria-hidden','true')
-            page.locator('#skillsPause').click();expect(page.locator('#skillsPause')).to_have_attribute('aria-pressed','true')
-            expect(page.locator('.skills-track')).to_have_css('animation-play-state','paused')
-            page.locator('#skillsPause').click();expect(page.locator('#skillsPause')).to_have_attribute('aria-pressed','false')
-            page.locator('#courseSearch').focus();page.mouse.move(0,0)
+            expect(page.locator('#skillsPause')).to_have_count(0)
+            assert page.evaluate("document.querySelector('.skills-line').compareDocumentPosition(document.querySelector('.site-header')) & Node.DOCUMENT_POSITION_FOLLOWING")
+            page.mouse.move(0,0)
             expect(page.locator('.skills-track')).to_have_css('animation-play-state','running')
             expect(page.locator('.creator-credit strong')).to_have_css('animation-name','signature-shine')
             expect(page.locator('.creator-star')).to_have_css('animation-name','signature-spark')
-            print('PASS: original skills return in a seamless moving line with pause/resume; creator signature has controlled gold motion',flush=True)
+            print('PASS: original skills run above the header without a pause button; creator signature has controlled gold motion',flush=True)
 
             page.locator('.experience-visual').scroll_into_view_if_needed();page.mouse.move(0,0)
             # Wait for viewport observation before advancing the simulated timer.
@@ -61,12 +60,17 @@ def run():
             page.clock.fast_forward(5100)
             expect(page.locator('.experience-slide.is-active')).not_to_have_attribute('data-slide',first)
             page.locator('#experiencePause').click();selected=page.locator('.experience-slide.is-active').get_attribute('data-slide')
-            page.clock.fast_forward(12000)
+            page.clock.fast_forward(10000)
             expect(page.locator('.experience-slide.is-active')).to_have_attribute('data-slide',selected)
-            page.locator('[data-experience-slide="3"]').click();expect(page.locator('#experienceSlideCount')).to_have_text('04 / 04')
+            page.locator('[data-experience-slide="1"]').click();expect(page.locator('#experienceSlideCount')).to_have_text('02 / 02')
             expect(page.locator('.experience-slide.is-active')).to_have_count(1)
-            page.locator('.experience-visual').focus();page.keyboard.press('ArrowLeft');expect(page.locator('#experienceSlideCount')).to_have_text('03 / 04')
-            page.locator('#experiencePause').click();page.locator('#courseSearch').focus();page.mouse.move(0,0)
+            page.locator('.experience-visual').focus();page.keyboard.press('ArrowLeft');expect(page.locator('#experienceSlideCount')).to_have_text('01 / 02')
+            page.locator('#experiencePause').click()
+            page.locator('.experience-visual').hover();page.locator('.experience-visual').focus()
+            selected=page.locator('.experience-slide.is-active').get_attribute('data-slide');page.clock.fast_forward(5100)
+            expect(page.locator('.experience-slide.is-active')).not_to_have_attribute('data-slide',selected)
+            page.clock.fast_forward(5100)
+            expect(page.locator('.experience-slide.is-active')).to_have_attribute('data-slide',selected)
             page.emulate_media(reduced_motion='reduce')
             expect(page.locator('#experiencePause')).to_be_disabled()
             expect(page.locator('.skills-track')).to_have_css('animation-name','none')
@@ -75,13 +79,17 @@ def run():
             expect(page.locator('.experience-slide.is-active')).to_have_attribute('data-slide',selected)
             print('PASS: one image at a time, timed sequence, manual controls, pause and reduced-motion stop work for the learning slideshow',flush=True)
 
-            for id,file in [(0,'course-learning.png'),(4,'course-accounting.png'),(3,'course-typing.png')]:
+            expected=['hero-library.jpg','word-doc.jpg','excel-desk.jpg','typing-keys.jpg','tally-prime.jpg','excel-sheet.jpg','marg-erp.jpg']
+            for id,file in enumerate(expected):
                 image=page.locator('.course-card').filter(has=page.locator('[data-action=course][data-id="'+str(id)+'"]')).locator('.course-image img')
-                expect(image).to_have_attribute('src','assets/'+file)
-            page.locator('[data-action=image-samples]').click();expect(page.locator('.image-sample-grid figure')).to_have_count(3)
-            expect(page.locator('#dialogContent')).to_contain_text('illustrative artwork')
-            for image in page.locator('.image-sample-grid img').all():assert image.evaluate('image=>image.complete && image.naturalWidth>1000')
-            page.locator('#dialogClose').click()
+                image.scroll_into_view_if_needed()
+                expect(image).to_have_attribute('src','../../public/assets/'+file)
+                assert image.get_attribute('alt')
+                page.wait_for_function('(src) => [...document.querySelectorAll(".course-image img")].find(i => i.getAttribute("src") === src)?.naturalWidth > 0',arg='../../public/assets/'+file)
+            expect(page.locator('.course-art-preview')).to_have_count(0)
+            expect(page.locator('[data-action=image-samples]')).to_have_count(0)
+            expect(page.locator('.experience-slide')).to_have_count(2)
+            assert 'word-doc' not in page.locator('.experience-slides').inner_html()
             for width in [320,390,700,768,1024,1440]:
                 page.set_viewport_size({'width':width,'height':1000});page.goto(base+'/previews/premium-home/');expect(page.locator('.course-card')).to_have_count(7)
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
@@ -90,11 +98,19 @@ def run():
                 page.keyboard.press('Escape')
                 if width in [390,1440]:
                     page.evaluate('scrollTo(0,0)');page.screenshot(path=str(OUT/('mobile.png' if width==390 else 'desktop.png')))
+                    page.locator('.footer-main').scroll_into_view_if_needed();page.screenshot(path=str(OUT/('footer-mobile.png' if width==390 else 'footer-desktop.png')))
+                    page.locator('#courses').scroll_into_view_if_needed();page.screenshot(path=str(OUT/('courses-mobile.png' if width==390 else 'courses-desktop.png')))
+                expect(page.locator('.footer-links')).to_have_count(3)
+                expect(page.locator('.footer-social .social-logo')).to_have_count(4)
+                for link in page.locator('.footer-links > a, .footer-links > button').all():
+                    box=link.bounding_box()
+                    assert box['height']>=48 and box['x']>=0 and box['x']+box['width']<=width,(width,box)
+                    assert link.evaluate('el => parseFloat(getComputedStyle(el).borderTopLeftRadius)')>=box['height']/2,(width,link.inner_text())
             assert not external,external
             assert not writes,writes
             assert not errors,errors
             assert not failed,failed
-            print('PASS: three generated image proposals/card mappings, larger typography, six responsive widths and no live requests or writes',flush=True)
+            print('PASS: seven distinct real course-image mappings, larger typography, six responsive widths and no live requests or writes',flush=True)
             browser.close()
     finally:server.shutdown()
 

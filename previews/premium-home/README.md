@@ -24,12 +24,13 @@ Then open `http://localhost:8002/previews/premium-home/`.
 
 ## Latest visual refinements
 
-- The original ten skills return in a moving details line, with pause/resume and reduced-motion support.
+- The original ten skills run in a compact moving line above the main header. There is no pause button; hovering pauses the line and reduced-motion preferences stop it.
 - A local RC learning logo appears in the header, footer and favicon. Clicking the header logo/name opens a keyboard-accessible menu. Its Admin login link opens the existing live sign-in page in a separate tab only when clicked; no administrator credentials or records are used by this preview.
-- Personal guidance shows four existing learning images one at a time, advancing every five seconds while visible. It pauses on hover, keyboard focus, hidden tabs or manual pause. Dot and arrow-key controls work; reduced motion disables automatic movement.
+- Personal guidance shows the two existing real learner/laptop photographs one at a time, advancing automatically every five seconds while visible, including when hovered or focused. It pauses for hidden tabs, manual pause and reduced-motion preferences. Dot and arrow-key controls work. Software screenshots are kept out of this section.
 - Dar Yasir's footer credit has gold shine and subtle moving accents. Motion stops on hover/focus and with reduced-motion preferences.
-- Three new generated course-art proposals share navy and gold lighting: computer learning, accounting/ERP and typing. They appear on the corresponding course cards. Click **Courses → View new image samples** to see all three together inside the browser, without relying on chat image attachments. They are illustrative artwork, not classroom photographs or actual software screenshots. Original course metadata and the existing gallery are retained.
-- Larger body, navigation, course, form and dialog text is checked at six screen widths.
+- Generated course artwork and its separate three-image showcase have been removed. Each of the seven course cards uses a different original photograph or software screenshot, with descriptive alternative text. Tally and Marg use their actual interfaces, displayed without cropping away menus. Original course metadata is unchanged.
+- **New learner-photo selection remains pending:** Pexels and Unsplash downloads returned HTTP 403 from the environment proxy. Required photo-site domains have been saved in the environment configuration draft, preserving the existing domains. Apply those settings before downloading and visually reviewing new learner/typing photographs. The current preview uses only already inspected local images; it does not fetch blocked images or silently substitute generated artwork.
+- Larger body, navigation, course, form and dialog text is checked at six screen widths. Explore, Your next step and Stay connected use larger rounded pill links. Social links include local Instagram/Facebook logos and a location icon; destinations are unchanged.
 
 ## Features that work
 
@@ -65,6 +66,6 @@ python3 tests/premium-home-motion-browser.py
 
 The pure checks cover curriculum/field preservation, actual duration filtering, all goal/experience/time recommendations, typing calculations and PDF object offsets. Browser checks exercise all major interactions, parse downloaded multi-page PDFs, verify each Tally module, test both WhatsApp destinations through intercepted popups, traverse the complete form, check memory-only personal data, and cover six viewport widths. Live service requests and record writes are blocked by the test.
 
-The motion suite also checks the logo/menu, keyboard controls, original moving skills, pause/resume, timed one-image slideshow, reduced motion, generated-image loading and mobile containment. It does not navigate to the live administrator page.
+The motion suite also checks the logo/menu, keyboard controls, the top skills line without a pause button, automatic slideshow advancement while hovered/focused, manual controls, reduced motion, seven distinct original course-image mappings and mobile containment. It does not navigate to the live administrator page.
 
 This preview is ready for design review, not production deployment. Approved elements must be integrated separately with the existing verified application/photo/payment flow, preserving its transaction and permission protections and rerunning payment/admission regressions before any Hosting release. Private application-status tracking remains a future backend feature.

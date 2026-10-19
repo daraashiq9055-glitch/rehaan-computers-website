@@ -54,31 +54,16 @@ export function initMotion() {
     }
   });
 
-  let skillsPaused = false;
-  $("#skillsPause").addEventListener("click", () => {
-    skillsPaused = !skillsPaused;
-    $(".skills-line").classList.toggle("is-paused", skillsPaused);
-    $("#skillsPause").setAttribute("aria-pressed", String(skillsPaused));
-    $("#skillsPause").setAttribute(
-      "aria-label",
-      skillsPaused ? "Resume moving skills line" : "Pause moving skills line",
-    );
-  });
-
   const region = $(".experience-visual");
   const slides = [...document.querySelectorAll(".experience-slide")];
   const dots = [...document.querySelectorAll("[data-experience-slide]")];
   const captions = [
     "Understanding comes<br>from trying.",
     "Practise real tasks.<br>Build real confidence.",
-    "Your ideas.<br>Clearer documents.",
-    "A little practice.<br>A lasting difference.",
   ];
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
   let selected = 0,
     paused = false,
-    hovered = false,
-    focused = false,
     visible = false,
     timer = 0;
   function select(index) {
@@ -92,20 +77,13 @@ export function initMotion() {
       dot.setAttribute("aria-pressed", String(current === selected)),
     );
     $("#experienceSlideCount").textContent =
-      `${String(selected + 1).padStart(2, "0")} / 04`;
+      `${String(selected + 1).padStart(2, "0")} / ${String(slides.length).padStart(2, "0")}`;
     $("#experienceSlideTitle").innerHTML = captions[selected];
   }
   function schedule() {
     clearInterval(timer);
     timer = 0;
-    if (
-      !paused &&
-      !hovered &&
-      !focused &&
-      visible &&
-      !reduce.matches &&
-      !document.hidden
-    ) {
+    if (!paused && visible && !reduce.matches && !document.hidden) {
       timer = setInterval(() => select(selected + 1), 5000);
     }
     $("#experiencePause").disabled = reduce.matches;
@@ -126,24 +104,6 @@ export function initMotion() {
   dots.forEach((dot, index) =>
     dot.addEventListener("click", () => {
       select(index);
-      schedule();
-    }),
-  );
-  region.addEventListener("mouseenter", () => {
-    hovered = true;
-    schedule();
-  });
-  region.addEventListener("mouseleave", () => {
-    hovered = false;
-    schedule();
-  });
-  region.addEventListener("focusin", () => {
-    focused = true;
-    schedule();
-  });
-  region.addEventListener("focusout", () =>
-    queueMicrotask(() => {
-      focused = region.contains(document.activeElement);
       schedule();
     }),
   );

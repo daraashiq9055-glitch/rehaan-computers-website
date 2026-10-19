@@ -167,40 +167,41 @@ function categoryMatches(course) {
   if (filter === "accounting") return course.category.includes("Accounting");
   return course.category === "Typing";
 }
-const courseImageSamples = [
-  {
-    title: "Computer learning",
-    image: "assets/course-learning.png",
-    description:
-      "A new illustration for computer fundamentals, office tools and general practical courses.",
-  },
-  {
-    title: "Accounting & ERP",
-    image: "assets/course-accounting.png",
-    description:
-      "A new illustration for accounting, GST, billing and business software courses.",
-  },
-  {
-    title: "Typing & keyboard skills",
-    image: "assets/course-typing.png",
-    description:
-      "A new illustration for typing practice, keyboard confidence and accuracy.",
-  },
-];
+// Original photographs and actual software interfaces, selected per course.
+// Keep the curriculum snapshot intact; presentation assets are mapped separately.
+const courseImages = {
+  "One Year Computer Diploma Course": [
+    "hero-library.jpg",
+    "Learners studying together with a laptop",
+  ],
+  "Six Month Computer Certificate Course": [
+    "word-doc.jpg",
+    "Microsoft Word document tools and workspace",
+  ],
+  "Three Month Computer Certificate Course": [
+    "excel-desk.jpg",
+    "A learner working with a spreadsheet on a laptop",
+  ],
+  "Typing Diploma Course": [
+    "typing-keys.jpg",
+    "Hands practising on a computer keyboard",
+  ],
+  "Tally Prime with GST — Detailed Course": [
+    "tally-prime.jpg",
+    "Actual Tally Prime educational interface and company menu",
+  ],
+  "Crash Computer Course": [
+    "excel-sheet.jpg",
+    "A practical spreadsheet with quantities, prices and formulas",
+  ],
+  "Marg ERP 9 Course": [
+    "marg-erp.jpg",
+    "Actual Marg ERP billing, inventory and business reports interface",
+  ],
+};
 function courseArtwork(course) {
-  return courseImageSamples[
-    course.category === "Typing"
-      ? 2
-      : course.category.includes("Accounting")
-        ? 1
-        : 0
-  ].image;
-}
-function showImageSamples() {
-  showDialog(
-    "New imagery for your learning paths.",
-    `<p>Three matching image concepts proposed for the course cards. They are illustrative artwork, not photographs of the institute or screenshots of a specific software product.</p><div class="image-sample-grid">${courseImageSamples.map((sample) => `<figure><img src="${sample.image}" alt="${escape(sample.title)} course image concept"><figcaption><strong>${escape(sample.title)}</strong><span>${escape(sample.description)}</span></figcaption></figure>`).join("")}</div>`,
-  );
+  const [file, alt] = courseImages[course.title];
+  return { src: "../../public/assets/" + file, alt };
 }
 function cards() {
   const visible = courses
@@ -224,7 +225,7 @@ function cards() {
   $("#courseGrid").innerHTML = visible
     .map(
       ({ course, id }) =>
-        `<article class="course-card"><div class="course-image"><img src="${courseArtwork(course)}" alt="" loading="lazy"><span class="course-number">LEARNING PATH / ${String(id + 1).padStart(2, "0")}</span><button class="save-course" data-action="save" data-id="${id}" aria-label="${saved.has(courseSlug(course)) ? "Unsave" : "Save"} ${escape(course.title)}" aria-pressed="${saved.has(courseSlug(course))}">${icon("bookmark")}</button></div><div class="course-body"><span class="course-category">${escape(course.category)}</span><h3>${escape(course.title)}</h3><p>${escape(course.overview)}</p><div class="course-meta"><span>${escape(course.duration)}</span><span>${escape(course.level)}</span></div></div><div class="course-actions"><button data-action="course" data-id="${id}">Explore syllabus ${icon("arrow")}</button><button data-action="apply" data-id="${id}">Apply now ${icon("arrow")}</button></div><div class="course-bottom"><label><input type="checkbox" data-compare="${id}" ${comparison.has(id) ? "checked" : ""}>Compare</label><button data-action="pdf" data-id="${id}">${icon("download")}Brochure</button></div></article>`,
+        `<article class="course-card"><div class="course-image${course.category.includes("Accounting") ? " course-software" : ""}"><img src="${courseArtwork(course).src}" alt="${escape(courseArtwork(course).alt)}" loading="lazy"><span class="course-number">LEARNING PATH / ${String(id + 1).padStart(2, "0")}</span><button class="save-course" data-action="save" data-id="${id}" aria-label="${saved.has(courseSlug(course)) ? "Unsave" : "Save"} ${escape(course.title)}" aria-pressed="${saved.has(courseSlug(course))}">${icon("bookmark")}</button></div><div class="course-body"><span class="course-category">${escape(course.category)}</span><h3>${escape(course.title)}</h3><p>${escape(course.overview)}</p><div class="course-meta"><span>${escape(course.duration)}</span><span>${escape(course.level)}</span></div></div><div class="course-actions"><button data-action="course" data-id="${id}">Explore syllabus ${icon("arrow")}</button><button data-action="apply" data-id="${id}">Apply now ${icon("arrow")}</button></div><div class="course-bottom"><label><input type="checkbox" data-compare="${id}" ${comparison.has(id) ? "checked" : ""}>Compare</label><button data-action="pdf" data-id="${id}">${icon("download")}Brochure</button></div></article>`,
     )
     .join("");
   $("#courseCount").textContent =
@@ -653,9 +654,6 @@ document.addEventListener("click", (event) => {
   }
   const id = button.hasAttribute("data-id") ? Number(button.dataset.id) : -1;
   switch (button.dataset.action) {
-    case "image-samples":
-      showImageSamples();
-      break;
     case "course":
       openCourse(id);
       break;
