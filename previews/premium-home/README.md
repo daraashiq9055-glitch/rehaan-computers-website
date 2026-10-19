@@ -1,6 +1,6 @@
 # Complete premium visitor experience
 
-This is the complete redesigned visitor preview agreed after the earlier small-change concepts. The familiar brand uses a new black/champagne-gold layout throughout, with new interactive learning tools, course discovery and a guided admission journey. **It is outside Firebase Hosting's `public/` directory. No live files, admin dashboard, rules, Workers or records are changed.**
+This is the complete redesigned visitor preview agreed after the earlier small-change concepts. The familiar brand uses deep sapphire/navy, champagne gold and ivory, with larger text, interactive learning tools, course discovery and a guided admission journey. **It is outside Firebase Hosting's `public/` directory. No live files, admin dashboard, rules, Workers or records are changed.**
 
 ## Open from Windows CMD
 
@@ -21,6 +21,15 @@ python -m http.server 8002 --bind 127.0.0.1
 ```
 
 Then open `http://localhost:8002/previews/premium-home/`.
+
+## Latest visual refinements
+
+- The original ten skills return in a moving details line, with pause/resume and reduced-motion support.
+- A local RC learning logo appears in the header, footer and favicon. Clicking the header logo/name opens a keyboard-accessible menu. Its Admin login link opens the existing live sign-in page in a separate tab only when clicked; no administrator credentials or records are used by this preview.
+- Personal guidance shows four existing learning images one at a time, advancing every five seconds while visible. It pauses on hover, keyboard focus, hidden tabs or manual pause. Dot and arrow-key controls work; reduced motion disables automatic movement.
+- Dar Yasir's footer credit has gold shine and subtle moving accents. Motion stops on hover/focus and with reduced-motion preferences.
+- Three new generated course-art proposals share navy and gold lighting: computer learning, accounting/ERP and typing. They appear on the corresponding course cards. Click **Courses → View new image samples** to see all three together inside the browser, without relying on chat image attachments. They are illustrative artwork, not classroom photographs or actual software screenshots. Original course metadata and the existing gallery are retained.
+- Larger body, navigation, course, form and dialog text is checked at six screen widths.
 
 ## Features that work
 
@@ -51,8 +60,11 @@ The previous previews remain in their folders as earlier concepts. `preview-home
 ```sh
 node --test tests/premium-home-model.test.mjs
 python3 tests/premium-home-browser.py
+python3 tests/premium-home-motion-browser.py
 ```
 
 The pure checks cover curriculum/field preservation, actual duration filtering, all goal/experience/time recommendations, typing calculations and PDF object offsets. Browser checks exercise all major interactions, parse downloaded multi-page PDFs, verify each Tally module, test both WhatsApp destinations through intercepted popups, traverse the complete form, check memory-only personal data, and cover six viewport widths. Live service requests and record writes are blocked by the test.
+
+The motion suite also checks the logo/menu, keyboard controls, original moving skills, pause/resume, timed one-image slideshow, reduced motion, generated-image loading and mobile containment. It does not navigate to the live administrator page.
 
 This preview is ready for design review, not production deployment. Approved elements must be integrated separately with the existing verified application/photo/payment flow, preserving its transaction and permission protections and rerunning payment/admission regressions before any Hosting release. Private application-status tracking remains a future backend feature.

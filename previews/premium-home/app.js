@@ -1,3 +1,4 @@
+import { initMotion } from "./motion.js";
 import {
   courseSlug,
   matchesDuration,
@@ -166,6 +167,41 @@ function categoryMatches(course) {
   if (filter === "accounting") return course.category.includes("Accounting");
   return course.category === "Typing";
 }
+const courseImageSamples = [
+  {
+    title: "Computer learning",
+    image: "assets/course-learning.png",
+    description:
+      "A new illustration for computer fundamentals, office tools and general practical courses.",
+  },
+  {
+    title: "Accounting & ERP",
+    image: "assets/course-accounting.png",
+    description:
+      "A new illustration for accounting, GST, billing and business software courses.",
+  },
+  {
+    title: "Typing & keyboard skills",
+    image: "assets/course-typing.png",
+    description:
+      "A new illustration for typing practice, keyboard confidence and accuracy.",
+  },
+];
+function courseArtwork(course) {
+  return courseImageSamples[
+    course.category === "Typing"
+      ? 2
+      : course.category.includes("Accounting")
+        ? 1
+        : 0
+  ].image;
+}
+function showImageSamples() {
+  showDialog(
+    "New imagery for your learning paths.",
+    `<p>Three matching image concepts proposed for the course cards. They are illustrative artwork, not photographs of the institute or screenshots of a specific software product.</p><div class="image-sample-grid">${courseImageSamples.map((sample) => `<figure><img src="${sample.image}" alt="${escape(sample.title)} course image concept"><figcaption><strong>${escape(sample.title)}</strong><span>${escape(sample.description)}</span></figcaption></figure>`).join("")}</div>`,
+  );
+}
 function cards() {
   const visible = courses
     .map((course, id) => ({ course, id }))
@@ -188,7 +224,7 @@ function cards() {
   $("#courseGrid").innerHTML = visible
     .map(
       ({ course, id }) =>
-        `<article class="course-card"><div class="course-image"><img src="../../public/${escape(course.img)}" alt="" loading="lazy"><span class="course-number">LEARNING PATH / ${String(id + 1).padStart(2, "0")}</span><button class="save-course" data-action="save" data-id="${id}" aria-label="${saved.has(courseSlug(course)) ? "Unsave" : "Save"} ${escape(course.title)}" aria-pressed="${saved.has(courseSlug(course))}">${icon("bookmark")}</button></div><div class="course-body"><span class="course-category">${escape(course.category)}</span><h3>${escape(course.title)}</h3><p>${escape(course.overview)}</p><div class="course-meta"><span>${escape(course.duration)}</span><span>${escape(course.level)}</span></div></div><div class="course-actions"><button data-action="course" data-id="${id}">Explore syllabus ${icon("arrow")}</button><button data-action="apply" data-id="${id}">Apply now ${icon("arrow")}</button></div><div class="course-bottom"><label><input type="checkbox" data-compare="${id}" ${comparison.has(id) ? "checked" : ""}>Compare</label><button data-action="pdf" data-id="${id}">${icon("download")}Brochure</button></div></article>`,
+        `<article class="course-card"><div class="course-image"><img src="${courseArtwork(course)}" alt="" loading="lazy"><span class="course-number">LEARNING PATH / ${String(id + 1).padStart(2, "0")}</span><button class="save-course" data-action="save" data-id="${id}" aria-label="${saved.has(courseSlug(course)) ? "Unsave" : "Save"} ${escape(course.title)}" aria-pressed="${saved.has(courseSlug(course))}">${icon("bookmark")}</button></div><div class="course-body"><span class="course-category">${escape(course.category)}</span><h3>${escape(course.title)}</h3><p>${escape(course.overview)}</p><div class="course-meta"><span>${escape(course.duration)}</span><span>${escape(course.level)}</span></div></div><div class="course-actions"><button data-action="course" data-id="${id}">Explore syllabus ${icon("arrow")}</button><button data-action="apply" data-id="${id}">Apply now ${icon("arrow")}</button></div><div class="course-bottom"><label><input type="checkbox" data-compare="${id}" ${comparison.has(id) ? "checked" : ""}>Compare</label><button data-action="pdf" data-id="${id}">${icon("download")}Brochure</button></div></article>`,
     )
     .join("");
   $("#courseCount").textContent =
@@ -617,6 +653,9 @@ document.addEventListener("click", (event) => {
   }
   const id = button.hasAttribute("data-id") ? Number(button.dataset.id) : -1;
   switch (button.dataset.action) {
+    case "image-samples":
+      showImageSamples();
+      break;
     case "course":
       openCourse(id);
       break;
@@ -708,6 +747,7 @@ document.addEventListener("click", (event) => {
       break;
   }
 });
+initMotion();
 $("#year").textContent = new Date().getFullYear();
 renderDemo();
 Promise.all(

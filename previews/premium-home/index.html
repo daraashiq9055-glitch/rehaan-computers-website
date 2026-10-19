@@ -4,14 +4,12 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <meta name="robots" content="noindex,nofollow" />
-    <meta name="theme-color" content="#090909" />
+    <meta name="theme-color" content="#080f1b" />
     <title>Rehaan Computers · Complete premium visitor preview</title>
     <link rel="stylesheet" href="premium.css" />
+    <link rel="stylesheet" href="refinements.css" />
     <script type="module" src="app.js"></script>
-    <link
-      rel="icon"
-      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23090909'/%3E%3Ctext x='11' y='43' font-family='Georgia' font-size='29' fill='%23ddbc78'%3ERC%3C/text%3E%3C/svg%3E"
-    />
+    <link rel="icon" href="assets/rehaan-mark.svg" type="image/svg+xml" />
   </head>
   <body>
     <svg class="sprite" aria-hidden="true">
@@ -73,10 +71,47 @@
     </div>
     <header class="site-header">
       <div class="wrap header-inner">
-        <a class="brand" href="#home" aria-label="Rehaan Computers home"
-          ><span class="brand-mark">RC</span
-          ><span>REHAAN<small>COMPUTERS</small></span></a
-        >
+        <div class="brand-wrap">
+          <button
+            class="brand"
+            id="brandMenuButton"
+            type="button"
+            aria-haspopup="menu"
+            aria-expanded="false"
+            aria-controls="brandMenu"
+            aria-label="Rehaan Computers menu"
+          >
+            <span class="brand-mark"
+              ><img
+                src="assets/rehaan-mark.svg"
+                alt="Rehaan Computers RC learning logo"
+                width="96"
+                height="96" /></span
+            ><span>REHAAN<small>COMPUTERS</small></span
+            ><span class="brand-chevron" aria-hidden="true"></span>
+          </button>
+          <div
+            class="brand-menu"
+            id="brandMenu"
+            role="menu"
+            aria-labelledby="brandMenuButton"
+            hidden
+          >
+            <span class="brand-menu-label">REHAAN COMPUTERS</span>
+            <a role="menuitem" href="#home"
+              >Visitor homepage <svg class="icon"><use href="#i-arrow" /></svg
+            ></a>
+            <a
+              role="menuitem"
+              id="brandAdminLogin"
+              href="https://rehaan-computers.web.app/admin.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              >Admin login <svg class="icon"><use href="#i-arrow" /></svg
+            ></a>
+            <small>Administrator sign-in opens in a separate tab.</small>
+          </div>
+        </div>
         <nav id="mainNav" aria-label="Main navigation">
           <a href="#home">Home</a><a href="#courses">Courses</a
           ><a href="#experience">The experience</a
@@ -226,6 +261,54 @@
           ><svg class="icon"><use href="#i-arrow" /></svg>
         </button>
       </section>
+      <section
+        class="skills-line"
+        aria-label="Skills taught at Rehaan Computers"
+      >
+        <div class="skills-line-inner wrap">
+          <span class="skills-caption"
+            >LEARN SOMETHING<br /><strong>THAT MOVES YOU FORWARD.</strong></span
+          >
+          <div class="skills-window">
+            <div class="skills-track">
+              <div class="skills-run">
+                <span>MS Word<i aria-hidden="true"></i></span
+                ><span>MS Excel<i aria-hidden="true"></i></span
+                ><span>PowerPoint<i aria-hidden="true"></i></span
+                ><span
+                  >Typing Speed &amp; Accuracy<i aria-hidden="true"></i></span
+                ><span>Tally Prime with GST<i aria-hidden="true"></i></span
+                ><span>Photoshop<i aria-hidden="true"></i></span
+                ><span>InPage<i aria-hidden="true"></i></span
+                ><span>Marg ERP 9<i aria-hidden="true"></i></span
+                ><span>Internet &amp; Email<i aria-hidden="true"></i></span
+                ><span>Computer Fundamentals<i aria-hidden="true"></i></span>
+              </div>
+              <div class="skills-run" aria-hidden="true">
+                <span>MS Word<i aria-hidden="true"></i></span
+                ><span>MS Excel<i aria-hidden="true"></i></span
+                ><span>PowerPoint<i aria-hidden="true"></i></span
+                ><span
+                  >Typing Speed &amp; Accuracy<i aria-hidden="true"></i></span
+                ><span>Tally Prime with GST<i aria-hidden="true"></i></span
+                ><span>Photoshop<i aria-hidden="true"></i></span
+                ><span>InPage<i aria-hidden="true"></i></span
+                ><span>Marg ERP 9<i aria-hidden="true"></i></span
+                ><span>Internet &amp; Email<i aria-hidden="true"></i></span
+                ><span>Computer Fundamentals<i aria-hidden="true"></i></span>
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            id="skillsPause"
+            aria-pressed="false"
+            aria-label="Pause moving skills line"
+          >
+            <span class="pause-bars" aria-hidden="true"></span>
+          </button>
+        </div>
+      </section>
       <section class="section courses-section" id="courses">
         <div class="wrap">
           <div class="section-heading">
@@ -297,6 +380,20 @@
               Reset filters
             </button>
           </div>
+          <div class="course-art-preview">
+            <div>
+              <span class="eyebrow">A NEW LOOK FOR YOUR LEARNING PATH</span>
+              <h3>New course imagery. Designed to belong.</h3>
+              <p>
+                Preview the three new visual directions for computer learning,
+                accounting and typing.
+              </p>
+            </div>
+            <button class="button outline small" data-action="image-samples">
+              View new image samples
+              <svg class="icon"><use href="#i-arrow" /></svg>
+            </button>
+          </div>
           <div class="catalogue-foot">
             <p>
               Save a course for later. Compare up to three. Ask us when you need
@@ -309,17 +406,95 @@
         </div>
       </section>
       <section class="section experience-section wrap" id="experience">
-        <div class="experience-visual">
-          <img
-            src="../../public/assets/hero-library.jpg"
-            alt="Learners practising together at a computer"
-            loading="lazy"
-          /><span class="photo-label"
+        <div
+          class="experience-visual"
+          role="region"
+          aria-roledescription="carousel"
+          aria-label="Personal guidance learning images"
+          tabindex="0"
+        >
+          <div class="experience-slides" id="experienceSlides">
+            <img
+              class="experience-slide is-active"
+              src="../../public/assets/hero-library.jpg"
+              alt="Learners practising together at a computer"
+              data-slide="0"
+              aria-hidden="false"
+            />
+            <img
+              class="experience-slide"
+              src="../../public/assets/excel-desk.jpg"
+              alt="A practical computer workspace for spreadsheet learning"
+              data-slide="1"
+              aria-hidden="true"
+              loading="lazy"
+            />
+            <img
+              class="experience-slide"
+              src="../../public/assets/word-doc.jpg"
+              alt="Document creation and everyday office skills"
+              data-slide="2"
+              aria-hidden="true"
+              loading="lazy"
+            />
+            <img
+              class="experience-slide"
+              src="../../public/assets/typing-keys.jpg"
+              alt="Keyboard practice for speed and accuracy"
+              data-slide="3"
+              aria-hidden="true"
+              loading="lazy"
+            />
+          </div>
+          <span class="photo-label"
             >LEARNING IMAGERY FROM OUR EXISTING WEBSITE</span
           >
           <div class="experience-caption">
             <span>YOUR SKILLS, OUR PRIORITY</span>
-            <h3>Understanding comes<br />from trying.</h3>
+            <h3 id="experienceSlideTitle">
+              Understanding comes<br />from trying.
+            </h3>
+          </div>
+          <div class="experience-controls">
+            <div
+              class="experience-dots"
+              role="group"
+              aria-label="Choose a learning image"
+            >
+              <button
+                type="button"
+                data-experience-slide="0"
+                aria-label="Show learning image 1 of 4"
+                aria-pressed="true"
+              ></button
+              ><button
+                type="button"
+                data-experience-slide="1"
+                aria-label="Show learning image 2 of 4"
+                aria-pressed="false"
+              ></button
+              ><button
+                type="button"
+                data-experience-slide="2"
+                aria-label="Show learning image 3 of 4"
+                aria-pressed="false"
+              ></button
+              ><button
+                type="button"
+                data-experience-slide="3"
+                aria-label="Show learning image 4 of 4"
+                aria-pressed="false"
+              ></button>
+            </div>
+            <span id="experienceSlideCount" aria-live="off">01 / 04</span
+            ><button
+              type="button"
+              id="experiencePause"
+              aria-pressed="false"
+              aria-label="Pause learning slideshow"
+            >
+              <span class="pause-bars" aria-hidden="true"></span>
+            </button>
           </div>
         </div>
         <div class="experience-copy">
@@ -878,7 +1053,12 @@
       <div class="wrap footer-main">
         <div class="footer-brand">
           <a class="brand" href="#home"
-            ><span class="brand-mark">RC</span
+            ><span class="brand-mark"
+              ><img
+                src="assets/rehaan-mark.svg"
+                alt="Rehaan Computers RC learning logo"
+                width="96"
+                height="96" /></span
             ><span>REHAAN<small>COMPUTERS</small></span></a
           >
           <p>
@@ -901,7 +1081,12 @@
           ><button data-action="brochure">Download a brochure</button
           ><a href="#practice">Typing challenge</a
           ><a href="#admission">Application preview</a
-          ><button data-action="admin-notice">Admin login</button>
+          ><a
+            href="https://rehaan-computers.web.app/admin.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            >Admin login</a
+          >
         </div>
         <div>
           <h3>Stay connected</h3>
