@@ -1,0 +1,189 @@
+/* Production admission/payment UI. Payment state is owned by script.js. */
+.admission-form-wrap {
+  min-width: 0;
+}
+#serviceStatus {
+  font-size: 12px;
+  color: #bdcce0;
+  line-height: 1.65;
+  padding: 0 3px;
+  margin: 0 0 12px;
+}
+#resumeAdmissionPayment {
+  margin-bottom: 15px;
+}
+.form-message {
+  margin: 0 0 16px;
+  border: 1px solid #acc5e04d;
+  border-radius: 10px;
+  background: #12253a;
+  color: #dae6f5;
+  padding: 16px;
+  font-size: 14px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+.form-message.error {
+  color: #ffcece;
+  border-color: #ed929275;
+  background: #3f202a;
+}
+.form-message.success {
+  color: #c6eedb;
+  border-color: #83bd9c75;
+  background: #173329;
+}
+#photoBox {
+  cursor: pointer;
+}
+#photoBox:focus-visible {
+  outline: 2px solid #edc470;
+  outline-offset: 4px;
+}
+#photoPrompt {
+  color: #c5d2e4;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 1px;
+}
+#photoStatus {
+  min-height: 22px;
+  line-height: 1.7;
+  color: #e6d3a8;
+  font-size: 12px;
+}
+body.modal-open {
+  overflow: hidden;
+}
+.payment-modal,
+.payment-success-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: #030914db;
+  overflow-y: auto;
+}
+.payment-sheet,
+.payment-success-card {
+  position: relative;
+  width: min(100%, 470px);
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  border: 1px solid #d1b87d87;
+  border-radius: 18px;
+  padding: 35px 28px 28px;
+  color: #ecf0f8;
+  background:
+    radial-gradient(ellipse at top left, #31577b45, transparent 65%),
+    linear-gradient(145deg, #192e49, #0a1423 80%);
+  box-shadow: 0 30px 90px #0008;
+}
+.payment-close,
+.payment-success-close {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid #c7ae724d;
+  border-radius: 50%;
+  color: #f0d28f;
+  background: #152a43;
+  font-size: 22px;
+}
+.payment-kicker,
+.payment-success-kicker {
+  display: block;
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  color: #edce89;
+  padding-right: 32px;
+  margin: 3px 0 14px;
+}
+.payment-sheet h3,
+.payment-success-card h2 {
+  font-family: Playfair, Georgia, serif;
+  font-size: 29px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: #f4e8cc;
+  margin: 0 0 16px;
+}
+.payment-sheet p,
+.payment-success-card p {
+  font-size: 14px;
+  line-height: 1.85;
+  color: #bdcde3;
+  margin: 0 0 16px;
+}
+.payment-sheet b {
+  color: #f6dba0;
+}
+.payment-note,
+.payment-success-hint {
+  font-size: 12px !important;
+  color: #b3c4db !important;
+}
+#razorpayStatus {
+  overflow-wrap: anywhere;
+}
+#razorpayPayBtn,
+.payment-success-done {
+  min-height: 48px;
+  border-radius: 9px;
+  border: 1px solid #ffe7a8a1;
+  padding: 13px 16px;
+  background: linear-gradient(110deg, #ffedb6, #d1a54c);
+  color: #1b2430;
+  font-size: 14px;
+  font-weight: 600;
+}
+#razorpayPayBtn:disabled {
+  opacity: 0.65;
+}
+.payment-success-card {
+  text-align: center;
+}
+.payment-success-check {
+  display: grid;
+  place-items: center;
+  height: 65px;
+  width: 65px;
+  margin: 0 auto 20px;
+  border-radius: 50%;
+  background: #84c7a21c;
+  border: 1px solid #93d5b3;
+  color: #b7f2d4;
+  font-size: 32px;
+}
+.payment-success-kicker {
+  padding-right: 0;
+}
+.payment-success-card .payment-success-amount {
+  color: #efd296;
+  font-size: 23px;
+}
+.payment-success-done {
+  width: 100%;
+}
+@media (max-width: 480px) {
+  .payment-modal,
+  .payment-success-modal {
+    padding: 14px;
+  }
+  .payment-sheet,
+  .payment-success-card {
+    padding: 36px 20px 24px;
+    max-height: calc(100dvh - 28px);
+  }
+  .payment-sheet h3,
+  .payment-success-card h2 {
+    font-size: 26px;
+  }
+}

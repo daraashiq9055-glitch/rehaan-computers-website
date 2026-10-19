@@ -1,0 +1,104 @@
+{
+  "about": [
+    "Rehaan Computers provides practical computer education with individual attention, modern facilities and job-oriented learning. Every student works on their own system and practises real documents, real accounts and real designs.",
+    "Our goal is simple: learn the basics, practise real work, build confidence and grow your skills — at your own pace, with no pressure of a fixed admission deadline."
+  ],
+  "benefits": [
+    {
+      "title": "Practical Training",
+      "text": "Learn by actually working on computers with real tasks, not just theory and notes."
+    },
+    {
+      "title": "Expert Guidance",
+      "text": "Get continuous guidance from experienced instructors throughout your course."
+    },
+    {
+      "title": "Individual Attention",
+      "text": "A personal system and paced teaching, so no learner is left behind."
+    },
+    {
+      "title": "Professional Certificate",
+      "text": "Receive a verifiable course certificate after completing your training."
+    }
+  ],
+  "steps": [
+    {
+      "title": "Choose a Course",
+      "text": "Pick the course and the Morning, Afternoon or Evening batch that suits your schedule."
+    },
+    {
+      "title": "Submit the Form",
+      "text": "Fill in the online application below — you will receive a confirmation by email."
+    },
+    {
+      "title": "Visit the Centre",
+      "text": "Bring 2 passport-size photographs and a photocopy of your Aadhaar card."
+    },
+    {
+      "title": "Start Learning",
+      "text": "Pay the ₹100 admission fee, your seat is confirmed and practical training starts in your chosen batch."
+    }
+  ],
+  "faq": [
+    {
+      "q": "Is my admission complete after I submit the form?",
+      "a": "No. The form registers your application. You must visit the centre with 2 passport-size photographs and a photocopy of your Aadhaar card to complete your admission."
+    },
+    {
+      "q": "Is there a last date for admission?",
+      "a": "No. Online admission stays open all year — there is no last date. A one-time ₹100 admission fee blocks your seat, allotted in the order applications arrive."
+    },
+    {
+      "q": "When do classes start?",
+      "a": "As soon as your admission is confirmed — pay the ₹100 admission fee, complete document verification at the centre, and join the next Morning, Afternoon or Evening batch."
+    },
+    {
+      "q": "Why is there a ₹100 admission fee?",
+      "a": "The ₹100 one-time admission fee reserves your seat and covers registration. Course fees are paid separately at the centre — the admission fee is not an advance or EMI."
+    },
+    {
+      "q": "What documents do I need to bring?",
+      "a": "Two passport-size photographs and one photocopy of your Aadhaar card. Carry them when you visit the centre after applying online."
+    },
+    {
+      "q": "How can I check course fees?",
+      "a": "Contact or visit Rehaan Computers for current course tuition details. The separate one-time admission fee is ₹100."
+    },
+    {
+      "q": "Which batches are available?",
+      "a": "You can choose a Morning, Afternoon or Evening batch in the application form. Batches begin right after your admission is confirmed."
+    }
+  ],
+  "tools": [
+    {
+      "title": "MS Excel",
+      "text": "Formulas, VLOOKUP, pivot tables, charts and ready-to-use payroll and billing sheets built from scratch."
+    },
+    {
+      "title": "Tally Prime",
+      "text": "Company creation, vouchers, GST invoices, inventory and final accounts — practised on the live Tally Prime screen."
+    },
+    {
+      "title": "Web & Code",
+      "text": "HTML, CSS, JavaScript and Python basics — you build and run real projects, not pretend ones."
+    },
+    {
+      "title": "MS Word",
+      "text": "Formatting, mail merge, tables and print-ready assignments, CVs and project files — typed from day one."
+    }
+  ],
+  "batches": [
+    {
+      "title": "Morning Batch",
+      "text": "Ideal for school and college students who attend regular classes in the afternoon."
+    },
+    {
+      "title": "Afternoon Batch",
+      "text": "Perfect for learners who prefer a relaxed mid-day schedule after lunch."
+    },
+    {
+      "title": "Evening Batch",
+      "text": "Designed for working learners and business users after shop and office hours."
+    }
+  ]
+}

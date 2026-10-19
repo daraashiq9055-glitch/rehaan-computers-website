@@ -4745,6 +4745,9 @@ function initAdminAuthentication() {
 
 function initMainWebsite() {
 
+    // The premium visitor controller initializes only the existing admission services.
+    if (document.body.dataset.visitorDesign === "premium") return;
+
     if (
         document.body.classList.contains(
             "admin-page"
@@ -4792,3 +4795,8 @@ document.addEventListener(
 
     }
 );
+
+// Shared with the premium visitor UI. Payment and persistence functions above
+// remain the existing production implementation; the controller owns form steps.
+export { submitApplication, processPassportPhoto, setStudentPhoto, initPhoneInputs,
+    initPaymentStep, initPaymentResume, initPaymentSuccessDialog };

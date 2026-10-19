@@ -1,4 +1,5 @@
 """Refined visitor design: brand access, top skills line and real course imagery."""
+import sys,importlib.util
 from pathlib import Path
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
@@ -10,9 +11,13 @@ OUT=ROOT/'tests/artifacts/premium-refinements'
 class Quiet(SimpleHTTPRequestHandler):
     def log_message(self,*args):pass
 
-def run():
+def run(production=False):
     server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT)))
     Thread(target=server.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{server.server_port}'
+    path='/public/' if production else '/previews/premium-home/'
+    if production:
+        spec=importlib.util.spec_from_file_location('payment_fixture',ROOT/'tests/admission-payment-browser.py')
+        fixture=importlib.util.module_from_spec(spec);spec.loader.exec_module(fixture)
     OUT.mkdir(parents=True,exist_ok=True)
     try:
         with sync_playwright() as p:
@@ -22,20 +27,23 @@ def run():
             def route(r):
                 if r.request.method not in ['GET','HEAD']:writes.append(r.request.url);r.abort()
                 elif r.request.url.startswith(base+'/'):r.continue_()
+                elif production and r.request.url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):
+                    r.fulfill(content_type='application/javascript',body=fixture.MOCK,headers={'Access-Control-Allow-Origin':'*'})
                 else:external.append(r.request.url);r.abort()
             context.route('**/*',route);page=context.new_page()
+            if production:page.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,auth:{currentUser:null,authStateReady:async()=>{}}};')
             page.on('pageerror',lambda error:errors.append(str(error)))
             page.on('response',lambda response:failed.append(response.url) if response.status>=400 else None)
             page.clock.install()
-            page.goto(base+'/previews/premium-home/');expect(page.locator('.course-card')).to_have_count(7)
+            page.goto(base+path);expect(page.locator('.course-card')).to_have_count(7)
             page.evaluate('document.fonts.ready')
             expect(page.locator('#brandMenu')).not_to_be_visible()
-            expect(page.locator('#brandMenuButton img')).to_have_attribute('src','assets/rehaan-mark.svg')
+            expect(page.locator('#brandMenuButton img')).to_have_attribute('src','visitor/assets/rehaan-mark.svg' if production else 'assets/rehaan-mark.svg')
             page.locator('#brandMenuButton').focus();page.keyboard.press('ArrowDown')
             expect(page.locator('#brandMenu')).to_be_visible()
             expect(page.locator('#brandMenu [role=menuitem]').first).to_be_focused()
             page.keyboard.press('ArrowDown');expect(page.locator('#brandAdminLogin')).to_be_focused()
-            expect(page.locator('#brandAdminLogin')).to_have_attribute('href','https://rehaan-computers.web.app/admin.html')
+            expect(page.locator('#brandAdminLogin')).to_have_attribute('href','admin.html' if production else 'https://rehaan-computers.web.app/admin.html')
             expect(page.locator('#brandAdminLogin')).to_have_attribute('target','_blank')
             page.keyboard.press('Escape');expect(page.locator('#brandMenu')).not_to_be_visible();expect(page.locator('#brandMenuButton')).to_be_focused()
             page.locator('#brandMenuButton').click();page.locator('.hero h1').click();expect(page.locator('#brandMenu')).not_to_be_visible()
@@ -102,15 +110,15 @@ def run():
             for id,file in enumerate(expected):
                 image=page.locator('.course-card').filter(has=page.locator('[data-action=course][data-id="'+str(id)+'"]')).locator('.course-image img')
                 image.scroll_into_view_if_needed()
-                expect(image).to_have_attribute('src','../../public/assets/'+file)
+                expect(image).to_have_attribute('src',('assets/' if production else '../../public/assets/')+file)
                 assert image.get_attribute('alt')
-                page.wait_for_function('(src) => [...document.querySelectorAll(".course-image img")].find(i => i.getAttribute("src") === src)?.naturalWidth > 0',arg='../../public/assets/'+file)
+                page.wait_for_function('(src) => [...document.querySelectorAll(".course-image img")].find(i => i.getAttribute("src") === src)?.naturalWidth > 0',arg=('assets/' if production else '../../public/assets/')+file)
             expect(page.locator('.course-art-preview')).to_have_count(0)
             expect(page.locator('[data-action=image-samples]')).to_have_count(0)
             expect(page.locator('.experience-slide')).to_have_count(2)
             assert 'word-doc' not in page.locator('.experience-slides').inner_html()
             for width in [320,390,700,768,1024,1440]:
-                page.set_viewport_size({'width':width,'height':1000});page.goto(base+'/previews/premium-home/');expect(page.locator('.course-card')).to_have_count(7)
+                page.set_viewport_size({'width':width,'height':1000});page.goto(base+path);expect(page.locator('.course-card')).to_have_count(7)
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
                 for card in page.locator('.studio-course').all():
                     box=card.bounding_box()
@@ -138,4 +146,4 @@ def run():
             browser.close()
     finally:server.shutdown()
 
-if __name__=='__main__':run()
+if __name__=='__main__':run('--production' in sys.argv)

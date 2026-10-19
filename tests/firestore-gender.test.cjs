@@ -6,6 +6,7 @@ const {doc,setDoc,getDoc,updateDoc,deleteDoc}=require('firebase/firestore');
  if(process.env.FIRESTORE_EMULATOR_HOST!=='127.0.0.1:8088') throw Error('Requires local emulator at 127.0.0.1:8088');
  const env=await initializeTestEnvironment({projectId:'demo-rehaan-gender',firestore:{host:'127.0.0.1',port:8088,rules:readFileSync('firestore.rules','utf8')}});
  try {
+  await env.clearFirestore(); // Repeatable fixtures: public setDoc must exercise create, not an old record update.
   const db=env.unauthenticatedContext().firestore();
   const base={fullName:'Test Student',phone:'9876543210',coursePreference:'Diploma',status:'Pending Payment',payment:{status:'awaiting',amount:100},paymentToken:'test-token-1234567890'};
   let id=0;

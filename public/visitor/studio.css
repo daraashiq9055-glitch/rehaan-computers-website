@@ -1,0 +1,757 @@
+/* Original animated learning illustration. No stock photo or progress bar. */
+.hero-studio {
+  position: relative;
+  min-width: 0;
+  padding: 0 0 6px;
+  isolation: isolate;
+}
+.studio-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 0 12px;
+}
+.studio-top > span {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 8px;
+  letter-spacing: 1.7px;
+  color: #b6c9df;
+}
+.studio-top i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #e8c483;
+  box-shadow: 0 0 0 4px #d1b16c12;
+}
+#studioMotion {
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  color: #afc2db;
+  background: #112238;
+  border: 1px solid #97afcd45;
+  border-radius: 50%;
+}
+#studioMotion svg {
+  width: 13px;
+  height: 13px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  fill: none;
+}
+#studioMotion[aria-pressed="true"] svg {
+  fill: currentColor;
+}
+#studioMotion:disabled {
+  opacity: 0.4;
+}
+.studio-scene {
+  overflow: clip;
+  position: relative;
+  height: 420px;
+  margin-top: 12px;
+  perspective: 1000px;
+}
+.studio-halo {
+  position: absolute;
+  inset: 12% 5% 0;
+  background: radial-gradient(
+    ellipse,
+    #427daf40,
+    #bd974618 45%,
+    transparent 70%
+  );
+  filter: blur(18px);
+  animation: studio-breathe 7s ease-in-out infinite alternate;
+}
+.studio-grid {
+  position: absolute;
+  inset: 35% 0 2%;
+  background-image:
+    linear-gradient(#9fb5ca0b 1px, transparent 1px),
+    linear-gradient(90deg, #9fb5ca0b 1px, transparent 1px);
+  background-size: 28px 28px;
+  transform: rotateX(63deg);
+  mask-image: radial-gradient(ellipse, black, transparent 70%);
+}
+.studio-ring {
+  position: absolute;
+  inset: 26px 7px 22px;
+  border: 1px solid #8cacd222;
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+.studio-ring i {
+  position: absolute;
+  top: 14%;
+  left: 14%;
+  height: 6px;
+  width: 6px;
+  background: #8bc5d9;
+  border-radius: 50%;
+  box-shadow: 0 0 18px #99d5ecb0;
+}
+.ring-one {
+  animation: studio-orbit 28s linear infinite;
+}
+.ring-two {
+  inset: 40px 36px 36px;
+  border-color: #ceaf6824;
+  animation: studio-orbit 37s linear infinite reverse;
+}
+.ring-two i {
+  height: 4px;
+  width: 4px;
+  background: #ebcf92;
+  box-shadow: 0 0 15px #e8c47a;
+}
+.studio-device {
+  position: absolute;
+  width: 78%;
+  left: 11%;
+  top: 88px;
+  transform-style: preserve-3d;
+  animation: studio-float 8s ease-in-out infinite;
+}
+.studio-screen-frame {
+  position: relative;
+  border-radius: 15px 15px 6px 6px;
+  padding: 11px 9px 9px;
+  background: linear-gradient(
+    130deg,
+    #c1c7cd,
+    #33485a 24%,
+    #1c2a38 63%,
+    #7a8892
+  );
+  box-shadow:
+    inset 0 0 0 1px #b9bfc67a,
+    0 25px 45px #0008;
+}
+.studio-camera {
+  position: absolute;
+  top: 4px;
+  left: 50%;
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: #93adc4;
+}
+.studio-screen {
+  position: relative;
+  padding: 20px 24px 15px;
+  overflow: hidden;
+  min-height: 225px;
+  border-radius: 7px;
+  background:
+    radial-gradient(ellipse at 90% 25%, #38759f45, transparent 60%),
+    linear-gradient(135deg, #142a40, #0a1423 60%);
+  border: 1px solid #0b1522;
+}
+.studio-screen::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    120deg,
+    transparent 10%,
+    #fff5d30b 40%,
+    transparent 65%
+  );
+  transform: translateX(-100%);
+  animation: studio-reflection 12s ease-in-out infinite;
+}
+.studio-screen-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #ead19b;
+  font-size: 9px;
+  letter-spacing: 2px;
+}
+.studio-screen-top b {
+  font-weight: 400;
+  font-size: 6px;
+  color: #91a8c3;
+  letter-spacing: 1px;
+  margin-left: 5px;
+}
+.studio-screen-stars {
+  font-size: 20px;
+  animation: studio-star 14s linear infinite;
+}
+.studio-word-window {
+  height: 67px;
+  overflow: hidden;
+  margin-top: 15px;
+}
+.studio-words {
+  animation: studio-words 20s infinite;
+}
+.studio-words > span {
+  display: block;
+  height: 67px;
+  line-height: 67px;
+  font-family: Playfair, Georgia, serif;
+  font-size: 51px;
+  font-weight: 500;
+  letter-spacing: -1.5px;
+  color: #f3d693;
+}
+.studio-screen p {
+  color: #dce8f6;
+  font-size: 17px;
+  font-weight: 400;
+  line-height: 1.5;
+  margin: 7px 0 18px;
+}
+.studio-screen-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 5px;
+  letter-spacing: 1.5px;
+  color: #94adc7;
+}
+.studio-screen-bottom svg {
+  width: 22px;
+  height: 22px;
+  stroke: #d8be82;
+  fill: none;
+  stroke-width: 1;
+}
+.studio-keyboard {
+  position: relative;
+  height: 25px;
+  margin: 0 -7%;
+  background: linear-gradient(165deg, #8797a3, #334555 50%, #9ba7ad);
+  clip-path: polygon(6% 0, 94% 0, 100% 100%, 0 100%);
+  padding-top: 3px;
+  border-top: 1px solid #cbd2d980;
+}
+.studio-keys {
+  height: 10px;
+  width: 70%;
+  margin-inline: auto;
+  background: repeating-linear-gradient(90deg, #162333 0 7px, #647587 7px 8px);
+  transform: perspective(80px) rotateX(25deg);
+  opacity: 0.8;
+  border-radius: 1px;
+}
+.studio-trackpad {
+  width: 22%;
+  height: 7px;
+  margin: 2px auto;
+  border: 1px solid #27394a88;
+  border-radius: 1px;
+  background: #7c8c99;
+}
+.studio-device-edge {
+  height: 5px;
+  margin: 0 -7%;
+  border-radius: 0 0 70% 70%;
+  background: linear-gradient(
+    90deg,
+    #344551,
+    #acb5b9 30%,
+    #8b999f 65%,
+    #293b48
+  );
+  box-shadow: 0 12px 20px #0008;
+}
+.studio-course {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  border: 1px solid #afc2da65;
+  border-radius: 12px;
+  padding: 13px 14px;
+  background: linear-gradient(125deg, #223952f5, #101f33f5);
+  box-shadow:
+    0 12px 35px #0005,
+    inset 0 1px #ffffff0a;
+  backdrop-filter: blur(10px);
+  color: #e1eaf6;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+}
+.studio-course:hover {
+  border-color: #e8c683;
+  box-shadow:
+    0 15px 35px #0007,
+    0 0 25px #c5a35c13;
+}
+.studio-course-icon {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 39px;
+  border-radius: 7px;
+  flex-shrink: 0;
+}
+.studio-course-icon svg {
+  width: 25px;
+  height: 25px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 1.2;
+}
+.office-icon {
+  background: #6f99cc22;
+  color: #a6c9f2;
+}
+.accounts-icon {
+  background: #dcc07d1c;
+  color: #e6cc94;
+}
+.typing-icon {
+  background: #7bc6b71c;
+  color: #9cdbce;
+}
+.studio-course small {
+  display: block;
+  font-size: 6px;
+  letter-spacing: 1.1px;
+  color: #a2b7d0;
+  margin-bottom: 5px;
+}
+.studio-course strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.2px;
+}
+.studio-course em {
+  display: block;
+  font-size: 8px;
+  font-style: normal;
+  color: #a3b8d1;
+  margin-top: 4px;
+}
+.studio-course > .icon {
+  width: 12px;
+  height: 12px;
+  margin-left: 3px;
+  color: #e0c48c;
+  flex-shrink: 0;
+}
+.studio-office {
+  top: 18px;
+  left: 0;
+}
+.studio-accounting {
+  top: 56px;
+  right: 0;
+}
+.studio-typing {
+  bottom: 10px;
+  left: 0;
+}
+.studio-note {
+  position: absolute;
+  right: 8px;
+  bottom: 18px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #d6c89e;
+}
+.studio-note > span {
+  font-size: 28px;
+  color: #dfc17a;
+  animation: studio-star 18s linear infinite;
+}
+.studio-note div {
+  font-size: 10px;
+  line-height: 1.8;
+  color: #9fb5cf;
+}
+.studio-note b {
+  color: #e3d4af;
+  font-weight: 400;
+  font-size: 12px;
+}
+.studio-intro {
+  padding: 21px 12px 0;
+}
+.studio-kicker {
+  font-size: 7px;
+  letter-spacing: 1.7px;
+  color: #adc2db;
+}
+.studio-intro h2 {
+  font-family: Playfair, Georgia, serif;
+  font-weight: 500;
+  font-size: clamp(29px, 2.9vw, 40px);
+  color: #e8edf4;
+  line-height: 1.17;
+  letter-spacing: -1px;
+  margin: 11px 0 15px;
+}
+.studio-intro h2 em {
+  color: #e7c687;
+  font-style: italic;
+}
+.studio-intro p {
+  font-size: 13px;
+  line-height: 1.85;
+  color: #acbfd9;
+  margin: 0;
+}
+.studio-bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+  align-items: center;
+  margin: 24px 12px 0;
+  padding-top: 19px;
+  border-top: 1px solid #8da8c531;
+}
+.studio-bottom > a,
+.studio-bottom > button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 11px;
+  color: #e6cc94;
+  border: none;
+  padding: 0;
+  background: none;
+  min-height: 30px;
+}
+.studio-bottom > button {
+  color: #acbfd9;
+}
+.studio-bottom .icon {
+  height: 14px;
+  width: 14px;
+}
+.hero-studio:not(.studio-live) .studio-scene *,
+.hero-studio:not(.studio-live) .studio-scene *::before {
+  animation-play-state: paused;
+}
+@keyframes studio-float {
+  0%,
+  100% {
+    transform: translateY(0) rotateY(-7deg) rotateX(4deg) rotateZ(-3deg);
+  }
+  50% {
+    transform: translateY(-13px) rotateY(3deg) rotateX(0deg) rotateZ(-1deg);
+  }
+}
+@keyframes studio-breathe {
+  from {
+    opacity: 0.55;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+@keyframes studio-orbit {
+  from {
+    transform: rotate(-18deg);
+  }
+  to {
+    transform: rotate(342deg);
+  }
+}
+@keyframes studio-star {
+  from {
+    transform: rotate(0);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes studio-reflection {
+  0%,
+  60% {
+    transform: translateX(-100%);
+  }
+  90%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+@keyframes studio-words {
+  0%,
+  18% {
+    transform: translateY(0);
+  }
+  22%,
+  38% {
+    transform: translateY(-67px);
+  }
+  42%,
+  58% {
+    transform: translateY(-134px);
+  }
+  62%,
+  78% {
+    transform: translateY(-201px);
+  }
+  82%,
+  100% {
+    transform: translateY(-268px);
+  }
+}
+@media (max-width: 1100px) and (min-width: 701px) {
+  .studio-scene {
+    height: 355px;
+  }
+  .studio-device {
+    top: 82px;
+    width: 82%;
+    left: 9%;
+  }
+  .studio-screen {
+    padding: 14px 16px 10px;
+    min-height: 190px;
+  }
+  .studio-screen p {
+    font-size: 14px;
+    margin-bottom: 10px;
+  }
+  .studio-screen-top b {
+    display: none;
+  }
+  .studio-word-window {
+    margin-top: 9px;
+  }
+  .studio-words > span {
+    font-size: 40px;
+  }
+  .studio-course {
+    padding: 9px 10px;
+    gap: 7px;
+  }
+  .studio-course-icon {
+    width: 27px;
+    height: 30px;
+  }
+  .studio-course-icon svg {
+    width: 21px;
+    height: 21px;
+  }
+  .studio-course strong {
+    font-size: 11px;
+  }
+  .studio-course small {
+    font-size: 5px;
+    letter-spacing: 0.8px;
+  }
+  .studio-course em {
+    font-size: 6px;
+  }
+  .studio-accounting {
+    top: 44px;
+  }
+  .studio-office {
+    top: 4px;
+  }
+  .studio-note {
+    right: 0;
+    bottom: 8px;
+    gap: 7px;
+  }
+  .studio-note div {
+    font-size: 8px;
+  }
+  .studio-note b {
+    font-size: 10px;
+  }
+  .studio-note > span {
+    font-size: 22px;
+  }
+  .studio-top > span {
+    font-size: 6px;
+    letter-spacing: 1px;
+  }
+  .studio-desktop-break {
+    display: none;
+  }
+}
+@media (max-width: 700px) {
+  .hero-studio {
+    margin-top: 30px;
+  }
+  .studio-top {
+    padding-inline: 2px;
+  }
+  .studio-top > span {
+    font-size: 7px;
+    letter-spacing: 1px;
+  }
+  .studio-scene {
+    height: 365px;
+    margin-top: 16px;
+  }
+  .studio-device {
+    top: 86px;
+    width: 80%;
+    left: 10%;
+  }
+  .studio-screen {
+    min-height: 200px;
+    padding: 16px 16px 12px;
+  }
+  .studio-screen-top {
+    font-size: 8px;
+  }
+  .studio-screen-top b {
+    display: none;
+  }
+  .studio-word-window {
+    margin-top: 8px;
+  }
+  .studio-words > span {
+    font-size: 43px;
+  }
+  .studio-screen p {
+    font-size: 15px;
+    margin: 0 0 12px;
+  }
+  .studio-course {
+    padding: 10px;
+    gap: 8px;
+    border-radius: 10px;
+  }
+  .studio-course-icon {
+    height: 31px;
+    width: 27px;
+  }
+  .studio-course-icon svg {
+    height: 22px;
+    width: 22px;
+  }
+  .studio-course strong {
+    font-size: 11px;
+  }
+  .studio-course small {
+    font-size: 5px;
+    letter-spacing: 0.8px;
+  }
+  .studio-course em {
+    font-size: 6px;
+  }
+  .studio-course > .icon {
+    width: 10px;
+    height: 10px;
+    margin-left: 0;
+  }
+  .studio-accounting {
+    top: 52px;
+  }
+  .studio-office {
+    top: 0;
+  }
+  .studio-typing {
+    bottom: 0;
+  }
+  .studio-note {
+    bottom: 6px;
+    right: 0;
+    gap: 7px;
+  }
+  .studio-note div {
+    font-size: 8px;
+  }
+  .studio-note b {
+    font-size: 10px;
+  }
+  .studio-note > span {
+    font-size: 22px;
+  }
+  .studio-intro {
+    padding-inline: 2px;
+    padding-top: 26px;
+  }
+  .studio-intro h2 {
+    font-size: 34px;
+  }
+  .studio-intro p {
+    font-size: 13px;
+  }
+  .studio-desktop-break {
+    display: none;
+  }
+  .studio-bottom {
+    margin-inline: 2px;
+  }
+  .studio-bottom > a,
+  .studio-bottom > button {
+    font-size: 11px;
+  }
+}
+@media (max-width: 360px) {
+  .studio-scene {
+    height: 340px;
+  }
+  .studio-screen {
+    padding: 12px 13px 9px;
+    min-height: 176px;
+  }
+  .studio-words > span {
+    font-size: 35px;
+  }
+  .studio-screen p {
+    font-size: 13px;
+  }
+  .studio-screen-bottom {
+    font-size: 4px;
+    letter-spacing: 1px;
+  }
+  .studio-course {
+    padding: 8px;
+    gap: 6px;
+  }
+  .studio-course-icon {
+    width: 24px;
+  }
+  .studio-course strong {
+    font-size: 10px;
+  }
+  .studio-course em {
+    font-size: 5px;
+  }
+  .studio-course small {
+    font-size: 4px;
+    letter-spacing: 0.6px;
+  }
+  .studio-note b {
+    font-size: 9px;
+  }
+  .studio-intro h2 {
+    font-size: 30px;
+  }
+  .studio-bottom > a,
+  .studio-bottom > button {
+    font-size: 10px;
+    gap: 7px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .studio-scene *,
+  .studio-scene *::before {
+    animation: none !important;
+    transition: none;
+  }
+  .studio-device {
+    transform: rotateZ(-2deg);
+  }
+  .studio-screen::before {
+    display: none;
+  }
+}

@@ -4,7 +4,7 @@ from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
 from urllib.parse import urlparse,parse_qs
-import json,re
+import json,re,sys,importlib.util
 import fitz
 from playwright.sync_api import sync_playwright,expect
 
@@ -13,11 +13,16 @@ OUT=ROOT/'tests/artifacts/premium-home'
 class Quiet(SimpleHTTPRequestHandler):
     def log_message(self,*args):pass
 
-def run():
+def run(production=False):
     server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT)))
     Thread(target=server.serve_forever,daemon=True).start()
     base=f'http://127.0.0.1:{server.server_port}'
     OUT.mkdir(parents=True,exist_ok=True)
+    path='/public/' if production else '/previews/premium-home/'
+    next_button='#applicationSubmit' if production else '#formNext'
+    if production:
+        spec=importlib.util.spec_from_file_location('payment_fixture',ROOT/'tests/admission-payment-browser.py')
+        fixture=importlib.util.module_from_spec(spec);spec.loader.exec_module(fixture)
     courses=json.loads((ROOT/'previews/premium-home/courses.json').read_text())
     try:
         with sync_playwright() as p:
@@ -28,12 +33,16 @@ def run():
             def route(r):
                 if r.request.method not in ['GET','HEAD']:writes.append(r.request.url);r.abort()
                 elif r.request.url.startswith(base+'/'):r.continue_()
+                elif production and r.request.url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):
+                    r.fulfill(content_type='application/javascript',body=fixture.MOCK,headers={'Access-Control-Allow-Origin':'*'})
                 elif r.request.url.startswith('https://wa.me/'):whatsapp.append(r.request.url);r.fulfill(content_type='text/html',body='WhatsApp draft intercepted. No message sent.')
                 else:external.append(r.request.url);r.abort()
             context.route('**/*',route)
-            page=context.new_page();page.on('pageerror',lambda error:errors.append(str(error)))
+            page=context.new_page();
+            if production:page.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,auth:{currentUser:null,authStateReady:async()=>{}}};')
+            page.on('pageerror',lambda error:errors.append(str(error)))
             page.on('response',lambda response:failed.append((response.status,response.url)) if response.status>=400 else None)
-            page.goto(base+'/previews/premium-home/');expect(page.locator('.course-card')).to_have_count(7)
+            page.goto(base+path);expect(page.locator('.course-card')).to_have_count(7)
             expect(page.locator('#coursePreference option')).to_have_count(8)
             page.evaluate('document.fonts.ready')
             assert page.evaluate('document.fonts.check("500 20px Inter") && document.fonts.check("500 20px Playfair")')
@@ -108,29 +117,41 @@ def run():
 
             page.locator('.course-card [data-action=apply][data-id="4"]').click()
             expect(page.locator('#coursePreference')).to_have_value(courses[4]['title'])
-            page.locator('#formNext').click();expect(page.locator('#formStepLabel')).to_have_text('STEP 01 / 05')
+            page.locator(next_button).click();expect(page.locator('#formStepLabel')).to_have_text('STEP 01 / 05')
             data={'fullName':'Sample Preview Learner','parentName':'Example Parent','phone':'9999999991','guardianPhone':'9999999992','aadhaarLast4':'1234','email':'preview@example.test','dob':'2005-03-12','address':'Example address for local design testing'}
             for key,value in data.items():page.locator('#'+key).fill(value)
             page.locator('#gender').select_option('prefer_not_to_say');page.locator('#qualification').select_option('Graduate')
-            page.locator('#formNext').click();expect(page.locator('#formStepLabel')).to_have_text('STEP 02 / 05')
+            page.locator(next_button).click();expect(page.locator('#formStepLabel')).to_have_text('STEP 02 / 05')
             page.locator('#batch').select_option('Evening');page.locator('#source').select_option('Facebook');page.locator('#message').fill('This is an example preview message.')
-            page.locator('#formNext').click();expect(page.locator('#formStepLabel')).to_have_text('STEP 03 / 05')
-            page.locator('#formNext').click();expect(page.locator('#formStatus')).to_contain_text('Choose a photo')
-            page.locator('[data-action=sample-photo]').click();expect(page.locator('#photoStatus')).to_contain_text('Nothing was uploaded')
-            expect(page.locator('#photoPreview')).to_have_attribute('src',re.compile('^blob:'))
-            page.locator('#formNext').click();expect(page.locator('#formStepLabel')).to_have_text('STEP 04 / 05')
+            page.locator(next_button).click();expect(page.locator('#formStepLabel')).to_have_text('STEP 03 / 05')
+            page.locator(next_button).click();expect(page.locator('#formStatus')).to_contain_text('passport photograph' if production else 'Choose a photo')
+            if production:
+                expect(page.locator('#admissionServiceState')).to_have_text('SECURE APPLICATION')
+                page.locator('#studentPhoto').set_input_files(str(ROOT/'public/assets/hero-library.jpg'))
+                expect(page.locator('#photoPreview')).to_be_visible()
+                expect(page.locator('#photoPreview')).to_have_attribute('src',re.compile('^data:image/jpeg'))
+            else:
+                page.locator('[data-action=sample-photo]').click();expect(page.locator('#photoStatus')).to_contain_text('Nothing was uploaded')
+                expect(page.locator('#photoPreview')).to_have_attribute('src',re.compile('^blob:'))
+            page.locator(next_button).click();expect(page.locator('#formStepLabel')).to_have_text('STEP 04 / 05')
             for value in [data['fullName'],data['phone'],data['email'],data['address'],'Prefer not to say','Graduate',courses[4]['title'],'Evening','Facebook','example preview message']:expect(page.locator('#applicationReview')).to_contain_text(value)
             page.locator('[data-review-edit="0"]').click();page.locator('#fullName').fill(' ')
             page.locator('[data-step="3"]').click();expect(page.locator('#formStepLabel')).to_have_text('STEP 01 / 05');expect(page.locator('#formStatus')).to_contain_text('highlighted field')
             page.locator('#fullName').fill('Edited Preview Learner')
             page.locator('[data-step="3"]').click();expect(page.locator('#applicationReview')).to_contain_text('Edited Preview Learner')
-            page.locator('#formNext').click();expect(page.locator('#formStepLabel')).to_have_text('STEP 05 / 05')
-            page.locator('#formNext').click();expect(page.locator('#formStatus')).to_contain_text('highlighted field')
-            page.locator('#agreement').check();page.locator('#formNext').click()
-            expect(page.locator('#dialogContent')).to_contain_text('No application was submitted')
-            expect(page.locator('#dialogContent')).to_contain_text('No money was charged')
-            page.locator('[data-action=clear-application]').click();expect(page.locator('#fullName')).to_have_value('')
-            expect(page.locator('#photoPreview')).not_to_have_attribute('src',re.compile('^blob:'))
+            page.locator(next_button).click();expect(page.locator('#formStepLabel')).to_have_text('STEP 05 / 05')
+            page.locator(next_button).click();expect(page.locator('#formStatus')).to_contain_text('highlighted field')
+            page.locator('#agreement').check()
+            if production:
+                assert page.evaluate('__fixture.writes.length')==0
+                page.locator('#clearApplication').click()
+            else:
+                page.locator(next_button).click()
+                expect(page.locator('#dialogContent')).to_contain_text('No application was submitted')
+                expect(page.locator('#dialogContent')).to_contain_text('No money was charged')
+                page.locator('[data-action=clear-application]').click()
+            expect(page.locator('#fullName')).to_have_value('')
+            expect(page.locator('#photoPreview')).not_to_have_attribute('src',re.compile('^(blob:|data:)'))
             assert page.evaluate('Object.keys(localStorage)')==['rehaan-visitor-saved-courses-v1'];assert page.evaluate('sessionStorage.length')==0
             print('PASS: all existing form details, validation, photo crop, edit/review/confirmation and clear controls work entirely in memory; no submission/payment',flush=True)
 
@@ -149,7 +170,7 @@ def run():
             print('PASS: real timed typing results/reset, gallery, contact phones, location coordinates and original social links work',flush=True)
 
             for width in [320,390,700,768,1024,1440]:
-                page.set_viewport_size({'width':width,'height':1000});page.goto(base+'/previews/premium-home/');expect(page.locator('.course-card')).to_have_count(7)
+                page.set_viewport_size({'width':width,'height':1000});page.goto(base+path);expect(page.locator('.course-card')).to_have_count(7)
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
                 if width<=950:
                     page.locator('#menuButton').click();expect(page.locator('#mainNav')).to_be_visible();page.locator('#mainNav a[href="#courses"]').click();expect(page.locator('#mainNav')).not_to_be_visible()
@@ -161,6 +182,7 @@ def run():
                 if width==1440:
                     page.emulate_media(reduced_motion='no-preference');page.locator('.hero-studio').scroll_into_view_if_needed();expect(page.locator('.studio-live .studio-device')).to_have_css('animation-play-state','running')
                     page.emulate_media(reduced_motion='reduce');expect(page.locator('.studio-device')).to_have_css('animation-name','none')
+            if production:assert page.evaluate('__fixture.writes.length')==0
             assert not errors,errors
             assert not external,external
             assert not writes,writes
@@ -169,4 +191,4 @@ def run():
             browser.close()
     finally:server.shutdown()
 
-if __name__=='__main__':run()
+if __name__=='__main__':run('--production' in sys.argv)
