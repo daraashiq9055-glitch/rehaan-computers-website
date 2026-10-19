@@ -43,12 +43,15 @@ def run():
             page.screenshot(path=str(OUT/'desktop.png'))
             expect(page.locator('#workspaceDemo')).to_have_count(0)
             expect(page.locator('[data-demo]')).to_have_count(0)
-            expect(page.locator('#journeyTitle')).to_have_text('A starting point that fits you.')
-            page.locator('[data-journey="1"]').click();expect(page.locator('#journeyTitle')).to_have_text('Real practice. Personal guidance.')
-            page.locator('[data-journey="2"]').click();expect(page.locator('#journeyTitle')).to_have_text('Skills for your everyday future.')
-            page.locator('.journey-cta').click();expect(page.locator('#dialogContent')).to_contain_text('What would you like to achieve?')
+            expect(page.locator('.hero-studio img')).to_have_count(0)
+            expect(page.locator('.journey-progress')).to_have_count(0)
+            for id in [1,4,3]:
+                page.locator('.studio-course[data-id="'+str(id)+'"]').click()
+                expect(page.locator('#dialogTitle')).to_have_text(courses[id]['title'])
+                page.locator('#dialogClose').click()
+            page.locator('.studio-bottom [data-action=finder]').click();expect(page.locator('#dialogContent')).to_contain_text('What would you like to achieve?')
             page.locator('#dialogClose').click()
-            print('PASS: complete content and photo-led learning journey load; all stages and course-finder action work',flush=True)
+            print('PASS: original computer-learning illustration, all three course shortcuts and course-finder action work',flush=True)
 
             page.locator('[data-filter=accounting]').click();expect(page.locator('.course-card')).to_have_count(2)
             page.locator('[data-filter=typing]').click();expect(page.locator('.course-card')).to_have_count(1)
@@ -156,8 +159,8 @@ def run():
                 if width==390:
                     page.evaluate('scrollTo(0,0)');page.screenshot(path=str(OUT/'mobile.png'));page.locator('#courses').scroll_into_view_if_needed();page.screenshot(path=str(OUT/'mobile-courses.png'))
                 if width==1440:
-                    page.emulate_media(reduced_motion='no-preference');page.locator('.hero-journey').scroll_into_view_if_needed();expect(page.locator('.journey-running .journey-progress > span')).to_have_css('animation-name','journey-time')
-                    page.emulate_media(reduced_motion='reduce');expect(page.locator('.journey-progress > span')).to_have_css('animation-name','none')
+                    page.emulate_media(reduced_motion='no-preference');page.locator('.hero-studio').scroll_into_view_if_needed();expect(page.locator('.studio-live .studio-device')).to_have_css('animation-play-state','running')
+                    page.emulate_media(reduced_motion='reduce');expect(page.locator('.studio-device')).to_have_css('animation-name','none')
             assert not errors,errors
             assert not external,external
             assert not writes,writes

@@ -26,8 +26,8 @@ def main():
         'previews/premium-home/index.html',
         'previews/premium-home/premium.css',
         'previews/premium-home/refinements.css',
-        'previews/premium-home/journey.css',
-        'previews/premium-home/journey.js',
+        'previews/premium-home/studio.css',
+        'previews/premium-home/studio.js',
         'previews/premium-home/app.js',
         'previews/premium-home/motion.js',
         'previews/premium-home/admission.js',
@@ -46,9 +46,9 @@ def main():
     with ThreadingHTTPServer(('127.0.0.1', 0), handler) as server:
         url = f'http://127.0.0.1:{server.server_port}/previews/premium-home/'
         print('\nREHAAN COMPUTERS - COMPLETE PREMIUM VISITOR PREVIEW', flush=True)
-        print('Look for: COMPLETE DESIGN PREVIEW and the photo-led YOUR LEARNING JOURNEY feature.', flush=True)
+        print('Look for: COMPLETE DESIGN PREVIEW and the animated computer-learning display.', flush=True)
         print('Try the course finder, comparison, PDF brochures, typing challenge and guided application.', flush=True)
-        print('Look for the top moving skills line, individual course images and automatic guidance slideshow.', flush=True)
+        print('Look for the moving skills line below navigation, individual course images and automatic guidance slideshow.', flush=True)
         print('\n' + url, flush=True)
         print('\nKeep this window open. Press Ctrl+C to stop.', flush=True)
         print('This preview cannot submit applications or payments.\n', flush=True)

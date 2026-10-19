@@ -12,7 +12,7 @@ git pull --ff-only
 python preview-home.py
 ```
 
-Keep CMD open. The launcher chooses a free localhost port, disables caching and opens this preview automatically. Look for **COMPLETE DESIGN PREVIEW** and the photo-led **Your learning journey** feature. If no tab opens, copy the printed URL exactly. No asterisks belong in a URL. `--no-browser` prints the address without opening a tab.
+Keep CMD open. The launcher chooses a free localhost port, disables caching and opens this preview automatically. Look for **COMPLETE DESIGN PREVIEW** and the original **animated computer-learning display**. If no tab opens, copy the printed URL exactly. No asterisks belong in a URL. `--no-browser` prints the address without opening a tab.
 
 Manual alternative from the repository root:
 
@@ -24,7 +24,7 @@ Then open `http://localhost:8002/previews/premium-home/`.
 
 ## Latest visual refinements
 
-- The original ten skills run in a compact moving line above the main header. There is no pause button; hovering pauses the line and reduced-motion preferences stop it.
+- The original ten skills run in a compact moving line directly below the main navigation. There is no pause button; hovering pauses the line and reduced-motion preferences stop it.
 - A local RC learning logo appears in the header, footer and favicon. Clicking the header logo/name opens a keyboard-accessible menu. Its Admin login link opens the existing live sign-in page in a separate tab only when clicked; no administrator credentials or records are used by this preview.
 - Personal guidance shows the two existing real learner/laptop photographs one at a time, advancing automatically every five seconds while visible, including when hovered or focused. It pauses for hidden tabs, manual pause and reduced-motion preferences. Dot and arrow-key controls work. Software screenshots are kept out of this section.
 - Dar Yasir's footer credit has gold shine and subtle moving accents. Motion stops on hover/focus and with reduced-motion preferences.
@@ -34,7 +34,7 @@ Then open `http://localhost:8002/previews/premium-home/`.
 
 ## Features that work
 
-1. A photo-led learning journey replaces the spreadsheet/accounting/document workspace. An existing real learning photograph, three Choose / Practise / Grow stages, gold progress line and a course-finder action explain what visitors can expect. Stages advance every 6.5 seconds while visible, with manual and keyboard navigation. Motion pauses for keyboard focus, manual pause, hidden tabs and reduced-motion preferences. No invented student numbers, results or job guarantees are shown.
+1. An original animated computer-learning illustration replaces the reused photo and Choose / Practise / Grow progress panel. The whole laptop gently floats and tilts, screen words cycle through Learn / Practise / Create / Grow, and light/orbit accents move continuously. Three stable, clickable Office / Tally / Typing cards open the existing real course details; course-finder and full catalogue actions remain available. All animation pauses out of view, in hidden tabs, on manual pause and for reduced-motion preferences. No photograph, loading bar, invented results or job guarantees are used in this hero.
 2. Searchable seven-course catalogue, category/duration filters, empty states and saved-course view.
 3. Save courses across visits on the same browser. Only stable public course slugs are stored under `rehaan-visitor-saved-courses-v1`. Student/application fields and photos are never saved to browser storage.
 4. Compare two or three courses side by side; a fourth selection is blocked. Smaller screens use an inner horizontal table scroller.
@@ -66,6 +66,6 @@ python3 tests/premium-home-motion-browser.py
 
 The pure checks cover curriculum/field preservation, actual duration filtering, all goal/experience/time recommendations, typing calculations and PDF object offsets. Browser checks exercise all major interactions, parse downloaded multi-page PDFs, verify each Tally module, test both WhatsApp destinations through intercepted popups, traverse the complete form, check memory-only personal data, and cover six viewport widths. Live service requests and record writes are blocked by the test.
 
-The motion suite checks the hero journey's timed advancement, pause/resume, keyboard navigation and course finder, along with the logo/menu, keyboard controls, the top skills line without a pause button, automatic slideshow advancement while hovered/focused, manual controls, reduced motion, seven distinct original course-image mappings and mobile containment. It does not navigate to the live administrator page.
+The motion suite checks full-scene animation, pause/resume, absence of the rejected photo/progress bar, ticker placement directly below navigation, course shortcuts and course finder, along with the logo/menu, keyboard controls, the top skills line without a pause button, automatic slideshow advancement while hovered/focused, manual controls, reduced motion, seven distinct original course-image mappings and mobile containment. It does not navigate to the live administrator page.
 
 This preview is ready for design review, not production deployment. Approved elements must be integrated separately with the existing verified application/photo/payment flow, preserving its transaction and permission protections and rerunning payment/admission regressions before any Hosting release. Private application-status tracking remains a future backend feature.

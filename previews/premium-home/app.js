@@ -1,4 +1,4 @@
-import { initJourney } from "./journey.js";
+import { initStudio } from "./studio.js";
 import { initMotion } from "./motion.js";
 import {
   courseSlug,
@@ -717,7 +717,7 @@ document.addEventListener("click", (event) => {
   }
 });
 initMotion();
-initJourney();
+initStudio();
 $("#year").textContent = new Date().getFullYear();
 Promise.all(
   ["courses.json", "site.json"].map((name) =>
