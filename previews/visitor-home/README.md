@@ -6,11 +6,23 @@ From Windows CMD:
 
 ```bat
 cd /d "%USERPROFILE%\rehaan-admin-preview"
+git fetch origin
+git switch codex/admin-dashboard-redesign
 git pull --ff-only
+python preview-home.py
+```
+
+The launcher opens the exact preview page automatically. It chooses a free localhost port so an older server cannot show the wrong homepage. Keep CMD open. If no browser opens, copy the address printed in CMD. Look for **Real skills. New possibilities.** The live website and the repository's root `index.html` still show the current design.
+
+The launcher locates files relative to itself rather than your CMD working directory, verifies the required preview files exist and disables browser caching for this local session. Use `python preview-home.py --no-browser` if you prefer to copy the URL yourself.
+
+Manual alternative, from the repository root:
+
+```bat
 python -m http.server 8002 --bind 127.0.0.1
 ```
 
-Keep that CMD window open. Open this exact address in a browser:
+Keep that CMD window open and open this exact address:
 
 http://localhost:8002/previews/visitor-home/
 
