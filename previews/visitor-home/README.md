@@ -1,24 +1,13 @@
 # Visitor homepage design preview
 
+This earlier alternative design was not selected. The launcher `python preview-home.py` now opens `previews/current-home/`, which improves the familiar current homepage. Use the manual server/address below only to revisit this earlier alternative.
+
 This is a separate, disconnected design preview. Nothing under `public/`, the admin dashboard, the live admission form, Firebase rules, workers or payment services is changed. The seven course records were copied from the existing public course definitions. The photographs are existing website imagery, not new photographs of the institute.
 
-From Windows CMD:
+To revisit this earlier alternative only, run from Windows CMD:
 
 ```bat
 cd /d "%USERPROFILE%\rehaan-admin-preview"
-git fetch origin
-git switch codex/admin-dashboard-redesign
-git pull --ff-only
-python preview-home.py
-```
-
-The launcher opens the exact preview page automatically. It chooses a free localhost port so an older server cannot show the wrong homepage. Keep CMD open. If no browser opens, copy the address printed in CMD. Look for **Real skills. New possibilities.** The live website and the repository's root `index.html` still show the current design.
-
-The launcher locates files relative to itself rather than your CMD working directory, verifies the required preview files exist and disables browser caching for this local session. Use `python preview-home.py --no-browser` if you prefer to copy the URL yourself.
-
-Manual alternative, from the repository root:
-
-```bat
 python -m http.server 8002 --bind 127.0.0.1
 ```
 

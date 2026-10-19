@@ -23,10 +23,10 @@ def main():
     parser.add_argument('--no-browser', action='store_true', help='Print the URL without opening a browser.')
     args = parser.parse_args()
     required = [
-        'previews/visitor-home/index.html',
-        'previews/visitor-home/preview.css',
-        'previews/visitor-home/preview.js',
-        'previews/visitor-home/courses.json',
+        'previews/current-home/index.html',
+        'previews/current-home/improvements.css',
+        'previews/current-home/improvements.js',
+        'previews/current-home/courses.json',
         'public/assets/hero-library.jpg',
         'public/admin-fonts/inter-latin-wght-normal.woff2',
     ]
@@ -36,9 +36,9 @@ def main():
 
     handler = partial(PreviewHandler, directory=str(ROOT))
     with ThreadingHTTPServer(('127.0.0.1', 0), handler) as server:
-        url = f'http://127.0.0.1:{server.server_port}/previews/visitor-home/'
-        print('\nNEW VISITOR HOMEPAGE PREVIEW', flush=True)
-        print('Look for: Real skills. New possibilities.', flush=True)
+        url = f'http://127.0.0.1:{server.server_port}/previews/current-home/'
+        print('\nCURRENT WEBSITE - IMPROVEMENTS PREVIEW', flush=True)
+        print('Look for: Master Real Computer Skills, then scroll to Courses for the new gold tabs.', flush=True)
         print('\n' + url, flush=True)
         print('\nKeep this window open. Press Ctrl+C to stop.', flush=True)
         print('This preview cannot submit applications or payments.\n', flush=True)
