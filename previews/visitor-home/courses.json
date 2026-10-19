@@ -1,0 +1,250 @@
+[
+  {
+    "title": "One Year Computer Diploma Course",
+    "img": "assets/excel-sheet.jpg",
+    "subtitle": "Basic to Advanced Computer Skills",
+    "duration": "1 Year",
+    "level": "Beginner → Advanced",
+    "certificate": "Professional Certificate",
+    "category": "Computer Diploma",
+    "overview": "A complete computer diploma designed to build strong fundamentals and practical computer skills from beginner to advanced level.",
+    "learn": [
+      "Computer Fundamentals",
+      "Windows & File Management",
+      "MS Word",
+      "MS Excel",
+      "MS PowerPoint",
+      "Internet & Email",
+      "Typing Practice",
+      "Tally Prime",
+      "GST Basics"
+    ],
+    "practical": "Students practice office documents, spreadsheets, presentations, typing, accounting tasks and everyday computer operations.",
+    "who": "Students, beginners and learners who want a complete computer foundation.",
+    "skills": [
+      "Office Productivity",
+      "Accounting Basics",
+      "Typing",
+      "Digital Skills",
+      "Practical Computer Work"
+    ]
+  },
+  {
+    "title": "Six Month Computer Certificate Course",
+    "img": "assets/word-doc.jpg",
+    "subtitle": "Get Certified • Boost Your Profile",
+    "duration": "6 Months",
+    "level": "Beginner → Intermediate",
+    "certificate": "Professional Certificate",
+    "category": "Computer Certificate",
+    "overview": "A practical six-month certificate course covering the most useful computer and office productivity skills.",
+    "learn": [
+      "Computer Fundamentals",
+      "MS Word",
+      "MS Excel",
+      "PowerPoint",
+      "Internet",
+      "Email",
+      "Typing",
+      "Office Productivity"
+    ],
+    "practical": "Practice documents, spreadsheets, presentations, typing, internet tasks and everyday office work.",
+    "who": "Students and beginners who want practical computer skills with a structured learning path.",
+    "skills": [
+      "Office Skills",
+      "Typing",
+      "Internet Skills",
+      "Document Creation",
+      "Digital Productivity"
+    ]
+  },
+  {
+    "title": "Three Month Computer Certificate Course",
+    "img": "assets/excel-desk.jpg",
+    "subtitle": "Learn Fast • Gain Skills",
+    "duration": "3 Months",
+    "level": "Beginner",
+    "certificate": "Professional Certificate",
+    "category": "Computer Certificate",
+    "overview": "A short practical course focused on essential computer skills for beginners.",
+    "learn": [
+      "Computer Basics",
+      "MS Word",
+      "MS Excel",
+      "PowerPoint",
+      "Internet",
+      "Email",
+      "Typing Practice"
+    ],
+    "practical": "Practice documents, spreadsheets, presentations, typing and basic internet tasks.",
+    "who": "Beginners who want essential computer skills within a short learning period.",
+    "skills": ["Computer Basics", "MS Office", "Typing", "Internet", "Email"]
+  },
+  {
+    "title": "Typing Diploma Course",
+    "img": "assets/typing-keys.jpg",
+    "subtitle": "Typing Speed & Accuracy",
+    "duration": "Flexible",
+    "level": "Beginner → Advanced",
+    "certificate": "Typing Diploma",
+    "category": "Typing",
+    "overview": "A focused typing course designed to improve keyboard familiarity, speed and typing accuracy through regular practice.",
+    "learn": [
+      "English Typing",
+      "Typing Accuracy",
+      "Speed Development",
+      "Daily Practice",
+      "Keyboard Familiarity"
+    ],
+    "practical": "Regular typing exercises are used to build speed, accuracy and confidence.",
+    "who": "Students, job seekers and anyone who wants to improve typing skills.",
+    "skills": [
+      "Typing Speed",
+      "Typing Accuracy",
+      "Keyboard Skills",
+      "Computer Confidence"
+    ]
+  },
+  {
+    "title": "Tally Prime with GST — Detailed Course",
+    "img": "assets/tally-prime.jpg",
+    "subtitle": "Complete Accounting & GST Training",
+    "duration": "3 Months",
+    "level": "Beginner → Job-Ready",
+    "certificate": "Professional Certificate",
+    "category": "Accounting",
+    "overview": "Our most detailed accounting programme — from Tally Prime basics to GST invoicing, inventory, payroll and final accounts, taught module by module on live company data.",
+    "syllabus": [
+      {
+        "module": "1. Accounting Foundations",
+        "items": [
+          "Computer basics for accountants",
+          "Accounting terms, ledgers & the three golden rules",
+          "Tally Prime interface, menus & data-entry speed"
+        ]
+      },
+      {
+        "module": "2. Company Setup",
+        "items": [
+          "Company creation, alteration & security control",
+          "Groups, ledgers & master creation",
+          "Opening balances & F11 features"
+        ]
+      },
+      {
+        "module": "3. Vouchers — All Types",
+        "items": [
+          "Receipt, Payment, Contra & Journal",
+          "Purchase, Sales, Debit & Credit Notes",
+          "Order processing, inventory vouchers & shortcut keys"
+        ]
+      },
+      {
+        "module": "4. Inventory Management",
+        "items": [
+          "Stock groups, stock items & units",
+          "Godowns, batching & manufacturing dates",
+          "Purchase orders, re-order levels & stock reports"
+        ]
+      },
+      {
+        "module": "5. GST Accounting",
+        "items": [
+          "GST concepts, registration & HSN/SAC codes",
+          "CGST / SGST / IGST vouchers & tax invoices",
+          "Credit notes, advances & e-way bill basics",
+          "GSTR-1 & GSTR-3B preparation practice"
+        ]
+      },
+      {
+        "module": "6. Payroll & TDS",
+        "items": [
+          "Employees, pays, earnings & deductions",
+          "Payroll register & salary vouchers",
+          "TDS basics & deduction entries"
+        ]
+      },
+      {
+        "module": "7. Final Accounts & Reports",
+        "items": [
+          "Day book, ledger, trial balance & journals",
+          "Balance sheet & profit/loss analysis",
+          "Cash flow, ratio analysis & interest calc",
+          "Backup, restore, export to Excel & printing"
+        ]
+      }
+    ],
+    "learn": [
+      "Company Setup",
+      "All Voucher Types",
+      "Inventory & GST",
+      "Payroll & TDS",
+      "Final Accounts",
+      "Reports, Backup & Excel Export"
+    ],
+    "practical": "Students create their own company and complete billing sets, GST return practice, a full payroll month and final accounts on real business data.",
+    "who": "Students, graduates, shopkeepers and anyone aiming for an accounting or computer-operator job.",
+    "skills": [
+      "Vouchers",
+      "GST Invoicing",
+      "Inventory",
+      "Payroll",
+      "Final Accounts",
+      "GSTR-1 & 3B"
+    ]
+  },
+  {
+    "title": "Crash Computer Course",
+    "img": "assets/tally-prime.jpg",
+    "subtitle": "Accounts • Design • Office Work",
+    "duration": "Short Term",
+    "level": "Beginner → Intermediate",
+    "certificate": "Course Certificate",
+    "category": "Crash Course",
+    "overview": "A short job-oriented computer course covering accounting, GST, design and office-related practical work.",
+    "learn": [
+      "Tally Prime",
+      "GST",
+      "Photoshop",
+      "InPage",
+      "Office Work",
+      "Practical Tasks"
+    ],
+    "practical": "Students practice accounting, GST, design and office-related exercises.",
+    "who": "Learners who want practical job-oriented computer skills in a shorter period.",
+    "skills": [
+      "Tally Prime",
+      "GST Basics",
+      "Graphic Design",
+      "InPage",
+      "Office Work"
+    ]
+  },
+  {
+    "title": "Marg ERP 9 Course",
+    "img": "assets/marg-erp.jpg",
+    "subtitle": "Tally + Inventory + Business Solutions",
+    "duration": "Flexible",
+    "level": "Beginner → Intermediate",
+    "certificate": "Course Certificate",
+    "category": "ERP / Accounting",
+    "overview": "A practical ERP course covering accounting, inventory, billing and business management using Marg ERP 9.",
+    "learn": [
+      "Marg ERP 9",
+      "Accounting",
+      "Inventory",
+      "Billing",
+      "Business Management",
+      "Practical Work"
+    ],
+    "practical": "Practice accounting, inventory, billing and business ERP operations.",
+    "who": "Students, business learners and anyone interested in accounting or inventory work.",
+    "skills": [
+      "ERP Operations",
+      "Accounting",
+      "Inventory",
+      "Billing",
+      "Business Management"
+    ]
+  }
+]
