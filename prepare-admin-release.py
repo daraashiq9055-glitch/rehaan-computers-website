@@ -76,6 +76,9 @@ def build(destination, audit_ready=False):
     spec=importlib.util.spec_from_file_location('admin_preview_builder',ROOT/'preview-admin.py')
     preview=importlib.util.module_from_spec(spec);spec.loader.exec_module(preview)
     html=preview.preview_html().decode()
+    # Unapproved design extensions stay in the local preview only.
+    html=re.sub(r'<script[^>]*data-preview-only[^>]*>.*?</script>','',html)
+    html=re.sub(r'<link[^>]*data-preview-only[^>]*>','',html)
     html=re.sub(r'<base href="/public/"><meta http-equiv="Content-Security-Policy"[^>]+>','',html)
     html=re.sub(r'<script type="importmap">.*?</script>','',html)
     html=re.sub(r'<script src="/previews/admin-premium/demo.js"></script>','',html)

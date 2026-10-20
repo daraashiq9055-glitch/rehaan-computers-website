@@ -12,6 +12,23 @@ Python opens the exact preview in a browser using a free port. Keep CMD open.
 There is no Firebase login or installation step. If the browser does not open,
 copy the printed address. `--no-browser` only prints that address.
 
+### Student photo on mark cards — preview only
+
+Open **Mark Cards**, select a sample student, enter and save their marks, then
+scroll to **Mark-card photo · preview first**. Choose a local JPEG, PNG or WebP
+to try the top-right portrait. A photo added to a sample offline student is also
+reused automatically. Real private student photos are not loaded in this demo.
+
+Use **Download photo preview · PNG** for a 3840-pixel-wide card, or select the
+smaller HD option. The original photo is fitted without stretching or cropping;
+its detail depends on the source resolution. A 4K card cannot restore missing
+detail in a small photo. Printing includes the preview portrait too.
+
+Trying a photo does not edit the student record or upload anything. Local photo
+selections disappear on reload/sign-out. This unapproved extension is explicitly
+excluded by `prepare-admin-release.py`; deploying the current release does not
+add this photo design to the live dashboard.
+
 This is the current complete dashboard with a new sapphire/gold presentation,
 matching the homepage, rather than a replacement with missing sections:
 

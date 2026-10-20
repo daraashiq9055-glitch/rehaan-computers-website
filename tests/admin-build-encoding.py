@@ -28,5 +28,9 @@ class ReleaseEncodingTest(unittest.TestCase):
             self.assertIn('”', (windows/'public/admin-ui/shell.js').read_text(encoding='utf-8'))
             self.assertFalse(json.loads((windows/'RELEASE.json').read_text(encoding='utf-8'))['auditEnabled'])
             self.assertNotIn('firestore',json.loads((windows/'firebase.json').read_text(encoding='utf-8')))
+            released_html=(windows/'public/admin.html').read_text(encoding='utf-8')
+            self.assertNotIn('data-preview-only',released_html)
+            self.assertNotIn('mark-photo-preview',released_html)
+            self.assertFalse(list((windows/'public').rglob('mark-photo-*.js')))
 
 if __name__=='__main__':unittest.main()
