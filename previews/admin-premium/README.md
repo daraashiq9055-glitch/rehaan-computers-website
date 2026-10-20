@@ -158,3 +158,13 @@ fields, archive/restore, per-course progress, stale/denied saves, both demo admi
 nonprivate preference storage/fallback, exact student quick actions, five widths,
 history attribution/export, and logout cleanup. Existing dashboard, accounts,
 records-centre and payment regression suites remain applicable.
+
+## Separate release candidate and audit backend
+
+The full reviewed UI can now be assembled with `python prepare-admin-release.py`.
+It creates an ignored, separate Hosting candidate without altering the published
+admin source. No demo SDK, automatic sign-in or browser journal is included.
+The server-controlled audit implementation and candidate rules are prepared in
+`backend/audit/`; actual deployment and principal identity still require the
+checks in its README. Secure history remains disabled in the generated UI until
+those backend checks pass. See [release details](../../docs/admin-upgrade-release-candidate.md).

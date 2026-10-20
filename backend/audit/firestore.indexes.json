@@ -1,0 +1,7 @@
+{
+  "indexes": [{"collectionGroup":"applicationAudit","queryScope":"COLLECTION","fields":[{"fieldPath":"applicationId","order":"ASCENDING"},{"fieldPath":"occurredAt","order":"DESCENDING"},{"fieldPath":"__name__","order":"DESCENDING"}]}],
+  "fieldOverrides": [
+    {"collectionGroup":"applicationAudit","fieldPath":"changes","indexes":[]},
+    {"collectionGroup":"applicationAudit","fieldPath":"actor","indexes":[]}
+  ]
+}

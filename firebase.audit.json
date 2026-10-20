@@ -1,0 +1,5 @@
+{
+  "functions": [{"source":"backend/audit","codebase":"application-audit","ignore":["node_modules",".git","*.log"]}],
+  "firestore": {"rules":"backend/audit/firestore.rules","indexes":"backend/audit/firestore.indexes.json"},
+  "emulators": {"firestore":{"host":"127.0.0.1","port":8088},"ui":{"enabled":false},"singleProjectMode":true}
+}

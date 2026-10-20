@@ -11,3 +11,10 @@ firebase-debug.log
 firestore-debug.log
 ui-debug.log
 .firebase/
+
+# Isolated audit backend dependencies and local deployment parameters
+backend/audit/node_modules/
+backend/audit/.env*
+!backend/audit/.env.example
+build/admin-release/
+build/admin-build-*/
