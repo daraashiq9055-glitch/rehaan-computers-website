@@ -1,9 +1,9 @@
+import {initSkillChallenge} from "./challenge.js";
 import { initStudio } from "./studio.js";
 import { initMotion } from "./motion.js";
 import {
   courseSlug,
   matchesDuration,
-  typingScore,
   recommendCourses,
   brochurePDF,
 } from "./model.js";
@@ -489,61 +489,6 @@ function renderSite() {
     .join("");
 
 }
-const passage =
-  "Practice builds confidence. Learn a little each day, type with care, and focus on accuracy before speed. Useful computer skills begin with simple steps.";
-let typingStart = 0,
-  typingInterval = 0,
-  typingDone = false;
-function typingUpdate(force = false) {
-  const typed = $("#typingInput").value,
-    elapsed = typingStart
-      ? Math.min(30000, performance.now() - typingStart)
-      : 0,
-    score = typingScore(passage, typed, elapsed);
-  $("#typingSpeed").textContent = score.wpm;
-  $("#typingAccuracy").textContent = typed.length ? score.accuracy + "%" : "—";
-  $("#typingTimer").textContent =
-    "00:" +
-    String(Math.max(0, Math.ceil((30000 - elapsed) / 1000))).padStart(2, "0");
-  if (force || elapsed >= 30000 || typed === passage) {
-    typingDone = true;
-    clearInterval(typingInterval);
-    $("#typingInput").disabled = true;
-    $("#typingStatus").textContent =
-      `Practice complete: ${score.wpm} WPM and ${score.accuracy}% text accuracy. This result was not saved or sent.`;
-  }
-}
-function resetTyping() {
-  clearInterval(typingInterval);
-  typingStart = 0;
-  typingDone = false;
-  $("#typingInput").value = "";
-  $("#typingInput").disabled = false;
-  $("#typingTimer").textContent = "00:30";
-  $("#typingSpeed").textContent = "0";
-  $("#typingAccuracy").textContent = "—";
-  $("#typingStatus").textContent =
-    "Type the passage above. Pasting is disabled for a fair practice run.";
-}
-$("#typingPassage").textContent = passage;
-$("#typingInput").addEventListener("input", () => {
-  if (typingDone) return;
-  if (!typingStart && $("#typingInput").value) {
-    typingStart = performance.now();
-    typingInterval = setInterval(typingUpdate, 250);
-    $("#typingStatus").textContent =
-      "Focus on accuracy. Your practice is in progress.";
-  }
-  typingUpdate();
-});
-$("#typingInput").addEventListener("paste", (event) => {
-  event.preventDefault();
-  toast("Type the passage yourself to measure your practice.");
-});
-document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && typingStart && !typingDone) typingUpdate();
-});
-window.addEventListener("pagehide", () => clearInterval(typingInterval));
 $("#menuButton").addEventListener("click", () => {
   const open = $("#mainNav").classList.toggle("open");
   $("#menuButton").setAttribute("aria-expanded", String(open));
@@ -687,18 +632,6 @@ document.addEventListener("click", (event) => {
         );
       break;
     }
-    case "typing-reset":
-      resetTyping();
-      $("#typingInput").focus();
-      break;
-    case "typing-course":
-      openCourse(courses.findIndex((course) => course.category === "Typing"));
-      break;
-    case "admin-notice":
-      toast(
-        "The admin dashboard is unchanged. This is a visitor-side preview.",
-      );
-      break;
     case "close-dialog":
       closeDialog();
       break;
@@ -710,6 +643,7 @@ document.addEventListener("click", (event) => {
 });
 initMotion();
 initStudio();
+initSkillChallenge();
 $("#year").textContent = new Date().getFullYear();
 Promise.all(
   ["courses.json", "site.json"].map((name) =>

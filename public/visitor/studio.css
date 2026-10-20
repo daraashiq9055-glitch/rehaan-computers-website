@@ -755,3 +755,13 @@
     display: none;
   }
 }
+/* Small learning stack in the open screen area; shares the scene motion controls. */
+.studio-learning-object { position:absolute;right:17px;top:111px;width:69px;height:73px;pointer-events:none; }
+.studio-learning-object svg { display:block;width:100%;height:100%; }
+.learning-pages { animation:learning-pages-float 6s ease-in-out infinite;transform-origin:38px 38px; }
+.learning-dot { animation:learning-dot-glow 4s ease-in-out infinite; }
+.learning-glint { animation:learning-dot-glow 4s ease-in-out infinite reverse; }
+@keyframes learning-pages-float { 50% { transform:translateY(-5px) rotate(3deg); } }
+@keyframes learning-dot-glow { 50% { opacity:.3;transform:translateY(2px); } }
+@media(max-width:700px){.studio-learning-object{top:98px;right:13px;width:58px;height:63px}}
+@media(max-width:360px){.studio-learning-object{top:92px;right:9px;width:43px;height:48px}}

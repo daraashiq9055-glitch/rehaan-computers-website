@@ -52,7 +52,7 @@ def run():
                 page.locator('.studio-bottom [data-action=finder]').click()
                 expect(page.locator('#dialogContent')).to_contain_text('What would you like to achieve?')
                 assert not stale,stale
-                assert seen=={'/script.js','/visitor/app.js','/visitor/admission.js','/visitor/model.js','/visitor/motion.js','/visitor/studio.js'},seen
+                assert seen=={'/script.js','/visitor/app.js','/visitor/admission.js','/visitor/model.js','/visitor/motion.js','/visitor/studio.js','/visitor/challenge.js'},seen
                 assert not errors,errors
                 assert not external,external
                 assert page.evaluate('__fixture.writes.length')==0

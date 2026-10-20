@@ -283,7 +283,7 @@ export function initAdmission({ courses, toast, escape, icon }) {
     const file = event.dataTransfer?.files?.[0];
     if (!busy && file) cropPhoto(file);
   });
-  import("../script.js?v=20261020-visitor-3")
+  import("../script.js?v=20261020-visitor-4")
     .then((service) => {
       core = service;
       core.initPhoneInputs();

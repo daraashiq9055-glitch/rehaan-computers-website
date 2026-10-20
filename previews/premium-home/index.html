@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="studio.css" />
     <script type="module" src="app.js"></script>
     <link rel="icon" href="assets/rehaan-mark.svg" type="image/svg+xml" />
+      <link rel="stylesheet" href="challenge.css" />
   </head>
   <body>
     <svg class="sprite" aria-hidden="true">
@@ -276,6 +277,19 @@
                     </div>
                   </div>
                   <p>A real skill.<br />A new possibility.</p>
+                  <div class="studio-learning-object" aria-hidden="true">
+                    <svg viewBox="0 0 76 80" fill="none">
+                      <path class="learning-shadow" d="m12 66 26-12 26 12-26 12Z" fill="#7398bd" opacity=".14"/>
+                      <g class="learning-pages">
+                        <path d="m10 46 28-15 28 15-28 16Z" fill="#233e58" stroke="#769abb"/>
+                        <path d="m10 36 28-15 28 15-28 16Z" fill="#304b64" stroke="#b3c8dc"/>
+                        <path d="m10 26 28-15 28 15-28 16Z" fill="#d6b874" stroke="#ffe6ac"/>
+                        <path d="m29 24 7 5 12-9" stroke="#172b3e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                      </g>
+                      <circle class="learning-dot" cx="64" cy="16" r="3" fill="#ffe4a1"/>
+                      <path class="learning-glint" d="M13 11v8M9 15h8" stroke="#91c9e8" stroke-linecap="round"/>
+                    </svg>
+                  </div>
                   <div class="studio-screen-bottom">
                     <span>BEGIN WITH CURIOSITY</span
                     ><svg viewBox="0 0 32 32">
@@ -569,52 +583,16 @@
           <div class="gallery" id="gallery"></div>
         </div>
       </section>
-      <section class="section typing-section" id="practice">
-        <div class="wrap typing-layout">
-          <div>
-            <p class="eyebrow">TRY SOMETHING USEFUL</p>
-            <h2>A little practice.<br /><em>A little more confidence.</em></h2>
-            <p>
-              Take a 30-second typing challenge. See your current speed and
-              accuracy—then explore the course that helps you practise.
-            </p>
-            <button class="text-link" data-action="typing-course">
-              Explore the Typing Diploma<svg class="icon">
-                <use href="#i-arrow" />
-              </svg>
-            </button>
-            <p class="typing-footnote">
-              Practice only. Results stay on this page and are not official
-              assessment marks.
-            </p>
+      <section class="section skill-section" id="practice" aria-labelledby="skillHeading">
+        <div class="wrap skill-layout">
+          <div class="skill-intro">
+            <p class="eyebrow">SMALL DISCOVERIES. REAL CONFIDENCE.</p>
+            <h2 id="skillHeading">A smart little break.<br /><em>A useful little skill.</em></h2>
+            <p>Three everyday computer questions. Tap what you think, discover why it works, and take one more useful idea with you.</p>
+            <div class="skill-pills"><span>Made for mobile</span><span>No timer</span><span>Learn with every tap</span></div>
+            <p class="skill-footnote">A friendly practice activity, not an admission test or official assessment. Your answers stay on this page.</p>
           </div>
-          <div class="typing-card">
-            <div class="typing-header">
-              <span>YOUR 30-SECOND CHALLENGE</span><b id="typingTimer">00:30</b>
-            </div>
-            <p id="typingPassage" class="typing-passage"></p>
-            <label class="sr-only" for="typingInput"
-              >Type the passage shown above</label
-            ><textarea
-              id="typingInput"
-              rows="3"
-              spellcheck="false"
-              autocapitalize="off"
-              autocomplete="off"
-              placeholder="Start typing here. The timer begins with your first character."
-            ></textarea>
-            <div class="typing-results" aria-live="polite">
-              <span><strong id="typingSpeed">0</strong>Words per minute</span
-              ><span><strong id="typingAccuracy">—</strong>Text accuracy</span
-              ><button class="text-link" data-action="typing-reset">
-                Try again ↻
-              </button>
-            </div>
-            <p id="typingStatus" role="status">
-              Type the passage above. Pasting is disabled for a fair practice
-              run.
-            </p>
-          </div>
+          <div id="skillChallenge" class="skill-card" aria-label="Everyday computer skill challenge"><p class="skill-privacy">Enable JavaScript to try this tap-based activity, or explore our courses below.</p></div>
         </div>
       </section>
       <section class="section" id="process">
@@ -1114,7 +1092,7 @@
           <h3>Your next step</h3>
           <button data-action="finder">Find my course</button
           ><button data-action="brochure">Download a brochure</button
-          ><a href="#practice">Typing challenge</a
+          ><a href="#practice">Skill challenge</a
           ><a href="#admission">Application preview</a
           ><a
             href="https://rehaan-computers.web.app/admin.html"

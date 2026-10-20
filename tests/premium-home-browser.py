@@ -155,19 +155,23 @@ def run(production=False):
             assert page.evaluate('Object.keys(localStorage)')==['rehaan-visitor-saved-courses-v1'];assert page.evaluate('sessionStorage.length')==0
             print('PASS: all existing form details, validation, photo crop, edit/review/confirmation and clear controls work entirely in memory; no submission/payment',flush=True)
 
-            page.clock.install()
-            page.locator('#typingInput').fill('Practice builds confidence.')
-            expect(page.locator('#typingAccuracy')).to_have_text('100%')
-            page.clock.fast_forward(30001)
-            expect(page.locator('#typingTimer')).to_have_text('00:00');expect(page.locator('#typingInput')).to_be_disabled()
-            expect(page.locator('#typingStatus')).to_contain_text('not saved or sent')
-            page.locator('[data-action=typing-reset]').click();expect(page.locator('#typingTimer')).to_have_text('00:30');expect(page.locator('#typingInput')).to_have_value('')
+            expect(page.locator('#typingInput')).to_have_count(0)
+            expect(page.locator('#skillNext')).to_be_disabled()
+            for answer in [0, 1, 2]:
+                page.locator('[data-skill-answer="'+str(answer)+'"]').click()
+                expect(page.locator('#skillFeedback')).to_contain_text('That’s right')
+                expect(page.locator('#skillNext')).to_be_enabled()
+                page.locator('#skillNext').click()
+            expect(page.locator('.skill-score')).to_contain_text('3 of 3 correct')
+            expect(page.locator('.skill-privacy')).to_contain_text('not saved or sent')
+            page.locator('#skillAgain').click()
+            expect(page.locator('#skillQuestion')).to_contain_text('CV')
             page.locator('[data-action=gallery]').first.click();expect(page.locator('.gallery-lightbox img')).to_be_visible();page.locator('#dialogClose').click()
             expect(page.locator('#contact a[href="tel:+919149551258"]')).to_have_count(1)
             expect(page.locator('#contact a[href="tel:+919797205429"]')).to_have_count(1)
             assert '34.026895%2C74.643088' in page.locator('#contact a[href^="https://www.google.com/maps"]').get_attribute('href')
             assert page.locator('a[href="https://www.facebook.com/share/14tvvFj3od1/"]').count()>=1
-            print('PASS: real timed typing results/reset, gallery, contact phones, location coordinates and original social links work',flush=True)
+            print('PASS: tap-based learning feedback/restart, gallery, contact phones, location coordinates and original social links work',flush=True)
 
             for width in [320,390,700,768,1024,1440]:
                 page.set_viewport_size({'width':width,'height':1000});page.goto(base+path);expect(page.locator('.course-card')).to_have_count(7)
