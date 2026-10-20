@@ -37,16 +37,17 @@ export function initMotion() {
     }
   });
   brandMenu.addEventListener("click", (event) => {
-    if (event.target.closest("a")) showMenu(false);
+    // Same-page choices close the menu; page links use native navigation.
+    if (event.target.closest('a[href^="#"]')) showMenu(false);
   });
   document.addEventListener("pointerdown", (event) => {
     if (!event.target.closest(".brand-wrap")) showMenu(false);
   });
-  $(".brand-wrap").addEventListener("focusout", () =>
-    queueMicrotask(() => {
-      if (!$(".brand-wrap").contains(document.activeElement)) showMenu(false);
-    }),
-  );
+  $(".brand-wrap").addEventListener("focusout", (event) => {
+    // During focusout activeElement can still be body. relatedTarget is the
+    // incoming focus, so moving from the brand button to its link stays open.
+    if (!$(".brand-wrap").contains(event.relatedTarget)) showMenu(false);
+  });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !brandMenu.hidden) {
       showMenu(false);

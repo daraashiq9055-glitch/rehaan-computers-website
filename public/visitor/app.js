@@ -1,13 +1,13 @@
-import { initStudio } from "./studio.js?v=20261020-visitor-1";
-import { initMotion } from "./motion.js?v=20261020-visitor-1";
+import { initStudio } from "./studio.js?v=20261020-visitor-2";
+import { initMotion } from "./motion.js?v=20261020-visitor-2";
 import {
   courseSlug,
   matchesDuration,
   typingScore,
   recommendCourses,
   brochurePDF,
-} from "./model.js?v=20261020-visitor-1";
-import { initAdmission } from "./admission.js?v=20261020-visitor-1";
+} from "./model.js?v=20261020-visitor-2";
+import { initAdmission } from "./admission.js?v=20261020-visitor-2";
 const $ = (selector) => document.querySelector(selector);
 const scrollBehavior = () =>
   matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";

@@ -1,5 +1,7 @@
 # Save, deploy and roll back the website
 
+The [homepage admin-link fix](admin-navigation-fix-2026-10-20.md) restores the logo-menu link and opens both Admin login links in the same tab.
+
 ## Current visitor website release — 20 October 2026
 
 The approved visitor redesign is integrated with the existing production admission/photo/payment functions. See [the current release checks and Hosting-only deployment steps](visitor-release-2026-10-20.md). The saved code fallback is `backup/before-visitor-redesign-2026-10-20` at `26505c0`. The admin dashboard, rules and Workers are unchanged. The older dashboard release notes below remain as history.
