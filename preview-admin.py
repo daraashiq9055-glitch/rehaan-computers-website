@@ -24,7 +24,6 @@ def preview_html():
     html = html.replace('<head>', '<head>' + head, 1)
     head_module = '<script type="module" src="' + PREVIEW + 'workbench.js"></script>'
     html = html.replace('</head>', head_module + '</head>', 1)
-    html = html.replace('</head>', '<script type="module" data-preview-only src="' + PREVIEW + 'mark-photo-preview.js"></script><link data-preview-only rel="stylesheet" href="' + PREVIEW + 'mark-photo-preview.css"></head>', 1)
     html = html.replace('</head>', '<link rel="stylesheet" href="' + PREVIEW + 'theme.css"><link rel="stylesheet" href="' + PREVIEW + 'records.css"><link rel="stylesheet" href="' + PREVIEW + 'operations.css"><link rel="stylesheet" href="' + PREVIEW + 'workbench.css"></head>', 1)
     html = html.replace('<body class="admin-page">', '<body class="admin-page admin-premium-preview"><div class="demo-strip"><span><i></i> DESIGN PREVIEW</span><p>Sample students only. Live records and payments are disconnected.</p><button type="button" id="demoReset">Reset demo</button></div>', 1)
     html = html.replace('href="index.html"', 'href="/previews/premium-home/"')

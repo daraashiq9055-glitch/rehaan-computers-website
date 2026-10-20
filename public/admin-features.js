@@ -16,6 +16,7 @@ let apps = [],
   renderVersion = 0,
   sessionEpoch = 0,
   saving = false;
+let markPhotoVersion = 0, markImageWidth = 3840;
 let services = {};
 export function configureAdditions(options) {
   services = options;
@@ -101,6 +102,7 @@ function print(kind, html) {
 export function resetAdditions() {
   renderVersion++;
   sessionEpoch++;
+  markPhotoVersion++;
   saving = false;
   apps = [];
   selected = "";
@@ -111,7 +113,7 @@ export function resetAdditions() {
 function markHTML(entry, card) {
   const d = entry.data,
     r = cardResult(card);
-  return `<article class="mark-paper"><div class="paper-brand"><div><h2>Rehaan Computers</h2><small>CHARANGAM · BEERWAH · KASHMIR</small></div><b>ACADEMIC RECORD</b></div><h2 class="mark-title">Statement of Marks</h2><p class="mark-subtitle">${e(card.title)}</p><div class="mark-details">${[
+  return `<article class="mark-paper"><div class="paper-brand"><div><h2>Rehaan Computers</h2><small>CHARANGAM · BEERWAH · KASHMIR</small></div><b>ACADEMIC RECORD</b><div class="mark-portrait-preview"><img alt="Student photograph" hidden><span>Student<br>photo</span></div></div><h2 class="mark-title">Statement of Marks</h2><p class="mark-subtitle">${e(card.title)}</p><div class="mark-details">${[
     ["STUDENT NAME", d.fullName],
     ["ADMISSION NUMBER", d.admissionNumber || "Not assigned"],
     ["PARENT / GUARDIAN", d.parentName],
@@ -139,7 +141,31 @@ function formCard() {
     ),
   };
 }
+async function loadMarkPhoto(entry) {
+  if (!entry.data.photo) return null;
+  if (!services.loadMarkPhoto) throw Error("Photo viewing is unavailable. Reload the dashboard before downloading.");
+  return services.loadMarkPhoto(entry.data.photo);
+}
+async function showMarkPhoto(entry) {
+  const host=$("#rcMarkPreview .mark-portrait-preview");
+  if (!host) return;
+  const version=++markPhotoVersion, epoch=sessionEpoch, photo=entry.data.photo;
+  if (!photo) return;
+  const image=host.querySelector('img'), note=host.querySelector('span');
+  note.textContent='Loading photo…';
+  try {
+    const loaded=await loadMarkPhoto(entry);
+    if(version!==markPhotoVersion||epoch!==sessionEpoch||selected!==entry.id||!host.isConnected)return;
+    image.src=loaded.src;await image.decode();
+    if(version!==markPhotoVersion||epoch!==sessionEpoch||selected!==entry.id||!host.isConnected)return;
+    image.hidden=false;note.hidden=true;
+  } catch {
+    if(version!==markPhotoVersion||epoch!==sessionEpoch||selected!==entry.id||!host.isConnected)return;
+    note.replaceChildren();const retry=document.createElement('button');retry.type='button';retry.dataset.new='retryMarkPhoto';retry.textContent='Retry photo';note.append(retry);
+  }
+}
 function drawMarks(view, card) {
+  markPhotoVersion++;
   const entry = apps.find((a) => a.id === selected);
   if (!entry) {
     view.innerHTML =
@@ -148,7 +174,8 @@ function drawMarks(view, card) {
   }
   let canExport=false;
   try { canExport=Boolean(entry.data.markCard)&&JSON.stringify(validateCard(card))===JSON.stringify(storedCard(entry)); } catch {}
-  view.innerHTML = `<section class="workspace-card"><div class="workspace-card-heading"><div><h2>Mark Cards</h2><p>Select any loaded student, enter marks and print their card here. Saved marks remain available after signing in again.</p></div><div class="rc-feature-actions"><button type="button" class="admin-save-btn" data-new="downloadMarks" ${canExport ? "" : "disabled"}>Download HD image · PNG</button><button class="admin-ghost-btn" data-new="printMarks" ${canExport ? "" : "disabled"}>Print mark card / PDF</button></div></div><div class="rc-marks-controls"><label>Find a student<input id="rcMarkSearch" type="search" placeholder="Name or admission number"></label><label>Student · all ${apps.length} loaded records<select id="rcMarkStudent">${apps.map((a) => `<option value="${e(a.id)}" ${a.id === selected ? "selected" : ""}>${e(a.data.fullName || "Unnamed")} · ${e(a.data.admissionNumber || "No admission number")}</option>`).join("")}</select></label></div><div class="rc-marks-layout"><form id="rcMarksForm"><div class="rc-marks-meta"><label>Assessment title<input id="rcExamTitle" maxlength="120" value="${e(card.title)}" required></label><label>Date<input id="rcExamDate" type="date" value="${e(card.date)}" max="${indiaDate()}" required></label></div><div class="rc-subject-scroll"><table class="rc-subject-table"><thead><tr><th>Subject</th><th>Max.</th><th>Obtained</th><th></th></tr></thead><tbody id="rcSubjectRows">${card.subjects.map((s, i) => `<tr><td><input data-subject="name" aria-label="Subject ${i + 1}" maxlength="100" value="${e(s.name)}" required></td><td><input data-subject="max" aria-label="Maximum ${i + 1}" type="number" min="1" max="1000" step="1" value="${s.max}" required></td><td><input data-subject="marks" aria-label="Marks ${i + 1}" type="number" min="0" max="${s.max}" step=".25" value="${s.marks ?? ""}" placeholder="Unmarked"></td><td><button type="button" data-new="removeSubject" data-index="${i}" aria-label="Remove subject ${i + 1}" ${card.subjects.length === 1 ? "disabled" : ""}>×</button></td></tr>`).join("")}</tbody></table></div><div class="rc-feature-actions"><button type="button" data-new="addSubject" ${card.subjects.length >= 12 ? "disabled" : ""}>+ Add subject</button><button type="submit" class="admin-save-btn">Save marks & update preview</button></div><p id="rcMarksStatus" role="status"></p><p class="rc-feature-note">Blank marks keep the result incomplete. Saving marks changes only the mark card fields. Student details and payments are kept. Save changes before printing or downloading the HD image.</p></form><div class="rc-paper-stage" id="rcMarkPreview">${markHTML(entry, card)}</div></div></section>`;
+  view.innerHTML = `<section class="workspace-card"><div class="workspace-card-heading"><div><h2>Mark Cards</h2><p>Select any loaded student, enter marks and print their card here. Saved marks remain available after signing in again.</p></div><div class="rc-feature-actions"><label class="mark-image-quality">Image size<select id="rcMarkImageWidth"><option value="3840" ${markImageWidth===3840?"selected":""}>4K · 3840 pixels wide</option><option value="1600" ${markImageWidth===1600?"selected":""}>HD · 1600 pixels wide</option></select></label><button type="button" class="admin-save-btn" data-new="downloadMarks" ${canExport ? "" : "disabled"}>Download HD image · PNG</button><button class="admin-ghost-btn" data-new="printMarks" ${canExport ? "" : "disabled"}>Print mark card / PDF</button></div></div><div class="rc-marks-controls"><label>Find a student<input id="rcMarkSearch" type="search" placeholder="Name or admission number"></label><label>Student · all ${apps.length} loaded records<select id="rcMarkStudent">${apps.map((a) => `<option value="${e(a.id)}" ${a.id === selected ? "selected" : ""}>${e(a.data.fullName || "Unnamed")} · ${e(a.data.admissionNumber || "No admission number")}</option>`).join("")}</select></label></div><div class="rc-marks-layout"><form id="rcMarksForm"><div class="rc-marks-meta"><label>Assessment title<input id="rcExamTitle" maxlength="120" value="${e(card.title)}" required></label><label>Date<input id="rcExamDate" type="date" value="${e(card.date)}" max="${indiaDate()}" required></label></div><div class="rc-subject-scroll"><table class="rc-subject-table"><thead><tr><th>Subject</th><th>Max.</th><th>Obtained</th><th></th></tr></thead><tbody id="rcSubjectRows">${card.subjects.map((s, i) => `<tr><td><input data-subject="name" aria-label="Subject ${i + 1}" maxlength="100" value="${e(s.name)}" required></td><td><input data-subject="max" aria-label="Maximum ${i + 1}" type="number" min="1" max="1000" step="1" value="${s.max}" required></td><td><input data-subject="marks" aria-label="Marks ${i + 1}" type="number" min="0" max="${s.max}" step=".25" value="${s.marks ?? ""}" placeholder="Unmarked"></td><td><button type="button" data-new="removeSubject" data-index="${i}" aria-label="Remove subject ${i + 1}" ${card.subjects.length === 1 ? "disabled" : ""}>×</button></td></tr>`).join("")}</tbody></table></div><div class="rc-feature-actions"><button type="button" data-new="addSubject" ${card.subjects.length >= 12 ? "disabled" : ""}>+ Add subject</button><button type="submit" class="admin-save-btn">Save marks & update preview</button></div><p id="rcMarksStatus" role="status"></p><p class="rc-feature-note">Blank marks keep the result incomplete. Saving marks changes only the mark card fields. Student details and payments are kept. Save changes before printing or downloading. The saved student photo is included automatically. Photo detail depends on the uploaded original.</p></form><div class="rc-paper-stage" id="rcMarkPreview">${markHTML(entry, card)}</div></div></section>`;
+  void showMarkPhoto(entry);
 }
 export function renderMarkCards(view, records) {
   apps = records;
@@ -237,6 +264,7 @@ async function whatsapp(receipt) {
   }
 }
 document.addEventListener("change", (event) => {
+  if(event.target.id === "rcMarkImageWidth") { markImageWidth=Number(event.target.value);return; }
   if (event.target.id === "rcMarkStudent" && !saving) {
     selected = event.target.value;
     drawMarks(
@@ -282,6 +310,7 @@ document.addEventListener("submit", async (event) => {
     entry.data = { ...entry.data, markCard: saved };
     if (selected === saveId && $("#rcMarkPreview")) {
       $("#rcMarkPreview").innerHTML = markHTML(entry, saved);
+      void showMarkPhoto(entry);
       $("[data-new=printMarks]").disabled = false;
       $("[data-new=downloadMarks]").disabled = false;
       $("#rcMarksStatus").textContent =
@@ -405,6 +434,9 @@ document.addEventListener("click", async (event) => {
         card.subjects.splice(Number(button.dataset.index), 1);
       drawMarks($("#workspaceView"), card);
     }
+    if (action === "retryMarkPhoto") {
+      const entry=apps.find(a=>a.id===selected);if(entry)void showMarkPhoto(entry);
+    }
     if (action === "printMarks" || action === "downloadMarks") {
       const entry = apps.find((a) => a.id === selected),
         card = validateCard(formCard());
@@ -413,23 +445,36 @@ document.addEventListener("click", async (event) => {
         JSON.stringify(card) !== JSON.stringify(storedCard(entry))
       )
         throw Error("Save the changed marks before printing or downloading.");
-      if(action === "printMarks") print("marks", markHTML(entry, card));
-      else {
-        const epoch=sessionEpoch,studentId=selected,expected=JSON.stringify(card);
-        button.disabled=true;
-        try {
-          const {markCardPNG}=await import('./admin-mark-image.js?v=20261020-admin-3');
-          const blob=await markCardPNG(structuredClone(entry),card);
-          if(epoch!==sessionEpoch||studentId!==selected||!$("#rcMarksForm"))return;
-          if(JSON.stringify(validateCard(formCard()))!==expected)throw Error("Marks changed while the image was prepared. Save them before downloading.");
+      const epoch=sessionEpoch,studentId=selected,expected=JSON.stringify(card),photoRef=entry.data.photo,form=$("#rcMarksForm");
+      const current=()=>epoch===sessionEpoch&&studentId===selected&&form.isConnected&&$("#rcMarksForm")===form&&apps.find(a=>a.id===studentId)?.data.photo===photoRef;
+      const unchanged=()=>{if(JSON.stringify(validateCard(formCard()))!==expected)throw Error("Marks changed while the image was prepared. Save them before downloading.");};
+      button.disabled=true;
+      try {
+        const photo=await loadMarkPhoto(entry);
+        if(!current())return;
+        unchanged();
+        if(action === "printMarks") {
+          let area=$("#rcPrintArea");if(!area){area=document.createElement('div');area.id='rcPrintArea';document.body.append(area);}
+          area.dataset.kind='marks';area.innerHTML=markHTML(entry,card);const paper=area.firstElementChild;
+          if(photo){const image=area.querySelector('.mark-portrait-preview img');image.src=photo.src;await image.decode();if(!current()){if(area.firstElementChild===paper)area.replaceChildren();return;}unchanged();image.hidden=false;area.querySelector('.mark-portrait-preview span').hidden=true;}
+          if(current())window.print();
+        } else {
+          const {markCardPNG}=await import('./admin-mark-image.js?v=20261020-admin-4');
+          if(!current())return;
+          const blob=await markCardPNG(structuredClone(entry),card,{photo,outputWidth:markImageWidth});
+          if(!current())return;
+          unchanged();
           const filename=String(entry.data.admissionNumber||entry.id).replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,80);
           download(blob,'Rehaan-Mark-Card-'+filename+'-'+card.date+'.png');
-          $("#rcMarksStatus").textContent="HD mark-card image downloaded. Student and payment records are unchanged.";
-        } finally {
-          if(button.isConnected){let clean=false;try{clean=JSON.stringify(validateCard(formCard()))===JSON.stringify(storedCard(entry));}catch{}button.disabled=!clean;}
+          $("#rcMarksStatus").textContent="Mark-card image downloaded with all saved details"+(photo?" and student photo":"")+". Student and payment records are unchanged.";
         }
+      } catch(error) {
+        if(current())$("#rcMarksStatus").textContent=error.message;
+      } finally {
+        if(button.isConnected){let clean=false;try{clean=JSON.stringify(validateCard(formCard()))===JSON.stringify(storedCard(entry));}catch{}button.disabled=!clean;}
       }
     }
+
     if (action === "printReceipt" && receipt)
       print("receipt", receiptHTML(receipt));
     if (action === "image" && receipt) await image(receipt);

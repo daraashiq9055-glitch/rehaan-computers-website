@@ -905,3 +905,17 @@
   #rcMarkPreview .paper-proof { font-size:10px; }
   .workspace-card-heading>.rc-feature-actions { flex-wrap:wrap;gap:10px; }
 }
+
+/* Approved student portrait: same framing on screen and printed mark cards. */
+.mark-paper .paper-brand { position:relative;padding-right:105px;min-height:115px; }
+.mark-paper .paper-brand>b { position:absolute;left:0;bottom:17px; }
+.mark-paper .paper-brand>div:first-child { padding-bottom:22px;min-width:0; }
+.mark-portrait-preview { position:absolute;top:0;right:0;width:82px;height:103px;border:1px solid #a58a50;padding:4px;display:grid;place-items:center;background:white; }
+.mark-portrait-preview img { width:100%;height:100%;max-height:93px;object-fit:contain;display:block; }
+.mark-portrait-preview span { font:11px/1.6 Inter,Arial,sans-serif;text-align:center;color:#586b51; }
+
+.mark-image-quality { display:grid;gap:6px;font-size:12px; }
+.mark-image-quality select { max-width:100%;padding:9px; }
+.mark-portrait-preview img[hidden],.mark-portrait-preview span[hidden] { display:none; }
+@media screen and (max-width:760px){#rcMarkPreview .mark-paper .paper-brand{padding-right:82px;min-height:115px;}#rcMarkPreview .mark-paper .paper-brand h2{font-size:24px;}#rcMarkPreview .mark-portrait-preview{width:70px;height:89px;}#rcMarkPreview .mark-portrait-preview img{max-height:79px;}}
+@media print{.mark-portrait-preview{width:22mm;height:28mm;}.mark-portrait-preview img{max-height:26mm;}.mark-portrait-preview button{display:none;}}

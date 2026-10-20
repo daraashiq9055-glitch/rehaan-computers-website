@@ -104,7 +104,7 @@ def run():
                 snapshot=page.evaluate('structuredClone(__adminPreview.records)');write_count=page.evaluate('__adminPreview.writes.length')
                 with page.expect_download() as downloaded:page.locator('[data-new=downloadMarks]').click()
                 import struct
-                png=Path(downloaded.value.path()).read_bytes();assert png.startswith(b'\x89PNG');image_width,image_height=struct.unpack('>II',png[16:24]);assert image_width==1600 and image_height>=2260
+                png=Path(downloaded.value.path()).read_bytes();assert png.startswith(b'\x89PNG');image_width,image_height=struct.unpack('>II',png[16:24]);assert image_width==3840 and image_height>=5424
                 assert page.evaluate('__adminPreview.records')==snapshot and page.evaluate('__adminPreview.writes.length')==write_count
                 page.locator('#rcExamTitle').fill('Unsaved assessment change');expect(page.locator('[data-new=downloadMarks]')).to_be_disabled()
                 page.locator('#rcExamTitle').fill('Progress assessment');page.locator('#rcMarksForm [type=submit]').click();expect(page.locator('#rcMarksStatus')).to_contain_text('Marks saved securely')
@@ -121,7 +121,7 @@ def run():
                   const entry={data:{fullName:'N'.repeat(120),parentName:'P'.repeat(120),admissionNumber:'RC/001',rollNumber:'001',coursePreference:'C'.repeat(120),batch:'Morning'}};
                   const original=CanvasRenderingContext2D.prototype.fillText,calls=[];
                   CanvasRenderingContext2D.prototype.fillText=function(value,x,y){calls.push({text:String(value),end:x+this.measureText(String(value)).width,y,bottom:y+parseFloat(this.font.match(/([\d.]+)px/)[1])});return original.call(this,value,x,y)};
-                  try{const blob=await markCardPNG(entry,card),image=await createImageBitmap(blob);const result={width:image.width,height:image.height,calls};image.close();return result;}finally{CanvasRenderingContext2D.prototype.fillText=original;}
+                  try{const blob=await markCardPNG(entry,card,{outputWidth:1600}),image=await createImageBitmap(blob);const result={width:image.width,height:image.height,calls};image.close();return result;}finally{CanvasRenderingContext2D.prototype.fillText=original;}
                 }""")
                 assert long_card['width']==1600 and long_card['height']>2260
                 assert any(call['text']=='SUBJECT_12' for call in long_card['calls'])
@@ -133,7 +133,7 @@ def run():
                 print('PASS: generated release saves lifecycle/checklists, preferences, offline student with cropped photo, atomic payment, corrected receipt/PNG and marks using existing guarded modules; logout clears private panels',flush=True)
                 assert not errors and not external and not writes and not failed,(errors,external,writes,failed)
                 blocked_image=True;page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
-                page.add_init_script("__adminPreview.records['demo-1'].markCard={title:'Saved fixture',date:'2026-10-20',subjects:[{name:'Practical',max:100,marks:80}]};")
+                page.add_init_script("document.addEventListener('DOMContentLoaded',()=>{__adminPreview.records['demo-1'].markCard={title:'Saved fixture',date:'2026-10-20',subjects:[{name:'Practical',max:100,marks:80}]};});")
                 login();page.locator('[data-section=marks]').click();page.locator('#rcMarkStudent').select_option('demo-1');before_download=page.evaluate('structuredClone(__adminPreview.records)')
                 page.locator('[data-new=downloadMarks]').click();expect(page.locator('#rcMarksStatus')).to_contain_text('Failed to fetch');assert page.evaluate('__adminPreview.records')==before_download
                 page.locator('[data-section=fees]').click();expect(page.locator('#rcFeeFilter')).to_be_visible();assert page.evaluate('__adminPreview.writes.length')==0
@@ -146,7 +146,7 @@ def run():
                 page.locator('[data-workbench=history]').click();expect(page.locator('[data-secure-event]')).to_have_count(30);page.locator('#secureHistoryMore').click();expect(page.locator('[data-secure-event]')).to_have_count(35);page.locator('#secureHistoryStudent').select_option('demo-2');expect(page.locator('[data-secure-event]')).to_have_count(1);page.locator('[data-secure-event]').click();expect(page.locator('.history-dialog')).to_contain_text('server-admin');expect(page.locator('.history-dialog')).to_contain_text('200');page.locator('[aria-label="Close history details"]').click()
                 with page.expect_download() as download:page.locator('#secureHistoryExport').click()
                 exported=json.loads(Path(download.value.path()).read_text());assert exported['scope']=='loaded pages only' and len(exported['events'])==1
-                page.evaluate('__adminPreview.delayAudit=true');page.locator('#secureHistoryRefresh').click();page.locator('[data-workbench=journeys]').click();page.evaluate('resolveAudit()');expect(page.locator('#adminWorkbench')).to_contain_text('Progress with context.');page.locator('#adminLogoutBtn').click();assert page.locator('#adminWorkbench').inner_text()==''
+                page.evaluate('__adminPreview.delayAudit=true');page.locator('#secureHistoryRefresh').click();page.locator('[data-workbench=journeys]').click();page.evaluate('resolveAudit()');expect(page.locator('#adminWorkbench')).to_contain_text('Progress with context.');page.locator('#adminLogoutBtn').click();expect(page.locator('#adminDashboard')).to_be_hidden();expect(page.locator('#adminWorkbench')).to_be_empty()
                 print('PASS: server history pages/filter/details/export work; delayed reads cannot replace another view or survive sign-out',flush=True)
                 blocked=True;page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)));login();expect(page.locator('#adminDashboard .startup-error')).to_contain_text('workspace tools could not load');page.locator('[data-section=fees]').click();expect(page.locator('#rcFeeFilter')).to_be_visible()
                 assert not errors and not external and not writes,(errors,external,writes)

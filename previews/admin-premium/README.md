@@ -12,23 +12,19 @@ Python opens the exact preview in a browser using a free port. Keep CMD open.
 There is no Firebase login or installation step. If the browser does not open,
 copy the printed address. `--no-browser` only prints that address.
 
-### Student photo on mark cards — preview only
+### Approved student photo on mark cards
 
-Open **Mark Cards**, select a sample student, enter and save their marks, then
-scroll to **Mark-card photo · preview first**. Choose a local JPEG, PNG or WebP
-to try the top-right portrait. A photo added to a sample offline student is also
-reused automatically. Real private student photos are not loaded in this demo.
+Open **Mark Cards** and select a sample student. To test a portrait, first add a
+fictional offline student with a local photo using the existing **Add student**
+form. Enter and save marks, then use the main **Download HD image · PNG** button.
+The selected student's saved photo appears at the top-right automatically on
+screen, in print and in the downloaded image. No second upload/button is needed.
 
-Use the main **Download HD image · PNG** button for a 3840-pixel-wide card
-including the photo and all details, or select the
-smaller HD option. The original photo is fitted without stretching or cropping;
-its detail depends on the source resolution. A 4K card cannot restore missing
-detail in a small photo. Printing includes the preview portrait too.
-
-Trying a photo does not edit the student record or upload anything. Local photo
-selections disappear on reload/sign-out. This unapproved extension is explicitly
-excluded by `prepare-admin-release.py`; deploying the current release does not
-add this photo design to the live dashboard.
+Choose **4K · 3840 pixels wide** (default) or **HD · 1600 pixels wide**. The photo
+is fitted without stretching or cropping; detail depends on the original source.
+The approved renderer is shared with the production release. Real private photos
+are loaded only after administrator sign-in in that release; this local preview
+continues to use fictional records and local photo adapters.
 
 This is the current complete dashboard with a new sapphire/gold presentation,
 matching the homepage, rather than a replacement with missing sections:

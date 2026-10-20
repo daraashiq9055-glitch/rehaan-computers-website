@@ -1,4 +1,4 @@
-import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions} from "./admin-features.js?v=20261020-admin-3";
+import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions} from "./admin-features.js?v=20261020-admin-4";
 import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261018-login-fix-1";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
@@ -2686,7 +2686,17 @@ function downloadFile(text, name, type) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-configureAdditions({getRecords:()=>adminState.apps,saveReceipt:async(receipt,input,expectedPaid,correctionId)=>{
+configureAdditions({loadMarkPhoto:async(photo)=>{
+    requireAdmin();const uid=verifiedAdminUid;
+    if(!photo)return null;
+    if(!isSafePhoto(photo))throw new Error("The stored photo reference needs review in student Details.");
+    const image=new Image();image.crossOrigin="anonymous";
+    const ready=await displayStudentPhoto(image,photo,adminPhotoToken);
+    if(!ready)throw new Error("Student photo could not load. Retry the photo before printing or downloading.");
+    await image.decode();
+    requireAdmin();if(verifiedAdminUid!==uid)throw new Error("Your session changed. Sign in again before viewing photos.");
+    return image;
+},getRecords:()=>adminState.apps,saveReceipt:async(receipt,input,expectedPaid,correctionId)=>{
     requireAdmin();const uid=verifiedAdminUid;
     const result=await correctReceipt({db,ref:doc(db,"applications",receipt.studentId),runTransaction,
         assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw new Error("Your session changed. Sign in again before correcting receipts.");},
