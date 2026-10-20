@@ -307,7 +307,7 @@ function openCourse(id, { route = true } = {}) {
     : "";
   showDialog(
     course.title,
-    `<p>${escape(course.subtitle)}</p><div class="dialog-meta"><span>${escape(course.category)}</span><span>${escape(course.duration)}</span><span>${escape(course.level)}</span><span>${escape(course.certificate)}</span></div><div class="detail-tabs" role="tablist" aria-label="Course information">${["overview", "syllabus", "fees"].map((tab, index) => `<button role="tab" id="course-tab-${tab}" aria-controls="course-panel-${tab}" aria-selected="${index === 0}" tabindex="${index === 0 ? "0" : "-1"}" data-detail-tab="${tab}">${["Overview", "Syllabus", "Fees & Batches"][index]}</button>`).join("")}</div><section class="detail-panel" role="tabpanel" tabindex="0" aria-labelledby="course-tab-overview" id="course-panel-overview"><p>${escape(course.overview)}</p><h3>Who is this for?</h3><p>${escape(course.who)}</p><h3>Your practical work</h3><p>${escape(course.practical)}</p></section><section class="detail-panel" role="tabpanel" tabindex="0" aria-labelledby="course-tab-syllabus" id="course-panel-syllabus" hidden><h3>What you will learn</h3><ul>${course.learn.map((item) => `<li>${escape(item)}</li>`).join("")}</ul>${modules}<h3>Skills you will practise</h3><div class="dialog-meta">${course.skills.map((skill) => `<span>${escape(skill)}</span>`).join("")}</div></section><section class="detail-panel" role="tabpanel" tabindex="0" aria-labelledby="course-tab-fees" id="course-panel-fees" hidden><div class="fee-grid"><div><small>ONE-TIME ADMISSION</small><b>₹100</b><p>Separate from course tuition.</p></div><div><small>COURSE TUITION</small><b>At the centre</b><p>Confirm current course fees and the payment schedule with the institute.</p></div></div><h3>Morning. Afternoon. Evening.</h3><p>Choose your batch preference in the application. The centre confirms current timings and availability. Admissions remain open throughout the year.</p><h3>Bring these when you visit</h3><p>2 printed passport-size photographs and 1 Aadhaar photocopy. Admission is completed after payment verification and institute formalities.</p></section><div class="dialog-actions"><button class="button gold" data-action="apply" data-id="${id}">Choose this course ${icon("arrow")}</button><button class="button outline" data-action="pdf" data-id="${id}">${icon("download")}Download PDF</button><button class="button outline" data-action="enquiry" data-id="${id}">${icon("chat")}Enquire</button><button class="button outline" data-action="save" data-id="${id}" aria-pressed="${saved.has(courseSlug(course))}">${icon("bookmark")}${saved.has(courseSlug(course)) ? "Saved" : "Save course"}</button><button class="text-link" data-action="copy-course" data-id="${id}">Copy course link ${icon("arrow")}</button></div>`,
+    `<p>${escape(course.subtitle)}</p><div class="dialog-meta"><span>${escape(course.category)}</span><span>${escape(course.duration)}</span><span>${escape(course.level)}</span><span>${escape(course.certificate)}</span></div><div class="detail-tabs" role="tablist" aria-label="Course information">${["overview", "syllabus", "fees"].map((tab, index) => `<button role="tab" id="course-tab-${tab}" aria-controls="course-panel-${tab}" aria-selected="${index === 0}" tabindex="${index === 0 ? "0" : "-1"}" data-detail-tab="${tab}">${["Overview", "Syllabus", "Fees & Batches"][index]}</button>`).join("")}</div><section class="detail-panel" role="tabpanel" tabindex="0" aria-labelledby="course-tab-overview" id="course-panel-overview"><p>${escape(course.overview)}</p><h3>Who is this for?</h3><p>${escape(course.who)}</p><h3>Your practical work</h3><p>${escape(course.practical)}</p></section><section class="detail-panel" role="tabpanel" tabindex="0" aria-labelledby="course-tab-syllabus" id="course-panel-syllabus" hidden><h3>What you will learn</h3><ul>${course.learn.map((item) => `<li>${escape(item)}</li>`).join("")}</ul>${modules}<h3>Skills you will practise</h3><div class="dialog-meta">${course.skills.map((skill) => `<span>${escape(skill)}</span>`).join("")}</div></section><section class="detail-panel" role="tabpanel" tabindex="0" aria-labelledby="course-tab-fees" id="course-panel-fees" hidden><div class="fee-grid"><div><small>ONE-TIME ADMISSION</small><b>₹100</b><p>Separate from course tuition.</p></div><div><small>COURSE TUITION</small><b>Monthly tuition</b><p>See the fee information below the batch schedule. Tuition is separate from admission; confirm the payment schedule with the institute.</p></div></div><h3>Morning. Afternoon. Evening.</h3><p>Choose your batch preference in the application. The centre confirms current timings and availability. Admissions remain open throughout the year.</p><h3>Bring these when you visit</h3><p>2 printed passport-size photographs and 1 Aadhaar photocopy. Admission is completed after payment verification and institute formalities.</p></section><div class="dialog-actions"><button class="button gold" data-action="apply" data-id="${id}">Choose this course ${icon("arrow")}</button><button class="button outline" data-action="pdf" data-id="${id}">${icon("download")}Download PDF</button><button class="button outline" data-action="enquiry" data-id="${id}">${icon("chat")}Enquire</button><button class="button outline" data-action="save" data-id="${id}" aria-pressed="${saved.has(courseSlug(course))}">${icon("bookmark")}${saved.has(courseSlug(course)) ? "Saved" : "Save course"}</button><button class="text-link" data-action="copy-course" data-id="${id}">Copy course link ${icon("arrow")}</button></div>`,
     "course",
   );
   if (route && location.hash !== "#course=" + courseSlug(course))
@@ -487,15 +487,7 @@ function renderSite() {
         `<details><summary>${escape(item.q)}</summary><p>${escape(item.a)}</p></details>`,
     )
     .join("");
-  $(".contact-card").insertAdjacentHTML(
-    "beforeend",
-    contacts
-      .map(
-        (contact) =>
-          `<a class="contact-phone" href="tel:+${contact.phone}">${contact.display}</a>`,
-      )
-      .join(""),
-  );
+
 }
 const passage =
   "Practice builds confidence. Learn a little each day, type with care, and focus on accuracy before speed. Useful computer skills begin with simple steps.";
@@ -691,7 +683,7 @@ document.addEventListener("click", (event) => {
       if (item)
         showDialog(
           item.title,
-          `<div class="gallery-lightbox"><img src="../../public/assets/${item.image}" alt="${escape(item.title)}"><p>${escape(item.description)} These are existing learning images, not a new photograph of the institute.</p></div>`,
+          `<div class="gallery-lightbox"><img src="../../public/assets/${item.image}" alt="${escape(item.title)}"><p>${escape(item.description)} Illustrative learning image.</p></div>`,
         );
       break;
     }

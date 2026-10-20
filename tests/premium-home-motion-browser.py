@@ -134,7 +134,8 @@ def run(production=False):
                     page.locator('.footer-main').scroll_into_view_if_needed();page.screenshot(path=str(OUT/('footer-mobile.png' if width==390 else 'footer-desktop.png')))
                     page.locator('#courses').scroll_into_view_if_needed();page.screenshot(path=str(OUT/('courses-mobile.png' if width==390 else 'courses-desktop.png')))
                 expect(page.locator('.footer-links')).to_have_count(3)
-                expect(page.locator('.footer-social .social-logo')).to_have_count(4)
+                expect(page.locator('.footer-social .social-logo')).to_have_count(3)
+                expect(page.locator('.footer-social a[href*="facebook.com"]')).to_have_count(1)
                 for link in page.locator('.footer-links > a, .footer-links > button').all():
                     box=link.bounding_box()
                     assert box['height']>=48 and box['x']>=0 and box['x']+box['width']<=width,(width,box)

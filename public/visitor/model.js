@@ -210,7 +210,7 @@ export function brochurePDF(course) {
     "Charangam, Beerwah, Kashmir\nEnquiries: +91 9149551258 / +91 9797205429\nLocation: 34.026895, 74.643088\nWebsite: https://rehaan-computers.web.app/",
   );
   paragraph(
-    "Managed by Dar Yasir / Website designed and developed by Dar Yasir.",
+    "Website designed and developed by Dar Yasir.",
     { size: 9, gap: 8 },
   );
   paragraph(

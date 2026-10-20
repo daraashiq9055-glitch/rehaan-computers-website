@@ -2189,3 +2189,35 @@ dialog h3 {
     display: none;
   }
 }
+
+
+.topbar .top-contact { font-size: 12px; font-weight: 650; letter-spacing: .02em; }
+.floating-whatsapp {
+  position: fixed; right: 24px; bottom: calc(24px + env(safe-area-inset-bottom));
+  z-index: 80; display: inline-flex; align-items: center; gap: 9px;
+  min-height: 48px; padding: 12px 20px; border-radius: 40px;
+  color: #fff; background: #116346; border: 1px solid #61cda2;
+  box-shadow: 0 8px 28px #0005; font-size: 14px; font-weight: 650;
+  text-decoration: none;
+}
+.floating-whatsapp:hover { background: #184f3c; transform: translateY(-2px); }
+.floating-whatsapp:focus-visible { outline: 3px solid #f0c777; outline-offset: 4px; }
+body:has(#compareTray:not([hidden])) .floating-whatsapp { bottom: calc(130px + env(safe-area-inset-bottom)); }
+body:has(#paymentModal:not([hidden]), #paymentSuccessModal:not([hidden])) .floating-whatsapp { visibility: hidden; }
+.institute-phones { display: grid; gap: 4px; margin-top: 18px; }
+@media (max-width: 700px) {
+  .header-actions > .header-call.button { display: inline-flex; padding: 8px 10px; min-height: 40px; font-size: 11px; white-space: nowrap; }
+  .header-actions { gap: 6px; }
+  .topbar .top-contact { font-size: 11px; white-space: nowrap; }
+  .floating-whatsapp { right: 16px; bottom: calc(86px + env(safe-area-inset-bottom)); padding: 12px; }
+  body:has(#compareTray:not([hidden])) .floating-whatsapp { bottom: calc(200px + env(safe-area-inset-bottom)); }
+  .floating-whatsapp span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+}
+
+@media (max-width: 380px) {
+  .header-inner { gap: 8px; }
+  .brand { gap: 6px; font-size: 11px; letter-spacing: 1.6px; }
+  .brand small { letter-spacing: 2px; }
+  .brand-mark { width: 30px; height: 34px; }
+  .header-actions > .header-call.button { padding: 8px; font-size: 10px; }
+}
