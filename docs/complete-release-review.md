@@ -61,6 +61,11 @@ cd build\admin-release
 type RELEASE.json
 ```
 
+The builder explicitly reads and writes UTF-8, including on Windows with a
+cp1252 system default. `python3 tests/admin-build-encoding.py` compares every
+generated file with a build under a simulated cp1252 default, preserving rupees,
+smart quotes and other non-ASCII content without changing payment logic.
+
 Confirm `auditEnabled` is **false**. This folder contains the complete homepage
 and upgraded admin together. It has a **Hosting-only** Firebase configuration.
 After the review and backup, deploy from this generated folder:

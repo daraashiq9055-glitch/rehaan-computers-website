@@ -49,16 +49,16 @@ def build(destination, audit_ready=False):
         (ui/name).write_text(text,encoding='utf-8')
     for source_name,target in [('reader.js','audit-reader.js'),('history-ui.js','history-ui.js')]:
         shutil.copyfile(ROOT/'backend/audit'/source_name,ui/target)
-    (ui/'audit-config.js').write_text('export const auditConfig = Object.freeze('+json.dumps({'enabled':bool(audit_ready)})+');\n')
+    (ui/'audit-config.js').write_text('export const auditConfig = Object.freeze('+json.dumps({'enabled':bool(audit_ready)})+');\n', encoding='utf-8')
     # Reuse only the presentation tools from the demo, never its fixture/auth code.
-    presentation=(source/'demo.js').read_text().split('// Presentation tools call the existing controls; no new persistence paths.\n')[1]
+    presentation=(source/'demo.js').read_text(encoding='utf-8').split('// Presentation tools call the existing controls; no new persistence paths.\n')[1]
     presentation=presentation.replace("document.addEventListener('DOMContentLoaded', () => {",'function setupShell(){',1)
     assert presentation.rstrip().endswith('});')
     presentation=presentation.rstrip()[:-3]+'}\nsetupShell();\n'
     presentation+="document.querySelector('#workspaceDate').textContent=new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Kolkata'}).format(new Date());\n"
-    (ui/'shell.js').write_text(presentation)
-    (ui/'main.js').write_text("import './shell.js?v="+VERSION+"';\nimport './workbench.js?v="+VERSION+"';\nimport {adminWorkspace} from '../admin-app.js?v="+VERSION+"';\nimport {createPaymentUI} from './payment-ui.js?v="+VERSION+"';\nadminWorkspace.installPaymentForm(createPaymentUI);\n")
-    bridge=(source/'bridge-exports.js').read_text()
+    (ui/'shell.js').write_text(presentation, encoding='utf-8')
+    (ui/'main.js').write_text("import './shell.js?v="+VERSION+"';\nimport './workbench.js?v="+VERSION+"';\nimport {adminWorkspace} from '../admin-app.js?v="+VERSION+"';\nimport {createPaymentUI} from './payment-ui.js?v="+VERSION+"';\nadminWorkspace.installPaymentForm(createPaymentUI);\n", encoding='utf-8')
+    bridge=(source/'bridge-exports.js').read_text(encoding='utf-8')
     bridge=bridge.replace('// Appended to the original admin module by the local preview launcher only.','// Reviewed workspace interface. All saves retain original session/transaction guards.')
     bridge=adapt(bridge).replace('/previews/admin-premium/','/admin-ui/').replace('// The preview uses the same original transaction function with a richer form.','// Richer form, same atomic ledger/receipt transaction.')
     # Keep the original sign-in graph independent from optional workspace assets.
@@ -71,7 +71,7 @@ def build(destination, audit_ready=False):
   async auditPage(options){requireAdmin();const [{createAuditReader},sdk]=await Promise.all([import('./admin-ui/audit-reader.js?v=VERSION'),import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js')]);return createAuditReader({db,sdk,identity:()=>verifiedAdminUid&&auth.currentUser?.uid===verifiedAdminUid?{uid:verifiedAdminUid}:null})(options);},
 """.replace('VERSION',VERSION)
     bridge=bridge.replace('export const adminWorkspace = Object.freeze({','export const adminWorkspace = Object.freeze({'+additions)
-    (public/'admin-app.js').write_text((public/'admin-app.js').read_text()+'\n'+bridge)
+    (public/'admin-app.js').write_text((public/'admin-app.js').read_text(encoding='utf-8')+'\n'+bridge, encoding='utf-8')
     # Use the exact reviewed premium DOM, without fixture scripts/import maps or CSP mocks.
     spec=importlib.util.spec_from_file_location('admin_preview_builder',ROOT/'preview-admin.py')
     preview=importlib.util.module_from_spec(spec);spec.loader.exec_module(preview)
@@ -88,10 +88,10 @@ def build(destination, audit_ready=False):
     html=html.replace('</body>',"<script type=\"module\">import('./admin-ui/main.js?v="+VERSION+"').catch(()=>{const note=document.createElement('p');note.className='startup-error';note.setAttribute('role','alert');note.textContent='Some workspace tools could not load. Reload the page before making changes.';document.querySelector('#adminDashboard .content').prepend(note);});</script></body>")
     html=re.sub(r'href="(admin-ui/[^\"]+\.css)"',r'href="\1?v='+VERSION+'"',html)
     if any(value in html for value in ['__adminPreview','previews/','demo-strip','type="importmap"','No real password']):raise RuntimeError('Preview-only markup leaked into the candidate.')
-    (public/'admin.html').write_text(html)
-    config=json.loads((ROOT/'firebase.json').read_text());config.pop('firestore',None)
-    (destination/'firebase.json').write_text(json.dumps(config,indent=2)+'\n')
-    (destination/'RELEASE.json').write_text(json.dumps({'generated':True,'version':VERSION,'auditEnabled':audit_ready,'source':'prepare-admin-release.py'},indent=2)+'\n')
+    (public/'admin.html').write_text(html, encoding='utf-8')
+    config=json.loads((ROOT/'firebase.json').read_text(encoding='utf-8'));config.pop('firestore',None)
+    (destination/'firebase.json').write_text(json.dumps(config,indent=2)+'\n', encoding='utf-8')
+    (destination/'RELEASE.json').write_text(json.dumps({'generated':True,'version':VERSION,'auditEnabled':audit_ready,'source':'prepare-admin-release.py'},indent=2)+'\n', encoding='utf-8')
     return destination
 
 def main():
