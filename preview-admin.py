@@ -17,11 +17,14 @@ def preview_html():
     imports = {f'https://www.gstatic.com/firebasejs/12.2.1/firebase-{name}.js': PREVIEW + 'sdk.js' for name in ['app', 'auth', 'firestore']}
     imports['/public/photo-storage.js?v=20261018-login-fix-1'] = PREVIEW + 'photos.js'
     imports['/public/photo-storage-config.js'] = PREVIEW + 'photos.js'
+    imports['/public/admin-app.js?v=20261018-login-fix-1'] = '/public/admin-preview-app.js'
     head = '<base href="/public/"><meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src \'self\' \'unsafe-inline\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: blob:; font-src \'self\'; connect-src \'self\'; object-src \'none\'; form-action \'none\'; base-uri \'self\'">'
     head += '<script type="importmap">' + json.dumps({'imports': imports}) + '</script>'
     head += '<script src="' + PREVIEW + 'demo.js"></script>'
     html = html.replace('<head>', '<head>' + head, 1)
-    html = html.replace('</head>', '<link rel="stylesheet" href="' + PREVIEW + 'theme.css"></head>', 1)
+    head_module = '<script type="module" src="' + PREVIEW + 'records.js"></script>'
+    html = html.replace('</head>', head_module + '</head>', 1)
+    html = html.replace('</head>', '<link rel="stylesheet" href="' + PREVIEW + 'theme.css"><link rel="stylesheet" href="' + PREVIEW + 'records.css"></head>', 1)
     html = html.replace('<body class="admin-page">', '<body class="admin-page admin-premium-preview"><div class="demo-strip"><span><i></i> DESIGN PREVIEW</span><p>Sample students only. Live records and payments are disconnected.</p><button type="button" id="demoReset">Reset demo</button></div>', 1)
     html = html.replace('href="index.html"', 'href="/previews/premium-home/"')
     html = html.replace('<span class="mark">RC</span>', '<span class="mark"><img src="visitor/assets/rehaan-mark.svg" alt="Rehaan Computers" width="44" height="44"></span>')
@@ -51,6 +54,13 @@ class PreviewHandler(SimpleHTTPRequestHandler):
             self.send_header('Content-Length', str(len(body)))
             self.end_headers()
             self.wfile.write(body)
+        elif path == '/public/admin-preview-app.js':
+            body = ((ROOT / 'public/admin-app.js').read_text(encoding='utf-8') + '\n' + (ROOT / 'previews/admin-premium/bridge-exports.js').read_text(encoding='utf-8')).encode('utf-8')
+            self.send_response(200)
+            self.send_header('Content-Type', 'application/javascript; charset=utf-8')
+            self.send_header('Content-Length', str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
         elif path.startswith('/public/') and (Path(path).suffix == '.html' or path == '/public/script.js'):
             self.send_error(404)
         elif path.startswith(('/public/', '/previews/admin-premium/', '/previews/premium-home/')):
@@ -64,7 +74,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--no-browser', action='store_true')
     args = parser.parse_args()
-    for file in ['public/admin.html', 'previews/admin-premium/theme.css', 'previews/admin-premium/sdk.js', 'previews/admin-premium/demo.js', 'previews/admin-premium/photos.js']:
+    for file in ['public/admin.html', 'previews/admin-premium/theme.css', 'previews/admin-premium/sdk.js', 'previews/admin-premium/demo.js', 'previews/admin-premium/photos.js', 'previews/admin-premium/records.css', 'previews/admin-premium/records.js', 'previews/admin-premium/records-model.js', 'previews/admin-premium/bridge-exports.js']:
         if not (ROOT / file).is_file():
             parser.exit(1, 'Missing preview files. Run git pull --ff-only first.\n')
     with ThreadingHTTPServer(('127.0.0.1', 0), partial(PreviewHandler, directory=str(ROOT))) as server:

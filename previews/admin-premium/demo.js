@@ -21,6 +21,12 @@
       admissionDate: date.toISOString().slice(0, 10), approvedAt: date.toISOString()
     });
   });
+  // Fictional examples make shared-family contact and missing-detail review visible.
+  records['demo-6'].guardianPhone = '9000000099';
+  records['demo-6'].parentName = '';
+  records['demo-7'].phone = records['demo-6'].phone;
+  records['demo-7'].coursePreference = '';
+  records['demo-0'].customLegacyField = {retained: true};
   const user = {uid: 'preview-admin', email: 'preview@rehaan.example', getIdToken: async () => 'local-preview-only'};
   window.__adminPreview = {records, writes: [], listeners: [], user, auth: {currentUser: user, authStateReady: async () => {}}};
   window.emailjs = {init() {}, async send() { throw Error('Email sending is disabled in this preview. No message was sent.'); }};

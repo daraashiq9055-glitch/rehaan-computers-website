@@ -5,6 +5,7 @@ export const storeStudentPhoto = async photo => photo || '';
 export const clearPhotoSession = () => {};
 export async function displayStudentPhoto(image, photo) {
   if (!image || !photo) return false;
+  image.dataset.photoReference = photo;
   image.src = photo;
   image.dataset.photoState = 'ready';
   return true;
