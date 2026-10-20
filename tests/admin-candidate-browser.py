@@ -43,7 +43,7 @@ def run():
             with sync_playwright() as p:
                 browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
                 errors,external,writes,failed=[],[],[],[]
-                blocked=False
+                blocked=False;blocked_image=False
                 def route(r):
                     if r.request.method not in ['GET','HEAD']:writes.append(r.request.url);r.abort()
                     elif r.request.url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):
@@ -51,7 +51,8 @@ def run():
                     elif r.request.url.startswith(base+'/photo-storage'):
                         r.fulfill(content_type='application/javascript',body=(ROOT/'previews/admin-premium/photos.js').read_text())
                     elif r.request.url.startswith(base+'/'):
-                        if blocked and '/admin-ui/main.js' in r.request.url:r.abort()
+                        if blocked_image and '/admin-mark-image.js' in r.request.url:r.abort()
+                        elif blocked and '/admin-ui/main.js' in r.request.url:r.abort()
                         else:r.continue_()
                     else:external.append(r.request.url);r.abort()
                 context=browser.new_context(viewport={'width':1512,'height':1100},reduced_motion='reduce',accept_downloads=True)
@@ -70,6 +71,8 @@ def run():
                 print('PASS: both homepage admin entrances open the generated upgraded sign-in in the same tab without saving records',flush=True)
                 login();expect(page.locator('[data-workbench=journeys]')).to_be_enabled();expect(page.locator('.application-card')).to_have_count(8)
                 assert page.locator('#switchDemoAdmin').count()==0 and page.locator('.demo-strip').count()==0
+                assert page.locator('.application-card').evaluate_all('rows=>rows.map(row=>row.dataset.applicationId)')==['demo-'+str(i) for i in range(8)]
+                page.locator('[data-records-centre]').click();expect(page.locator('#recordsSort')).to_have_value('admission');page.locator('[data-section=overview]').click()
                 original=page.evaluate('structuredClone(__adminPreview.records)')
                 for width in [320,390,768,1024,1512]:
                     page.set_viewport_size({'width':width,'height':1100})
@@ -98,9 +101,44 @@ def run():
                 page.locator('[data-section=marks]').click();page.locator('#rcMarkStudent').select_option('demo-1')
                 for field in page.locator('[data-subject=marks]').all():field.fill('80')
                 page.locator('#rcMarksForm [type=submit]').click();expect(page.locator('#rcMarksStatus')).to_contain_text('Marks saved securely')
+                snapshot=page.evaluate('structuredClone(__adminPreview.records)');write_count=page.evaluate('__adminPreview.writes.length')
+                with page.expect_download() as downloaded:page.locator('[data-new=downloadMarks]').click()
+                import struct
+                png=Path(downloaded.value.path()).read_bytes();assert png.startswith(b'\x89PNG');image_width,image_height=struct.unpack('>II',png[16:24]);assert image_width==1600 and image_height>=2260
+                assert page.evaluate('__adminPreview.records')==snapshot and page.evaluate('__adminPreview.writes.length')==write_count
+                page.locator('#rcExamTitle').fill('Unsaved assessment change');expect(page.locator('[data-new=downloadMarks]')).to_be_disabled()
+                page.locator('#rcExamTitle').fill('Progress assessment');page.locator('#rcMarksForm [type=submit]').click();expect(page.locator('#rcMarksStatus')).to_contain_text('Marks saved securely')
+                for width in [320,390,768]:
+                    page.set_viewport_size({'width':width,'height':1100})
+                    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+                    if width<=760:
+                        assert page.locator('#rcMarkPreview .mark-details').evaluate('el=>parseFloat(getComputedStyle(el).fontSize)>=16')
+                        assert page.locator('#rcMarkPreview .mark-paper').evaluate('el=>el.scrollWidth<=el.clientWidth'),width
+                page.set_viewport_size({'width':1512,'height':1100})
+                long_card=page.evaluate(r"""async()=>{
+                  const {markCardPNG}=await import('/admin-mark-image.js?v=test');
+                  const card={title:'Long assessment '+ 'X'.repeat(100),date:'2026-10-20',subjects:Array.from({length:12},(_,i)=>({name:'SUBJECT_'+(i+1)+' '+ 'W'.repeat(80),max:1000,marks:i===11?null:950}))};
+                  const entry={data:{fullName:'N'.repeat(120),parentName:'P'.repeat(120),admissionNumber:'RC/001',rollNumber:'001',coursePreference:'C'.repeat(120),batch:'Morning'}};
+                  const original=CanvasRenderingContext2D.prototype.fillText,calls=[];
+                  CanvasRenderingContext2D.prototype.fillText=function(value,x,y){calls.push({text:String(value),end:x+this.measureText(String(value)).width,y,bottom:y+parseFloat(this.font.match(/([\d.]+)px/)[1])});return original.call(this,value,x,y)};
+                  try{const blob=await markCardPNG(entry,card),image=await createImageBitmap(blob);const result={width:image.width,height:image.height,calls};image.close();return result;}finally{CanvasRenderingContext2D.prototype.fillText=original;}
+                }""")
+                assert long_card['width']==1600 and long_card['height']>2260
+                assert any(call['text']=='SUBJECT_12' for call in long_card['calls'])
+                assert any(call['text']=='Incomplete' for call in long_card['calls'])
+                assert all(call['end']<=1570 and call['y']>=30 and call['bottom']<=long_card['height']-30 for call in long_card['calls'])
+                print('PASS: HD saved-mark PNG has full dimensions and preserves records; unsaved edits disable export; mobile text is readable; long names and all 12 subject rows fit the full image',flush=True)
+
                 page.locator('#adminLogoutBtn').click();expect(page.locator('#adminDashboard')).to_be_hidden();assert page.locator('#adminWorkbench').inner_text()==''
                 print('PASS: generated release saves lifecycle/checklists, preferences, offline student with cropped photo, atomic payment, corrected receipt/PNG and marks using existing guarded modules; logout clears private panels',flush=True)
                 assert not errors and not external and not writes and not failed,(errors,external,writes,failed)
+                blocked_image=True;page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
+                page.add_init_script("__adminPreview.records['demo-1'].markCard={title:'Saved fixture',date:'2026-10-20',subjects:[{name:'Practical',max:100,marks:80}]};")
+                login();page.locator('[data-section=marks]').click();page.locator('#rcMarkStudent').select_option('demo-1');before_download=page.evaluate('structuredClone(__adminPreview.records)')
+                page.locator('[data-new=downloadMarks]').click();expect(page.locator('#rcMarksStatus')).to_contain_text('Failed to fetch');assert page.evaluate('__adminPreview.records')==before_download
+                page.locator('[data-section=fees]').click();expect(page.locator('#rcFeeFilter')).to_be_visible();assert page.evaluate('__adminPreview.writes.length')==0
+                blocked_image=False
+                print('PASS: missing optional HD image renderer cannot block sign-in, alter saved marks or disable the fee register',flush=True)
                 # Trusted-history UI is tested with simulated server responses, not the demo journal.
                 (output/'public/admin-ui/audit-config.js').write_text('export const auditConfig={enabled:true};')
                 page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)));login()

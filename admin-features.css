@@ -881,3 +881,27 @@
     grid-template-columns: 1fr;
   }
 }
+/* Phone preview uses a readable vertical layout; the HD PNG keeps the full paper. */
+@media screen and (max-width:760px) {
+  #rcMarkPreview.rc-paper-stage { padding:4px; }
+  #rcMarkPreview .mark-paper { min-width:0;width:100%;padding:16px;overflow-wrap:anywhere; }
+  #rcMarkPreview .paper-brand { flex-wrap:wrap;gap:9px; }
+  #rcMarkPreview .paper-brand h2 { font-size:28px; }
+  #rcMarkPreview .paper-brand small,#rcMarkPreview .paper-brand>b { font-size:10px;letter-spacing:.5px; }
+  #rcMarkPreview .mark-title { font-size:28px; }
+  #rcMarkPreview .mark-subtitle { font-size:15px; }
+  #rcMarkPreview .mark-details { grid-template-columns:1fr;font-size:16px;gap:16px; }
+  #rcMarkPreview .mark-details span { font-size:12px; }
+  #rcMarkPreview .mark-paper table { font-size:14px;table-layout:fixed; }
+  #rcMarkPreview .mark-paper th { font-size:11px;letter-spacing:0;padding:11px 4px;overflow-wrap:anywhere; }
+  #rcMarkPreview .mark-paper td { padding:13px 4px;overflow-wrap:anywhere; }
+  #rcMarkPreview .mark-paper th:first-child { width:40%; }
+  #rcMarkPreview .mark-result { gap:5px;padding:16px 4px; }
+  #rcMarkPreview .mark-result span { font-size:10px; }
+  #rcMarkPreview .mark-result strong { font-size:23px; }
+  #rcMarkPreview .mark-policy { font-size:12px; }
+  #rcMarkPreview .mark-signatures { gap:15px;flex-wrap:wrap; }
+  #rcMarkPreview .mark-signatures>div { min-width:0;font-size:10px; }
+  #rcMarkPreview .paper-proof { font-size:10px; }
+  .workspace-card-heading>.rc-feature-actions { flex-wrap:wrap;gap:10px; }
+}

@@ -8,7 +8,7 @@ const $ = selector => document.querySelector(selector);
 const e = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money = value => Number.isFinite(Number(value)) && value !== null && value !== '' ? '₹' + Number(value).toLocaleString('en-IN', {maximumFractionDigits: 2}) : 'Needs review';
 const date = value => value && Number.isFinite(new Date(value).getTime()) ? new Intl.DateTimeFormat('en-IN', {day:'numeric', month:'short', year:'numeric', timeZone:'Asia/Kolkata'}).format(new Date(value)) : 'Not recorded';
-const defaults = () => ({query:'', course:'', batch:'', status:'', queue:'all', sort:'name'});
+const defaults = () => ({query:'', course:'', batch:'', status:'', queue:'all', sort:'admission'});
 let rows = [], filters = defaults(), saved = [], page = 1, active = false, profileId = '', profileTab = 'overview';
 let renderQueued = false;
 const size = 15;

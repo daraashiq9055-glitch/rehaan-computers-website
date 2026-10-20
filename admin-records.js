@@ -90,3 +90,16 @@ export function validateChanges(original, patch) {
     if ((patch.status || original.status) === "Approved" && !(patch.admissionNumber ?? original.admissionNumber)) throw new Error("An admission number is required before approval.");
     if ("coursePreference" in patch && !patch.coursePreference.trim()) throw new Error("A course is required.");
 }
+
+// Display order only: never renumber, filter out, or mutate stored applications.
+export function compareAdmissionRecords(a, b) {
+    const number = row => String(row.data?.admissionNumber ?? "").trim();
+    const first = number(a), second = number(b);
+    if (!first !== !second) return first ? -1 : 1;
+    if (first && second) {
+        const order = first.localeCompare(second, "en-IN", {numeric: true, sensitivity: "base"});
+        if (order) return order;
+    }
+    return recordTime(b.data?.createdAt) - recordTime(a.data?.createdAt)
+        || String(a.id).localeCompare(String(b.id), "en-IN", {numeric: true});
+}

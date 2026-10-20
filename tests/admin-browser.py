@@ -255,6 +255,23 @@ def run(enabled=False):
         expect(card.locator('[data-act=approve]')).to_have_text('✓ Approved')
         assert page.evaluate('__fixture.records.online.admissionNumber')=='002'
         assert page.evaluate('__fixture.mailAttempted')
+        expect(page.locator('#adminDetailsModal')).to_be_visible()
+        expect(page.locator('#adminDetailsModal .admin-modal-msg')).to_contain_text('Admission approved and saved')
+        approved_record=page.evaluate('structuredClone(__fixture.records.online)')
+        write_count=page.evaluate('__fixture.writes.length')
+        page.locator('.admin-send-admission').click()
+        from urllib.parse import urlparse,parse_qs
+        draft=page.evaluate('__fixture.opened')
+        assert urlparse(draft).path=='/919876543210'
+        message=parse_qs(urlparse(draft).query)['text'][0]
+        assert re.search(r'\*Date of Admission:\* \d{4}-\d{2}-\d{2}',message)
+        assert 'OFFICIAL ADMISSION CONFIRMATION' in message and '002' in message and 'Changed elsewhere' in message and COURSE in message
+        assert page.evaluate('__fixture.records.online')==approved_record and page.evaluate('__fixture.writes.length')==write_count
+        page.locator('#adminDetailsModal .admin-modal-close').click()
+        card.locator('[data-act=details]').click()
+        expect(page.locator('.admin-send-admission')).to_be_visible()
+        page.locator('#adminDetailsModal .admin-modal-close').click()
+        passed('Online approval offers the saved admission WhatsApp draft and a persistent resend action without extra record/payment writes')
         passed('Admission fee verification and approval preserve provider details')
         page.locator('[data-section=fees]').click()
         expect(page.locator('.rc-fee-row')).to_have_count(2)

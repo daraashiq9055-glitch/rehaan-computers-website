@@ -1,3 +1,4 @@
+import {compareAdmissionRecords} from '../../public/admin-records.js';
 // Read-only record review. These checks never approve, merge, cancel or edit data.
 const text = value => typeof value === 'string' ? value.trim() : '';
 const normal = value => text(value).toLocaleLowerCase('en-IN');
@@ -48,11 +49,11 @@ export function filterRecords(rows, filters = {}) {
         || (queue === 'photos' && !r.photoSaved) || (queue === 'duplicates' && r.possibleDuplicates.length > 0));
   });
 }
-export function sortRecords(rows, sort = 'name') {
+export function sortRecords(rows, sort = 'admission') {
   const copy = [...rows];
   return copy.sort((a, b) => {
     if (sort === 'review') return (b.review.essential.length + b.review.possibleDuplicates.length) - (a.review.essential.length + a.review.possibleDuplicates.length) || String(a.data.fullName || '').localeCompare(String(b.data.fullName || ''), 'en-IN');
-    if (sort === 'admission') return String(a.data.admissionNumber || '\uffff').localeCompare(String(b.data.admissionNumber || '\uffff'), 'en-IN', {numeric: true});
+    if (sort === 'admission') return compareAdmissionRecords(a,b);
     return String(a.data.fullName || '').localeCompare(String(b.data.fullName || ''), 'en-IN');
   });
 }

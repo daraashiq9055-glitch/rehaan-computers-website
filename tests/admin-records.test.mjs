@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { recordTime, isSafePhoto, csvCell, paymentPatch, assertUnchanged, validateChanges, canonicalRecord, formatGender } from '../public/admin-records.js';
+import { recordTime, isSafePhoto, csvCell, paymentPatch, assertUnchanged, validateChanges, canonicalRecord, formatGender, compareAdmissionRecords } from '../public/admin-records.js';
 
 test('legacy dates and Firebase timestamps sort without dropping undated records', () => {
     assert.equal(recordTime({seconds: 100}), 100000);
@@ -82,4 +82,11 @@ test('Cloudinary raster delivery URLs work alongside existing inline photos', ()
         assert.ok(!isSafePhoto(url),url);
         assert.throws(()=>validateChanges({}, {photo:url}));
     }
+});
+
+test('admission sequence is numeric, keeps legacy prefixes and unnumbered records without mutating data', () => {
+    const rows=[['ten','10'],['missing',''],['two','002'],['first','001'],['legacy10','RC/10'],['legacy2','RC/2'],['numeric',3]].map(([id,admissionNumber])=>({id,data:{admissionNumber,payment:{status:'paid',amount:100},monthlyFees:{month:500},legacy:{keep:true}}}));
+    const before=structuredClone(rows),sorted=[...rows].sort(compareAdmissionRecords);
+    assert.deepEqual(sorted.map(row=>row.id),['first','two','numeric','ten','legacy2','legacy10','missing']);
+    assert.deepEqual(rows,before);
 });

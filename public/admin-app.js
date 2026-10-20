@@ -1,11 +1,11 @@
-import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions} from "./admin-features.js?v=20261018-login-fix-1";
+import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions} from "./admin-features.js?v=20261020-admin-3";
 import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261018-login-fix-1";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
 let activePhotoMigration = null;
 
 // Admin features adapted from website-updates d738bb2. The public site keeps its existing script.
-import { recordTime, isSafePhoto, csvCell, fieldValue, paymentPatch, assertUnchanged, validateChanges, canonicalRecord, formatGender } from "./admin-records.js";
+import { recordTime, isSafePhoto, csvCell, fieldValue, paymentPatch, assertUnchanged, validateChanges, canonicalRecord, formatGender, compareAdmissionRecords } from "./admin-records.js";
 /* =========================================================
    REHAAN COMPUTERS
    MAIN WEBSITE + FIREBASE + ADMIN
@@ -604,6 +604,17 @@ async function approveApplication(applicationId, data, button) {
 
 
         await loadApplications();
+        // Offer a user-clicked draft only after approval was saved and refreshed.
+        const enrolled = adminState.apps.find(entry => entry.id === applicationId);
+        if (enrolled?.data.status === "Approved") {
+            openAdminDetails(applicationId);
+            const confirmation = document.querySelector("#adminDetailsModal .admin-modal-msg");
+            if (confirmation) {
+                confirmation.hidden = false;
+                confirmation.className = "admin-modal-msg ok";
+                confirmation.textContent = "Admission approved and saved. Use Send Admission Confirmation on WhatsApp to open the student's message. You still need to press Send in WhatsApp.";
+            }
+        }
 
     } catch (error) {
 
@@ -1172,7 +1183,7 @@ async function loadApplications() {
             });
         });
 
-        adminState.apps.sort((a,b) => recordTime(b.data.createdAt) - recordTime(a.data.createdAt));
+        adminState.apps.sort(compareAdmissionRecords);
         recordsLoaded = true;
         renderAdminList();
 
@@ -1692,7 +1703,7 @@ function openAdminDetails(applicationId) {
             </div>
             <button type="button" class="admin-save-btn admin-save-edits">Save Changes</button>
             </div>
-            ${data.channel === "offline" && data.status === "Approved" ? '<button type="button" class="admin-ghost-btn admin-send-admission" style="margin-top:14px">Send Admission Confirmation on WhatsApp ↗</button>' : ""}
+            ${data.status === "Approved" && data.admissionNumber ? '<button type="button" class="admin-ghost-btn admin-send-admission" style="margin-top:14px">Send Admission Confirmation on WhatsApp ↗</button>' : ""}
             <p class="admin-modal-msg" hidden></p>
         </div>
     `);
@@ -1710,7 +1721,7 @@ function openAdminDetails(applicationId) {
     modal.querySelector(".admin-send-admission")?.addEventListener("click", () => openAdmissionWhatsApp({
         ...data,
         coursePreference: data.coursePreference || data.course || "",
-        admissionDate: (data.admissionDate || data.approvedAt || "").slice(0, 10)
+        admissionDate: admissionConfirmationDate(data)
     }));
     if (isSafePhoto(data.photo)) displayAdminPhoto(modal.querySelector("[data-photo-zoom] img"), data.photo);
     let updatedPhoto = null;
@@ -1910,6 +1921,14 @@ function openStudentCropper(file, onDone) {
         });
     };
     image.src=url;
+}
+
+function admissionConfirmationDate(data) {
+    if (/^\d{4}-\d{2}-\d{2}$/.test(data.admissionDate || "")) return data.admissionDate;
+    const time = recordTime(data.approvedAt);
+    if (!time) return "Not recorded";
+    const day = indiaCalendarDate(new Date(time));
+    return [day.year, String(day.month).padStart(2, "0"), String(day.day).padStart(2, "0")].join("-");
 }
 
 function admissionWhatsAppMessage(student) {
