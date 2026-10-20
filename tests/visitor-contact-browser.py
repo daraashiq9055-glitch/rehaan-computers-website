@@ -37,7 +37,8 @@ def run():
                     page.set_viewport_size({'width':width,'height':900})
                     page.locator('.header-call').scroll_into_view_if_needed()
                     expect(page.locator('.header-call')).to_be_visible()
-                    expect(page.locator('.top-contact')).to_be_visible()
+                    expect(page.locator('.top-contact')).to_have_count(2)
+                    for contact in page.locator('.top-contact').all():expect(contact).to_be_visible()
                     expect(page.locator('.floating-whatsapp')).to_be_visible()
                     assert page.locator('.floating-whatsapp').evaluate('el=>{const r=el.getBoundingClientRect();return el.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2))}'),(js,width,'contact action obscured')
                     assert page.locator('.header-call').get_attribute('href')=='tel:+919149551258'
@@ -45,10 +46,16 @@ def run():
                     assert page.locator('a[href*="facebook.com"]').count()==1
                     assert '14tvvFj3od1' in page.locator('a[href*="facebook.com"]').get_attribute('href')
                     assert 'dar_yas_ir' in page.locator('a[href*="instagram.com"]').get_attribute('href')
+                    expect(page.locator('.hero-tuition strong')).to_have_text('₹999/month')
+                    expect(page.locator('.monthly-tuition')).to_contain_text('₹999/month')
+                    page.locator('.floating-whatsapp').click()
+                    for number in ['919149551258','919797205429']:
+                        expect(page.locator('.whatsapp-options a[href^="https://wa.me/'+number+'?"]')).to_be_visible()
+                    page.locator('.floating-whatsapp').click()
                     body=page.locator('body').inner_text()
                     assert body.count('Dar Yasir')==1 and body.count('₹999/month')==2
                     assert 'learning images already' not in body and 'Created by' not in body and 'Managed by' not in body
-                    for selector in ['.header-call','.top-contact','.floating-whatsapp','.header-inner','.creator-credit']:
+                    for selector in ['.header-call','.top-contacts','.floating-whatsapp','.header-inner','.creator-credit']:
                         box=page.locator(selector).bounding_box()
                         assert box and box['x']>=-1 and box['x']+box['width']<=width+1,(js,width,selector,box)
                 if js:

@@ -1,13 +1,13 @@
-import {initSkillChallenge} from "./challenge.js?v=20261020-visitor-4";
-import { initStudio } from "./studio.js?v=20261020-visitor-4";
-import { initMotion } from "./motion.js?v=20261020-visitor-4";
+import {initSkillChallenge} from "./challenge.js?v=20261020-visitor-5";
+import { initStudio } from "./studio.js?v=20261020-visitor-5";
+import { initMotion } from "./motion.js?v=20261020-visitor-5";
 import {
   courseSlug,
   matchesDuration,
   recommendCourses,
   brochurePDF,
-} from "./model.js?v=20261020-visitor-4";
-import { initAdmission } from "./admission.js?v=20261020-visitor-4";
+} from "./model.js?v=20261020-visitor-5";
+import { initAdmission } from "./admission.js?v=20261020-visitor-5";
 const $ = (selector) => document.querySelector(selector);
 const scrollBehavior = () =>
   matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth";

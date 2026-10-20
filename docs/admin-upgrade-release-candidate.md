@@ -6,14 +6,13 @@ existing dashboard until the reviewed candidate is explicitly published.
 The visitor source now includes the requested homepage corrections: the sole Dar
 Yasir credit is the existing premium footer treatment, personal Facebook is
 removed, the requested personal Instagram and one official Facebook link remain,
-and visitor gallery wording describes practical learning. The top bar phone,
+and visitor gallery wording describes practical learning. Both top bar phone numbers,
 header Call us, both institute phone links and a floating WhatsApp enquiry are
-present in HTML, so contact details do not depend on JavaScript. WhatsApp opens a
-draft to +91 9149551258; the existing enquiry dialog still offers both confirmed
-numbers, including +91 9797205429. Nothing is sent automatically.
+present in HTML, so contact details do not depend on JavaScript. The floating WhatsApp chooser and the existing enquiry dialog both offer
++91 9149551258 and +91 9797205429. Nothing is sent automatically.
 
 Tuition is explicitly **₹999/month** in exactly two static areas: the overview
-fee strip and the explanation below batch choices. The separate **₹100 admission
+gold-highlighted hero panel and the explanation below batch choices. The separate **₹100 admission
 fee**, original public form, Cloudinary/photo flow, payment Worker integration and
 verification logic are preserved. The visitor module graph uses a new cache
 version to avoid mixed cached code after a later release.
@@ -103,3 +102,7 @@ It requires no typing or timer, saves no answers and never affects official mark
 admission or payments. The laptop screen has a small animated stack of learning
 cards that follows the existing scene pause/reduced-motion controls.
 `python3 tests/visitor-skill-browser.py` validates the activity, motion and privacy.
+
+The final manual review and Hosting-only commands are in
+[complete release review](complete-release-review.md). Deploying the generated
+`build/admin-release` bundle includes both the homepage and upgraded admin.

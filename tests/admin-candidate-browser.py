@@ -60,6 +60,14 @@ def run():
                 def login():
                     page.goto(base+'/admin.html');expect(page.locator('#adminLoginButton')).to_be_enabled();expect(page.locator('#adminDashboard')).to_be_hidden()
                     page.locator('#adminEmail').fill('admin@example.test');page.locator('#adminPassword').fill('test-only');page.locator('#adminLoginButton').click();expect(page.locator('#adminDashboard')).to_be_visible()
+                popups=[];page.on('popup',lambda popup:popups.append(popup.url))
+                for entrance in ['brand','footer']:
+                    page.goto(base+'/');expect(page.locator('.course-card')).to_have_count(7)
+                    if entrance=='brand':page.locator('#brandMenuButton').click();page.locator('#brandAdminLogin').click()
+                    else:page.locator('footer a[href="admin.html"]').click()
+                    expect(page).to_have_url(base+'/admin.html');expect(page.locator('#adminLoginButton')).to_be_enabled();expect(page.locator('#adminDashboard')).to_be_hidden()
+                assert not popups and len(context.pages)==1
+                print('PASS: both homepage admin entrances open the generated upgraded sign-in in the same tab without saving records',flush=True)
                 login();expect(page.locator('[data-workbench=journeys]')).to_be_enabled();expect(page.locator('.application-card')).to_have_count(8)
                 assert page.locator('#switchDemoAdmin').count()==0 and page.locator('.demo-strip').count()==0
                 original=page.evaluate('structuredClone(__adminPreview.records)')
