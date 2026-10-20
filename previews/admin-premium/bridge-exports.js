@@ -35,3 +35,11 @@ export const previewAdminBridge = Object.freeze({
   },
   backup() {requireAdmin();selectSection('reports');document.getElementById('reportJson')?.click();}
 });
+
+// The preview uses the same original transaction function with a richer form.
+import {createPaymentUI} from '/previews/admin-premium/payment-ui.js';
+recordMonthlyTuition = createPaymentUI({
+  tuitionPeriod,overdueMonthlyTuition,requireAdmin,createModal:adminCreateModal,
+  closeModal:closeAdminModal,uid:()=>verifiedAdminUid,saveMonthlyPayment,
+  db,doc,runTransaction,refresh:loadApplications,openReceipt
+});

@@ -28,6 +28,12 @@ matching the homepage, rather than a replacement with missing sections:
   matches, and optional photos without deleting, merging or changing records.
 - Student profiles with personal details, photos, fees/receipts, marks and the
   available saved activity; full private JSON export preserves unknown fields.
+- Today workspace with new applications, overdue/reminder counts, recent saved
+  activity and direct links to the original enrolment, record and fee controls.
+- Accounts book with Today/month/custom ranges, admission/tuition and method
+  filters, current corrected receipt totals, CSV export and mobile entry cards.
+- Richer monthly payment form with required method, received date, optional
+  reference/note, balance review and saved receipt/image actions.
 - Fee follow-up shortcuts read the existing billing functions and open the
   original overdue/reminder/partial-payment views. No new billing engine.
 - Restyled sign-in; use Sign out to view it, then any demo email/password to return.
@@ -72,3 +78,38 @@ Additional validation:
 
 No production admin UI, Firestore rules, Worker or payment source is changed in
 this preview update. Hosting deployment remains deferred until the UI is agreed.
+
+## Today / accounts / payment update
+
+Open **Today** or **Accounts book** from the sidebar. For payments, open the
+existing fee register, choose a student, and select Cash, UPI, Bank transfer or
+Manually recorded. The received date defaults to the India calendar date; future
+dates are rejected. The optional reference and note are combined into the existing
+printed receipt note. Method/date/note are staged in the same original transaction
+as the fee increment and receipt, with the existing stale-record and stable-ID
+retry checks retained. There is no separate metadata write or bank charge.
+
+Accounts totals use saved paid admission entries and valid dated tuition receipts.
+Admission date fallbacks are labelled. Current corrected receipt values are counted
+once; this is not an immutable historical bank-reconciliation report. Unknown
+methods remain Unspecified. Older monthly ledger amounts without dated receipts
+stay visible separately and are not invented into dated totals. Nothing is merged,
+deleted or automatically marked paid.
+
+This batch implements the three recommended daily-work tools. Student lifecycle,
+learning checklists, personal preferences and a backend-enforced general audit log
+remain future work; the preview does not claim to provide those yet.
+
+Validation:
+
+- `node --test tests/admin-operations.test.mjs`: atomic method/date/reference save,
+  denied/stale writes, stable-ID retries, simultaneous administrators, corrections,
+  legacy/invalid/duplicate receipt handling and India date boundaries.
+- `python3 tests/admin-operations-browser.py`: Today/accounts navigation, actual
+  form/receipt/PNG/PDF/CSV values, correction totals, denied saves, lost acknowledgement
+  recovery, stale updates, five widths, invalid date ranges and logout cleanup.
+- Both existing premium-preview and records-centre browser regressions also run
+  with the new mandatory method selection. Public payment fingerprints still pass.
+
+These are isolated sample-data checks. No deployment, live bank verification, real
+charge, email, message or production student write is performed.

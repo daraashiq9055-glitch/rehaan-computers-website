@@ -125,7 +125,7 @@ def run():
             page.locator('[data-section=fees]').click()
             page.screenshot(path=str(OUT / 'fees-desktop.png'), full_page=True)
             page.locator('[data-fee-pay="demo-1"]').click()
-            page.locator('#rcPaymentAmount').fill('400')
+            page.locator('#rcPaymentMethod').select_option('Cash');page.locator('#rcPaymentAmount').fill('400')
             page.locator('#rcPaymentForm [type=submit]').click()
             expect(page.locator('#rcPaymentMessage')).to_contain_text('Payment saved')
             page.locator('#rcOpenSavedReceipt').click()

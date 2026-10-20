@@ -28,7 +28,10 @@ export const getDocs = async () => {
   const rows = Object.entries(state.records).map(([id, data]) => snapshot(id, data));
   return {empty: !rows.length, forEach: fn => rows.forEach(fn)};
 };
-export const runTransaction = async (_db, fn) => {
+let transactionQueue = Promise.resolve();
+export const runTransaction = (_db, fn) => {
+ const task = transactionQueue.then(async () => {
+  if (state.failWrite) throw Object.assign(new Error('Preview permission denied'), {code:'permission-denied'});
   const staged = [];
   const result = await fn({get: getDoc, update: (ref, patch) => staged.push(['update', ref, patch]), set: (ref, data) => staged.push(['set', ref, data]), delete: ref => staged.push(['delete', ref])});
   const next = structuredClone(state.records);
@@ -44,5 +47,9 @@ export const runTransaction = async (_db, fn) => {
   }
   state.records = next;
   state.writes.push(...staged.map(([kind, ref, data]) => ({kind, id: ref.id, data})));
+  if (state.loseAcknowledgementOnce && staged.length) {state.loseAcknowledgementOnce=false;throw Object.assign(new Error('Connection ended before acknowledgement'),{code:'unavailable'});}
   return result;
+ });
+ transactionQueue = task.catch(() => {});
+ return task;
 };

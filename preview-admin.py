@@ -22,9 +22,9 @@ def preview_html():
     head += '<script type="importmap">' + json.dumps({'imports': imports}) + '</script>'
     head += '<script src="' + PREVIEW + 'demo.js"></script>'
     html = html.replace('<head>', '<head>' + head, 1)
-    head_module = '<script type="module" src="' + PREVIEW + 'records.js"></script>'
+    head_module = '<script type="module" src="' + PREVIEW + 'operations.js"></script>'
     html = html.replace('</head>', head_module + '</head>', 1)
-    html = html.replace('</head>', '<link rel="stylesheet" href="' + PREVIEW + 'theme.css"><link rel="stylesheet" href="' + PREVIEW + 'records.css"></head>', 1)
+    html = html.replace('</head>', '<link rel="stylesheet" href="' + PREVIEW + 'theme.css"><link rel="stylesheet" href="' + PREVIEW + 'records.css"><link rel="stylesheet" href="' + PREVIEW + 'operations.css"></head>', 1)
     html = html.replace('<body class="admin-page">', '<body class="admin-page admin-premium-preview"><div class="demo-strip"><span><i></i> DESIGN PREVIEW</span><p>Sample students only. Live records and payments are disconnected.</p><button type="button" id="demoReset">Reset demo</button></div>', 1)
     html = html.replace('href="index.html"', 'href="/previews/premium-home/"')
     html = html.replace('<span class="mark">RC</span>', '<span class="mark"><img src="visitor/assets/rehaan-mark.svg" alt="Rehaan Computers" width="44" height="44"></span>')
@@ -74,13 +74,14 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--no-browser', action='store_true')
     args = parser.parse_args()
-    for file in ['public/admin.html', 'previews/admin-premium/theme.css', 'previews/admin-premium/sdk.js', 'previews/admin-premium/demo.js', 'previews/admin-premium/photos.js', 'previews/admin-premium/records.css', 'previews/admin-premium/records.js', 'previews/admin-premium/records-model.js', 'previews/admin-premium/bridge-exports.js']:
+    for file in ['public/admin.html', 'previews/admin-premium/theme.css', 'previews/admin-premium/sdk.js', 'previews/admin-premium/demo.js', 'previews/admin-premium/photos.js', 'previews/admin-premium/records.css', 'previews/admin-premium/records.js', 'previews/admin-premium/operations.js', 'previews/admin-premium/operations.css', 'previews/admin-premium/payment-ui.js', 'previews/admin-premium/payment-service.js', 'previews/admin-premium/accounts-model.js', 'previews/admin-premium/records-model.js', 'previews/admin-premium/bridge-exports.js']:
         if not (ROOT / file).is_file():
             parser.exit(1, 'Missing preview files. Run git pull --ff-only first.\n')
     with ThreadingHTTPServer(('127.0.0.1', 0), partial(PreviewHandler, directory=str(ROOT))) as server:
         url = f'http://127.0.0.1:{server.server_port}' + PREVIEW
         print('\nREHAAN COMPUTERS - PREMIUM ADMIN PREVIEW', flush=True)
         print('Same dashboard options, new sapphire and gold design.', flush=True)
+        print('New: Today, Accounts book and payment method/date/reference.', flush=True)
         print('Sample data only. Try adding a demo student, payments, receipts and mark cards.', flush=True)
         print('No live sign-in, student writes, uploads, messages or charges. Reload resets the demo.', flush=True)
         print('\n' + url + '\n', flush=True)
