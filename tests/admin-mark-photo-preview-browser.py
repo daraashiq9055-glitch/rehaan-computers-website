@@ -31,16 +31,17 @@ def run():
             page.goto(base+launcher.PREVIEW);expect(page.locator('#adminDashboard')).to_be_visible();page.locator('[data-section=marks]').click();page.locator('#rcMarkStudent').select_option('demo-1');expect(page.locator('#markPhotoPreviewControls')).to_be_visible()
             for field in page.locator('[data-subject=marks]').all():field.fill('80')
             page.locator('#rcMarksForm [type=submit]').click();expect(page.locator('#rcMarksStatus')).to_contain_text('Marks saved securely')
+            expect(page.locator('#markPhotoPreviewDownload')).to_have_count(0)
             before=page.evaluate('structuredClone(__adminPreview.records)');count=page.evaluate('__adminPreview.writes.length')
             page.locator('#markPreviewPhoto').set_input_files({'name':'local-preview.png','mimeType':'image/png','buffer':sample()})
             expect(page.locator('#rcMarkPreview .mark-portrait-preview img')).to_be_visible();expect(page.locator('#markPhotoPreviewStatus')).to_contain_text('256 × 320')
             assert page.evaluate('__adminPreview.records')==before and page.evaluate('__adminPreview.writes.length')==count
-            with page.expect_download() as download:page.locator('#markPhotoPreviewDownload').click()
+            with page.expect_download() as download:page.locator('[data-new=downloadMarks]').click()
             path=download.value.path();image=Image.open(path);assert image.width==3840 and image.height>=5424
             assert image.convert('RGB').getpixel((3330,559))==(30,120,160)
             image.save(OUT/'mark-photo-4k.png')
             page.locator('#markPreviewQuality').select_option('1600')
-            with page.expect_download() as download:page.locator('#markPhotoPreviewDownload').click()
+            with page.expect_download() as download:page.locator('[data-new=downloadMarks]').click()
             hd=Image.open(download.value.path());assert hd.width==1600 and hd.height>=2260
             assert hd.convert('RGB').getpixel((1387,233))==(30,120,160)
             for width in [320,390,768,1512]:
@@ -50,6 +51,7 @@ def run():
             page.set_viewport_size({'width':1512,'height':1100});page.evaluate('window.print=()=>window.__printed=true');page.locator('[data-new=printMarks]').click();page.wait_for_function('window.__printed===true');assert page.locator('#rcPrintArea .mark-portrait-preview img').get_attribute('src').startswith('data:image/png')
             page.locator('#rcMarkStudent').select_option('demo-2');expect(page.locator('#rcMarkPreview .mark-portrait-preview img')).to_be_hidden();page.locator('#rcMarkStudent').select_option('demo-1');expect(page.locator('#rcMarkPreview .mark-portrait-preview img')).to_be_visible()
             page.locator('#adminLogoutBtn').click();expect(page.locator('#adminDashboard')).to_be_hidden()
+            assert page.evaluate('__adminPreview.records')==before and page.evaluate('__adminPreview.writes.length')==count
             assert not errors and not external and not writes,(errors,external,writes)
             print('PASS: local portrait appears top-right in preview/print and both 3840px/1600px PNGs; exact photo pixels preserved; four widths; separate student photos; no record writes, live requests or payments',flush=True)
             browser.close()

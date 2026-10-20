@@ -19,7 +19,8 @@ scroll to **Mark-card photo · preview first**. Choose a local JPEG, PNG or WebP
 to try the top-right portrait. A photo added to a sample offline student is also
 reused automatically. Real private student photos are not loaded in this demo.
 
-Use **Download photo preview · PNG** for a 3840-pixel-wide card, or select the
+Use the main **Download HD image · PNG** button for a 3840-pixel-wide card
+including the photo and all details, or select the
 smaller HD option. The original photo is fitted without stretching or cropping;
 its detail depends on the source resolution. A 4K card cannot restore missing
 detail in a small photo. Printing includes the preview portrait too.
