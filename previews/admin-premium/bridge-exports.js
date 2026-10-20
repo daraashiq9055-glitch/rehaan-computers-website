@@ -1,6 +1,11 @@
 // Appended to the original admin module by the local preview launcher only.
-// Read-only snapshots and existing UI entry points; no new write implementation.
+// Original UI entry points plus isolated, transaction-guarded preview services.
 export const previewAdminBridge = Object.freeze({
+  refresh() {return loadApplications();},
+  identity() {return verifiedAdminUid?{uid:verifiedAdminUid,email:auth.currentUser?.email||''}:null;},
+  topics(id) {const data=adminState.apps.find(entry=>entry.id===id)?.data;const course=courses.find(item=>item.title===(data?.coursePreference||data?.course));return structuredClone(course?.learn?.length?course.learn:['Computer fundamentals','Practical coursework','Course assessment']);},
+  async lifecycle(id,input) {requireAdmin();const uid=verifiedAdminUid;const result=await saveLifecycle({...input,db,ref:doc(db,'applications',id),runTransaction,actor:uid,assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');}});await loadApplications();return result;},
+  async progress(id,input) {requireAdmin();const uid=verifiedAdminUid;const result=await saveProgress({...input,db,ref:doc(db,'applications',id),runTransaction,actor:uid,assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');}});await loadApplications();return result;},
   snapshot() {
     return {ready: Boolean(verifiedAdminUid && recordsLoaded), records: verifiedAdminUid && recordsLoaded ? structuredClone(adminState.apps) : []};
   },
@@ -30,6 +35,11 @@ export const previewAdminBridge = Object.freeze({
     requireAdmin();const receipt = adminState.apps.find(item => item.id === id)?.data.feeReceipts?.[receiptId];
     if (receipt) openReceipt(structuredClone(receipt));
   },
+  feeStudent(id) {
+    requireAdmin();selectSection('fees');const entry=adminState.apps.find(row=>row.id===id);if(!entry)return;
+    const list=document.getElementById('applicationsList');renderFeeManagement(list,[entry]);receiptTools(list,adminState.apps);
+    const note=document.createElement('p');note.className='ops-footnote';note.textContent='Showing only '+(entry.data.fullName||'this student')+'. Changing filters or refreshing returns to the full register.';list.prepend(note);
+  },
   feeQueue(filter = 'all') {
     requireAdmin();selectSection('fees');adminState.feeFilter = filter;renderAdminList();
   },
@@ -43,3 +53,5 @@ recordMonthlyTuition = createPaymentUI({
   closeModal:closeAdminModal,uid:()=>verifiedAdminUid,saveMonthlyPayment,
   db,doc,runTransaction,refresh:loadApplications,openReceipt
 });
+
+import {saveLifecycle,saveProgress} from '/previews/admin-premium/journey-service.js';

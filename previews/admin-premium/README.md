@@ -96,9 +96,8 @@ methods remain Unspecified. Older monthly ledger amounts without dated receipts
 stay visible separately and are not invented into dated totals. Nothing is merged,
 deleted or automatically marked paid.
 
-This batch implements the three recommended daily-work tools. Student lifecycle,
-learning checklists, personal preferences and a backend-enforced general audit log
-remain future work; the preview does not claim to provide those yet.
+The daily-work tools are complemented by the remaining UI features described below.
+A backend-enforced general audit log remains a production integration requirement.
 
 Validation:
 
@@ -113,3 +112,49 @@ Validation:
 
 These are isolated sample-data checks. No deployment, live bank verification, real
 charge, email, message or production student write is performed.
+
+## Remaining feature preview
+
+- **Student journeys:** Active, On hold, Completed and Archived views, reversible
+  stage changes with reasons and saved lifecycle events. These are organisation
+  stages: they do not change admission approval, waive balances or stop billing.
+- **Learning checklist:** presets from the assigned course syllabus, extra practical
+  topics, assessed-topic percentages and saved checklists kept separately for each
+  course. Marks and payments are unchanged; completion is never automatic.
+- **My workspace:** separate start page, density, motion, list/card layout and up to
+  four shortcuts for each administrator. Only validated presentation settings are
+  stored in this browser. Student records, passwords and search queries are not.
+  With browser storage blocked, preferences fall back to the page session.
+- **Direct Ctrl+K student actions:** open the exact student's profile, fees, marks
+  and personal receipt section. Fee actions use an exact record ID, avoiding partial
+  admission-number matches with another student's phone.
+- **Change history demo:** the local transaction adapter appends successful changes
+  with before/after values, actor and time, including original edits/payments/deletes.
+  Failed saves and idempotent payment retries create no additional history. Filter
+  by student or administrator and export the clearly labelled preview log.
+
+Use My workspace's **Switch demo administrator** control to try the two independent
+sets of preferences against the same sample students. This does not create a real
+Firebase administrator. Learning/lifecycle writes compare the relevant saved fields
+and enrolment/course after reading the transaction snapshot. Newer payment fields
+are never replaced by these writes. Saved progress for other courses is retained.
+
+### Production audit requirement
+
+The demo journal is in browser memory, resets on reload, and is not tamper-proof.
+It must not be deployed as a trusted audit trail. Before live integration, implement
+server-controlled logging of application create/update/delete events with reliable
+authenticated actor identity, restricted admin reads and no client update/delete
+permission for log documents. Review retention and export requirements, and test
+logging failure/retry behavior. Older edits without stored history cannot be rebuilt.
+No audit collection, Firestore rules, cloud trigger, billing plan or live backend was
+changed by this preview work. Lifecycle/learning fields in the demo are included
+in the existing private student JSON backup; the separate demo journal has its own
+explicit export button.
+
+Validation: `node --test tests/admin-journey.test.mjs` and
+`python3 tests/admin-workbench-browser.py` cover preservation of financial/legacy
+fields, archive/restore, per-course progress, stale/denied saves, both demo admins,
+nonprivate preference storage/fallback, exact student quick actions, five widths,
+history attribution/export, and logout cleanup. Existing dashboard, accounts,
+records-centre and payment regression suites remain applicable.
