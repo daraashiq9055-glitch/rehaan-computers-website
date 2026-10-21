@@ -6,9 +6,11 @@ import {
   monthLabel,
   validateCard,
   cardResult,
+  subjectResult,
+  MARK_GRADES,
   validateReceiptCorrection,
-} from "./admin-feature-model.js?v=20261018-login-fix-1";
-import { receiptPNG, whatsappURL } from "./admin-receipt-image.js?v=20261018-login-fix-1";
+} from "./admin-feature-model.js?v=20261021-admin-5";
+import { receiptPNG, whatsappURL } from "./admin-receipt-image.js?v=20261021-admin-5";
 let apps = [],
   selected = "",
   receipts = [],
@@ -126,17 +128,22 @@ function markHTML(entry, card) {
     .map(([key, value]) => `<div><span>${key}</span>${e(value || "—")}</div>`)
     .join(
       "",
-    )}</div><table><thead><tr><th>SUBJECT / COMPONENT</th><th>MAXIMUM</th><th>OBTAINED</th><th>RESULT</th></tr></thead><tbody>${card.subjects.map((s) => `<tr><td>${e(s.name)}</td><td>${s.max}</td><td>${s.marks ?? "Unmarked"}</td><td>${s.marks === null ? "Unmarked" : s.marks / s.max >= 0.33 ? "Pass" : "Below pass mark"}</td></tr>`).join("")}<tr><td><strong>TOTAL</strong></td><td>${r.maximum}</td><td>${r.total ?? "Incomplete"}</td><td></td></tr></tbody></table><div class="mark-result"><div><span>PERCENTAGE</span><strong>${r.percentage === null ? "—" : r.percentage + "%"}</strong></div><div><span>GRADE</span><strong>${r.grade}</strong></div><div><span>RESULT</span><strong>${!r.complete ? "Incomplete" : r.passed ? "Pass" : "Not passed"}</strong></div></div><p class="mark-policy">Grading: at least 33% in each component. A+ ≥ 90%, A ≥ 75%, B ≥ 60%, C ≥ 45%, D ≥ 33%, subject to passing each component.</p><div class="mark-signatures"><div>EXAMINER / ASSESSOR</div><div>AUTHORIZED SIGNATORY</div></div><p class="paper-proof">REHAAN COMPUTERS · STUDENT ACADEMIC RECORD</p></article>`;
+    )}</div><table><thead><tr><th>SUBJECT / COMPONENT</th><th>MAXIMUM</th><th>OBTAINED</th><th>RESULT</th></tr></thead><tbody>${card.subjects.map((s) => `<tr><td>${e(s.name)}</td><td>${s.max}</td><td>${s.marks ?? "Unmarked"}</td><td>${subjectResult(s).label}</td></tr>`).join("")}<tr><td><strong>TOTAL</strong></td><td>${r.maximum}</td><td>${r.total ?? "Incomplete"}</td><td></td></tr></tbody></table><div class="mark-result"><div><span>PERCENTAGE</span><strong>${r.percentage === null ? "—" : r.percentage + "%"}</strong></div><div><span>GRADE</span><strong>${r.grade}</strong></div><div><span>RESULT</span><strong>${!r.complete ? "Incomplete" : r.passed ? "Pass" : "Fail"}</strong></div></div><p class="mark-policy">Grading: at least 33% in each component. A+ ≥ 90%, A ≥ 75%, B ≥ 60%, C ≥ 45%, D ≥ 33%, subject to passing each component.</p><div class="mark-signatures"><div>EXAMINER / ASSESSOR</div><div>AUTHORIZED SIGNATORY</div></div><p class="paper-proof">REHAAN COMPUTERS · STUDENT ACADEMIC RECORD</p></article>`;
+}
+function gradeOptions(value="") {
+  return `<option value="">Automatic</option>`+MARK_GRADES.map(grade=>`<option value="${grade}" ${grade===value?"selected":""}>${grade}</option>`).join("");
 }
 function formCard() {
   return {
     title: $("#rcExamTitle").value,
     date: $("#rcExamDate").value,
+    manualGrade: $("#rcOverallGrade").value,
     subjects: [...document.querySelectorAll("#rcSubjectRows tr")].map(
       (row) => ({
         name: row.querySelector("[data-subject=name]").value,
         max: row.querySelector("[data-subject=max]").value,
         marks: row.querySelector("[data-subject=marks]").value,
+        manualGrade: row.querySelector("[data-subject=grade]").value,
       }),
     ),
   };
@@ -174,7 +181,7 @@ function drawMarks(view, card) {
   }
   let canExport=false;
   try { canExport=Boolean(entry.data.markCard)&&JSON.stringify(validateCard(card))===JSON.stringify(storedCard(entry)); } catch {}
-  view.innerHTML = `<section class="workspace-card"><div class="workspace-card-heading"><div><h2>Mark Cards</h2><p>Select any loaded student, enter marks and print their card here. Saved marks remain available after signing in again.</p></div><div class="rc-feature-actions"><label class="mark-image-quality">Image size<select id="rcMarkImageWidth"><option value="3840" ${markImageWidth===3840?"selected":""}>4K · 3840 pixels wide</option><option value="1600" ${markImageWidth===1600?"selected":""}>HD · 1600 pixels wide</option></select></label><button type="button" class="admin-save-btn" data-new="downloadMarks" ${canExport ? "" : "disabled"}>Download HD image · PNG</button><button class="admin-ghost-btn" data-new="printMarks" ${canExport ? "" : "disabled"}>Print mark card / PDF</button></div></div><div class="rc-marks-controls"><label>Find a student<input id="rcMarkSearch" type="search" placeholder="Name or admission number"></label><label>Student · all ${apps.length} loaded records<select id="rcMarkStudent">${apps.map((a) => `<option value="${e(a.id)}" ${a.id === selected ? "selected" : ""}>${e(a.data.fullName || "Unnamed")} · ${e(a.data.admissionNumber || "No admission number")}</option>`).join("")}</select></label></div><div class="rc-marks-layout"><form id="rcMarksForm"><div class="rc-marks-meta"><label>Assessment title<input id="rcExamTitle" maxlength="120" value="${e(card.title)}" required></label><label>Date<input id="rcExamDate" type="date" value="${e(card.date)}" max="${indiaDate()}" required></label></div><div class="rc-subject-scroll"><table class="rc-subject-table"><thead><tr><th>Subject</th><th>Max.</th><th>Obtained</th><th></th></tr></thead><tbody id="rcSubjectRows">${card.subjects.map((s, i) => `<tr><td><input data-subject="name" aria-label="Subject ${i + 1}" maxlength="100" value="${e(s.name)}" required></td><td><input data-subject="max" aria-label="Maximum ${i + 1}" type="number" min="1" max="1000" step="1" value="${s.max}" required></td><td><input data-subject="marks" aria-label="Marks ${i + 1}" type="number" min="0" max="${s.max}" step=".25" value="${s.marks ?? ""}" placeholder="Unmarked"></td><td><button type="button" data-new="removeSubject" data-index="${i}" aria-label="Remove subject ${i + 1}" ${card.subjects.length === 1 ? "disabled" : ""}>×</button></td></tr>`).join("")}</tbody></table></div><div class="rc-feature-actions"><button type="button" data-new="addSubject" ${card.subjects.length >= 12 ? "disabled" : ""}>+ Add subject</button><button type="submit" class="admin-save-btn">Save marks & update preview</button></div><p id="rcMarksStatus" role="status"></p><p class="rc-feature-note">Blank marks keep the result incomplete. Saving marks changes only the mark card fields. Student details and payments are kept. Save changes before printing or downloading. The saved student photo is included automatically. Photo detail depends on the uploaded original.</p></form><div class="rc-paper-stage" id="rcMarkPreview">${markHTML(entry, card)}</div></div></section>`;
+  view.innerHTML = `<section class="workspace-card"><div class="workspace-card-heading"><div><h2>Mark Cards</h2><p>Select any loaded student, enter marks and print their card here. Saved marks remain available after signing in again.</p></div><div class="rc-feature-actions"><label class="mark-image-quality">Image size<select id="rcMarkImageWidth"><option value="3840" ${markImageWidth===3840?"selected":""}>4K · 3840 pixels wide</option><option value="1600" ${markImageWidth===1600?"selected":""}>HD · 1600 pixels wide</option></select></label><button type="button" class="admin-save-btn" data-new="downloadMarks" ${canExport ? "" : "disabled"}>Download HD image · PNG</button><button class="admin-ghost-btn" data-new="printMarks" ${canExport ? "" : "disabled"}>Print mark card / PDF</button></div></div><div class="rc-marks-controls"><label>Find a student<input id="rcMarkSearch" type="search" placeholder="Name or admission number"></label><label>Student · all ${apps.length} loaded records<select id="rcMarkStudent">${apps.map((a) => `<option value="${e(a.id)}" ${a.id === selected ? "selected" : ""}>${e(a.data.fullName || "Unnamed")} · ${e(a.data.admissionNumber || "No admission number")}</option>`).join("")}</select></label></div><div class="rc-marks-layout"><form id="rcMarksForm"><div class="rc-marks-meta"><label>Assessment title<input id="rcExamTitle" maxlength="120" value="${e(card.title)}" required></label><label>Date<input id="rcExamDate" type="date" value="${e(card.date)}" max="${indiaDate()}" required></label><label>Final grade<select id="rcOverallGrade">${gradeOptions(card.manualGrade)}</select></label></div><p class="rc-feature-note">Automatic calculates grades from marks. Choose a letter to set a manual grade. Passing still requires at least 33% in every subject; a manual F means Fail. Blank marks remain Incomplete.</p><div class="rc-subject-scroll"><table class="rc-subject-table"><thead><tr><th>Subject</th><th>Max.</th><th>Obtained</th><th>Grade</th><th></th></tr></thead><tbody id="rcSubjectRows">${card.subjects.map((s, i) => `<tr><td><input data-subject="name" aria-label="Subject ${i + 1}" maxlength="100" value="${e(s.name)}" required></td><td><input data-subject="max" aria-label="Maximum ${i + 1}" type="number" min="1" max="1000" step="1" value="${s.max}" required></td><td><input data-subject="marks" aria-label="Marks ${i + 1}" type="number" min="0" max="${s.max}" step=".25" value="${s.marks ?? ""}" placeholder="Unmarked"></td><td><select data-subject="grade" aria-label="Grade ${i + 1}">${gradeOptions(s.manualGrade)}</select></td><td><button type="button" data-new="removeSubject" data-index="${i}" aria-label="Remove subject ${i + 1}" ${card.subjects.length === 1 ? "disabled" : ""}>×</button></td></tr>`).join("")}</tbody></table></div><div class="rc-feature-actions"><button type="button" data-new="addSubject" ${card.subjects.length >= 12 ? "disabled" : ""}>+ Add subject</button><button type="submit" class="admin-save-btn">Save marks & update preview</button></div><p id="rcMarksStatus" role="status"></p><p class="rc-feature-note">Blank marks keep the result incomplete. Saving marks changes only the mark card fields. Student details and payments are kept. Save changes before printing or downloading. The saved student photo is included automatically. Photo detail depends on the uploaded original.</p></form><div class="rc-paper-stage" id="rcMarkPreview">${markHTML(entry, card)}</div></div></section>`;
   void showMarkPhoto(entry);
 }
 export function renderMarkCards(view, records) {
@@ -264,6 +271,9 @@ async function whatsapp(receipt) {
   }
 }
 document.addEventListener("change", (event) => {
+  if(event.target.closest("#rcMarksForm")) {
+    for(const action of ["printMarks","downloadMarks"]){const control=$("[data-new="+action+"]");if(control)control.disabled=true;}
+  }
   if(event.target.id === "rcMarkImageWidth") { markImageWidth=Number(event.target.value);return; }
   if (event.target.id === "rcMarkStudent" && !saving) {
     selected = event.target.value;
@@ -459,7 +469,7 @@ document.addEventListener("click", async (event) => {
           if(photo){const image=area.querySelector('.mark-portrait-preview img');image.src=photo.src;await image.decode();if(!current()){if(area.firstElementChild===paper)area.replaceChildren();return;}unchanged();image.hidden=false;area.querySelector('.mark-portrait-preview span').hidden=true;}
           if(current())window.print();
         } else {
-          const {markCardPNG}=await import('./admin-mark-image.js?v=20261020-admin-4');
+          const {markCardPNG}=await import('./admin-mark-image.js?v=20261021-admin-5');
           if(!current())return;
           const blob=await markCardPNG(structuredClone(entry),card,{photo,outputWidth:markImageWidth});
           if(!current())return;

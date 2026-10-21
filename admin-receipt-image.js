@@ -1,5 +1,5 @@
 // Local PNG rendering: no uploads, remote libraries or external image requests.
-import { money, dateLabel, monthLabel } from "./admin-feature-model.js?v=20261018-login-fix-1";
+import { money, dateLabel, monthLabel } from "./admin-feature-model.js?v=20261021-admin-5";
 export function whatsappPhone(value) {
   const digits = String(value || "").replace(/[\s()+.-]/g, "");
   const local = /^91[6-9]\d{9}$/.test(digits) ? digits.slice(2) : digits;

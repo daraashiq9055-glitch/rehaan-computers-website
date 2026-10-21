@@ -44,6 +44,20 @@ export const escapeHTML = (value) =>
         c
       ],
   );
+export const MARK_GRADES = Object.freeze(["A+", "A", "B", "C", "D", "F"]);
+function manualGrade(value) {
+  if (value === undefined || value === null || value === "") return "";
+  if (!MARK_GRADES.includes(value)) throw Error("Choose Automatic or a valid grade: A+, A, B, C, D, F.");
+  return value;
+}
+function automaticGrade(percentage) {
+  return percentage >= 90 ? "A+" : percentage >= 75 ? "A" : percentage >= 60 ? "B" : percentage >= 45 ? "C" : percentage >= 33 ? "D" : "F";
+}
+export function subjectResult(subject) {
+  if (subject.marks === null) return {grade:"Incomplete",label:"Unmarked",passed:false};
+  const grade = subject.marks / subject.max < .33 ? "F" : manualGrade(subject.manualGrade) || automaticGrade(subject.marks / subject.max * 100);
+  return {grade,label:({"A+":"Excellent",A:"Excellent",B:"Very Good",C:"Good",D:"Pass",F:"Fail"})[grade],passed:grade!=="F"};
+}
 export function validateCard(input) {
   const title = String(input.title || "").trim();
   if (!title || title.length > 120)
@@ -83,9 +97,11 @@ export function validateCard(input) {
       throw Error(
         "Obtained marks must be between zero and the subject maximum.",
       );
-    return { name, max, marks };
+    const grade=manualGrade(row.manualGrade);
+    return { name, max, marks, ...(grade ? {manualGrade:grade} : {}) };
   });
-  return { title, date, subjects };
+  const grade=manualGrade(input.manualGrade);
+  return { title, date, subjects, ...(grade ? {manualGrade:grade} : {}) };
 }
 export function cardResult(card) {
   const complete = card.subjects.every((s) => s.marks !== null);
@@ -96,25 +112,12 @@ export function cardResult(card) {
   const percentage = complete
     ? Math.round((total / maximum) * 10000) / 100
     : null;
-  const passed =
-    complete && card.subjects.every((s) => s.marks / s.max >= 0.33);
-  const grade = !complete
-    ? "Incomplete"
-    : !passed
-      ? "Not passed"
-      : percentage >= 90
-        ? "A+"
-        : percentage >= 75
-          ? "A"
-          : percentage >= 60
-            ? "B"
-            : percentage >= 45
-              ? "C"
-              : percentage >= 33
-                ? "D"
-                : "Not passed";
+  const componentsPassed = complete && card.subjects.every(s => subjectResult(s).passed);
+  const grade = !complete ? "Incomplete" : !componentsPassed ? "F" : manualGrade(card.manualGrade) || automaticGrade(percentage);
+  const passed = complete && grade !== "F";
   return { complete, maximum, total, percentage, passed, grade };
 }
+
 export function makeReceipt({
   id,
   data,

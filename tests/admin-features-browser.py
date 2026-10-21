@@ -36,7 +36,7 @@ def run():
   def open_page(records):
    page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda d:d.accept())
    page.add_init_script('window.__fixture={records:'+json.dumps(records)+',writes:[],listeners:[],authorized:true,auth:{currentUser:null,authStateReady:async()=>{}}};window.print=()=>{window.__printed=(window.__printed||0)+1};')
-   page.goto(base+'/admin.html');expect(page.locator('#adminDashboard')).to_be_hidden();assert page.evaluate('__fixture.writes.length')==0
+   page.goto(base+'/admin.html');expect(page.locator('#adminLoginButton')).to_be_enabled();expect(page.locator('#adminDashboard')).to_be_hidden();assert page.evaluate('__fixture.writes.length')==0
    page.locator('#adminEmail').fill('admin@example.test');page.locator('#adminPassword').fill('valid-password');page.locator('#adminLoginButton').click();expect(page.locator('#adminDashboard')).to_be_visible();return page
   def pdf(page,name,kind,count=1):
    assert page.locator('#rcPrintArea').get_attribute('data-kind')==kind

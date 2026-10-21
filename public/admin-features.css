@@ -919,3 +919,6 @@
 .mark-portrait-preview img[hidden],.mark-portrait-preview span[hidden] { display:none; }
 @media screen and (max-width:760px){#rcMarkPreview .mark-paper .paper-brand{padding-right:82px;min-height:115px;}#rcMarkPreview .mark-paper .paper-brand h2{font-size:24px;}#rcMarkPreview .mark-portrait-preview{width:70px;height:89px;}#rcMarkPreview .mark-portrait-preview img{max-height:79px;}}
 @media print{.mark-portrait-preview{width:22mm;height:28mm;}.mark-portrait-preview img{max-height:26mm;}.mark-portrait-preview button{display:none;}}
+
+.rc-subject-table select { width:100%;min-width:95px;padding:9px;border-radius:6px;font:inherit; }
+.rc-subject-table th:nth-child(4),.rc-subject-table td:nth-child(4) { min-width:112px; }

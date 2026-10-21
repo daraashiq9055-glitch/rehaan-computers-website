@@ -1,5 +1,5 @@
 // Local 4K/HD mark card with an administrator-authorized, decoded photo. No uploads or record writes.
-import {validateCard,cardResult,dateLabel,indiaDate} from './admin-feature-model.js?v=20261018-login-fix-1';
+import {validateCard,cardResult,subjectResult,dateLabel,indiaDate} from './admin-feature-model.js?v=20261021-admin-5';
 
 export async function markCardPNG(entry,input,{photo=null,outputWidth=3840}={}){
   if(![1600,3840].includes(outputWidth))throw Error("Choose HD or 4K image size.");
@@ -26,7 +26,7 @@ export async function markCardPNG(entry,input,{photo=null,outputWidth=3840}={}){
   for(let i=0;i<details.length;i+=2){const height=70+Math.max(details[i].lines.length,details[i+1].lines.length)*62;detailRows.push({top:y,fields:details.slice(i,i+2)});y+=height;}
   const tableTop=y+30; y=tableTop+90;
   const tableRows=card.subjects.map(subject=>{
-    const name=lines(subject.name,650,48),verdict=subject.marks===null?'Unmarked':subject.marks/subject.max>=.33?'Pass':'Below pass mark',status=lines(verdict,270,40);
+    const name=lines(subject.name,650,48),verdict=subjectResult(subject).label,status=lines(verdict,270,40);
     const row={top:y,height:Math.max(name.length*61,status.length*52,61)+40,name,status,subject};y+=row.height;return row;
   });
   const totalTop=y; y+=100;
@@ -52,7 +52,7 @@ export async function markCardPNG(entry,input,{photo=null,outputWidth=3840}={}){
   tableRows.forEach(row=>{block(row.name,xs[0],row.top+22,48);text(row.subject.max,xs[1],row.top+22,46);text(row.subject.marks??'—',xs[2],row.top+22,46);block(row.status,xs[3],row.top+24,40);rule(row.top+row.height);});
   text('TOTAL',xs[0],totalTop+28,42,ink,600);text(result.maximum,xs[1],totalTop+28,46);text(result.total??'—',xs[2],totalTop+28,46);rule(totalTop+100);
   ctx.fillStyle='#eff4e9';ctx.fillRect(left,resultTop,width,190);
-  [['PERCENTAGE',result.percentage===null?'—':result.percentage+'%'],['GRADE',result.grade],['RESULT',!result.complete?'Incomplete':result.passed?'Pass':'Not passed']].forEach(([label,value],index)=>{const x=left+index*(width/3)+25;text(label,x,resultTop+28,30,muted);text(value,x,resultTop+88,52,ink,600);});
+  [['PERCENTAGE',result.percentage===null?'—':result.percentage+'%'],['GRADE',result.grade],['RESULT',!result.complete?'Incomplete':result.passed?'Pass':'Fail']].forEach(([label,value],index)=>{const x=left+index*(width/3)+25;text(label,x,resultTop+28,30,muted);text(value,x,resultTop+88,52,ink,600);});
   block(policy,left,policyTop,30,muted);
   const signatureTop=height-170;rule(signatureTop,left,left+530,gold);rule(signatureTop,right-530,right,gold);text('EXAMINER / ASSESSOR',left,signatureTop+22,27,muted);text('AUTHORIZED SIGNATORY',right-530,signatureTop+22,27,muted);
   text('REHAAN COMPUTERS · STUDENT ACADEMIC RECORD',left,height-77,23,muted);
