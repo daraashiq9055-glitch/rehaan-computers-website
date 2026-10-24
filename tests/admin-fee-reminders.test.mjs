@@ -31,11 +31,23 @@ test('upcoming reminders also work more than five days before due; paid current/
 });
 test('month-wise warnings contain the oldest period and exact remaining balance without suggesting an overdue date is in the future',()=>{
  const data=record(),bill=api.select(data,now(24)),message=api.message(data,bill);
- assert.match(message,/OVERDUE MONTHLY FEE REMINDER/);assert.match(message,/Fee Month:\* August 2026/);assert.match(message,/Outstanding Fee:\* Rs\. 499/);assert.match(message,/Due Date:\* 10-08-2026/);assert.doesNotMatch(message,/on or before the due date/);
+ assert.match(message,/OVERDUE MONTHLY FEE REMINDER/);assert.match(message,/Fee Month:\* \*July 2026\*/);assert.match(message,/\*AMOUNT TO PAY\*\n\*₹499\*/);assert.match(message,/Due Date:\* 10-08-2026/);assert.doesNotMatch(message,/on or before the due date/);
  const before=structuredClone(data);api.message(data,bill);assert.deepEqual(data,before);
 });
 test('short months, leap days and year changes still select the original oldest unpaid due date',()=>{
  for(const text of ['2026-12-31','2027-01-01','2027-02-28','2028-02-29']){
   const data=record();assert.equal(api.select(data,new Date(text+'T06:00:00Z')).key,'2026-08-10');
  }
+});
+
+test('fee month names the learning month, while the original due date and balances stay unchanged',()=>{
+ for(const [joined,due,label] of [['2026-10-01','2026-11-01','October 2026'],['2026-10-10','2026-11-10','October 2026'],['2026-12-10','2027-01-10','December 2026'],['2027-01-31','2027-02-28','January 2027'],['2028-01-31','2028-02-29','January 2028']]){
+  const data=record();data.admissionDate=joined;data.monthlyFees={};data.feeReminders={};const before=structuredClone(data),bill=api.select(data,new Date(joined+'T06:00:00Z'));
+  assert.equal(bill.key,due);const message=api.message(data,bill);assert.ok(message.includes('*Fee Month:* *'+label+'*'));assert.ok(message.includes('*Due Date:* '+due.split('-').reverse().join('-')));assert.ok(message.includes('*AMOUNT TO PAY*\n*₹999*'));assert.doesNotMatch(message,/PAYMENT NUMBER|6006433125|pay directly to this number/);assert.deepEqual(data,before);
+ }
+});
+
+test('the rupee amount has its own bold line, with two decimal places for partial rupees',()=>{
+ const data=record(),bill=api.select(data,now(24));bill.remaining=499.5;
+ const message=api.message(data,bill);assert.match(message,/\*AMOUNT TO PAY\*\n\*₹499\.50\*/);assert.doesNotMatch(message,/Rs\.|PAYMENT NUMBER|6006433125|pay directly to this number/);
 });

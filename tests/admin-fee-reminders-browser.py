@@ -38,21 +38,21 @@ def run():
                 page.locator('[data-operations=today]').click();expect(page.locator('[data-today-action=soon] strong')).to_have_text('1');page.locator('[data-section=students]').click();expect(page.locator('[data-application-id=enrolled] [data-act=monthly-reminder]')).to_be_visible();page.locator('[data-section=fees]').click();page.locator('#rcFeeFilter').select_option('reminders');expect(page.locator('.rc-fee-row')).to_have_count(1)
                 before=page.evaluate('structuredClone(__fixture.records)');page.locator('.rc-reminder[data-fee-wa=enrolled]').click();assert page.evaluate('__fixture.records')==before and page.evaluate('__fixture.writes.length')==0
                 def draft():return parse_qs(urlparse(page.evaluate('__opened.at(-1)')).query)['text'][0]
-                message=draft();assert 'August 2026' in message and 'Rs. 499' in message and 'OVERDUE' in message and 'September 2026' not in message
+                message=draft();assert 'July 2026' in message and '*AMOUNT TO PAY*\n*₹499*' in message and 'PAYMENT NUMBER' not in message and '6006433125' not in message and 'pay directly to this number' not in message and 'OVERDUE' in message and 'August 2026' not in message
                 confirm[0]=True;page.locator('.rc-reminder[data-fee-wa=enrolled]').click();expect(page.locator('.rc-reminder[data-fee-wa=enrolled]')).to_have_text('🔔 Remind again');page.wait_for_function('__fixture.writes.length===1')
                 saved=page.evaluate('__fixture.records.enrolled')
                 for key,value in original.items():
                     if key!='feeReminders':assert saved[key]==value,key
                 assert '2026-08-10' in saved['feeReminders'] and '2026-09-10' not in saved['feeReminders']
                 patch=page.evaluate('__fixture.writes[0].data');assert set(patch)=={'feeReminders.2026-08-10','updatedAt','updatedBy'}
-                confirm[0]=False;page.locator('.rc-reminder[data-fee-wa=enrolled]').click();assert 'August 2026' in draft() and 'Rs. 499' in draft()
+                confirm[0]=False;page.locator('.rc-reminder[data-fee-wa=enrolled]').click();assert 'July 2026' in draft() and '*₹499*' in draft()
                 print('PASS: all calendar dates, Today/student/fee views, reminder filter, paid period exclusion, repeat reminders and month-specific overdue draft; only confirmed reminder metadata changes',flush=True)
                 confirm[0]=True;page.locator('[data-fee-pay=enrolled]').click();page.locator('#rcPaymentAmount').fill('499');page.locator('#rcPaymentMethod').select_option('Cash');page.locator('#rcPaymentForm [type=submit]').click();expect(page.locator('#rcPaymentMessage')).to_contain_text('Payment saved.');page.locator('#rcTuitionModal .admin-modal-close').click()
                 assert page.evaluate('__fixture.records.enrolled.monthlyFees["2026-08-10"]')==999
-                confirm[0]=False;page.locator('.rc-reminder[data-fee-wa=enrolled]').click();assert 'September 2026' in draft() and 'Rs. 999' in draft() and 'August 2026' not in draft()
+                confirm[0]=False;page.locator('.rc-reminder[data-fee-wa=enrolled]').click();assert 'August 2026' in draft() and '*₹999*' in draft() and 'July 2026' not in draft()
                 assert page.evaluate('__fixture.records.enrolled.payment')==original['payment'];assert page.evaluate('__fixture.records.enrolled.photo')==original['photo']
                 assert not errors and not external and not writes,(errors,external,writes)
-                print('PASS: recording the remaining August balance advances the reminder to unpaid September; original payment/provider/photo data retained; no live charge, message or network write',flush=True)
+                print('PASS: clearing the oldest billing balance advances the reminder to the next unpaid learning month; original payment/provider/photo data retained; no live charge, message or network write',flush=True)
                 browser.close()
         finally:server.shutdown()
 if __name__=='__main__':run()

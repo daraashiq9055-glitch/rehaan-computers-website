@@ -1,6 +1,6 @@
 # Always-available monthly fee reminders
 
-Release `20261024-admin-6` follows the updated request: there is no date window
+Release `20261024-admin-7` follows the updated request: there is no date window
 or inactive gap. An enrolled, non-cancelled student with an unpaid billing period
 can be reminded on any day. The proposed 25th–15th rule is not included.
 
@@ -11,10 +11,17 @@ paid using the existing payment form, the next unpaid period becomes eligible.
 When there is no earlier debt, the existing upcoming tuition period is used;
 there is no five-day limit. Fully paid periods are not requested.
 
+The fee month names the learning month, not the following due-date month:
+joining 1 October gives October fees due 1 November; joining 10 October gives
+October fees due 10 November. Stored due-date keys, receipt labels and balances
+are not migrated or changed. Year rollover and short months retain this rule.
+
 Overdue drafts identify the fee month, original due date and exact remaining
 balance, and ask for that period to be cleared first. Upcoming drafts retain
-normal due-date wording. The saved student mobile and original payment contact
-remain unchanged. A previously reminded period shows **Remind again**.
+normal due-date wording. The saved student mobile remains unchanged. The payment number and the
+"pay directly to this number" instruction have been removed from drafts. The
+amount to pay has its own bold rupee line, for example `*₹999*`, below
+`*AMOUNT TO PAY*`. Partial rupees display two decimal places, such as ₹499.50. A previously reminded period shows **Remind again**.
 WhatsApp still opens a draft for the administrator to send manually. Only
 explicit confirmation records the latest reminder timestamp for that period.
 This timestamp is not proof of WhatsApp delivery. Dismissing confirmation saves
@@ -36,7 +43,7 @@ cd build\admin-release
 type RELEASE.json
 ```
 
-Confirm `20261024-admin-6` and `auditEnabled: false`, then publish Hosting:
+Confirm `20261024-admin-7` and `auditEnabled: false`, then publish Hosting:
 
 ```bat
 npx --yes firebase-tools@15.34.0 deploy --only hosting --project rehaan-computers

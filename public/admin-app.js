@@ -966,9 +966,16 @@ function overdueMonthlyTuition(data, today = indiaCalendarDate()) {
     return oldest;
 }
 function tuitionWhatsAppMessage(data, bill) {
+    // Stored keys are due dates after a month of learning. Label the month
+    // being paid for, without moving or rewriting the existing ledger key.
+    const [dueYear, dueMonth] = bill.key.split("-").map(Number);
     const period = new Intl.DateTimeFormat("en-IN", {
         timeZone: "Asia/Kolkata", month: "long", year: "numeric"
-    }).format(new Date(bill.key + "T00:00:00+05:30"));
+    }).format(new Date(Date.UTC(dueYear, dueMonth - 2, 1)));
+    const amount = new Intl.NumberFormat("en-IN", {
+        minimumFractionDigits: Number.isInteger(bill.remaining) ? 0 : 2,
+        maximumFractionDigits: 2
+    }).format(bill.remaining);
     return [
         "*REHAAN COMPUTERS*",
         "Charangam, Beerwah",
@@ -982,14 +989,15 @@ function tuitionWhatsAppMessage(data, bill) {
         "",
         "*Student Name:* " + (data.fullName || "Student"),
         "*Admission No.:* " + (data.admissionNumber || "—"),
-        "*Fee Month:* " + period,
-        "*Outstanding Fee:* Rs. " + bill.remaining,
+        "*Fee Month:* *" + period + "*",
         "*Due Date:* " + bill.key.split("-").reverse().join("-"),
         "",
         bill.diff < 0 ? "Kindly clear the remaining fee for the overdue period shown above." : "Kindly clear your outstanding fee on or before the due date.",
         "",
-        "*PAYMENT NUMBER: 6006433125*",
-        "You may pay directly to this number.",
+        "━━━━━━━━━━━━━━━━━━",
+        "*AMOUNT TO PAY*",
+        "*₹" + amount + "*",
+        "━━━━━━━━━━━━━━━━━━",
         "",
         "If you have already paid, kindly disregard this reminder and share your payment confirmation for verification.",
         "",
