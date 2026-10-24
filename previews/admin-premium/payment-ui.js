@@ -24,7 +24,7 @@ export function createPaymentUI(services) {
     form.dataset.pending='true';submit.disabled=true;fields.forEach(input=>input.disabled=true);modal._canClose=false;modal.querySelector('.admin-modal-close').disabled=true;
     let receipt;
     try {
-      receipt=await saveDetailedPayment(services.saveMonthlyPayment,{db:services.db,ref:services.doc(services.db,'applications',id),runTransaction:services.runTransaction,
+      receipt=await saveDetailedPayment(services.saveMonthlyPayment,{db:services.db,ref:services.doc(services.db,'applications',id),counterRef:services.doc(services.db,'receiptCounters','tuition'),runTransaction:services.runTransaction,
         assertSession:()=>{services.requireAdmin();if(services.uid()!==uid)throw Error('Your session changed. Sign in and refresh before recording payment.');},
         actor:uid,id,due:bill.key,amount,expectedPaid:existing,expectedAdmission:data.admissionNumber,expectedJoined:data.admissionDate||data.approvedAt||'',receiptId},input);
     }catch(error){status.hidden=false;status.className='admin-modal-msg err';status.textContent='Payment not confirmed: '+error.message+'. Keep this form open to retry, or refresh and check saved receipts.';form.dataset.pending='false';submit.disabled=false;fields.forEach(input=>input.disabled=false);modal._canClose=true;modal.querySelector('.admin-modal-close').disabled=false;return;}

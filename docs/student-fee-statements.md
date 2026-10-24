@@ -1,3 +1,5 @@
+> Included in release **20261024-admin-10** with the approved receipt design. Use [the current deployment instructions](receipt-refresh-release.md), including the counter rules before Hosting.
+
 # Premium monthly student statements
 
 Candidate version: `20261024-admin-9`. This is a read-only addition to the existing

@@ -68,6 +68,7 @@ export async function saveMonthlyPayment({
   expectedAdmission,
   expectedJoined,
   receiptId,
+  counterRef = null,
   monthly = 999,
   now = new Date().toISOString(),
 }) {
@@ -117,6 +118,14 @@ export async function saveMonthlyPayment({
         "Payment record changed. Close this form, refresh and try again.",
       );
     if (paid + added > fee) throw Error("Payment exceeds remaining balance.");
+    let sequence = null;
+    if(counterRef){
+      const counter = await transaction.get(counterRef);
+      assertSession();
+      const last = counter.exists() ? counter.data().last : 999;
+      if(!Number.isSafeInteger(last)||last<999||last>=9999999)throw Error('Receipt numbering needs administrator review. No payment was saved.');
+      sequence=last+1;
+    }
     const receipt = makeReceipt({
       id,
       data,
@@ -128,6 +137,7 @@ export async function saveMonthlyPayment({
       createdAt: now,
       createdBy: actor,
     });
+    if(sequence!==null){receipt.number=String(sequence);transaction.set(counterRef,{last:sequence});}
     transaction.update(ref, {
       ["monthlyFees." + due]: (paid + added) / 100,
       ["feeReceipts." + receiptId]: receipt,

@@ -155,6 +155,7 @@ export function makeReceipt({
       admission: String(data.admissionNumber || "—"),
       course: String(data.coursePreference || data.course || "—"),
       phone: String(data.phone || ""),
+      address: String(data.address || ""),
     },
     period: due.slice(0, 7),
     due,

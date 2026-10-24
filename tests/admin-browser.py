@@ -39,7 +39,7 @@ export const collection=(_db,name)=>({name});
 export const doc=(_db,col,id)=>({col,id});
 export const snapshot=(id,data)=>({id,exists:()=>data!==undefined,data:()=>structuredClone(data)});
 const reordered = value => value && typeof value === 'object' && !Array.isArray(value) ? Object.fromEntries(Object.keys(value).reverse().map(key=>[key,reordered(value[key])])) : value;
-export const getDoc=async ref=>snapshot(ref.id,ref.col==='admins'?(state.authorized?{uid:'admin-uid',isAdmin:true}:undefined):(state.reorderReads?reordered(state.records[ref.id]):state.records[ref.id]));
+export const getDoc=async ref=>snapshot(ref.id,ref.col==='receiptCounters'?state.counters?.[ref.id]:ref.col==='admins'?(state.authorized?{uid:'admin-uid',isAdmin:true}:undefined):(state.reorderReads?reordered(state.records[ref.id]):state.records[ref.id]));
 export const getDocs=async()=>{
  if(state.failRead)throw Object.assign(new Error('Read denied'),{code:'permission-denied'});
  const rows=Object.entries(state.records).map(([id,data])=>snapshot(id,data));
@@ -51,6 +51,7 @@ export const runTransaction=async(_db,fn)=>{
  const tx={get:getDoc,update:(ref,patch)=>staged.push(['update',ref,patch]),set:(ref,data)=>staged.push(['set',ref,data]),delete:ref=>staged.push(['delete',ref])};
  const result = await fn(tx);
  for(const [kind,ref,data] of staged){
+  if(ref.col==='receiptCounters'){(state.counters??={})[ref.id]=structuredClone(data);continue;}
   if(kind==='delete')delete state.records[ref.id];
   else if(kind==='set')state.records[ref.id]=structuredClone(data);
   else for(const [path,value] of Object.entries(data)){

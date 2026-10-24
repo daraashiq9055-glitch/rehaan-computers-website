@@ -1111,7 +1111,7 @@ async function recordMonthlyTuition(id, data) {
         submit.disabled = true;
         let receipt;
         try {
-            receipt = await saveMonthlyPayment({db,ref:doc(db,"applications",id),runTransaction,
+            receipt = await saveMonthlyPayment({db,ref:doc(db,"applications",id),counterRef:doc(db,"receiptCounters","tuition"),runTransaction,
                 assertSession:()=>{requireAdmin();if(verifiedAdminUid!==paymentUid)throw new Error("Your session changed. Sign in and refresh before recording payment.");},
                 actor:paymentUid,id,due:bill.key,amount:added,expectedPaid:existing,
                 expectedAdmission:data.admissionNumber,expectedJoined:data.admissionDate||data.approvedAt||"",receiptId});

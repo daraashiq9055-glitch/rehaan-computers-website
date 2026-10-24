@@ -1,3 +1,5 @@
+> Latest release: **20261024-admin-10** adds approved receipts and includes Fee Statements. Follow [receipt-refresh-release.md](receipt-refresh-release.md): publish the additive counter rules first, then Hosting. Older Hosting-only commands below apply to earlier releases.
+
 # Complete release: review first, Hosting deployment afterwards
 
 This release keeps the confirmed Spark plan. Secure server history is disabled;

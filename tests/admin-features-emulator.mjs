@@ -12,10 +12,11 @@ const env=await initializeTestEnvironment({projectId:'demo-rehaan-features',fire
 const student={fullName:'Emulator Fixture',phone:'9999999991',status:'Approved',admissionNumber:'TEST/001',admissionDate:'2026-01-14',monthlyFees:{'2026-02-14':200},payment:{status:'paid',amount:100,providerId:'keep'},photo:'retained-photo-reference',unknown:{all:['original','fields']}};
 try{
  await env.clearFirestore();
- await env.withSecurityRulesDisabled(async context=>{const db=context.firestore();for(const uid of ['admin-one','admin-two'])await setDoc(doc(db,'admins',uid),{uid,isAdmin:true});for(const id of ['student','concurrent'])await setDoc(doc(db,'applications',id),student);});
+ await env.withSecurityRulesDisabled(async context=>{const db=context.firestore();for(const uid of ['admin-one','admin-two'])await setDoc(doc(db,'admins',uid),{uid,isAdmin:true});for(const id of ['student','concurrent','bootstrap-one','bootstrap-two'])await setDoc(doc(db,'applications',id),student);});
  const first=env.authenticatedContext('admin-one').firestore(),second=env.authenticatedContext('admin-two').firestore();
- const input=(db,id='student',receiptId='a'.repeat(32))=>({db,ref:doc(db,'applications',id),runTransaction,assertSession:()=>{},actor:db===first?'admin-one':'admin-two',id,due:'2026-02-14',amount:400,expectedPaid:200,expectedAdmission:'TEST/001',expectedJoined:'2026-01-14',receiptId});
- const receipt=await saveMonthlyPayment(input(first));assert.equal(receipt.balanceAtIssue,39900);
+ const input=(db,id='student',receiptId='a'.repeat(32))=>({db,ref:doc(db,'applications',id),counterRef:doc(db,'receiptCounters','tuition'),runTransaction,assertSession:()=>{},actor:db===first?'admin-one':'admin-two',id,due:'2026-02-14',amount:400,expectedPaid:200,expectedAdmission:'TEST/001',expectedJoined:'2026-01-14',receiptId});
+ const initial=await Promise.all([saveMonthlyPayment(input(first,'bootstrap-one','8'.repeat(32))),saveMonthlyPayment(input(second,'bootstrap-two','9'.repeat(32)))]);assert.deepEqual(initial.map(r=>Number(r.number)).sort((a,b)=>a-b),[1000,1001]);
+ const receipt=await saveMonthlyPayment(input(first));assert.equal(receipt.balanceAtIssue,39900);assert.equal(receipt.number,'1002');
  const persisted=(await getDoc(doc(second,'applications','student'))).data();assert.equal(persisted.monthlyFees['2026-02-14'],600);assert.deepEqual(persisted.feeReceipts[receipt.id],receipt);for(const key of ['payment','photo','unknown'])assert.deepEqual(persisted[key],student[key]);
  assert.deepEqual(await saveMonthlyPayment(input(first)),receipt);assert.equal((await getDoc(doc(first,'applications','student'))).data().monthlyFees['2026-02-14'],600);
  const result=await Promise.allSettled([saveMonthlyPayment(input(first,'concurrent','b'.repeat(32))),saveMonthlyPayment(input(second,'concurrent','c'.repeat(32)))]);
@@ -36,5 +37,24 @@ try{
  for(const db of [anonymous,nonAdmin]){await assertFails(getDoc(doc(db,'applications','student')));await assert.rejects(saveMonthlyPayment(input(db,'student','d'.repeat(32))));await assert.rejects(correctReceipt({...correctionArgs(db),correctionId:'3'.repeat(32)}));await assert.rejects(saveMarkCard({db,ref:doc(db,'applications','student'),runTransaction,assertSession:()=>{},actor:'not-admin',card,expected:null}));}
  const base={fullName:'Public applicant',phone:'9999999991',coursePreference:'Diploma',status:'Pending Payment',payment:{status:'awaiting',amount:100}};
  await assertFails(setDoc(doc(anonymous,'applications','injected-marks'),{...base,markCard:card}));await assertFails(setDoc(doc(anonymous,'applications','injected-receipt'),{...base,feeReceipts:{fake:receipt}}));
+ // Both admins can save different students concurrently without duplicate numbers.
+ await env.withSecurityRulesDisabled(async context=>{for(const id of ['seq-one','seq-two','seq-denied'])await setDoc(doc(context.firestore(),'applications',id),student);});
+ const beforeCounter=(await getDoc(doc(first,'receiptCounters','tuition'))).data().last;
+ const parallel=await Promise.all([saveMonthlyPayment(input(first,'seq-one','5'.repeat(32))),saveMonthlyPayment(input(second,'seq-two','6'.repeat(32)))]);
+ assert.deepEqual(parallel.map(r=>Number(r.number)).sort((a,b)=>a-b),[beforeCounter+1,beforeCounter+2]);
+ const afterCounter=(await getDoc(doc(first,'receiptCounters','tuition'))).data().last;
+ assert.equal(afterCounter,beforeCounter+2);
+ assert.deepEqual(await saveMonthlyPayment(input(first,'seq-one','5'.repeat(32))),parallel[0]);
+ assert.equal((await getDoc(doc(first,'receiptCounters','tuition'))).data().last,afterCounter);
+ await assertFails(getDoc(doc(anonymous,'receiptCounters','tuition')));
+ await assertFails(setDoc(doc(anonymous,'receiptCounters','tuition'),{last:afterCounter+1}));
+ await assertFails(setDoc(doc(second,'receiptCounters','tuition'),{last:1000}));
+ await assertFails(setDoc(doc(second,'receiptCounters','tuition'),{last:afterCounter+2}));
+ const beforeDenied=(await getDoc(doc(first,'applications','seq-denied'))).data();
+ // Inaccessible counter must abort the entire payment, never save just the ledger.
+ await assert.rejects(saveMonthlyPayment({...input(first,'seq-denied','7'.repeat(32)),counterRef:doc(first,'receiptCounters','wrong-document')}));
+ assert.deepEqual((await getDoc(doc(first,'applications','seq-denied'))).data(),beforeDenied);
+ assert.equal((await getDoc(doc(first,'receiptCounters','tuition'))).data().last,afterCounter);
+ console.log('PASS: shared numbering starts at 1000; simultaneous admins get unique numbers; retries consume no number; counter denial saves no payment; public/reset/skipped counter writes denied');
  console.log('PASS: actual Firestore SDK + deployed rules preserve records, persist marks, atomically save receipts, audit atomic receipt corrections, reject concurrent corrections/duplicates/stale marks and deny non-admin access/injection');
 }finally{await env.cleanup();}

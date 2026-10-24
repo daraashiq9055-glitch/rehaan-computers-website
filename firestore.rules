@@ -33,6 +33,29 @@ service cloud.firestore {
     }
 
 
+    // Shared tuition receipt sequence. No public access and no student data here.
+    match /receiptCounters/tuition {
+      function counterAdmin() {
+        return request.auth != null
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid;
+      }
+      allow get: if counterAdmin();
+      allow create: if counterAdmin()
+        && request.resource.data.keys().hasOnly(["last"])
+        && request.resource.data.last is int
+        && request.resource.data.last == 1000;
+      allow update: if counterAdmin()
+        && request.resource.data.keys().hasOnly(["last"])
+        && request.resource.data.last is int
+        // Allow an unchanged value so stale optimistic transactions can reach
+        // their version precondition and retry; the application increments once.
+        && request.resource.data.last >= resource.data.last
+        && request.resource.data.last <= resource.data.last + 1
+        && request.resource.data.last <= 9999999;
+      allow list, delete: if false;
+    }
+
     /*
      * APPLICATIONS
      */

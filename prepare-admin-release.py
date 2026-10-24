@@ -12,7 +12,7 @@ import shutil
 import tempfile
 
 ROOT=Path(__file__).resolve().parent
-VERSION='20261024-admin-9'
+VERSION='20261024-admin-10'
 
 def build(destination, audit_ready=False):
     destination=Path(destination)
@@ -94,7 +94,7 @@ def build(destination, audit_ready=False):
     (public/'admin.html').write_text(html, encoding='utf-8')
     config=json.loads((ROOT/'firebase.json').read_text(encoding='utf-8'));config.pop('firestore',None)
     (destination/'firebase.json').write_text(json.dumps(config,indent=2)+'\n', encoding='utf-8')
-    (destination/'RELEASE.json').write_text(json.dumps({'generated':True,'version':VERSION,'auditEnabled':audit_ready,'source':'prepare-admin-release.py'},indent=2)+'\n', encoding='utf-8')
+    (destination/'RELEASE.json').write_text(json.dumps({'generated':True,'version':VERSION,'auditEnabled':audit_ready,'receiptCounterRulesRequired':True,'source':'prepare-admin-release.py'},indent=2)+'\n', encoding='utf-8')
     return destination
 
 def main():
@@ -110,6 +110,7 @@ def main():
         shutil.move(str(output),target)
     print('Built separate candidate:',target)
     print('Current public/ and live website were not changed. Nothing was deployed.')
+    print('Before Hosting: publish the receipt counter rules from the repository root (see docs/receipt-refresh-release.md).')
     print('Secure history:', 'enabled; verify backend before deployment' if args.audit_ready else 'disabled until backend verification')
 
 if __name__=='__main__':main()

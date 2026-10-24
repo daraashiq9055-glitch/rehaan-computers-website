@@ -1,3 +1,4 @@
+import {receiptHTML as refreshedReceiptHTML,presentReceipt,receiptMessage} from './admin-receipt-layout.js?v=20261024-admin-10';
 import {
   escapeHTML as e,
   indiaDate,
@@ -202,33 +203,7 @@ export function renderMarkCards(view, records) {
     view.innerHTML = `<section class="workspace-card"><h2>Stored marks need review</h2><p>${e(error.message)} No records were changed.</p></section>`;
   }
 }
-function receiptHTML(r = null) {
-  const blank = !r;
-  const field = (label, value, wide = false) =>
-    `<div class="receipt-field${wide ? " full" : ""}"><span>${label}</span><b>${blank ? "" : e(value)}</b></div>`;
-  return `<article class="receipt-paper"><div class="paper-brand"><div><h2>Rehaan Computers</h2><small>CHARANGAM · BEERWAH · KASHMIR</small></div><b>FEE RECEIPT</b></div><div class="receipt-meta"><span>Receipt no. <b>${blank ? "" : e(r.number)}</b></span><span>Date <b>${blank ? "" : dateLabel(r.date)}</b></span></div><div class="receipt-fields">${field("Student name", r?.student.name, true)}${field("Admission no.", r?.student.admission)}${field("Fee month", r ? monthLabel(r.period) : "")}${field("Course / programme", r?.student.course, true)}${field("Due date", r?.due)}${field("Monthly tuition", r ? money(r.billed) : "")}</div><div class="receipt-totals">${[
-    ["RECEIVED NOW", r?.amount],
-    [
-      r?.balanceBasis === "correction"
-        ? "TOTAL AT CORRECTION"
-        : "RECEIVED FOR THIS MONTH",
-      r?.receivedAtIssue,
-    ],
-    [
-      r?.balanceBasis === "correction"
-        ? "BALANCE AT CORRECTION"
-        : "BALANCE AFTER PAYMENT",
-      r?.balanceAtIssue,
-    ],
-  ]
-    .map(
-      ([label, value]) =>
-        `<div><small>${label}</small><strong>${blank ? "" : money(value)}</strong></div>`,
-    )
-    .join(
-      "",
-    )}</div><div class="receipt-bottom"><p>Please retain this acknowledgement for your records.<br>₹100 admission fee is separate from monthly tuition.${r ? "<br>Recorded method: " + e(r.method) : ""}${r?.note ? "<br>Note: " + e(r.note) : ""}${r?.balanceRecordedAt ? "<br>Balance recorded: " + dateLabel(r.balanceRecordedAt.slice(0, 10)) : ""}</p><div>AUTHORIZED SIGNATORY</div></div><p class="paper-proof">REHAAN COMPUTERS · ${blank ? "BLANK FORM FOR HANDWRITTEN DETAILS" : "FEE PAYMENT ACKNOWLEDGEMENT"}</p></article>`;
-}
+function receiptHTML(r=null){return refreshedReceiptHTML(r?presentReceipt(r):{student:{},number:'',date:''},{blank:!r,numbered:false});}
 export function openReceipt(receipt) {
   modal(
     "Payment receipt",
@@ -280,7 +255,7 @@ async function whatsapp(receipt) {
   const phone = current?.data.phone || receipt.student.phone;
   const url = whatsappURL(
     phone,
-    `REHAAN COMPUTERS\nFee receipt: ${receipt.number}\nStudent: ${receipt.student.name}\nFee month: ${monthLabel(receipt.period)}\nPayment date: ${dateLabel(receipt.date)}\nAmount received: ${money(receipt.amount)}\n${receipt.balanceBasis === "correction" ? "Balance at correction" : "Remaining after payment"}: ${money(receipt.balanceAtIssue)}\n\nPlease retain this acknowledgement for your records.`,
+    receiptMessage(presentReceipt(receipt)),
   );
   const version = ++renderVersion;
   modal(
@@ -525,14 +500,14 @@ document.addEventListener("click", async (event) => {
     if (action === "blank")
       modal(
         "Blank receipt",
-        `<div class="rc-paper-stage">${receiptHTML()}</div><div class="rc-feature-actions"><button class="admin-save-btn" data-new="printBlank">Print blank · A5</button><button data-new="printSheet">Print two blanks · A4</button></div>`,
+        `<div class="rc-paper-stage">${receiptHTML()}</div><div class="rc-feature-actions"><button class="admin-save-btn" data-new="printBlank">Print blank · A5</button><button data-new="printSheet">Print two blanks · A4</button></div><p class="rc-feature-note">Blank slips leave the receipt number empty. Printing does not record a payment or reserve a number; use the number from the saved payment.</p>`,
       );
     if (action === "printBlank") print("receipt", receiptHTML());
     if (action === "printSheet")
       print(
         "sheet",
         receiptHTML() +
-          '<div class="rc-cutline">CUT HERE</div>' +
+          '' +
           receiptHTML(),
       );
     if (action === "receipts")

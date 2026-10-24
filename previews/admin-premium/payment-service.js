@@ -19,6 +19,7 @@ export async function saveDetailedPayment(saveMonthlyPayment, options, input) {
   const originalTransaction=options.runTransaction;
   return saveMonthlyPayment({...options,runTransaction:(db,callback)=>originalTransaction(db,transaction=>callback({
     get:ref=>transaction.get(ref),
+    set:(ref,data)=>transaction.set(ref,data),
     update:(ref,patch)=>{
       // The original save function returns this same new receipt after staging it.
       const receipt=patch['feeReceipts.'+options.receiptId];
