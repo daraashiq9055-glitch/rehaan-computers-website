@@ -20,6 +20,7 @@ let apps = [],
   saving = false;
 let markPhotoVersion = 0, markImageWidth = 3840;
 let services = {};
+let clearStatement = null;
 export function configureAdditions(options) {
   services = options;
 }
@@ -102,6 +103,7 @@ function print(kind, html) {
   window.print();
 }
 export function resetAdditions() {
+  clearStatement?.();
   renderVersion++;
   sessionEpoch++;
   markPhotoVersion++;
@@ -230,6 +232,18 @@ export function openReceipt(receipt) {
     "Payment receipt",
     `<div class="rc-paper-stage">${receiptHTML(receipt)}</div><div class="rc-feature-actions"><button class="admin-save-btn" data-new="printReceipt" data-id="${receipt.id}">Print / Save PDF</button><button data-new="image" data-id="${receipt.id}">Download image</button><button data-new="whatsapp" data-id="${receipt.id}">WhatsApp receipt</button><button data-new="editReceipt" data-id="${receipt.id}">Edit / correct receipt</button><button data-new="receiptHistory" data-id="${receipt.id}">Correction history (${receipt.amendments?.length || 0})</button></div><p class="rc-feature-note">${receipt.balanceBasis === "correction" ? "Corrected receipt. The totals show the balance at the financial correction." : "This receipt preserves the amount and balance when this payment was recorded."}</p>`,
   );
+}
+export async function openStudentStatement(id) {
+  const epoch=sessionEpoch;
+  try {
+    services.assertSession?.();
+    const {openFeeStatement,clearFeeStatement}=await import('./admin-fee-statement.js?v=20261024-admin-8');
+    if(epoch!==sessionEpoch)return;
+    clearStatement=clearFeeStatement;
+    openFeeStatement({getEntry:()=>{services.assertSession?.();return services.getRecords?.().find(entry=>entry.id===id);}});
+  } catch(error) {
+    if(epoch===sessionEpoch)modal('Could not open fee statement',`<p>${e(error.message)}</p>`);
+  }
 }
 export function receiptTools(list, records) {
   syncReceipts(records);
@@ -485,6 +499,7 @@ document.addEventListener("click", async (event) => {
       }
     }
 
+    if (action === "statement") {await openStudentStatement(button.dataset.student);return;}
     if (action === "printReceipt" && receipt)
       print("receipt", receiptHTML(receipt));
     if (action === "image" && receipt) await image(receipt);

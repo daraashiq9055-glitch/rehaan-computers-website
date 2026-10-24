@@ -182,3 +182,13 @@ The server-controlled audit implementation and candidate rules are prepared in
 `backend/audit/`; actual deployment and principal identity still require the
 checks in its README. Secure history remains disabled in the generated UI until
 those backend checks pass. See [release details](../../docs/admin-upgrade-release-candidate.md).
+
+## Monthly fee statements
+
+Open **Fees & payments → Fee statement** on any sample student, or use the new
+button in the profile's **Fees & receipts** tab. The navy/gold and cream statement
+shows learning months, due dates, received/balance/status, the oldest unpaid month,
+total due and upcoming fees separately. Try screen filters, full PNG, print and
+CSV. WhatsApp remains blocked in this disconnected demo. All statement actions
+are read-only; local payment examples can still be recorded using the original
+payment form. See [calculation and release details](../../docs/student-fee-statements.md).

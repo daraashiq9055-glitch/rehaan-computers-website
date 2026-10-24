@@ -31,6 +31,7 @@ export const previewAdminBridge = Object.freeze({
     const input = document.getElementById('rcMarkStudent');
     if (input) {input.value = id;input.dispatchEvent(new Event('change', {bubbles: true}));}
   },
+  statement(id) {requireAdmin();return openStudentStatement(id);},
   receipt(id, receiptId) {
     requireAdmin();const receipt = adminState.apps.find(item => item.id === id)?.data.feeReceipts?.[receiptId];
     if (receipt) openReceipt(structuredClone(receipt));

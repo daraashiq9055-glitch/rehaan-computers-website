@@ -1,4 +1,4 @@
-import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions} from "./admin-features.js?v=20261021-admin-5";
+import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement} from "./admin-features.js?v=20261024-admin-8";
 import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261021-admin-5";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
@@ -1390,6 +1390,7 @@ function renderFeeManagement(list, entries) {
               </div>
               <div class="rc-fee-actions">
                 ${x.current ? `<button type="button" data-fee-pay="${escapeHTML(x.id)}">Record Payment</button>` : ""}
+                <button type="button" data-new="statement" data-student="${escapeHTML(x.id)}">Fee statement</button>
                 ${x.eligibleReminder ? `<button type="button" class="rc-reminder" data-fee-wa="${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 ${x.reminder?.sent ? "Remind again" : "Send reminder"}</button>` : ""}
               </div>
             </div>`).join("") : '<p class="rc-fees-empty">No enrolled students match the current search and filters.</p>'}
@@ -2709,7 +2710,7 @@ function downloadFile(text, name, type) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-configureAdditions({loadMarkPhoto:async(photo)=>{
+configureAdditions({assertSession:requireAdmin,loadMarkPhoto:async(photo)=>{
     requireAdmin();const uid=verifiedAdminUid;
     if(!photo)return null;
     if(!isSafePhoto(photo))throw new Error("The stored photo reference needs review in student Details.");
