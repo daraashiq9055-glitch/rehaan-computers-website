@@ -966,23 +966,27 @@ function overdueMonthlyTuition(data, today = indiaCalendarDate()) {
     return oldest;
 }
 function tuitionWhatsAppMessage(data, bill) {
+    const period = new Intl.DateTimeFormat("en-IN", {
+        timeZone: "Asia/Kolkata", month: "long", year: "numeric"
+    }).format(new Date(bill.key + "T00:00:00+05:30"));
     return [
         "*REHAAN COMPUTERS*",
         "Charangam, Beerwah",
         "",
-        "*MONTHLY FEE REMINDER*",
+        bill.diff < 0 ? "*OVERDUE MONTHLY FEE REMINDER*" : "*MONTHLY FEE REMINDER*",
         "",
         "Dear " + (data.fullName || "Student") + ",",
         "",
         "Greetings from Rehaan Computers.",
-        "This is a gentle reminder regarding your pending monthly course fee.",
+        bill.diff < 0 ? "Your previous billing period still has an unpaid balance. Please clear this period first." : "This is a gentle reminder regarding your pending monthly course fee.",
         "",
         "*Student Name:* " + (data.fullName || "Student"),
         "*Admission No.:* " + (data.admissionNumber || "—"),
+        "*Fee Month:* " + period,
         "*Outstanding Fee:* Rs. " + bill.remaining,
         "*Due Date:* " + bill.key.split("-").reverse().join("-"),
         "",
-        "Kindly clear your outstanding fee on or before the due date.",
+        bill.diff < 0 ? "Kindly clear the remaining fee for the overdue period shown above." : "Kindly clear your outstanding fee on or before the due date.",
         "",
         "*PAYMENT NUMBER: 6006433125*",
         "You may pay directly to this number.",
@@ -995,20 +999,29 @@ function tuitionWhatsAppMessage(data, bill) {
         "*Rehaan Computers*"
     ].join("\n");
 }
-function actionableFeeReminder(data) {
-    const upcoming = tuitionPeriod(data);
-    const overdue = overdueMonthlyTuition(data);
+function actionableFeeReminder(data, now = new Date()) {
+    const today = indiaCalendarDate(now);
+    const upcoming = tuitionPeriod(data, today);
+    const overdue = overdueMonthlyTuition(data, today);
     if (overdue) {
         const sent = Boolean((data.feeReminders || {})[overdue.key]);
-        if (!sent && overdue.balance > 0) return {
-            key: overdue.key, remaining: overdue.balance, diff: -overdue.daysLate, sent: false
+        if (overdue.balance > 0) return {
+            key: overdue.key, remaining: overdue.balance, diff: -overdue.daysLate, sent
         };
     }
-    return upcoming && upcoming.diff <= 5 && upcoming.diff >= 0 &&
-        upcoming.remaining > 0 && !upcoming.sent ? upcoming : null;
+    return upcoming && upcoming.diff >= 0 && upcoming.remaining > 0 ? upcoming : null;
 }
 async function openTuitionReminder(id, data, bill) {
-    if (!bill || bill.diff > 5 || bill.remaining <= 0 || bill.sent) return;
+    requireAdmin();
+    // Use the latest loaded balance and oldest unpaid period at the click.
+    // A sent reminder never skips an unpaid month or marks it paid.
+    const latest = adminState.apps.find(entry => entry.id === id);
+    if (!latest || !bill) return;
+    data = latest.data;
+    const current = actionableFeeReminder(data);
+    if (!current || current.key !== bill.key) return;
+    bill = current;
+    const reminderUid = verifiedAdminUid;
     const digits = String(data.phone || "").replace(/\D/g, "");
     if (!/^[6-9]\d{9}$/.test(digits)) {
         window.alert("Student phone must contain 10 digits.");
@@ -1023,8 +1036,10 @@ async function openTuitionReminder(id, data, bill) {
         window.alert("Pop-up blocked. Please allow WhatsApp pop-ups for this site.");
         return;
     }
-    if (window.confirm("WhatsApp opened. Only click OK after you have actually pressed Send in WhatsApp. Mark this month's single reminder as sent?")) {
+    if (window.confirm("WhatsApp opened. Only click OK after you have actually pressed Send in WhatsApp. Record this reminder for the displayed fee period? You can remind again while it is unpaid.")) {
         try {
+            requireAdmin();
+            if (verifiedAdminUid !== reminderUid) throw new Error("Your session changed. Sign in again before recording reminders.");
             await updateDoc(doc(db, "applications", id), {
                 ["feeReminders." + bill.key]: new Date().toISOString()
             });
@@ -1343,7 +1358,7 @@ function renderFeeManagement(list, entries) {
       <section class="rc-fees">
         <div class="rc-fees-top">
           <div><p class="rc-eyebrow">REHAAN COMPUTERS · ADMIN ONLY</p>
-          <h2>Fee Management</h2><p>₹999 monthly tuition · due on admission anniversary · 5-day grace period</p></div>
+          <h2>Fee Management</h2><p>₹999 monthly tuition · due on admission anniversary · reminders available anytime</p></div>
           <span class="rc-fees-tag">Manual WhatsApp reminders</span>
         </div>
         <div class="rc-fees-kpis">
@@ -1367,11 +1382,11 @@ function renderFeeManagement(list, entries) {
               </div>
               <div class="rc-fee-actions">
                 ${x.current ? `<button type="button" data-fee-pay="${escapeHTML(x.id)}">Record Payment</button>` : ""}
-                ${x.eligibleReminder ? `<button type="button" class="rc-reminder" data-fee-wa="${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 Send reminder</button>` : ""}
+                ${x.eligibleReminder ? `<button type="button" class="rc-reminder" data-fee-wa="${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 ${x.reminder?.sent ? "Remind again" : "Send reminder"}</button>` : ""}
               </div>
             </div>`).join("") : '<p class="rc-fees-empty">No enrolled students match the current search and filters.</p>'}
         </div>
-        <p class="rc-fees-footnote">Monthly fee is ₹999. Recorded payments reduce the outstanding balance; for example, ₹500 paid leaves ₹499 due. The 🔔 WhatsApp button appears during the final 5 days before an unpaid due date or when overdue.</p>
+        <p class="rc-fees-footnote">Monthly fee is ₹999. Recorded payments reduce the outstanding balance; for example, ₹500 paid leaves ₹499 due. The 🔔 WhatsApp reminder is always available for an unpaid billing period. Previous unpaid months come first, including partial payments. Sending a reminder does not mark a month paid; you can remind again until its balance is cleared. Due dates and recorded payments are unchanged.</p>
       </section>`;
     const feeFilter = list.querySelector("#rcFeeFilter");
     feeFilter.value = adminState.feeFilter;
