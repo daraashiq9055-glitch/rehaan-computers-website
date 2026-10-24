@@ -1,6 +1,6 @@
 # Premium monthly student statements
 
-Candidate version: `20261024-admin-8`. This is a read-only addition to the existing
+Candidate version: `20261024-admin-9`. This is a read-only addition to the existing
 dashboard, not a new ledger or payment engine. Nothing is deployed by the build.
 
 ## Review first
@@ -11,7 +11,18 @@ git pull --ff-only
 python preview-admin.py
 ```
 
-Open **Fees & payments → Fee statement** on a sample student's row. It is also
+Open the separate **Fee Statements** sidebar tab to review all sample students.
+Search by name, admission number or mobile; filter by course, batch or payment
+position; sort by admission, balance or oldest unpaid period. Expand Complete
+monthly breakdown for all periods without leaving the tab, or Open full statement.
+
+The tab shows selection totals across every results page, with review-required
+records clearly excluded from monetary totals. It includes paid/partial/unpaid
+counts, admission date, the latest dated receipt (when available), and older
+undated-ledger amounts. Refresh records reloads the register through the existing
+read-only refresh operation. Filtered CSV exports all matches, not only one page.
+
+The original **Fees & payments → Fee statement** buttons remain available. It is also
 available under **Records centre → student profile → Fees & receipts → Monthly
 fee statement**. The preview loads fictional local students; no private backup
 upload, real login, student record or payment is required. Recording a payment
@@ -68,6 +79,7 @@ Checks:
 
 - `node --test tests/admin-fee-statement.test.mjs tests/admin-features.test.mjs tests/admin-fee-reminders.test.mjs tests/visitor-release.test.mjs`
 - `python3 tests/admin-fee-statement-browser.py`
+- `python3 tests/admin-fee-statement-directory-browser.py`
 - `python3 tests/admin-candidate-browser.py`
 - `python3 tests/admin-release-browser.py`
 - `python3 tests/admin-build-encoding.py`
@@ -75,7 +87,7 @@ Checks:
 The browser checks use the generated real-service release with intercepted SDK
 calls. They cover no-write exports, precise due/upcoming sums, receipt/legacy
 handling, full PNG/PDF/CSV, saved-mobile draft, profile entry, mobile/tablet/desktop,
-49-month image bounds, stale-record protection and sign-out during image loading.
+49-month image bounds, 23-record directory pagination/filters/CSV, stale-record protection and sign-out during image loading.
 No real student, fee, message, image upload or charge is created by these tests.
 
 After preview approval, the normal release commands remain:
@@ -86,6 +98,6 @@ cd build\admin-release
 type RELEASE.json
 ```
 
-Confirm version `20261024-admin-8` and `auditEnabled: false`. Hosting deployment
+Confirm version `20261024-admin-9` and `auditEnabled: false`. Hosting deployment
 is a separate final action using the existing project. The earlier code remains
 in Git at `b1ee81d`; student data is not backed up by a Git commit.

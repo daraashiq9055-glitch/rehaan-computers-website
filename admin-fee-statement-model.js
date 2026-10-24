@@ -59,7 +59,7 @@ export function feeStatement(entry,asOf=indiaDate()){
     const dueRows=rows.filter(row=>!row.upcoming),oldest=rows.find(row=>row.balance>0&&!row.upcoming)||null;
     const totals={billed:dueRows.reduce((s,r)=>s+r.billed,0),received:rows.reduce((s,r)=>s+r.paid,0),due:dueRows.reduce((s,r)=>s+r.balance,0),upcoming:rows.filter(r=>r.upcoming).reduce((s,r)=>s+r.balance,0),credit:rows.reduce((s,r)=>s+r.credit,0),legacy:rows.reduce((s,r)=>s+r.legacyPaid,0)};
     if(!Object.values(totals).every(Number.isSafeInteger))issue('Stored totals exceed the supported amount range.');
-    return {studentId:entry.id,student:{name:String(data.fullName||'Unnamed student'),admission:String(data.admissionNumber||'Not assigned'),course:String(data.coursePreference||data.course||'Not recorded'),phone:String(data.phone||'')},joined,asOf,rows,totals,oldest,warnings:[...new Set(warnings)],unmatched,reliable,admission:{status:String(data.payment?.status||'Not recorded'),amount:cents(data.payment?.amount)}};
+    return {lastReceiptDate:validReceipts.map(r=>r.date).sort().at(-1)||null,studentId:entry.id,student:{name:String(data.fullName||'Unnamed student'),admission:String(data.admissionNumber||'Not assigned'),course:String(data.coursePreference||data.course||'Not recorded'),phone:String(data.phone||'')},joined,asOf,rows,totals,oldest,warnings:[...new Set(warnings)],unmatched,reliable,admission:{status:String(data.payment?.status||'Not recorded'),amount:cents(data.payment?.amount)}};
 }
 export function statementWhatsApp(statement){
     if(!statement.reliable)return null;

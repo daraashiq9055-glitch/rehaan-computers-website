@@ -76,13 +76,13 @@ def run():
                 original=page.evaluate('structuredClone(__adminPreview.records)')
                 for width in [320,390,768,1024,1512]:
                     page.set_viewport_size({'width':width,'height':1100})
-                    for selector in ['[data-section='+name+']' for name in ['overview','admissions','students','fees','courses','batches','reports','settings','marks']]+['[data-records-centre]','[data-operations=today]','[data-operations=accounts]','[data-workbench=journeys]','[data-workbench=history]','[data-workbench=preferences]']:
+                    for selector in ['[data-section='+name+']' for name in ['overview','admissions','students','fees','courses','batches','reports','settings','marks','statements']]+['[data-records-centre]','[data-operations=today]','[data-operations=accounts]','[data-workbench=journeys]','[data-workbench=history]','[data-workbench=preferences]']:
                         if width<=760:page.locator('#menuToggle').click()
                         page.locator(selector).click()
                         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,selector)
                 assert page.evaluate('__adminPreview.records')==original and page.evaluate('__adminPreview.writes.length')==0
                 page.locator('[data-workbench=history]').click();expect(page.locator('#adminWorkbench')).to_contain_text('Secure history is not enabled yet');assert page.evaluate('__adminPreview.auditReads||0')==0
-                print('PASS: candidate requires manual sign-in, contains no demo controls, retains all 15 views at five widths and never reads unconfigured history or writes while browsing',flush=True)
+                print('PASS: candidate requires manual sign-in, contains no demo controls, retains all 16 views at five widths and never reads unconfigured history or writes while browsing',flush=True)
                 page.locator('[data-workbench=journeys]').click();page.locator('[data-journey-student="demo-1"]').click();page.locator('#lifecycleStage').select_option('Completed');page.locator('#lifecycleReason').fill('Candidate lifecycle test');page.locator('#lifecycleForm [type=submit]').click();expect(page.locator('#lifecycleStatus')).to_contain_text('Stage saved')
                 page.locator('[data-journey-tab=learning]').click();page.locator('[data-learning-index="0"]').check();page.locator('#learningSave').click();expect(page.locator('#learningStatus')).to_contain_text('Checklist saved')
                 updated=page.evaluate('__adminPreview.records["demo-1"]')

@@ -1,4 +1,4 @@
-import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement} from "./admin-features.js?v=20261024-admin-8";
+import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261024-admin-9";
 import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261021-admin-5";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
@@ -2631,9 +2631,9 @@ function updateWorkspace() {
         [distinct("coursePreference"), "Courses with students", "Browse the course directory", "courses", "courses"],
         [distinct("batch"), "Batches with students", "Browse batch assignments", "batches", "batches"]
     ].map(([count,label,note,icon,target]) => `<button type="button" class="workspace-stat" data-summary="${target}" aria-label="Open ${label.toLowerCase()}${recordsLoaded ? ': ' + count : ''}" ${recordsLoaded ? "" : "disabled"}><span class="workspace-stat-icon" aria-hidden="true">${workspaceIcon(icon)}</span><span class="workspace-stat-body"><span class="workspace-stat-label">${label}</span><strong>${recordsLoaded ? count : "—"}</strong><small>${note}</small></span><span class="workspace-stat-arrow" aria-hidden="true">${workspaceIcon("arrow")}</span></button>`).join("");
-    const titles = { marks: "Student mark cards", overview: "Your institute, at a glance.", admissions: "Admission applications", students: "Enrolled students", fees: "Fees & payments", courses: "Course directory", batches: "Batch directory", reports: "Reports & exports", settings: "Workspace settings" };
+    const titles = { statements: "Fee Statements", marks: "Student mark cards", overview: "Your institute, at a glance.", admissions: "Admission applications", students: "Enrolled students", fees: "Fees & payments", courses: "Course directory", batches: "Batch directory", reports: "Reports & exports", settings: "Workspace settings" };
     getElement("workspaceHeading").textContent = titles[workspaceSection];
-    getElement("workspaceBreadcrumb").textContent = workspaceSection[0].toUpperCase() + workspaceSection.slice(1);
+    getElement("workspaceBreadcrumb").textContent = workspaceSection === "statements" ? "Fee Statements" : workspaceSection[0].toUpperCase() + workspaceSection.slice(1);
     getElement("workspaceProfile").textContent = auth.currentUser?.email || "Administrator";
     getElement("workspaceAdd").disabled = !recordsLoaded;
     getElement("workspaceExport").disabled = !recordsLoaded || !apps.length;
@@ -2645,7 +2645,7 @@ function updateWorkspace() {
     document.querySelectorAll(".admin-tab").forEach(button => { const active = button.dataset.tab === adminState.tab; button.classList.toggle("is-active", active); button.setAttribute("aria-selected", String(active)); button.tabIndex = active ? 0 : -1; });
     getElement("applicationsList").setAttribute("role", "tabpanel");
     getElement("applicationsList").setAttribute("aria-labelledby", "registerTab-" + adminState.tab);
-    const directory = ["courses", "batches", "reports", "settings", "marks"].includes(workspaceSection);
+    const directory = ["courses", "batches", "reports", "settings", "marks", "statements"].includes(workspaceSection);
     getElement("registerPanel").hidden = directory && recordsLoaded;
     getElement("workspaceView").hidden = !recordsLoaded || (!["overview"].includes(workspaceSection) && !directory);
     if (!recordsLoaded) return;
@@ -2682,6 +2682,8 @@ function updateWorkspace() {
             } else adminState.batch = "";
             renderAdminList();
         });
+    } else if (workspaceSection === "statements") {
+        renderStatementDirectory(view);
     } else if (workspaceSection === "marks") {
         renderMarkCards(view,apps);
     } else if (workspaceSection === "reports") {
@@ -2710,7 +2712,7 @@ function downloadFile(text, name, type) {
     setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-configureAdditions({assertSession:requireAdmin,loadMarkPhoto:async(photo)=>{
+configureAdditions({assertSession:requireAdmin,refreshRecords:loadApplications,loadMarkPhoto:async(photo)=>{
     requireAdmin();const uid=verifiedAdminUid;
     if(!photo)return null;
     if(!isSafePhoto(photo))throw new Error("The stored photo reference needs review in student Details.");

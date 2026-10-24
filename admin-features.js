@@ -21,6 +21,7 @@ let apps = [],
 let markPhotoVersion = 0, markImageWidth = 3840;
 let services = {};
 let clearStatement = null;
+let statementDirectoryVersion = 0;
 export function configureAdditions(options) {
   services = options;
 }
@@ -104,6 +105,7 @@ function print(kind, html) {
 }
 export function resetAdditions() {
   clearStatement?.();
+  statementDirectoryVersion++;
   renderVersion++;
   sessionEpoch++;
   markPhotoVersion++;
@@ -233,11 +235,24 @@ export function openReceipt(receipt) {
     `<div class="rc-paper-stage">${receiptHTML(receipt)}</div><div class="rc-feature-actions"><button class="admin-save-btn" data-new="printReceipt" data-id="${receipt.id}">Print / Save PDF</button><button data-new="image" data-id="${receipt.id}">Download image</button><button data-new="whatsapp" data-id="${receipt.id}">WhatsApp receipt</button><button data-new="editReceipt" data-id="${receipt.id}">Edit / correct receipt</button><button data-new="receiptHistory" data-id="${receipt.id}">Correction history (${receipt.amendments?.length || 0})</button></div><p class="rc-feature-note">${receipt.balanceBasis === "correction" ? "Corrected receipt. The totals show the balance at the financial correction." : "This receipt preserves the amount and balance when this payment was recorded."}</p>`,
   );
 }
+export async function renderStatementDirectory(view) {
+  const epoch=sessionEpoch,version=++statementDirectoryVersion;
+  view.innerHTML='<section class="workspace-card" data-statement-loading><h2>Fee Statements</h2><p>Preparing student payment summaries…</p></section>';
+  const marker=view.firstElementChild;
+  try {
+    services.assertSession?.();
+    const {mountStatementDirectory}=await import('./admin-fee-statement-directory.js?v=20261024-admin-9');
+    if(epoch!==sessionEpoch||version!==statementDirectoryVersion||!marker.isConnected||view.hidden||view.firstElementChild!==marker)return;
+    mountStatementDirectory({host:view,getRecords:()=>{services.assertSession?.();return services.getRecords?.()||[];},openStatement:openStudentStatement,refreshRecords:()=>{services.assertSession?.();return services.refreshRecords?.();}});
+  } catch(error) {
+    if(epoch===sessionEpoch&&marker.isConnected)marker.querySelector('p').textContent='Statements could not load: '+error.message+'. Other dashboard options remain available.';
+  }
+}
 export async function openStudentStatement(id) {
   const epoch=sessionEpoch;
   try {
     services.assertSession?.();
-    const {openFeeStatement,clearFeeStatement}=await import('./admin-fee-statement.js?v=20261024-admin-8');
+    const {openFeeStatement,clearFeeStatement}=await import('./admin-fee-statement.js?v=20261024-admin-9');
     if(epoch!==sessionEpoch)return;
     clearStatement=clearFeeStatement;
     openFeeStatement({getEntry:()=>{services.assertSession?.();return services.getRecords?.().find(entry=>entry.id===id);}});

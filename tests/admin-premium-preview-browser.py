@@ -58,7 +58,7 @@ def run():
             page.locator('[data-register-layout=list]').click()
             assert page.evaluate('__adminPreview.writes.length') == 0
             print('PASS: quick search finds students/sections; list and card views retain all records without writes', flush=True)
-            sections = ['overview', 'admissions', 'students', 'fees', 'courses', 'batches', 'reports', 'settings', 'marks']
+            sections = ['overview', 'admissions', 'students', 'fees', 'courses', 'batches', 'reports', 'settings', 'marks', 'statements']
             for width in [320, 390, 768, 1024, 1512]:
                 page.set_viewport_size({'width': width, 'height': 1000})
                 for section in sections:
@@ -69,7 +69,7 @@ def run():
                 if width == 390:
                     page.screenshot(path=str(OUT / 'marks-mobile.png'), full_page=True)
             assert page.evaluate('__adminPreview.writes.length') == 0
-            print('PASS: all nine original dashboard sections fit five screen widths; browsing never changes demo records', flush=True)
+            print('PASS: all ten dashboard sections fit five screen widths; browsing never changes demo records', flush=True)
             page.set_viewport_size({'width': 1512, 'height': 1100})
             page.locator('[data-section=students]').click()
             for tab, count in [('new', 2), ('enrolled', 6), ('all', 8)]:

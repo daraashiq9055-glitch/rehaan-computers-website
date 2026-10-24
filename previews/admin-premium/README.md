@@ -185,7 +185,10 @@ those backend checks pass. See [release details](../../docs/admin-upgrade-releas
 
 ## Monthly fee statements
 
-Open **Fees & payments → Fee statement** on any sample student, or use the new
+Open the **Fee Statements** sidebar tab for the complete searchable directory,
+selection totals, course/batch/payment filters, sorting, pagination, inline monthly
+breakdowns and filtered summary CSV. The tab is read-only. You can also use
+**Fees & payments → Fee statement** on any sample student, or use the new
 button in the profile's **Fees & receipts** tab. The navy/gold and cream statement
 shows learning months, due dates, received/balance/status, the oldest unpaid month,
 total due and upcoming fees separately. Try screen filters, full PNG, print and
