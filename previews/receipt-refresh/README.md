@@ -17,10 +17,12 @@ The image and print share the same navy ink / cream paper / warm-gold layout:
 
 - Small email at top left: rehaancomputers881@gmail.com.
 - Both cell numbers at top right: 9797205429, 9149551258.
-- REHAAN COMPUTERS CHARANGAM, followed by the full main-road postal address.
+- A classic bold serif REHAAN COMPUTERS CHARANGAM heading, followed by the
+  full main-road postal address between two thin gold rules.
 - Receipt number at left, date at right; Received from, Address, admission/course,
   learning month, due date, payment mode and amount in words.
-- Rupee payment/received/balance boxes, signature space and the website.
+- Rupee payment/received/balance boxes, signature space, a serif website footer
+  and the small Learn · Practise · Grow motto.
 - The old 100-rupee admission-fee footer is omitted.
 
 Numbers 1000 and 1001 demonstrate short, bold, handwritten-style numbering.
