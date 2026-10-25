@@ -72,6 +72,20 @@ show the supplied signatures there; they intentionally are absent from GitHub.
 The source-only preview still works and its Institute signatures control can
 load the cleaned PNGs locally.
 
+## Preview without downloading a ZIP
+
+`git pull --ff-only` now also fetches `preview-assets/mark-signatures.enc`.
+This contains only the two PNGs, encrypted with AES-256-CBC and independently
+HMAC-SHA256 authenticated. The random 256-bit preview key is provided separately
+in the private conversation; it is not in Git, Hosting or the generated release.
+Run `python preview-marks.py --signature-key THE_SUPPLIED_PREVIEW_KEY` once.
+The helper authenticates the complete bundle before decryption, restricts
+extraction to the two expected PNGs and writes them into ignored private-assets/.
+Windows uses its built-in PowerShell/.NET AES provider; no pip install is needed.
+Other systems use OpenSSL. No network call or live record is needed to unlock it.
+Later starts can use plain `python preview-marks.py` after the files are loaded.
+The private preview key is unrelated to Firebase, Cloudinary or payment keys.
+
 ## Future approved deployment
 
 The additive rules for private signatures must be deployed before using their
