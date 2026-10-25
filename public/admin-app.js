@@ -1004,7 +1004,11 @@ function tuitionWhatsAppMessage(data, bill) {
         "Thank you for your cooperation.",
         "",
         "*Accounts Department*",
-        "*Rehaan Computers*"
+        "*Rehaan Computers*",
+        "",
+        "──────────────────",
+        "*FEE PAYMENT CONTACT*",
+        "*6006433125*"
     ].join("\n");
 }
 function actionableFeeReminder(data, now = new Date()) {

@@ -38,7 +38,7 @@ def run():
                 page.locator('[data-operations=today]').click();expect(page.locator('[data-today-action=soon] strong')).to_have_text('1');page.locator('[data-section=students]').click();expect(page.locator('[data-application-id=enrolled] [data-act=monthly-reminder]')).to_be_visible();page.locator('[data-section=fees]').click();page.locator('#rcFeeFilter').select_option('reminders');expect(page.locator('.rc-fee-row')).to_have_count(1)
                 before=page.evaluate('structuredClone(__fixture.records)');page.locator('.rc-reminder[data-fee-wa=enrolled]').click();assert page.evaluate('__fixture.records')==before and page.evaluate('__fixture.writes.length')==0
                 def draft():return parse_qs(urlparse(page.evaluate('__opened.at(-1)')).query)['text'][0]
-                message=draft();assert 'July 2026' in message and '*AMOUNT TO PAY*\n*₹499*' in message and 'PAYMENT NUMBER' not in message and '6006433125' not in message and 'pay directly to this number' not in message and 'OVERDUE' in message and 'August 2026' not in message
+                message=draft();assert 'July 2026' in message and '*AMOUNT TO PAY*\n*₹499*' in message and 'PAYMENT NUMBER' not in message and message.endswith('*FEE PAYMENT CONTACT*\n*6006433125*') and 'pay directly to this number' not in message and 'OVERDUE' in message and 'August 2026' not in message
                 confirm[0]=True;page.locator('.rc-reminder[data-fee-wa=enrolled]').click();expect(page.locator('.rc-reminder[data-fee-wa=enrolled]')).to_have_text('🔔 Remind again');page.wait_for_function('__fixture.writes.length===1')
                 saved=page.evaluate('__fixture.records.enrolled')
                 for key,value in original.items():
