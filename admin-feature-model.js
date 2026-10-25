@@ -98,10 +98,19 @@ export function validateCard(input) {
         "Obtained marks must be between zero and the subject maximum.",
       );
     const grade=manualGrade(row.manualGrade);
-    return { name, max, marks, ...(grade ? {manualGrade:grade} : {}) };
+    let typing;
+    if(row.typing !== undefined){
+      if(!row.typing||typeof row.typing!=='object'||Array.isArray(row.typing))throw Error('Enter valid typing speed and accuracy.');
+      const metric=(key,max)=>{const raw=row.typing[key];if(raw===undefined||raw===null||raw==='')return null;const value=Number(raw);if(typeof raw==='boolean'||!Number.isFinite(value)||value<0||value>max)throw Error(key==='speed'?'Typing speed must be from 0 to 500 WPM.':'Typing accuracy must be from 0 to 100%.');return Math.round(value*100)/100;};
+      typing={speed:metric('speed',500),accuracy:metric('accuracy',100)};
+    }
+    return { name, max, marks, ...(grade ? {manualGrade:grade} : {}), ...(typing?{typing}:{}) };
   });
   const grade=manualGrade(input.manualGrade);
-  return { title, date, subjects, ...(grade ? {manualGrade:grade} : {}) };
+  let paperColor=input.paperColor||'';
+  if(typeof paperColor!=='string'||(paperColor&&!/^#[a-f0-9]{6}$/i.test(paperColor)))throw Error('Choose a valid mark-card background colour.');
+  paperColor=paperColor.toLowerCase();
+  return { title, date, subjects, ...(grade ? {manualGrade:grade} : {}), ...(paperColor&&paperColor!=='#fbf7ec'?{paperColor}:{}) };
 }
 export function cardResult(card) {
   const complete = card.subjects.every((s) => s.marks !== null);

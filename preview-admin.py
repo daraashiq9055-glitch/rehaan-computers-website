@@ -1,4 +1,5 @@
 """Open the premium admin UI preview with sample records and no live services."""
+import base64
 import argparse
 import json
 from functools import partial
@@ -21,6 +22,10 @@ def preview_html():
     head = '<base href="/public/"><meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src \'self\' \'unsafe-inline\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: blob:; font-src \'self\'; connect-src \'self\'; object-src \'none\'; form-action \'none\'; base-uri \'self\'">'
     head += '<script type="importmap">' + json.dumps({'imports': imports}) + '</script>'
     head += '<script src="' + PREVIEW + 'demo.js"></script>'
+    signature_folder=ROOT/'private-assets/mark-signatures'
+    if all((signature_folder/(key+'.png')).is_file() for key in ['examiner','authorized']):
+        images={key:'data:image/png;base64,'+base64.b64encode((signature_folder/(key+'.png')).read_bytes()).decode() for key in ['examiner','authorized']}
+        head+='<script data-preview-only>window.__markSignaturePreviewPromise=(async()=>{const {importSignature}=await import("/public/admin-mark-signatures.js?v=20261025-admin-12");const images='+json.dumps(images)+';return Object.fromEntries(await Promise.all(Object.entries(images).map(async([key,value])=>[key,await importSignature(new File([Uint8Array.from(atob(value.split(",")[1]),c=>c.charCodeAt(0))],key+".png",{type:"image/png"}))])));})();</script>'
     html = html.replace('<head>', '<head>' + head, 1)
     head_module = '<script type="module" src="' + PREVIEW + 'workbench.js"></script>'
     html = html.replace('</head>', head_module + '</head>', 1)

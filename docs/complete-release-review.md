@@ -1,3 +1,5 @@
+> Latest marks-card preview: [professional card, typing metrics and private signatures](mark-card-premium.md), version **20261025-admin-12**. Review before deployment; no live changes have been published.
+
 > Latest release: **20261024-admin-10** adds approved receipts and includes Fee Statements. Follow [receipt-refresh-release.md](receipt-refresh-release.md): publish the additive counter rules first, then Hosting. Older Hosting-only commands below apply to earlier releases.
 
 # Complete release: review first, Hosting deployment afterwards

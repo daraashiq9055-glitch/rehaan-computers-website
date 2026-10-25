@@ -1,3 +1,5 @@
+> Latest marks-card preview: [professional card, typing metrics and private signatures](mark-card-premium.md), version **20261025-admin-12**. Review before deployment; no live changes have been published.
+
 # Mark cards and fee receipts
 
 This release adds one **Mark Cards** section to the existing admin dashboard and receipts to **Fees & payments**. The original layout, login, student register, offline enrolment and Cloudinary integration remain. No preview adapter, sample data, JSON loader, additional assessment tab, bulk import, new activity screen or certificate feature is included in Hosting.

@@ -23,7 +23,7 @@ export const doc = (_db, col, id) => ({col, id});
 function snapshot(id, data) {
   return {id, exists: () => data !== undefined, data: () => structuredClone(data)};
 }
-export const getDoc = async ref => snapshot(ref.id, ref.col === 'receiptCounters' ? state.counters?.[ref.id] : ref.col === 'admins' ? {uid: state.user.uid, isAdmin: true} : state.records[ref.id]);
+export const getDoc = async ref => snapshot(ref.id, ref.col === 'instituteSettings' ? state.settings?.[ref.id] ?? (ref.id==='markCardSignatures'?await window.__markSignaturePreviewPromise:undefined) : ref.col === 'receiptCounters' ? state.counters?.[ref.id] : ref.col === 'admins' ? {uid: state.user.uid, isAdmin: true} : state.records[ref.id]);
 export const getDocs = async () => {
   const rows = Object.entries(state.records).map(([id, data]) => snapshot(id, data));
   return {empty: !rows.length, forEach: fn => rows.forEach(fn)};
@@ -40,7 +40,9 @@ export const runTransaction = (_db, fn) => {
   const beforeRecords=structuredClone(state.records);
   const next = structuredClone(state.records);
   const counters=structuredClone(state.counters||{});
+  const settings=structuredClone(state.settings||{});
   for (const [kind, ref, data] of staged) {
+    if(ref.col==='instituteSettings'){settings[ref.id]=structuredClone(data);continue;}
     if(ref.col==='receiptCounters'){counters[ref.id]=structuredClone(data);continue;}
     if (kind === 'delete') delete next[ref.id];
     else if (kind === 'set') next[ref.id] = structuredClone(data);
@@ -52,7 +54,7 @@ export const runTransaction = (_db, fn) => {
     }
   }
   const getField=(record,path)=>path.split('.').reduce((value,key)=>value?.[key],record);
-  const events=staged.filter(([,ref])=>ref.col!=='receiptCounters').map(([kind,ref,patch])=>{
+  const events=staged.filter(([,ref])=>ref.col!=='receiptCounters'&&ref.col!=='instituteSettings').map(([kind,ref,patch])=>{
     const fields=kind==='update'?Object.keys(patch):[...new Set([...Object.keys(beforeRecords[ref.id]||{}),...Object.keys(next[ref.id]||{})])];
     const changes=fields.map(field=>({field,before:structuredClone(getField(beforeRecords[ref.id],field)??null),after:structuredClone(getField(next[ref.id],field)??null)})).filter(change=>JSON.stringify(change.before)!==JSON.stringify(change.after));
     let label=kind==='set'?'Student created':kind==='delete'?'Student deleted':fields.includes('studentLifecycle')?'Lifecycle changed':fields.includes('learningProgress')?'Learning checklist saved':fields.some(field=>field.startsWith('feeReceipts.'))?'Payment / receipt updated':'Student details updated';
@@ -60,6 +62,7 @@ export const runTransaction = (_db, fn) => {
   }).filter(event=>event.changes.length);
   state.records = next;
   state.counters=counters;
+  state.settings=settings;
   state.audit=state.audit||[];state.audit.push(...events);
   state.writes.push(...staged.map(([kind, ref, data]) => ({kind, id: ref.id, data})));
   if (state.loseAcknowledgementOnce && staged.length) {state.loseAcknowledgementOnce=false;throw Object.assign(new Error('Connection ended before acknowledgement'),{code:'unavailable'});}

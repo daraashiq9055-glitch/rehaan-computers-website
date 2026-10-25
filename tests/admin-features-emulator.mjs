@@ -56,5 +56,18 @@ try{
  assert.deepEqual((await getDoc(doc(first,'applications','seq-denied'))).data(),beforeDenied);
  assert.equal((await getDoc(doc(first,'receiptCounters','tuition'))).data().last,afterCounter);
  console.log('PASS: shared numbering starts at 1000; simultaneous admins get unique numbers; retries consume no number; counter denial saves no payment; public/reset/skipped counter writes denied');
+ // Institute signatures are shared by the two verified admins, separate from students.
+ const signatureDoc=doc(first,'instituteSettings','markCardSignatures');
+ const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a2ioAAAAASUVORK5CYII=';
+ const signatureSet={examiner:png,authorized:png,updatedAt:'2026-10-25T06:00:00Z',updatedBy:'admin-one'};
+ await setDoc(signatureDoc,signatureSet);assert.deepEqual((await getDoc(doc(second,'instituteSettings','markCardSignatures'))).data(),signatureSet);
+ await assertFails(getDoc(doc(anonymous,'instituteSettings','markCardSignatures')));
+ await assertFails(getDoc(doc(env.authenticatedContext('not-an-admin').firestore(),'instituteSettings','markCardSignatures')));
+ await assertFails(setDoc(doc(anonymous,'instituteSettings','markCardSignatures'),signatureSet));
+ await assertFails(setDoc(signatureDoc,{...signatureSet,authorized:'https://example.com/sign.png'}));
+ await assertFails(setDoc(signatureDoc,{...signatureSet,updatedBy:'admin-two'}));
+ await assertFails(setDoc(signatureDoc,{...signatureSet,extra:true}));
+ assert.deepEqual((await getDoc(signatureDoc)).data(),signatureSet);
+ console.log('PASS: private bounded PNG signatures shared by verified admins only; public/non-admin reads and writes, wrong actor, injected fields and external images denied');
  console.log('PASS: actual Firestore SDK + deployed rules preserve records, persist marks, atomically save receipts, audit atomic receipt corrections, reject concurrent corrections/duplicates/stale marks and deny non-admin access/injection');
 }finally{await env.cleanup();}

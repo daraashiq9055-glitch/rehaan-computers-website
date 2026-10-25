@@ -33,6 +33,28 @@ service cloud.firestore {
     }
 
 
+    // Private shared signature images; administrators only, never public assets.
+    match /instituteSettings/markCardSignatures {
+      function signatureAdmin() {
+        return request.auth != null
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid;
+      }
+      function validSignature(value) {
+        return value is string && value.size() <= 220000
+          && (value == "" || value.matches('^data:image/png;base64,[A-Za-z0-9+/]+={0,2}$'));
+      }
+      allow get: if signatureAdmin();
+      allow create, update: if signatureAdmin()
+        && request.resource.data.keys().hasOnly(["examiner", "authorized", "updatedAt", "updatedBy"])
+        && validSignature(request.resource.data.examiner)
+        && validSignature(request.resource.data.authorized)
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt is string
+        && request.resource.data.updatedAt.size() <= 40;
+      allow list, delete: if false;
+    }
+
     // Shared tuition receipt sequence. No public access and no student data here.
     match /receiptCounters/tuition {
       function counterAdmin() {

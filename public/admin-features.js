@@ -1,3 +1,5 @@
+import {validateSignatureSet,importSignature,decodeSignatures} from './admin-mark-signatures.js?v=20261025-admin-12';
+import {modernMarkHTML,paperPalette,MARK_PAPER_THEMES,DEFAULT_MARK_PAPER} from './admin-mark-layout.js?v=20261025-admin-12';
 import {receiptHTML as refreshedReceiptHTML,presentReceipt,receiptMessage} from './admin-receipt-layout.js?v=20261024-admin-10';
 import {
   escapeHTML as e,
@@ -21,6 +23,7 @@ let apps = [],
   saving = false;
 let markPhotoVersion = 0, markImageWidth = 3840;
 let services = {};
+let signatureSettings=null,signatureDraft=null,signatureLoaded=false,signatureLoading=null;
 let clearStatement = null;
 let statementDirectoryVersion = 0;
 export function configureAdditions(options) {
@@ -105,6 +108,7 @@ function print(kind, html) {
   window.print();
 }
 export function resetAdditions() {
+  signatureSettings=null;signatureDraft=null;signatureLoaded=false;signatureLoading=null;
   clearStatement?.();
   statementDirectoryVersion++;
   renderVersion++;
@@ -117,24 +121,7 @@ export function resetAdditions() {
   $("#rcFeatureDialog")?.close();
   $("#rcPrintArea")?.replaceChildren();
 }
-function markHTML(entry, card) {
-  const d = entry.data,
-    r = cardResult(card);
-  return `<article class="mark-paper"><div class="paper-brand"><div><h2>Rehaan Computers</h2><small>CHARANGAM · BEERWAH · KASHMIR</small></div><b>ACADEMIC RECORD</b><div class="mark-portrait-preview"><img alt="Student photograph" hidden><span>Student<br>photo</span></div></div><h2 class="mark-title">Statement of Marks</h2><p class="mark-subtitle">${e(card.title)}</p><div class="mark-details">${[
-    ["STUDENT NAME", d.fullName],
-    ["ADMISSION NUMBER", d.admissionNumber || "Not assigned"],
-    ["PARENT / GUARDIAN", d.parentName],
-    ["ROLL NUMBER", d.rollNumber],
-    ["COURSE", d.coursePreference || d.course],
-    ["BATCH", d.batch],
-    ["ASSESSMENT DATE", dateLabel(card.date)],
-    ["PREPARED ON", dateLabel(indiaDate())],
-  ]
-    .map(([key, value]) => `<div><span>${key}</span>${e(value || "—")}</div>`)
-    .join(
-      "",
-    )}</div><table><thead><tr><th>SUBJECT / COMPONENT</th><th>MAXIMUM</th><th>OBTAINED</th><th>RESULT</th></tr></thead><tbody>${card.subjects.map((s) => `<tr><td>${e(s.name)}</td><td>${s.max}</td><td>${s.marks ?? "Unmarked"}</td><td>${subjectResult(s).label}</td></tr>`).join("")}<tr><td><strong>TOTAL</strong></td><td>${r.maximum}</td><td>${r.total ?? "Incomplete"}</td><td></td></tr></tbody></table><div class="mark-result"><div><span>PERCENTAGE</span><strong>${r.percentage === null ? "—" : r.percentage + "%"}</strong></div><div><span>GRADE</span><strong>${r.grade}</strong></div><div><span>RESULT</span><strong>${!r.complete ? "Incomplete" : r.passed ? "Pass" : "Fail"}</strong></div></div><p class="mark-policy">Grading: at least 33% in each component. A+ ≥ 90%, A ≥ 75%, B ≥ 60%, C ≥ 45%, D ≥ 33%, subject to passing each component.</p><div class="mark-signatures"><div>EXAMINER / ASSESSOR</div><div>AUTHORIZED SIGNATORY</div></div><p class="paper-proof">REHAAN COMPUTERS · STUDENT ACADEMIC RECORD</p></article>`;
-}
+function markHTML(entry,card){return modernMarkHTML(entry,card);}
 function gradeOptions(value="") {
   return `<option value="">Automatic</option>`+MARK_GRADES.map(grade=>`<option value="${grade}" ${grade===value?"selected":""}>${grade}</option>`).join("");
 }
@@ -143,12 +130,14 @@ function formCard() {
     title: $("#rcExamTitle").value,
     date: $("#rcExamDate").value,
     manualGrade: $("#rcOverallGrade").value,
+    paperColor: $("#rcMarkPaperColor").value,
     subjects: [...document.querySelectorAll("#rcSubjectRows tr")].map(
       (row) => ({
         name: row.querySelector("[data-subject=name]").value,
         max: row.querySelector("[data-subject=max]").value,
         marks: row.querySelector("[data-subject=marks]").value,
         manualGrade: row.querySelector("[data-subject=grade]").value,
+        ...(row.querySelector('[data-subject=typing]').checked?{typing:{speed:row.querySelector('[data-subject=speed]').value,accuracy:row.querySelector('[data-subject=accuracy]').value}}:{}),
       }),
     ),
   };
@@ -176,6 +165,20 @@ async function showMarkPhoto(entry) {
     note.replaceChildren();const retry=document.createElement('button');retry.type='button';retry.dataset.new='retryMarkPhoto';retry.textContent='Retry photo';note.append(retry);
   }
 }
+async function ensureMarkSignatures(refresh=false){
+ if(!refresh&&signatureLoaded)return validateSignatureSet(signatureSettings||{});
+ if(signatureLoading)return signatureLoading;
+ const epoch=sessionEpoch;
+ const task=(async()=>{const value=services.loadSignatures?await services.loadSignatures():null;if(epoch!==sessionEpoch)throw Error('Your session changed.');const clean=validateSignatureSet(value||{});signatureSettings=value;signatureLoaded=true;return clean;})();signatureLoading=task;
+ try{return await task;}finally{if(signatureLoading===task)signatureLoading=null;}
+}
+async function showMarkSignatures(){
+ const epoch=sessionEpoch,host=$('#rcMarkPreview .mark-paper');if(!host)return;
+ try{const value=await ensureMarkSignatures(),images=await decodeSignatures(value);if(epoch!==sessionEpoch||!host.isConnected)return;for(const [key,image] of Object.entries(images)){const target=host.querySelector('[data-mark-signature='+key+']');target.src=image.src;target.hidden=false;}
+ const status=$('#rcSignatureStatus');if(status)status.textContent=Object.keys(images).length?'Saved institute signatures are applied to every student’s card.':'Add the institute signatures once to use them on every student’s card.';
+ }catch(error){if(epoch===sessionEpoch&&$('#rcSignatureStatus'))$('#rcSignatureStatus').textContent='Signatures could not load: '+error.message;}
+}
+function signatureControls(){return `<details class="mark-signature-settings"><summary>Institute signatures · shared by both admins</summary><form id="rcSignatureForm"><p>Choose the cleaned transparent PNGs. Authorised uses the R signature; Examiner uses the Y signature. Saves apply to all students without changing their marks.</p><label>Examiner · Y signature<input id="rcSignatureExaminer" type="file" accept="image/png"></label><label>Authorised · R signature<input id="rcSignatureAuthorized" type="file" accept="image/png"></label><button type="submit">Save institute signatures</button><p id="rcSignatureStatus" role="status"></p></form></details>`;}
 function drawMarks(view, card) {
   markPhotoVersion++;
   const entry = apps.find((a) => a.id === selected);
@@ -186,10 +189,12 @@ function drawMarks(view, card) {
   }
   let canExport=false;
   try { canExport=Boolean(entry.data.markCard)&&JSON.stringify(validateCard(card))===JSON.stringify(storedCard(entry)); } catch {}
-  view.innerHTML = `<section class="workspace-card"><div class="workspace-card-heading"><div><h2>Mark Cards</h2><p>Select any loaded student, enter marks and print their card here. Saved marks remain available after signing in again.</p></div><div class="rc-feature-actions"><label class="mark-image-quality">Image size<select id="rcMarkImageWidth"><option value="3840" ${markImageWidth===3840?"selected":""}>4K · 3840 pixels wide</option><option value="1600" ${markImageWidth===1600?"selected":""}>HD · 1600 pixels wide</option></select></label><button type="button" class="admin-save-btn" data-new="downloadMarks" ${canExport ? "" : "disabled"}>Download HD image · PNG</button><button class="admin-ghost-btn" data-new="printMarks" ${canExport ? "" : "disabled"}>Print mark card / PDF</button></div></div><div class="rc-marks-controls"><label>Find a student<input id="rcMarkSearch" type="search" placeholder="Name or admission number"></label><label>Student · all ${apps.length} loaded records<select id="rcMarkStudent">${apps.map((a) => `<option value="${e(a.id)}" ${a.id === selected ? "selected" : ""}>${e(a.data.fullName || "Unnamed")} · ${e(a.data.admissionNumber || "No admission number")}</option>`).join("")}</select></label></div><div class="rc-marks-layout"><form id="rcMarksForm"><div class="rc-marks-meta"><label>Assessment title<input id="rcExamTitle" maxlength="120" value="${e(card.title)}" required></label><label>Date<input id="rcExamDate" type="date" value="${e(card.date)}" max="${indiaDate()}" required></label><label>Final grade<select id="rcOverallGrade">${gradeOptions(card.manualGrade)}</select></label></div><p class="rc-feature-note">Automatic calculates grades from marks. Choose a letter to set a manual grade. Passing still requires at least 33% in every subject; a manual F means Fail. Blank marks remain Incomplete.</p><div class="rc-subject-scroll"><table class="rc-subject-table"><thead><tr><th>Subject</th><th>Max.</th><th>Obtained</th><th>Grade</th><th></th></tr></thead><tbody id="rcSubjectRows">${card.subjects.map((s, i) => `<tr><td><input data-subject="name" aria-label="Subject ${i + 1}" maxlength="100" value="${e(s.name)}" required></td><td><input data-subject="max" aria-label="Maximum ${i + 1}" type="number" min="1" max="1000" step="1" value="${s.max}" required></td><td><input data-subject="marks" aria-label="Marks ${i + 1}" type="number" min="0" max="${s.max}" step=".25" value="${s.marks ?? ""}" placeholder="Unmarked"></td><td><select data-subject="grade" aria-label="Grade ${i + 1}">${gradeOptions(s.manualGrade)}</select></td><td><button type="button" data-new="removeSubject" data-index="${i}" aria-label="Remove subject ${i + 1}" ${card.subjects.length === 1 ? "disabled" : ""}>×</button></td></tr>`).join("")}</tbody></table></div><div class="rc-feature-actions"><button type="button" data-new="addSubject" ${card.subjects.length >= 12 ? "disabled" : ""}>+ Add subject</button><button type="submit" class="admin-save-btn">Save marks & update preview</button></div><p id="rcMarksStatus" role="status"></p><p class="rc-feature-note">Blank marks keep the result incomplete. Saving marks changes only the mark card fields. Student details and payments are kept. Save changes before printing or downloading. The saved student photo is included automatically. Photo detail depends on the uploaded original.</p></form><div class="rc-paper-stage" id="rcMarkPreview">${markHTML(entry, card)}</div></div></section>`;
+  view.innerHTML = `<section class="workspace-card"><div class="workspace-card-heading"><div><h2>Mark Cards</h2><p>Select any loaded student, enter marks and print their card here. Saved marks remain available after signing in again.</p></div><div class="rc-feature-actions"><label class="mark-image-quality">Image size<select id="rcMarkImageWidth"><option value="3840" ${markImageWidth===3840?"selected":""}>4K · 3840 pixels wide</option><option value="1600" ${markImageWidth===1600?"selected":""}>HD · 1600 pixels wide</option></select></label><button type="button" class="admin-save-btn" data-new="downloadMarks" ${canExport ? "" : "disabled"}>Download HD image · PNG</button><button class="admin-ghost-btn" data-new="printMarks" ${canExport ? "" : "disabled"}>Print mark card / PDF</button></div></div><div class="rc-marks-controls"><label>Find a student<input id="rcMarkSearch" type="search" placeholder="Name or admission number"></label><label>Student · all ${apps.length} loaded records<select id="rcMarkStudent">${apps.map((a) => `<option value="${e(a.id)}" ${a.id === selected ? "selected" : ""}>${e(a.data.fullName || "Unnamed")} · ${e(a.data.admissionNumber || "No admission number")}</option>`).join("")}</select></label></div>${signatureControls()}<div class="rc-marks-layout"><form id="rcMarksForm"><div class="rc-marks-meta"><label>Assessment title<input id="rcExamTitle" maxlength="120" value="${e(card.title)}" required></label><label>Date<input id="rcExamDate" type="date" value="${e(card.date)}" max="${indiaDate()}" required></label><label>Final grade<select id="rcOverallGrade">${gradeOptions(card.manualGrade)}</select></label></div><fieldset class="mark-appearance"><legend>Paper & colour</legend><label>Premium palette<select id="rcMarkTheme"><option value="">Custom colour</option>${MARK_PAPER_THEMES.map(t=>`<option value="${t.color}" ${(card.paperColor||DEFAULT_MARK_PAPER)===t.color?'selected':''}>${t.name}</option>`).join('')}</select></label><label>Background colour<input type="color" id="rcMarkPaperColor" value="${e(card.paperColor||DEFAULT_MARK_PAPER)}"></label><p>Colour previews instantly. Save before exporting. Typing metrics are recorded separately from marks.</p></fieldset><p class="rc-feature-note">Automatic calculates grades from marks. Choose a letter to set a manual grade. Passing still requires at least 33% in every subject; a manual F means Fail. Blank marks remain Incomplete.</p><div class="rc-subject-scroll"><table class="rc-subject-table"><thead><tr><th>Subject</th><th>Max.</th><th>Obtained</th><th>Grade</th><th></th></tr></thead><tbody id="rcSubjectRows">${card.subjects.map((s, i) => `<tr><td data-label="Subject"><input data-subject="name" aria-label="Subject ${i + 1}" maxlength="100" value="${e(s.name)}" required><label class="mark-typing-toggle"><input type="checkbox" data-subject="typing" ${s.typing?'checked':''}> Typing assessment</label><div class="mark-typing-fields" ${s.typing?'':'hidden'}><label>Speed · WPM<input data-subject="speed" aria-label="Typing speed ${i+1}" type="number" min="0" max="500" step=".01" value="${s.typing?.speed??''}" ${s.typing?'':'disabled'}></label><label>Accuracy · %<input data-subject="accuracy" aria-label="Typing accuracy ${i+1}" type="number" min="0" max="100" step=".01" value="${s.typing?.accuracy??''}" ${s.typing?'':'disabled'}></label></div></td><td data-label="Max."><input data-subject="max" aria-label="Maximum ${i + 1}" type="number" min="1" max="1000" step="1" value="${s.max}" required></td><td data-label="Marks"><input data-subject="marks" aria-label="Marks ${i + 1}" type="number" min="0" max="${s.max}" step=".25" value="${s.marks ?? ""}" placeholder="Unmarked"></td><td data-label="Grade"><select data-subject="grade" aria-label="Grade ${i + 1}">${gradeOptions(s.manualGrade)}</select></td><td><button type="button" data-new="removeSubject" data-index="${i}" aria-label="Remove subject ${i + 1}" ${card.subjects.length === 1 ? "disabled" : ""}>×</button></td></tr>`).join("")}</tbody></table></div><div class="rc-feature-actions"><button type="button" data-new="addSubject" ${card.subjects.length >= 12 ? "disabled" : ""}>+ Add subject</button><button type="submit" class="admin-save-btn">Save marks & update preview</button></div><p id="rcMarksStatus" role="status"></p><p class="rc-feature-note">Blank marks keep the result incomplete. Saving marks changes only the mark card fields. Student details and payments are kept. Save changes before printing or downloading. The saved student photo is included automatically. Photo detail depends on the uploaded original.</p></form><div class="rc-paper-stage" id="rcMarkPreview">${markHTML(entry, card)}</div></div></section>`;
   void showMarkPhoto(entry);
+  void showMarkSignatures();
 }
 export function renderMarkCards(view, records) {
+  signatureLoaded=false;signatureDraft=null;
   apps = records;
   if (!apps.some((a) => a.id === selected)) selected = apps[0]?.id || "";
   try {
@@ -274,7 +279,20 @@ async function whatsapp(receipt) {
     if ($("#rcImageStatus")) $("#rcImageStatus").textContent = error.message;
   }
 }
-document.addEventListener("change", (event) => {
+function updateTypingRow(row,enabled){
+ row.querySelector('[data-subject=typing]').checked=enabled;
+ row.querySelector('.mark-typing-fields').hidden=!enabled;
+ row.querySelectorAll('[data-subject=speed],[data-subject=accuracy]').forEach(input=>input.disabled=!enabled);
+}
+function updatePaperPreview(){const color=$('#rcMarkPaperColor').value,palette=paperPalette(color),paper=$('#rcMarkPreview .mark-paper');if(paper)for(const [key,value] of Object.entries(palette))paper.style.setProperty('--mark-'+key,value);}
+document.addEventListener("change", async (event) => {
+  if(['rcSignatureExaminer','rcSignatureAuthorized'].includes(event.target.id)){
+    const epoch=sessionEpoch,control=event.target,file=control.files?.[0];if(!file)return;control.disabled=true;
+    try{const current=await ensureMarkSignatures(),value=await importSignature(file);if(epoch!==sessionEpoch||!control.isConnected)return;signatureDraft={...(signatureDraft||current),[control.id==='rcSignatureExaminer'?'examiner':'authorized']:value};$('#rcSignatureStatus').textContent='Signature prepared. Save institute signatures to apply it.';}
+    catch(error){if(epoch===sessionEpoch&&$('#rcSignatureStatus'))$('#rcSignatureStatus').textContent=error.message;}finally{if(control.isConnected)control.disabled=false;}return;
+  }
+  if(event.target.id==='rcMarkTheme'&&event.target.value){$('#rcMarkPaperColor').value=event.target.value;updatePaperPreview();}
+  if(event.target.dataset.subject==='typing')updateTypingRow(event.target.closest('tr'),event.target.checked);
   if(event.target.closest("#rcMarksForm")) {
     for(const action of ["printMarks","downloadMarks"]){const control=$("[data-new="+action+"]");if(control)control.disabled=true;}
   }
@@ -293,6 +311,8 @@ document.addEventListener("change", (event) => {
 });
 document.addEventListener("input", (event) => {
   if (event.target.closest("#rcMarksForm")) {
+    if(event.target.id==='rcMarkPaperColor'){$('#rcMarkTheme').value=MARK_PAPER_THEMES.some(t=>t.color===event.target.value)?event.target.value:'';updatePaperPreview();}
+    if(event.target.dataset.subject==='name'&&/typing|typewriting/i.test(event.target.value))updateTypingRow(event.target.closest('tr'),true);
     for (const action of ["printMarks","downloadMarks"]) { const control=$("[data-new="+action+"]"); if(control)control.disabled=true; }
     return;
   }
@@ -303,6 +323,13 @@ document.addEventListener("input", (event) => {
     option.hidden = !option.text.toLowerCase().includes(query);
 });
 document.addEventListener("submit", async (event) => {
+  if(event.target.id==='rcSignatureForm'){
+    event.preventDefault();const form=event.target,epoch=sessionEpoch,button=form.querySelector('[type=submit]');if(button.disabled)return;
+    button.disabled=true;
+    try{if(!signatureDraft)throw Error('Choose a signature file first.');if(form.querySelector('input:disabled'))throw Error('Wait until both signature files are prepared.');if(!services.saveSignatures)throw Error('Signature saving is unavailable.');const saved=await services.saveSignatures(validateSignatureSet(signatureDraft),signatureSettings);if(epoch!==sessionEpoch||!form.isConnected)return;signatureSettings=saved;signatureDraft=null;signatureLoaded=true;await showMarkSignatures();}
+    catch(error){if(epoch===sessionEpoch&&$('#rcSignatureStatus'))$('#rcSignatureStatus').textContent='Signatures not saved: '+error.message;}
+    finally{if(button.isConnected)button.disabled=false;}return;
+  }
   if (event.target.id !== "rcMarksForm") return;
   event.preventDefault();
   if (saving) return;
@@ -325,6 +352,7 @@ document.addEventListener("submit", async (event) => {
     if (selected === saveId && $("#rcMarkPreview")) {
       $("#rcMarkPreview").innerHTML = markHTML(entry, saved);
       void showMarkPhoto(entry);
+      void showMarkSignatures();
       $("[data-new=printMarks]").disabled = false;
       $("[data-new=downloadMarks]").disabled = false;
       $("#rcMarksStatus").textContent =
@@ -465,17 +493,19 @@ document.addEventListener("click", async (event) => {
       button.disabled=true;
       try {
         const photo=await loadMarkPhoto(entry);
+        const signatureImages=await decodeSignatures(await ensureMarkSignatures(true));
         if(!current())return;
         unchanged();
         if(action === "printMarks") {
           let area=$("#rcPrintArea");if(!area){area=document.createElement('div');area.id='rcPrintArea';document.body.append(area);}
           area.dataset.kind='marks';area.innerHTML=markHTML(entry,card);const paper=area.firstElementChild;
           if(photo){const image=area.querySelector('.mark-portrait-preview img');image.src=photo.src;await image.decode();if(!current()){if(area.firstElementChild===paper)area.replaceChildren();return;}unchanged();image.hidden=false;area.querySelector('.mark-portrait-preview span').hidden=true;}
-          if(current())window.print();
+          for(const [key,image] of Object.entries(signatureImages)){const target=area.querySelector('[data-mark-signature='+key+']');target.src=image.src;await target.decode();target.hidden=false;}
+          if(current()){unchanged();window.print();}
         } else {
           const {markCardPNG}=await import('./admin-mark-image.js?v=20261021-admin-5');
           if(!current())return;
-          const blob=await markCardPNG(structuredClone(entry),card,{photo,outputWidth:markImageWidth});
+          const blob=await markCardPNG(structuredClone(entry),card,{photo,signatures:signatureImages,outputWidth:markImageWidth});
           if(!current())return;
           unchanged();
           const filename=String(entry.data.admissionNumber||entry.id).replace(/[^a-zA-Z0-9_-]/g,'-').slice(0,80);

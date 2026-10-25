@@ -18,3 +18,8 @@ backend/audit/.env*
 !backend/audit/.env.example
 build/admin-release/
 build/admin-build-*/
+
+# Original/cleaned personal signatures stay out of public code and Hosting.
+private-assets/
+build/mark-signatures.zip
+build/rehaan-marks-preview.zip

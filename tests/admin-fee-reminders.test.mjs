@@ -56,7 +56,7 @@ test('the rupee amount has its own bold line, with two decimal places for partia
 test('payment contact is a distinct bold footer, without changing the student recipient or outstanding amount',()=>{
  const data=record(),before=structuredClone(data),bill=api.select(data,now(24)),message=api.message(data,bill);
  assert.match(message,/\*AMOUNT TO PAY\*\n\*₹499\*/);
- assert.ok(message.endsWith('──────────────────\n*FEE PAYMENT CONTACT*\n*6006433125*'));
+ assert.ok(message.endsWith('──────────────────\n*FEE PAYMENT*\nPay to: *6006433125*\nPlease share your payment confirmation after paying.'));
  assert.equal(message.split('6006433125').length-1,1);
  assert.deepEqual(data,before);
 });

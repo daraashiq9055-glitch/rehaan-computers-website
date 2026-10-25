@@ -1,0 +1,5 @@
+// Local sample marks only. This file is never loaded by the live release.
+const state=window.__adminPreview;
+state.records['demo-1'].markCard={title:'Computer skills assessment',date:new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date()),subjects:[{name:'Computer fundamentals',max:100,marks:92},{name:'Office applications',max:100,marks:88},{name:'Typing',max:100,marks:95,typing:{speed:42,accuracy:97.5}}]};
+function openMarks(){const dashboard=document.querySelector('#adminDashboard'),button=document.querySelector('[data-section=marks]');if(!dashboard||!button||getComputedStyle(dashboard).display==='none')return false;button.click();const select=document.querySelector('#rcMarkStudent');select.value='demo-1';select.dispatchEvent(new Event('change',{bubbles:true}));return true;}
+document.addEventListener('DOMContentLoaded',()=>{if(openMarks())return;const observer=new MutationObserver(()=>{if(openMarks())observer.disconnect();});observer.observe(document.querySelector('#adminDashboard'),{attributes:true});});

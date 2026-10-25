@@ -18,7 +18,7 @@ are not migrated or changed. Year rollover and short months retain this rule.
 
 Overdue drafts identify the fee month, original due date and exact remaining
 balance, and ask for that period to be cleared first. Upcoming drafts retain
-normal due-date wording. The saved student mobile remains unchanged. The reminder ends with a separate bold **FEE PAYMENT CONTACT — 6006433125**
+normal due-date wording. The saved student mobile remains unchanged. The reminder ends with a separate bold **FEE PAYMENT — Pay to: 6006433125**
 footer (updated 25 October 2026). This is institute contact information; the
 WhatsApp draft still opens for the selected student’s saved mobile number. The
 amount to pay has its own bold rupee line, for example `*₹999*`, below
