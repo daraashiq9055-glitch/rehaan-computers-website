@@ -1,5 +1,5 @@
 import {validateSignatureSet,importSignature,decodeSignatures} from './admin-mark-signatures.js?v=20261025-admin-12';
-import {modernMarkHTML,paperPalette,MARK_PAPER_THEMES,DEFAULT_MARK_PAPER} from './admin-mark-layout.js?v=20261025-admin-12';
+import {modernMarkHTML,paperPalette,MARK_PAPER_THEMES,DEFAULT_MARK_PAPER} from './admin-mark-layout.js?v=20261026-admin-13';
 import {receiptHTML as refreshedReceiptHTML,presentReceipt,receiptMessage} from './admin-receipt-layout.js?v=20261024-admin-10';
 import {
   escapeHTML as e,
@@ -503,7 +503,7 @@ document.addEventListener("click", async (event) => {
           for(const [key,image] of Object.entries(signatureImages)){const target=area.querySelector('[data-mark-signature='+key+']');target.src=image.src;await target.decode();target.hidden=false;}
           if(current()){unchanged();window.print();}
         } else {
-          const {markCardPNG}=await import('./admin-mark-image.js?v=20261021-admin-5');
+          const {markCardPNG}=await import('./admin-mark-image.js?v=20261026-admin-13');
           if(!current())return;
           const blob=await markCardPNG(structuredClone(entry),card,{photo,signatures:signatureImages,outputWidth:markImageWidth});
           if(!current())return;

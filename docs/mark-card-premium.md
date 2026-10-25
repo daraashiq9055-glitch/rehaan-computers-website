@@ -1,3 +1,5 @@
+> Presentation refinement **20261026-admin-13**: Cinzel institute heading, centred address, marks title and assessment subtitle in screen/print/PNG, a two-level serif contact footer and fine corner ornaments inside the card boundary. Stored records, grades, signatures and payments are unchanged. The fee reminder retains **Pay to: 6006433125**.
+
 # Mark-card redesign — 20261025-admin-12
 
 Preview first; no deployment has been run. The reminder footer now explicitly
@@ -92,7 +94,7 @@ The additive rules for private signatures must be deployed before using their
 Save button. Counter/application/admin/payment rules are otherwise retained.
 Publish current firestore:rules from the repository root, build with
 `python prepare-admin-release.py`, and publish Hosting from build/admin-release.
-Expected manifest: version 20261025-admin-12, auditEnabled false,
+Expected manifest: version 20261026-admin-13, auditEnabled false,
 receiptCounterRulesRequired true, markSignatureRulesRequired true.
 No rules, website or data have been deployed during this work.
 

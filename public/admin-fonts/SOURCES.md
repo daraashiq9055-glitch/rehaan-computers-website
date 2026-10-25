@@ -7,3 +7,7 @@ Sources: @fontsource-variable/inter@5.3.0 and
 @fontsource-variable/playfair-display@5.3.0 from registry.npmjs.org.
 Tarball SHA-512 integrity was verified against npm registry metadata before
 extracting the Latin variable-weight WOFF2 fonts. No font CDN is needed at runtime.
+
+Cinzel variable display font: Google Fonts, `ofl/cinzel/Cinzel[wght].ttf`
+from github.com/google/fonts. SIL Open Font License retained in Cinzel-OFL.txt.
+Used locally for the marks-card institute heading; no external font request.
