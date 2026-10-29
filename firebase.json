@@ -4,9 +4,54 @@
     "ignore": [
       "firebase.json",
       "**/.*",
-      "**/node_modules/**"
+      "**/node_modules/**",
+      "**/*.env",
+      "**/*.env.*",
+      "**/*.pem",
+      "**/*.key",
+      "**/*.p12",
+      "**/*.map",
+      "**/*.log",
+      "**/*.zip",
+      "**/*.md",
+      "**/admin-fix.js",
+      "**/*service-account*.json",
+      "**/credentials.json"
     ],
     "headers": [
+      {
+        "source": "**",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "object-src 'none'; base-uri 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+          },
+          {
+            "key": "Content-Security-Policy-Report-Only",
+            "value": "default-src 'self'; script-src 'self' https://www.gstatic.com/firebasejs/12.2.1/ https://*.razorpay.com https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js 'sha256-zf1NQSRZRCCVbozQv592ZpXmtM4xZw5RxI8Kzfbnvg4='; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://*.razorpay.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.razorpay.com https://api.emailjs.com https://rehaan-razorpay-live.daraashiq9055.workers.dev https://rehaan-student-photos.daraashiq9055.workers.dev; frame-src https://*.razorpay.com https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
+          },
+          {
+            "key": "X-Content-Type-Options",
+            "value": "nosniff"
+          },
+          {
+            "key": "X-Frame-Options",
+            "value": "DENY"
+          },
+          {
+            "key": "Referrer-Policy",
+            "value": "strict-origin-when-cross-origin"
+          },
+          {
+            "key": "Permissions-Policy",
+            "value": "camera=(), microphone=(), geolocation=()"
+          },
+          {
+            "key": "Strict-Transport-Security",
+            "value": "max-age=31536000; includeSubDomains"
+          }
+        ]
+      },
       {
         "source": "/admin**",
         "headers": [
@@ -58,6 +103,15 @@
           {
             "key": "Cache-Control",
             "value": "no-cache"
+          }
+        ]
+      },
+      {
+        "source": "/admin.html",
+        "headers": [
+          {
+            "key": "Content-Security-Policy",
+            "value": "default-src 'self'; script-src 'self' https://www.gstatic.com/firebasejs/12.2.1/ https://*.razorpay.com https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js 'sha256-zf1NQSRZRCCVbozQv592ZpXmtM4xZw5RxI8Kzfbnvg4='; script-src-attr 'none'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: blob: https://res.cloudinary.com https://images.unsplash.com https://*.razorpay.com; connect-src 'self' https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://firestore.googleapis.com https://*.razorpay.com https://api.emailjs.com https://rehaan-razorpay-live.daraashiq9055.workers.dev https://rehaan-student-photos.daraashiq9055.workers.dev; frame-src https://*.razorpay.com https://www.google.com; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none'; upgrade-insecure-requests"
           }
         ]
       }

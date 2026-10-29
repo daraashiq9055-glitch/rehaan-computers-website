@@ -1,5 +1,13 @@
 # Rehaan student photo service
 
+Security update (2026-10-29): deployments now require **both**
+`PHOTO_UPLOAD_LIMITER` (10 requests/minute/IP) and `PHOTO_READ_LIMITER`
+(300 requests/minute/IP), as configured in `wrangler.toml`. Missing protection
+fails closed. Production origins are the two exact Firebase Hosting origins;
+localhost needs a separate local configuration. Before deploying this update,
+retain the current Worker deployment for rollback and verify private viewing
+with an administrator session. See `docs/security-audit-2026-10-29.md`.
+
 Prepared for Cloudinary cloud `salatmdv`, signed preset `ml_default`.
 The preview configuration is now **enabled** after the owner reported a passing
 live admin upload/private-viewing check. This does not deploy the frontend or

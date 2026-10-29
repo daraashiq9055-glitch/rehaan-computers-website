@@ -20,6 +20,12 @@ export const addDoc=async(ref,data)=>{
 '''
 SDK='''window.Razorpay=class{constructor(options){window.__checkout=options;} on(){} open(){window.__fixture.checkoutOpened=true;}};'''
 class Quiet(SimpleHTTPRequestHandler):
+ def end_headers(self):
+  config=json.loads((ROOT/'firebase.json').read_text())
+  for entry in config['hosting']['headers']:
+   if entry['source']=='**':
+    for header in entry['headers']:self.send_header(header['key'],header['value'])
+  super().end_headers()
  def log_message(self,*args):pass
 
 def run(enabled=False, edge=False):
@@ -45,8 +51,8 @@ def run(enabled=False, edge=False):
     def route_handler(route):
      url=route.request.url
      if url==base+'/photo-storage-config.js':
-      route.fulfill(content_type='application/javascript',body='export const photoStorageConfig='+json.dumps({'enabled':enabled,'cloudName':'salatmdv','serviceUrl':'https://photos.example.test'})+';')
-     elif url=='https://photos.example.test/upload':
+      route.fulfill(content_type='application/javascript',body='export const photoStorageConfig='+json.dumps({'enabled':enabled,'cloudName':'salatmdv','serviceUrl':'https://rehaan-student-photos.daraashiq9055.workers.dev'})+';')
+     elif url=='https://rehaan-student-photos.daraashiq9055.workers.dev/upload':
       uploads.append(url)
       assert route.request.post_data_buffer[:3]==b'\xff\xd8\xff'
       assert route.request.headers.get('content-type')=='image/jpeg'
@@ -126,7 +132,7 @@ def run(enabled=False, edge=False):
       assert page.evaluate('localStorage.getItem("rehaan-pending-admission")') is None
       assert [e for e,b in calls]==['create-order']
      else:
-      page.wait_for_function('__fixture.checkoutOpened===true')
+      page.wait_for_function('()=>__fixture.checkoutOpened===true')
       assert page.evaluate('__checkout.amount')==10000
       assert page.evaluate('__fixture.writes.length')==1
       if mode=='pending':
@@ -143,7 +149,7 @@ def run(enabled=False, edge=False):
        assert [endpoint for endpoint,body in calls].count('status')==3
       elif mode=='unconfirmed':
        page.evaluate('void __checkout.handler({razorpay_order_id:"order_test",razorpay_payment_id:"payment_test",razorpay_signature:"signature_test"})')
-       page.wait_for_function('document.querySelector("#razorpayStatus").textContent.includes("verifying")')
+       page.wait_for_function('()=>document.querySelector("#razorpayStatus").textContent.includes("verifying")')
        for _ in range(14):page.clock.fast_forward(3000);page.wait_for_timeout(100)
        expect(page.locator('#applicationMessage')).to_contain_text('being confirmed')
        expect(page.locator('#paymentSuccessModal')).to_be_hidden()

@@ -19,16 +19,16 @@ export default {async fetch(request) {
     try {
         const origin='https://rehaan-computers.web.app';
         const token='e30.'+btoa(JSON.stringify({sub:'test-admin'})).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')+'.fake';
-        const env={ALLOWED_ORIGINS:origin,CLOUDINARY_CLOUD_NAME:'salatmdv',CLOUDINARY_UPLOAD_PRESET:'ml_default',CLOUDINARY_API_KEY:'test-key',CLOUDINARY_API_SECRET:'test-secret',FIREBASE_PROJECT_ID:'demo-photo-tests',PHOTO_UPLOAD_LIMITER:{limit:async()=>({success:true})}};
+        const env={ALLOWED_ORIGINS:origin,CLOUDINARY_CLOUD_NAME:'salatmdv',CLOUDINARY_UPLOAD_PRESET:'ml_default',CLOUDINARY_API_KEY:'test-key',CLOUDINARY_API_SECRET:'test-secret',FIREBASE_PROJECT_ID:'demo-photo-tests',PHOTO_READ_LIMITER:{limit:async()=>({success:true})},PHOTO_UPLOAD_LIMITER:{limit:async()=>({success:true})}};
         const nativeFetcher=(url,options)=>{
             assert(options.redirect==='manual','Native fetch must use supported manual redirect handling');
             const path=url.startsWith('https://firestore.googleapis.com/')?'admin':url.startsWith('https://api.cloudinary.com/')?'upload':'photo';
             return fetch(incoming.origin+'/upstream/'+path,options);
         };
-        const upload=()=>new Request('https://photos.example/upload',{method:'POST',headers:{Origin:origin,Authorization:'Bearer '+token,'CF-Connecting-IP':'192.0.2.1','Content-Type':'image/jpeg'},body:jpeg});
+        const upload=()=>new Request('https://photos.example/upload',{method:'POST',headers:{'CF-Connecting-IP':'192.0.2.1',Origin:origin,Authorization:'Bearer '+token,'Content-Type':'image/jpeg'},body:jpeg});
         const result=await handleRequest(upload(),env,nativeFetcher);
         const data=await result.json();assert(result.status===200,'Upload failed: '+JSON.stringify(data));
-        const get=new Request('https://photos.example/photo?photo='+encodeURIComponent(data.photo),{headers:{Origin:origin,Authorization:'Bearer '+token}});
+        const get=new Request('https://photos.example/photo?photo='+encodeURIComponent(data.photo),{headers:{'CF-Connecting-IP':'192.0.2.1',Origin:origin,Authorization:'Bearer '+token}});
         const photo=await handleRequest(get,env,nativeFetcher);
         assert(photo.status===200,'Private delivery failed');assert((await photo.arrayBuffer()).byteLength===jpeg.length,'Photo body differs');
         let redirects=0;

@@ -74,7 +74,7 @@ async function authorizeAdmin(request, env, fetcher) {
 export async function handleRequest(request, env, fetcher = fetch) {
     const origin = request.headers.get('Origin');
     const allowed = (env.ALLOWED_ORIGINS || '').split(',').map(x => x.trim()).filter(Boolean);
-    const cors = { 'Vary': 'Origin', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' };
+    const cors = { 'Vary': 'Origin', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy':'no-referrer' };
     if (!origin || !allowed.includes(origin)) return Response.json({error:'Origin not allowed.'}, {status:403,headers:cors});
     cors['Access-Control-Allow-Origin'] = origin;
     const json = (data, status=200) => Response.json(data, {status,headers:cors});
@@ -120,6 +120,11 @@ export async function handleRequest(request, env, fetcher = fetch) {
             return json({photo:`https://res.cloudinary.com/${env.CLOUDINARY_CLOUD_NAME}/image/authenticated/v${data.version}/${publicId}.jpg`});
         }
         if (url.pathname === '/photo' && request.method === 'GET') {
+            if (!request.headers.has('Authorization')) throw new HttpError(401, 'Sign in as an administrator.');
+            const ip = request.headers.get('CF-Connecting-IP');
+            if (!ip || !env.PHOTO_READ_LIMITER) throw new HttpError(503, 'Photo viewing protection is unavailable.');
+            stage = 'READ_RATE_LIMIT';
+            if (!(await env.PHOTO_READ_LIMITER.limit({key:ip})).success) throw new HttpError(429, 'Too many photo requests. Please wait a minute and try again.');
             stage = 'ADMIN_VERIFICATION';
             await authorizeAdmin(request,env,fetcher);
             const path = privatePhotoPath(url.searchParams.get('photo'),env.CLOUDINARY_CLOUD_NAME);

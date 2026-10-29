@@ -33,6 +33,51 @@ service cloud.firestore {
     }
 
 
+    // Private shared signature images; administrators only, never public assets.
+    match /instituteSettings/markCardSignatures {
+      function signatureAdmin() {
+        return request.auth != null
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid;
+      }
+      function validSignature(value) {
+        return value is string && value.size() <= 220000
+          && (value == "" || value.matches('^data:image/png;base64,[A-Za-z0-9+/]+={0,2}$'));
+      }
+      allow get: if signatureAdmin();
+      allow create, update: if signatureAdmin()
+        && request.resource.data.keys().hasOnly(["examiner", "authorized", "updatedAt", "updatedBy"])
+        && validSignature(request.resource.data.examiner)
+        && validSignature(request.resource.data.authorized)
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt is string
+        && request.resource.data.updatedAt.size() <= 40;
+      allow list, delete: if false;
+    }
+
+    // Shared tuition receipt sequence. No public access and no student data here.
+    match /receiptCounters/tuition {
+      function counterAdmin() {
+        return request.auth != null
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid;
+      }
+      allow get: if counterAdmin();
+      allow create: if counterAdmin()
+        && request.resource.data.keys().hasOnly(["last"])
+        && request.resource.data.last is int
+        && request.resource.data.last == 1000;
+      allow update: if counterAdmin()
+        && request.resource.data.keys().hasOnly(["last"])
+        && request.resource.data.last is int
+        // Allow an unchanged value so stale optimistic transactions can reach
+        // their version precondition and retry; the application increments once.
+        && request.resource.data.last >= resource.data.last
+        && request.resource.data.last <= resource.data.last + 1
+        && request.resource.data.last <= 9999999;
+      allow list, delete: if false;
+    }
+
     /*
      * APPLICATIONS
      */
@@ -106,8 +151,7 @@ service cloud.firestore {
           ])
           && d.payment.status == "awaiting"
           && d.payment.amount is number
-          && d.payment.amount >= 0
-          && d.payment.amount <= 100000;
+          && d.payment.amount == 100;
       }
 
 
@@ -133,6 +177,7 @@ service cloud.firestore {
 
           && d.phone is string
           && d.phone.size() == 10
+          && d.phone.matches('^[0-9]{10}$')
 
           && d.coursePreference is string
           && d.coursePreference.size() >= 1
@@ -155,6 +200,10 @@ service cloud.firestore {
           && (!("aadhaarLast4" in d)
               || d.aadhaarLast4.matches("^[0-9]{4}$"))
           && strLen(d, "photo", 0, 800000)
+          && (!("photo" in d) || d.photo == ""
+              || d.photo.matches('^data:image/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$')
+              || (d.photo.size() <= 2048
+                  && d.photo.matches('^https://res[.]cloudinary[.]com/salatmdv/image/authenticated/v[0-9]{1,15}/student-photos/[0-9a-f-]{36}[.]jpg$')))
           && strLen(d, "attendanceSetup", 0, 16)
           && strLen(d, "attendanceEmail", 0, 254)
           && strLen(d, "attendanceUid", 0, 128)

@@ -1,0 +1,41 @@
+{
+  "date": "2026-10-29",
+  "status": "tested-local-candidate-not-deployed",
+  "productionWritesPerformed": false,
+  "productionPaymentSourceVerified": false,
+  "visitorStrictCsp": "report-only-until-real-checkout-verified",
+  "adminStrictCsp": "enforced-in-candidate",
+  "dependencyAudit": {
+    "info": 0,
+    "low": 0,
+    "moderate": 0,
+    "high": 0,
+    "critical": 0,
+    "total": 0
+  },
+  "history": {
+    "reachableCommitsBeforeAudit": 179,
+    "uniqueBlobsBeforeAudit": 671,
+    "providerScannerTextBlobs": 646,
+    "confirmedPrivateCredentialLeaks": 0,
+    "limitation": "Pattern/entropy scans; no provider credential validation or access to production secret values."
+  },
+  "passed": {
+    "nodeUnitTests": 109,
+    "paymentCandidateFunctionalChecks": 39,
+    "publicAdmissionBrowserScenarios": 25,
+    "adminBrowserRegression": true,
+    "adminCspAndStoredXssBrowserRegression": true,
+    "publicRulesEmulator": true,
+    "adminFinanceEmulator": true,
+    "optionalHistoryEmulator": true,
+    "windowsEncodingBuild": true
+  },
+  "outstanding": [
+    "Direct anonymous Firestore admission spam: App Check or protected admission gateway required.",
+    "Export/compare deployed payment Worker before porting/deploying candidate.",
+    "Account IAM/auth policies/API restrictions and production secret bindings not verified.",
+    "Live external checkout SDK and Worker endpoints unavailable through network proxy.",
+    "Deploy reviewed frontend/rules/photo protections separately; verify real provider flows."
+  ]
+}

@@ -151,8 +151,7 @@ service cloud.firestore {
           ])
           && d.payment.status == "awaiting"
           && d.payment.amount is number
-          && d.payment.amount >= 0
-          && d.payment.amount <= 100000;
+          && d.payment.amount == 100;
       }
 
 
@@ -178,6 +177,7 @@ service cloud.firestore {
 
           && d.phone is string
           && d.phone.size() == 10
+          && d.phone.matches('^[0-9]{10}$')
 
           && d.coursePreference is string
           && d.coursePreference.size() >= 1
@@ -200,6 +200,10 @@ service cloud.firestore {
           && (!("aadhaarLast4" in d)
               || d.aadhaarLast4.matches("^[0-9]{4}$"))
           && strLen(d, "photo", 0, 800000)
+          && (!("photo" in d) || d.photo == ""
+              || d.photo.matches('^data:image/(jpeg|jpg|png|webp);base64,[A-Za-z0-9+/]+={0,2}$')
+              || (d.photo.size() <= 2048
+                  && d.photo.matches('^https://res[.]cloudinary[.]com/salatmdv/image/authenticated/v[0-9]{1,15}/student-photos/[0-9a-f-]{36}[.]jpg$')))
           && strLen(d, "attendanceSetup", 0, 16)
           && strLen(d, "attendanceEmail", 0, 254)
           && strLen(d, "attendanceUid", 0, 128)

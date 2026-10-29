@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {handleRequest,uploadSignature,privatePhotoPath} from '../backend/photos/worker.mjs';
 const origin='https://rehaan-computers.web.app';
-const env={CLOUDINARY_CLOUD_NAME:'salatmdv',CLOUDINARY_UPLOAD_PRESET:'ml_default',CLOUDINARY_API_KEY:'test-key',CLOUDINARY_API_SECRET:'test-secret',FIREBASE_PROJECT_ID:'demo-photo-tests',ALLOWED_ORIGINS:origin,PHOTO_UPLOAD_LIMITER:{limit:async()=>({success:true})}};
+const env={CLOUDINARY_CLOUD_NAME:'salatmdv',CLOUDINARY_UPLOAD_PRESET:'ml_default',CLOUDINARY_API_KEY:'test-key',CLOUDINARY_API_SECRET:'test-secret',FIREBASE_PROJECT_ID:'demo-photo-tests',ALLOWED_ORIGINS:origin,PHOTO_READ_LIMITER:{limit:async()=>({success:true})},PHOTO_UPLOAD_LIMITER:{limit:async()=>({success:true})}};
 const photo='https://res.cloudinary.com/salatmdv/image/authenticated/v123/student-photos/12345678-1234-4123-8123-123456789abc.jpg';
 const token='e30.'+Buffer.from(JSON.stringify({sub:'test-admin'})).toString('base64url')+'.fake';
 const jpeg=Uint8Array.from([255,216,255,192,0,17,8,1,104,1,104,3,1,17,0,2,17,0,3,17,0,255,217]);
-const req=(path,options={})=>new Request('https://photos.example'+path,{...options,headers:{Origin:origin,...options.headers}});
+const req=(path,options={})=>new Request('https://photos.example'+path,{...options,headers:{Origin:origin,'CF-Connecting-IP':'192.0.2.1',...options.headers}});
 const upload=()=>req('/upload',{method:'POST',headers:{'Content-Type':'image/jpeg','CF-Connecting-IP':'192.0.2.1'},body:jpeg});
 const denyFetch=async()=>{throw Error('Unexpected upstream request')};
 test('signature uses the provider-required sorted parameter digest',async()=>{
@@ -130,4 +130,9 @@ test('unexpected exceptions report a fixed stage, never provider text or secrets
  assert.deepEqual(await result.json(),{error:'Photo service could not complete this step. (PHOTO_CLOUDINARY_UPLOAD)',code:'PHOTO_CLOUDINARY_UPLOAD'});
  const rate=await handleRequest(upload(),{...env,PHOTO_UPLOAD_LIMITER:{limit:async()=>{throw Error('test-secret')}}},denyFetch);
  assert.equal((await rate.json()).code,'PHOTO_RATE_LIMIT');
+});
+
+test('private photo rate limiter rejects before any upstream read and fails closed when missing',async()=>{
+ for(const [binding,status] of [[undefined,503],[{limit:async()=>({success:false})},429]]){
+ const response=await handleRequest(req('/photo?photo='+encodeURIComponent(photo),{headers:{Authorization:'Bearer '+token}}),{...env,PHOTO_READ_LIMITER:binding},denyFetch);assert.equal(response.status,status);assert.equal(response.headers.get('Cache-Control'),'no-store');}
 });

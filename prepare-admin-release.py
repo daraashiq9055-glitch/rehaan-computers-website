@@ -12,7 +12,7 @@ import shutil
 import tempfile
 
 ROOT=Path(__file__).resolve().parent
-VERSION='20261026-admin-13'
+VERSION='20261029-security-1'
 
 def build(destination, audit_ready=False):
     destination=Path(destination)
@@ -93,6 +93,10 @@ def build(destination, audit_ready=False):
     if any(value in html for value in ['__adminPreview','previews/','demo-strip','type="importmap"','No real password']):raise RuntimeError('Preview-only markup leaked into the candidate.')
     (public/'admin.html').write_text(html, encoding='utf-8')
     config=json.loads((ROOT/'firebase.json').read_text(encoding='utf-8'));config.pop('firestore',None)
+    security_spec=importlib.util.spec_from_file_location('release_security_headers',ROOT/'security_headers.py')
+    security=importlib.util.module_from_spec(security_spec);security_spec.loader.exec_module(security)
+    config=security.secure_hosting_config(config,[public/'index.html',public/'admin.html'])
+    (public/'admin-fix.js').unlink(missing_ok=True)
     (destination/'firebase.json').write_text(json.dumps(config,indent=2)+'\n', encoding='utf-8')
     (destination/'RELEASE.json').write_text(json.dumps({'generated':True,'version':VERSION,'auditEnabled':audit_ready,'receiptCounterRulesRequired':True,'markSignatureRulesRequired':True,'source':'prepare-admin-release.py'},indent=2)+'\n', encoding='utf-8')
     return destination

@@ -774,7 +774,6 @@ async function verifyAdmin(user) {
 
 
         if (
-            adminData.uid &&
             adminData.uid !== user.uid
         ) {
 
@@ -797,7 +796,7 @@ async function verifyAdmin(user) {
 
         console.error(
             "Admin verification error:",
-            error
+            error.code || "verification-failed"
         );
 
 
@@ -2406,6 +2405,7 @@ async function handleAdminLogin(event) {
         const { user } = await signInWithEmailAndPassword(auth,
             getElement("adminEmail").value.trim(), getElement("adminPassword").value);
         const verification = await verifyAdmin(user);
+        if (auth.currentUser?.uid !== user.uid) throw new Error("Your session changed. Sign in again.");
         if (!verification.authorized) {
             await signOut(auth);
             throw new Error(verification.reason);
@@ -2417,6 +2417,7 @@ async function handleAdminLogin(event) {
     } catch (error) {
         showAdminMessage("error", friendlyError(error));
     } finally {
+        getElement("adminPassword").value = "";
         button.disabled = false;
         button.textContent = "Sign in securely";
     }

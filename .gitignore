@@ -23,3 +23,15 @@ build/admin-build-*/
 private-assets/
 build/mark-signatures.zip
 build/rehaan-marks-preview.zip
+
+# Deployment credentials and local security-audit artifacts.
+**/.env
+**/.env.*
+!**/.env.example
+!**/.env.*.example
+**/*.pem
+**/*.key
+**/*.p12
+**/*service-account*.json
+**/credentials.json
+security-artifacts/
