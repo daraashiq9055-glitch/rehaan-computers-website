@@ -12,7 +12,7 @@ import shutil
 import tempfile
 
 ROOT=Path(__file__).resolve().parent
-VERSION='20261101-fees-2'
+VERSION='20261101-attendance-1'
 
 def build(destination, audit_ready=False):
     destination=Path(destination)

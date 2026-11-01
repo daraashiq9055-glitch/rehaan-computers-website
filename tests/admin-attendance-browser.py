@@ -1,0 +1,15 @@
+from pathlib import Path
+from http.server import ThreadingHTTPServer
+from functools import partial
+from threading import Thread
+import importlib.util
+from playwright.sync_api import sync_playwright,expect
+ROOT=Path(__file__).resolve().parents[1]
+spec=importlib.util.spec_from_file_location('preview',ROOT/'preview-attendance.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m)
+server=ThreadingHTTPServer(('127.0.0.1',0),partial(m.preview.PreviewHandler,directory=str(ROOT)));Thread(target=server.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{server.server_port}'
+try:
+ with sync_playwright() as p:
+  browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);page=browser.new_page(viewport={'width':1200,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.route('**/*',lambda r:r.continue_() if r.request.url.startswith(base+'/') else r.abort());page.goto(base+m.preview.PREVIEW);expect(page.locator('#attendanceForm')).to_be_visible();before=page.evaluate('structuredClone(__adminPreview.records["demo-0"])');page.locator('[data-section=attendance]').click();expect(page.locator('#attendanceForm')).to_be_visible();page.locator('#attendanceMonth').fill('2026-10');page.locator('#attendanceMonth').dispatch_event('change');page.locator('#attendanceForm [name=days]').fill('12');page.locator('#attendanceForm [name=totalDays]').fill('24');page.locator('#attendanceSuggest').click();expect(page.locator('#attendanceForm [name=note]')).to_have_value('You have missed several classes this month. Please attend regularly and contact us if you need help.');page.locator('#attendanceForm [name=note]').fill('Please attend your morning classes regularly.');page.locator('#attendanceForm [type=submit]').click();expect(page.locator('#attendanceStatus')).to_contain_text('Attendance saved');after=page.evaluate('__adminPreview.records["demo-0"]');assert after['monthlyAttendance']['2026-10']['days']==12
+  for key,value in before.items():assert after[key]==value,key
+  page.locator('#attendanceShare').click();expect(page.locator('#attendanceSharePreview')).to_contain_text('12');expect(page.locator('#attendanceSharePreview')).to_contain_text('Please attend your morning classes regularly.');assert 'wa.me/' in page.locator('#attendanceSharePreview a').get_attribute('href');artifacts=ROOT/'tests/artifacts/attendance';artifacts.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(artifacts/'desktop.png'),full_page=True);page.locator('#attendanceFollowup').click();expect(page.locator('#classFollowupDialog')).to_contain_text('24 hours');assert after['status']==before['status'];page.locator('#classFollowupDialog button').click();page.set_viewport_size({'width':390,'height':844});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth');page.locator('#adminLogoutBtn').evaluate('b=>b.click()');expect(page.locator('#adminDashboard')).to_be_hidden();assert not errors,errors;browser.close();print('PASS: monthly entry, editable suggestion, isolated save, WhatsApp draft, manual follow-up, mobile and logout; no live calls')
+finally:server.shutdown()

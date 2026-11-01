@@ -1,3 +1,4 @@
+import {saveAttendance} from './admin-attendance-model.js?v=20261101-attendance-1';
 import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261101-fees-2";
 import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261101-fees-2";
 import { photoStorageConfig } from "./photo-storage-config.js";
@@ -1673,6 +1674,7 @@ function openAdminDetails(applicationId) {
                     <p>${data.admissionNumber ? "Admission No " + escapeHTML(String(data.admissionNumber)) : "No admission number yet"} · ${data.channel === "offline" ? "Added offline by admin" : "Online application"} · Applied ${escapeHTML(formatDate(data.createdAt))}</p>
                 </div>
             </div>
+            <button type="button" class="admin-ghost-btn admin-class-followup">Class follow-up</button>
             <div class="admin-details-grid">
                 ${adminField("Parent / Guardian", data.parentName)}
                 ${adminField("Student Phone", data.phone)}
@@ -1743,6 +1745,7 @@ function openAdminDetails(applicationId) {
     );
 
     const editGroup = modal.querySelector(".admin-edit-fields");
+    modal.querySelector('.admin-class-followup').onclick=async()=>{const uid=verifiedAdminUid;try{requireAdmin();const {openFollowup}=await import('./admin-attendance.js?v=20261101-attendance-1');requireAdmin();if(uid!==verifiedAdminUid||!modal.isConnected)return;const entry=adminState.apps.find(a=>a.id===id);if(entry)openFollowup(entry);}catch(error){alert(friendlyError(error));}};
     modal.querySelector(".admin-toggle-edit").addEventListener("click", () => {
         editGroup.hidden = !editGroup.hidden;
         modal.querySelector(".admin-toggle-edit").textContent = editGroup.hidden ? "✎" : "✕";
@@ -2526,6 +2529,7 @@ function friendlyError(error) {
 
 function clearAdminSession() {
     resetAdditions();
+    document.querySelector("#classFollowupDialog")?.remove();
     clearPhotoSession();
     if (activePhotoMigration) activePhotoMigration.stopped = true;
     verifiedAdminUid = null;
@@ -2638,7 +2642,7 @@ function updateWorkspace() {
         [distinct("coursePreference"), "Courses with students", "Browse the course directory", "courses", "courses"],
         [distinct("batch"), "Batches with students", "Browse batch assignments", "batches", "batches"]
     ].map(([count,label,note,icon,target]) => `<button type="button" class="workspace-stat" data-summary="${target}" aria-label="Open ${label.toLowerCase()}${recordsLoaded ? ': ' + count : ''}" ${recordsLoaded ? "" : "disabled"}><span class="workspace-stat-icon" aria-hidden="true">${workspaceIcon(icon)}</span><span class="workspace-stat-body"><span class="workspace-stat-label">${label}</span><strong>${recordsLoaded ? count : "—"}</strong><small>${note}</small></span><span class="workspace-stat-arrow" aria-hidden="true">${workspaceIcon("arrow")}</span></button>`).join("");
-    const titles = { statements: "Fee Statements", marks: "Student mark cards", overview: "Your institute, at a glance.", admissions: "Admission applications", students: "Enrolled students", fees: "Fees & payments", courses: "Course directory", batches: "Batch directory", reports: "Reports & exports", settings: "Workspace settings" };
+    const titles = { attendance:"Attendance", statements: "Fee Statements", marks: "Student mark cards", overview: "Your institute, at a glance.", admissions: "Admission applications", students: "Enrolled students", fees: "Fees & payments", courses: "Course directory", batches: "Batch directory", reports: "Reports & exports", settings: "Workspace settings" };
     getElement("workspaceHeading").textContent = titles[workspaceSection];
     getElement("workspaceBreadcrumb").textContent = workspaceSection === "statements" ? "Fee Statements" : workspaceSection[0].toUpperCase() + workspaceSection.slice(1);
     getElement("workspaceProfile").textContent = auth.currentUser?.email || "Administrator";
@@ -2652,7 +2656,7 @@ function updateWorkspace() {
     document.querySelectorAll(".admin-tab").forEach(button => { const active = button.dataset.tab === adminState.tab; button.classList.toggle("is-active", active); button.setAttribute("aria-selected", String(active)); button.tabIndex = active ? 0 : -1; });
     getElement("applicationsList").setAttribute("role", "tabpanel");
     getElement("applicationsList").setAttribute("aria-labelledby", "registerTab-" + adminState.tab);
-    const directory = ["courses", "batches", "reports", "settings", "marks", "statements"].includes(workspaceSection);
+    const directory = ["courses", "batches", "reports", "settings", "marks", "statements", "attendance"].includes(workspaceSection);
     getElement("registerPanel").hidden = directory && recordsLoaded;
     getElement("workspaceView").hidden = !recordsLoaded || (!["overview"].includes(workspaceSection) && !directory);
     if (!recordsLoaded) return;
@@ -2689,6 +2693,13 @@ function updateWorkspace() {
             } else adminState.batch = "";
             renderAdminList();
         });
+    } else if (workspaceSection === "attendance") {
+        const uid=verifiedAdminUid;view.innerHTML='<p>Loading attendance…</p>';
+        import('./admin-attendance.js?v=20261101-attendance-1').then(({mountAttendance})=>{
+            if(verifiedAdminUid!==uid||workspaceSection!=='attendance')return;
+            const guard=()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');};
+            mountAttendance({host:view,assertSession:guard,getRecords:()=>adminState.apps,save:async(id,month,input,expected)=>{guard();const saved=await saveAttendance({db,ref:doc(db,'applications',id),runTransaction,assertSession:guard,actor:uid,month,input,expected});guard();const entry=adminState.apps.find(a=>a.id===id);if(entry)entry.data.monthlyAttendance={...(entry.data.monthlyAttendance||{}),[month]:saved};return saved;}});
+        }).catch(()=>{if(verifiedAdminUid===uid&&workspaceSection==='attendance')view.textContent='Attendance could not load. Reload the dashboard.';});
     } else if (workspaceSection === "statements") {
         renderStatementDirectory(view);
     } else if (workspaceSection === "marks") {
