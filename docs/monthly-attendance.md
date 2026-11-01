@@ -48,3 +48,27 @@ those fixtures are never injected into a production release.
 The redesigned preview passed attendance browser checks for saves, both status
 filters, WhatsApp totals/percentage, mobile overflow and logout; the three focused
 attendance unit tests and release generation also passed. No live calls were used.
+
+## Release verification — 2026-11-01
+
+Approved release candidate: `20261101-attendance-1`. Rebuilt successfully with
+117 standalone unit tests, the legacy fee helper check, the attendance browser,
+security/CSP browser, full generated admin candidate browser and Windows encoding
+check passing. The legacy fee test was corrected to expect the approved bold ₹
+amount rather than obsolete Rs. text; production payment logic was not changed.
+The separate Firestore emulator suite was not run in this environment (its local
+emulator/dependencies are not installed). No rules are changed for this release.
+Firebase CLI reports no authorized account in this workspace, so Hosting must be
+published from the owner's already authenticated Windows terminal. No deployment
+has been performed by these checks.
+
+```bat
+cd /d "%USERPROFILE%\rehaan-admin-preview"
+git pull --ff-only
+python prepare-admin-release.py
+cd build\admin-release
+npx --yes firebase-tools@15.34.0 deploy --only hosting --project rehaan-computers
+```
+
+Stop if the pull or build reports an error. This releases the full generated
+website including Attendance; it does not replace student records or payments.

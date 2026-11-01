@@ -20,7 +20,7 @@ student.monthlyFees["2026-11-09"]=500;
 bill=call("tuitionPeriod", student, at);
 assert.equal(bill.remaining,499);
 const message=call("tuitionWhatsAppMessage",student,bill);
-for(const phrase of ["Test Student","001","Rs. 499","09-11-2026"]) assert.ok(message.includes(phrase),phrase);
+for(const phrase of ["Test Student","001","*₹499*","09-11-2026"]) assert.ok(message.includes(phrase),phrase);
 student.monthlyFees["2026-11-09"]=999;
 assert.equal(call("tuitionPeriod",student,at).remaining,0);
 student.monthlyFees["2026-11-09"]=500;
