@@ -5,7 +5,7 @@ import {
   makeReceipt,
   validateReceiptCorrection,
   receiptAuditSnapshot,
-} from "./admin-feature-model.js?v=20261021-admin-5";
+} from "./admin-feature-model.js?v=20261101-fees-1";
 import { canonicalRecord } from "./admin-records.js";
 function paise(value) {
   const number = Number(value);
@@ -226,6 +226,7 @@ export async function correctReceipt({
       date: clean.date,
       method: clean.method,
       note: clean.note,
+      ...(clean.paperColor?{paperColor:clean.paperColor}:{}),
       amount: clean.amount,
       revision: (stored.revision || 0) + 1,
       amendedAt: now,

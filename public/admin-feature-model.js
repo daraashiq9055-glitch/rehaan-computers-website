@@ -210,6 +210,7 @@ export function validateReceiptCorrection(input) {
       "Describe the correction reason using at least five characters.",
     );
   return {
+    ...(input.paperColor!==undefined?{paperColor:(()=>{if(!/^#[0-9a-f]{6}$/i.test(input.paperColor))throw Error('Choose a valid receipt background colour.');return input.paperColor.toLowerCase();})()}:{}),
     name: text("name", 120, true),
     admission: text("admission", 20, true, 1),
     course: text("course", 120, true),
@@ -226,6 +227,7 @@ export function receiptAuditSnapshot(receipt) {
     date: receipt.date,
     method: receipt.method,
     note: receipt.note || "",
+    paperColor: receipt.paperColor || "#fffcf2",
     amount: receipt.amount,
     receivedAtIssue: receipt.receivedAtIssue,
     balanceAtIssue: receipt.balanceAtIssue,

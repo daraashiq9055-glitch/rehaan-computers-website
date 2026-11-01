@@ -1,5 +1,5 @@
-import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261024-admin-9";
-import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261021-admin-5";
+import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261101-fees-1";
+import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261101-fees-1";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
 let activePhotoMigration = null;
@@ -1394,6 +1394,7 @@ function renderFeeManagement(list, entries) {
               </div>
               <div class="rc-fee-actions">
                 ${x.current ? `<button type="button" data-fee-pay="${escapeHTML(x.id)}">Record Payment</button>` : ""}
+                <button type="button" data-new="monthlyStatus" data-student="${escapeHTML(x.id)}">Monthly status</button>
                 <button type="button" data-new="statement" data-student="${escapeHTML(x.id)}">Fee statement</button>
                 ${x.eligibleReminder ? `<button type="button" class="rc-reminder" data-fee-wa="${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 ${x.reminder?.sent ? "Remind again" : "Send reminder"}</button>` : ""}
               </div>
@@ -2719,6 +2720,7 @@ function downloadFile(text, name, type) {
 }
 
 configureAdditions({
+recordMonthlyPayment:id=>{requireAdmin();const entry=adminState.apps.find(a=>a.id===id);if(entry)recordMonthlyTuition(id,entry.data);},
 loadSignatures:async()=>{requireAdmin();const uid=verifiedAdminUid;const snapshot=await getDoc(doc(db,'instituteSettings','markCardSignatures'));requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');return snapshot.exists()?snapshot.data():null;},
 saveSignatures:async(input,expected)=>{requireAdmin();const uid=verifiedAdminUid;const {validateSignatureSet}=await import('./admin-mark-signatures.js?v=20261025-admin-12');const clean=validateSignatureSet(input),ref=doc(db,'instituteSettings','markCardSignatures');const saved={...clean,updatedAt:new Date().toISOString(),updatedBy:uid};await runTransaction(db,async tx=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');const current=await tx.get(ref);requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');if(canonicalRecord(current.exists()?current.data():null)!==canonicalRecord(expected))throw Error('Signatures changed in another session. Reopen Mark Cards and review before saving.');tx.set(ref,saved);});return saved;},
 assertSession:requireAdmin,refreshRecords:loadApplications,loadMarkPhoto:async(photo)=>{

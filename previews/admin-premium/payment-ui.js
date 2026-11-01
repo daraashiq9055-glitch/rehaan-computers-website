@@ -1,5 +1,5 @@
 import {indiaDay, paymentDetails, saveDetailedPayment} from './payment-service.js';
-import {receiptPNG} from '/public/admin-receipt-image.js?v=20261018-login-fix-1';
+import {receiptImageBlob as receiptPNG} from '/public/admin-features.js?v=20261101-fees-1';
 const e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const money=amount=>'₹'+Number(amount).toLocaleString('en-IN',{maximumFractionDigits:2});
 export function createPaymentUI(services) {

@@ -1,6 +1,7 @@
+import {monthlyStatusHTML} from './admin-monthly-status.js?v=20261101-fees-1';
 import {validateSignatureSet,importSignature,decodeSignatures} from './admin-mark-signatures.js?v=20261025-admin-12';
 import {modernMarkHTML,paperPalette,MARK_PAPER_THEMES,DEFAULT_MARK_PAPER} from './admin-mark-layout.js?v=20261026-admin-13';
-import {receiptHTML as refreshedReceiptHTML,presentReceipt,receiptMessage} from './admin-receipt-layout.js?v=20261024-admin-10';
+import {receiptHTML as refreshedReceiptHTML,presentReceipt,receiptMessage,receiptPalette,DEFAULT_RECEIPT_PAPER} from './admin-receipt-layout.js?v=20261101-fees-1';
 import {
   escapeHTML as e,
   indiaDate,
@@ -12,8 +13,8 @@ import {
   subjectResult,
   MARK_GRADES,
   validateReceiptCorrection,
-} from "./admin-feature-model.js?v=20261021-admin-5";
-import { receiptPNG, whatsappURL } from "./admin-receipt-image.js?v=20261021-admin-5";
+} from "./admin-feature-model.js?v=20261101-fees-1";
+import { receiptPNG, whatsappURL } from "./admin-receipt-image.js?v=20261101-fees-1";
 let apps = [],
   selected = "",
   receipts = [],
@@ -208,12 +209,37 @@ export function renderMarkCards(view, records) {
     view.innerHTML = `<section class="workspace-card"><h2>Stored marks need review</h2><p>${e(error.message)} No records were changed.</p></section>`;
   }
 }
-function receiptHTML(r=null){return refreshedReceiptHTML(r?presentReceipt(r):{student:{},number:'',date:''},{blank:!r,numbered:false});}
-export function openReceipt(receipt) {
-  modal(
-    "Payment receipt",
-    `<div class="rc-paper-stage">${receiptHTML(receipt)}</div><div class="rc-feature-actions"><button class="admin-save-btn" data-new="printReceipt" data-id="${receipt.id}">Print / Save PDF</button><button data-new="image" data-id="${receipt.id}">Download image</button><button data-new="whatsapp" data-id="${receipt.id}">WhatsApp receipt</button><button data-new="editReceipt" data-id="${receipt.id}">Edit / correct receipt</button><button data-new="receiptHistory" data-id="${receipt.id}">Correction history (${receipt.amendments?.length || 0})</button></div><p class="rc-feature-note">${receipt.balanceBasis === "correction" ? "Corrected receipt. The totals show the balance at the financial correction." : "This receipt preserves the amount and balance when this payment was recorded."}</p>`,
-  );
+function receiptHTML(r=null,assets={}){return refreshedReceiptHTML(r?presentReceipt(r):{student:{},number:'',date:''},{blank:!r,numbered:false,photoSource:assets.photo?.src,signatureSource:assets.authorized?.src});}
+function receiptEntry(receipt){return (services.getRecords?.()||apps).find(entry=>entry.id===receipt?.studentId);}
+async function receiptAssets(receipt){
+ const epoch=sessionEpoch;services.assertSession?.();
+ const entry=receiptEntry(receipt),photoRef=entry?.data.photo;
+ if(receipt&&!entry)throw Error('Refresh the register before preparing this student’s receipt.');
+ const [photo,signatures]=await Promise.all([photoRef?loadMarkPhoto(entry):null,ensureMarkSignatures().then(value=>decodeSignatures({authorized:value.authorized||''}))]);
+ services.assertSession?.();if(epoch!==sessionEpoch||photoRef!==receiptEntry(receipt)?.data.photo)throw Error('The student or session changed. Reopen the receipt.');
+ return {photo,authorized:signatures.authorized||null};
+}
+export async function receiptImageBlob(receipt){
+ const epoch=sessionEpoch,assets=await receiptAssets(receipt),blob=await receiptPNG(receipt,assets);
+ services.assertSession?.();if(epoch!==sessionEpoch)throw Error('Your session changed. Reopen the receipt.');return blob;
+}
+async function hydrateReceiptPaper(paper,receipt){
+ const assets=await receiptAssets(receipt);if(!paper.isConnected)return;
+ for(const [selector,image] of [['.receipt-student-photo img',assets.photo],['.receipt-signature-image img',assets.authorized]]){const target=paper.querySelector(selector);if(!target||!image)continue;target.src=image.src;await target.decode();if(!paper.isConnected)return;target.hidden=false;if(selector.includes('student'))target.nextElementSibling.hidden=true;}
+ const note=paper.querySelector('.receipt-student-photo span');if(note&&!assets.photo)note.textContent='No photo saved';return assets;
+}
+export function openReceipt(receipt){
+ const dialog=modal('Payment receipt',`<div class="rc-paper-stage">${receiptHTML(receipt)}</div><p id="rcReceiptMediaStatus" role="status">Preparing student photo and authorised signature…</p><div class="rc-feature-actions"><button class="admin-save-btn" data-new="printReceipt" data-id="${receipt.id}" disabled>Print / Save PDF</button><button data-new="image" data-id="${receipt.id}" disabled>Download image</button><button data-new="whatsapp" data-id="${receipt.id}" disabled>WhatsApp receipt</button><button data-new="editReceipt" data-id="${receipt.id}">Edit / correct receipt</button><button data-new="receiptHistory" data-id="${receipt.id}">Correction history (${receipt.amendments?.length||0})</button><button data-new="openReceipt" data-id="${receipt.id}">Reload photo / signature</button></div><p class="rc-feature-note">${receipt.balanceBasis==='correction'?'Corrected receipt. Totals show the balance at the financial correction.':'Amounts and balances are preserved from when this payment was recorded.'}</p>`);
+ const paper=dialog.querySelector('.receipt-design'),epoch=sessionEpoch;
+ hydrateReceiptPaper(paper,receipt).then(assets=>{if(epoch!==sessionEpoch||!paper.isConnected)return;dialog.querySelector('#rcReceiptMediaStatus').textContent=(assets.authorized?'Authorised R signature ready.':'No authorised signature saved yet. Add it in Mark Cards to include it here.')+(assets.photo?' Student photo ready.':' No student photo saved.');dialog.querySelectorAll('[data-new=printReceipt],[data-new=image],[data-new=whatsapp]').forEach(b=>b.disabled=false);}).catch(error=>{if(epoch===sessionEpoch&&paper.isConnected)dialog.querySelector('#rcReceiptMediaStatus').textContent='Could not prepare receipt: '+error.message+' Reload the photo/signature before exporting.';});
+}
+async function printReceiptPaper(receipt=null,sheet=false){
+ const epoch=sessionEpoch,assets=await receiptAssets(receipt),html=receiptHTML(receipt,assets);let area=$('#rcPrintArea');if(!area){area=document.createElement('div');area.id='rcPrintArea';document.body.append(area);}area.dataset.kind=sheet?'sheet':'receipt';area.innerHTML=html+(sheet?html:'');
+ const paper=area.firstElementChild;await Promise.all([...area.querySelectorAll('img:not([hidden])')].map(image=>image.decode()));await document.fonts.ready;services.assertSession?.();if(epoch!==sessionEpoch||area.firstElementChild!==paper)throw Error('The session changed before printing.');window.print();
+}
+function openMonthlyStatus(id){
+ services.assertSession?.();const entry=(services.getRecords?.()||apps).find(a=>a.id===id);if(!entry)throw Error('Refresh the register before viewing monthly fees.');
+ modal('Student monthly fees',monthlyStatusHTML(entry)+`<div class="rc-feature-actions"><button type="button" class="admin-save-btn" data-new="monthlyPayment" data-student="${e(id)}">Record payment</button><button type="button" data-new="studentReceipts" data-student="${e(id)}">View receipts</button><button type="button" data-new="statement" data-student="${e(id)}">Full fee statement</button></div>`);
 }
 export async function renderStatementDirectory(view) {
   const epoch=sessionEpoch,version=++statementDirectoryVersion;
@@ -250,7 +276,9 @@ export function receiptTools(list, records) {
   list.prepend(div);
 }
 async function image(receipt) {
-  const blob = await receiptPNG(receipt);
+  const epoch=sessionEpoch;
+  const blob = await receiptImageBlob(receipt);
+  if(epoch!==sessionEpoch)return;
   download(blob, receipt.number + ".png");
 }
 async function whatsapp(receipt) {
@@ -268,7 +296,9 @@ async function whatsapp(receipt) {
     `<div class="rc-share-layout"><div class="rc-paper-stage"><img id="rcShareImage" alt="Payment receipt image" hidden><p id="rcImageStatus" role="status">Preparing image…</p></div><div><h4>${e(receipt.student.name)}</h4><p>Saved student mobile: <strong>${e(phone || "Not set")}</strong></p><p>Download the image, open this student’s chat, attach the downloaded PNG and press Send.</p><div class="rc-feature-actions"><button class="admin-save-btn" data-new="image" data-id="${receipt.id}">Download receipt image</button>${url ? `<a id="rcOpenWhatsApp" class="admin-ghost-btn" href="${url}" target="_blank" rel="noopener noreferrer">Open student’s WhatsApp</a>` : '<button id="rcOpenWhatsApp" disabled>Save a valid student mobile first</button>'}</div><p class="rc-feature-note">A WhatsApp link cannot attach a local image automatically. Nothing is sent until you attach the image and press Send. Mobile numbers can be edited in the existing student Details panel.</p></div></div>`,
   );
   try {
-    const blob = await receiptPNG(receipt);
+    const epoch=sessionEpoch;
+  const blob = await receiptImageBlob(receipt);
+  if(epoch!==sessionEpoch)return;
     if (version !== renderVersion || !$("#rcShareImage")) return;
     if (imageURL) URL.revokeObjectURL(imageURL);
     imageURL = URL.createObjectURL(blob);
@@ -382,9 +412,11 @@ function editReceipt(receipt) {
     `<label>${label}<input name="${key}" value="${e(value)}" maxlength="${max}" required></label>`;
   modal(
     "Correct payment receipt",
-    `<p>${e(receipt.number)} · Due ${e(receipt.due)} · Monthly total currently ${money(Math.round(paid * 100))}</p><form id="rcReceiptEditForm" data-id="${receipt.id}" data-paid="${paid}" data-correction="${crypto.randomUUID().replaceAll("-", "")}"><div class="rc-receipt-edit-grid">${field("name", "Student name on receipt", receipt.student.name, 120)}${field("admission", "Admission number on receipt", receipt.student.admission, 20)}${field("course", "Course on receipt", receipt.student.course, 120)}<label>Payment date<input name="date" type="date" value="${receipt.date}" max="${indiaDate()}" required></label><label>Correct receipt amount (₹)<input name="amount" type="number" min="0.01" max="${receipt.billed / 100}" step="0.01" value="${receipt.amount / 100}" required></label><label>Recorded method<select name="method">${["Manually recorded", "Cash", "UPI", "Bank transfer"].map((method) => `<option ${receipt.method === method ? "selected" : ""}>${method}</option>`).join("")}</select></label><label class="rc-full">Receipt note (printed, optional)<input name="note" maxlength="160" value="${e(receipt.note || "")}"></label><label class="rc-full">Reason for correction (required, private history)<textarea name="reason" minlength="5" maxlength="500" required></textarea></label></div><p id="rcCorrectionPreview" class="rc-feature-note">Correcting the amount adjusts this due's monthly ledger by the difference. The original receipt values are retained in history. This does not charge or refund an online payment.</p><p class="rc-feature-note">Student profile, admission fee, due date, receipt number and other receipts stay unchanged. A zero/reversed payment requires separate review.</p><label class="rc-correction-confirm"><input type="checkbox" name="confirmed" required>I reviewed the correction and its effect on the monthly balance.</label><p id="rcReceiptEditStatus" role="status"></p><div class="rc-feature-actions"><button class="admin-save-btn" type="submit">Save correction with history</button><button type="button" data-new="openReceipt" data-id="${receipt.id}">Cancel</button></div></form>`,
+    `<p>${e(receipt.number)} · Due ${e(receipt.due)} · Monthly total currently ${money(Math.round(paid * 100))}</p><form id="rcReceiptEditForm" data-id="${receipt.id}" data-paid="${paid}" data-correction="${crypto.randomUUID().replaceAll("-", "")}"><div class="rc-receipt-edit-grid">${field("name", "Student name on receipt", receipt.student.name, 120)}${field("admission", "Admission number on receipt", receipt.student.admission, 20)}${field("course", "Course on receipt", receipt.student.course, 120)}<label>Payment date<input name="date" type="date" value="${receipt.date}" max="${indiaDate()}" required></label><label>Correct receipt amount (₹)<input name="amount" type="number" min="0.01" max="${receipt.billed / 100}" step="0.01" value="${receipt.amount / 100}" required></label><label>Recorded method<select name="method">${["Manually recorded", "Cash", "UPI", "Bank transfer"].map((method) => `<option ${receipt.method === method ? "selected" : ""}>${method}</option>`).join("")}</select></label><label class="rc-receipt-colour">Receipt background<input type="color" name="paperColor" value="${e(receipt.paperColor||DEFAULT_RECEIPT_PAPER)}"></label><label class="rc-full">Receipt note (printed, optional)<input name="note" maxlength="160" value="${e(receipt.note || "")}"></label><label class="rc-full">Reason for correction (required, private history)<textarea name="reason" minlength="5" maxlength="500" required></textarea></label></div><details class="rc-receipt-edit-preview" open><summary>Receipt appearance preview</summary><div class="rc-paper-stage">${receiptHTML(receipt)}</div></details><p id="rcCorrectionPreview" class="rc-feature-note">Correcting the amount adjusts this due's monthly ledger by the difference. The original receipt values are retained in history. This does not charge or refund an online payment.</p><p class="rc-feature-note">Student profile, admission fee, due date, receipt number and other receipts stay unchanged. A zero/reversed payment requires separate review.</p><label class="rc-correction-confirm"><input type="checkbox" name="confirmed" required>I reviewed the correction and its effect on the monthly balance.</label><p id="rcReceiptEditStatus" role="status"></p><div class="rc-feature-actions"><button class="admin-save-btn" type="submit">Save correction with history</button><button type="button" data-new="openReceipt" data-id="${receipt.id}">Cancel</button></div></form>`,
   );
   const form = $("#rcReceiptEditForm");
+  const paper=form.querySelector('.receipt-design');hydrateReceiptPaper(paper,receipt).catch(()=>{if(paper.isConnected){const note=document.createElement('p');note.textContent='Photo or signature could not load. Reopen the saved receipt before exporting.';paper.after(note);}});
+  form.elements.paperColor.addEventListener('input',()=>{const palette=receiptPalette(form.elements.paperColor.value);for(const [key,value]of Object.entries(palette))paper.style.setProperty('--receipt-'+key,value);});
   form.querySelector("[name=amount]").addEventListener("input", () => {
     const next = Number(form.elements.amount.value),
       total = paid + next - receipt.amount / 100;
@@ -400,6 +432,7 @@ function receiptHistory(receipt) {
     ["Payment date", (r) => dateLabel(r.date)],
     ["Recorded method", (r) => r.method],
     ["Receipt note", (r) => r.note || "—"],
+    ["Background colour", (r) => r.paperColor || DEFAULT_RECEIPT_PAPER],
     ["Receipt amount", (r) => money(r.amount)],
     ["Monthly total on receipt", (r) => money(r.receivedAtIssue)],
     ["Balance on receipt", (r) => money(r.balanceAtIssue)],
@@ -521,25 +554,24 @@ document.addEventListener("click", async (event) => {
 
     if (action === "statement") {await openStudentStatement(button.dataset.student);return;}
     if (action === "printReceipt" && receipt)
-      print("receipt", receiptHTML(receipt));
+      await printReceiptPaper(receipt);
     if (action === "image" && receipt) await image(receipt);
     if (action === "whatsapp" && receipt) await whatsapp(receipt);
     if (action === "openReceipt" && receipt) openReceipt(receipt);
     if (action === "editReceipt" && receipt) editReceipt(receipt);
     if (action === "receiptHistory" && receipt) receiptHistory(receipt);
-    if (action === "blank")
+    if (action === "blank"){
       modal(
         "Blank receipt",
         `<div class="rc-paper-stage">${receiptHTML()}</div><div class="rc-feature-actions"><button class="admin-save-btn" data-new="printBlank">Print blank · A5</button><button data-new="printSheet">Print two blanks · A4</button></div><p class="rc-feature-note">Blank slips leave the receipt number empty. Printing does not record a payment or reserve a number; use the number from the saved payment.</p>`,
       );
-    if (action === "printBlank") print("receipt", receiptHTML());
-    if (action === "printSheet")
-      print(
-        "sheet",
-        receiptHTML() +
-          '' +
-          receiptHTML(),
-      );
+      await hydrateReceiptPaper($("#rcFeatureDialog .receipt-design"),null);
+    }
+    if (action === "printBlank") await printReceiptPaper();
+    if (action === "printSheet") await printReceiptPaper(null,true);
+    if(action==='monthlyStatus')openMonthlyStatus(button.dataset.student);
+    if(action==='monthlyPayment'){const id=button.dataset.student;services.assertSession?.();$('#rcFeatureDialog')?.close();services.recordMonthlyPayment?.(id);}
+    if(action==='studentReceipts'){const id=button.dataset.student;syncReceipts(services.getRecords?.()||apps);modal('Student receipts',`<div class="rc-receipt-list">${receipts.filter(r=>r.studentId===id).map(r=>`<button type="button" data-new="openReceipt" data-id="${r.id}"><strong>${e(r.number)}</strong><span>${e(presentReceipt(r).month)} · ${money(r.amount)}</span></button>`).join('')||'<p>No dated receipts recorded for this student. Older monthly ledger payments are kept.</p>'}</div>`);}
     if (action === "receipts")
       modal(
         "Saved payment receipts",
