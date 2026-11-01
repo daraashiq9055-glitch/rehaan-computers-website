@@ -360,3 +360,68 @@ body, body:not(.signed-in) { font-size: 15px; }
   .workspace-card:has(#rcMarksForm) > .workspace-card-heading { flex-direction: column; align-items: stretch; gap: 16px; }
   .workspace-card:has(#rcMarksForm) > .workspace-card-heading > button { align-self: flex-start; font-size: 12px; }
 }
+
+/* Studio finish: presentation only; existing controls and record flows stay intact. */
+@media screen {
+  #adminDashboard { --studio-border:#aac3e22e; --studio-muted:#b4c6dd; }
+  #adminDashboard .sidebar { background:linear-gradient(165deg,#172b43 0%,#0c192b 45%,#091322); box-shadow:8px 0 35px #02081220; scrollbar-width:thin; scrollbar-color:#52657c transparent; }
+  #adminDashboard .sidebar .brand { border-bottom-color:#d5b57533; }
+  #adminDashboard .nav button { font-size:13px; letter-spacing:.1px; transition:background-color .18s,color .18s,box-shadow .18s; }
+  #adminDashboard .nav button.active { background:linear-gradient(100deg,#d8b87827,#cfae6810); border-color:#d8b87852; box-shadow:inset 3px 0 #e8ca8e,0 4px 18px #030a141a; }
+  #adminDashboard .topbar { background:linear-gradient(110deg,#101f32f5,#142941ee); border-bottom:1px solid #b6cce32b; box-shadow:0 6px 24px #02081215; }
+  #adminDashboard .content>header { position:relative; padding-bottom:25px; margin-bottom:20px; border-bottom:1px solid #c7ad792e; }
+  #adminDashboard .content>header::after { content:''; position:absolute; bottom:-1px; left:0; width:90px; height:2px; border-radius:2px; background:linear-gradient(90deg,#efd59c,#b48c45); animation:studio-rule .55s ease-out both; pointer-events:none; }
+  #adminDashboard #workspaceHeading { font-weight:500; letter-spacing:-.6px; line-height:1.2; color:#faf6ed; }
+  #adminDashboard .workspace-eyebrow { font-size:10px; letter-spacing:2.2px; color:#e4c78d; }
+  #adminDashboard .content>header p { font-size:13px; line-height:1.7; color:var(--studio-muted); }
+  #adminDashboard .workspace-stat { min-height:148px; border-radius:17px; border-color:var(--studio-border); background:linear-gradient(135deg,#1b3049,#102137); box-shadow:inset 0 1px #e0ebfa0d,0 10px 26px #02081226; transition:border-color .2s,box-shadow .2s,transform .2s; }
+  #adminDashboard .workspace-stat:nth-child(2) { background:linear-gradient(135deg,#333a3f,#14263a); }
+  #adminDashboard .workspace-stat strong { font-size:37px; font-weight:600; font-variant-numeric:tabular-nums; letter-spacing:-1px; }
+  #adminDashboard .workspace-stat .workspace-stat-label { font-size:12px; color:#e0e8f4; }
+  #adminDashboard .workspace-stat small { font-size:11px; color:#b0c3dc; }
+  #adminDashboard .workspace-stat-icon { width:36px; height:36px; border-radius:11px; background:#bdd4f012; }
+  #adminDashboard .workspace-card:not(.attendance-workspace),#adminDashboard .table-card { border-color:var(--studio-border); border-radius:18px; box-shadow:inset 0 1px #cddff00b,0 12px 32px #02081225; }
+  #adminDashboard .workspace-card-heading h2,#adminDashboard .applications-title h2 { font-size:18px; font-weight:600; letter-spacing:-.25px; }
+  #adminDashboard .workspace-card:not(.attendance-workspace)>p,#adminDashboard .applications-title p { font-size:12px; line-height:1.7; color:#afc1d8; }
+  #adminDashboard .workspace-quick strong { font-size:13px; }
+  #adminDashboard .workspace-quick small { font-size:11px; color:#acc0da; }
+  #adminDashboard .workspace-quick>span { background:linear-gradient(135deg,#d9ba791c,#aac9ed0c); border-color:#d9ba7933; }
+  #adminDashboard .admin-tabs { padding:6px; gap:6px; border-radius:14px; background:#081423; box-shadow:inset 0 1px 5px #02081230; }
+  #adminDashboard .admin-tab { font-size:13px; line-height:1.5; border-radius:9px; }
+  #adminDashboard .admin-tab.is-active { color:#fff0c9; border-color:#d5b87870; background:linear-gradient(120deg,#d5b8782d,#d5b87813); box-shadow:inset 0 1px #ffe9ba20,0 3px 9px #0002; }
+  #adminDashboard .admin-search,#adminDashboard .admin-select { font-size:13px; min-height:44px; background:#0c1c30; border-color:#adc5e345; border-radius:10px; }
+  #adminDashboard .admin-search::placeholder { color:#a6bad3; }
+  #adminDashboard .application-card { border-color:#acc6e331; border-radius:14px; background:linear-gradient(120deg,#182b42a6,#102137b3); transition:border-color .18s,background-color .18s,box-shadow .18s; }
+  #adminDashboard .row-line1 h3 { font-size:16px; font-weight:600; letter-spacing:-.15px; }
+  #adminDashboard .row-meta { font-size:12px; line-height:1.75; color:#b8cbe2; }
+  #adminDashboard .application-number { font-size:11px; color:#c6b78f; font-variant-numeric:tabular-nums; }
+  #adminDashboard .application-status,#adminDashboard .adm-chip,#adminDashboard .src-chip,#adminDashboard .fee-chip { font-size:11px; line-height:1.6; border-radius:7px; }
+  #adminDashboard .row-actions { gap:8px; padding-top:14px; }
+  #adminDashboard .row-actions button { font-size:12px; min-height:38px; border-radius:9px; padding:9px 12px; }
+  #adminDashboard .header-actions button { font-size:12px; min-height:42px; border-radius:10px; }
+  #adminDashboard .admin-save-btn:not(.attendance-workspace *),#adminDashboard .admin-add-student-btn,#adminDashboard .approve-application-btn { background:linear-gradient(115deg,#f5dfab,#e0bd76 65%,#d5ac60); color:#271e0e; border-color:#e8cd95; box-shadow:inset 0 1px #fff8,0 5px 14px #b9904520; }
+  #adminDashboard :is(button,a,input,select,textarea):focus-visible { outline:2px solid #f4d797; outline-offset:3px; }
+  #adminDashboard input,#adminDashboard select { font-variant-numeric:tabular-nums; }
+  #adminDashboard button:active:not(:disabled) { transform:none; }
+  #adminDashboard .attendance-workspace { color-scheme:light; }
+}
+@media screen and (hover:hover) and (pointer:fine) {
+  #adminDashboard .workspace-stat:hover:not(:disabled) { transform:translateY(-2px); border-color:#e1c48a75; box-shadow:inset 0 1px #e0ebfa12,0 13px 28px #02081238; }
+  #adminDashboard .application-card:hover { border-color:#b1c7e45e; box-shadow:0 6px 18px #02081220; }
+}
+@media screen and (max-width:760px) {
+  #adminDashboard .content>header { padding-bottom:20px; margin-bottom:16px; }
+  #adminDashboard .workspace-stat { min-height:140px; padding:18px 13px; }
+  #adminDashboard .workspace-stat strong { font-size:31px; }
+  #adminDashboard .workspace-stat .workspace-stat-label { font-size:11px; }
+  #adminDashboard .workspace-stat small { font-size:10px; }
+  #adminDashboard .row-actions button,#adminDashboard .admin-tab { min-height:44px; }
+  #adminDashboard .admin-search,#adminDashboard .admin-select { font-size:16px; }
+  #adminDashboard .row-meta { font-size:12px; }
+}
+@keyframes studio-rule { from { opacity:0; transform:scaleX(.35); transform-origin:left; } to { opacity:1; transform:scaleX(1); transform-origin:left; } }
+@media (prefers-reduced-motion:reduce) {
+  #adminDashboard .content>header::after { animation:none; }
+  #adminDashboard .workspace-stat,#adminDashboard .application-card,#adminDashboard .nav button { transition:none; }
+  #adminDashboard button:hover:not(:disabled) { transform:none; }
+}
