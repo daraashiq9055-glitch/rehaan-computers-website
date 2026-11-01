@@ -20,6 +20,7 @@ def preview_html():
     imports['/public/photo-storage-config.js'] = PREVIEW + 'photos.js'
     imports['/public/admin-app.js?v=20261018-login-fix-1'] = '/public/admin-preview-app.js'
     imports['/public/admin-app.js?v=20261101-fees-1'] = '/public/admin-preview-app.js'
+    imports['/public/admin-app.js?v=20261101-fees-2'] = '/public/admin-preview-app.js'
     head = '<base href="/public/"><meta http-equiv="Content-Security-Policy" content="default-src \'self\'; script-src \'self\' \'unsafe-inline\'; style-src \'self\' \'unsafe-inline\'; img-src \'self\' data: blob:; font-src \'self\'; connect-src \'self\'; object-src \'none\'; form-action \'none\'; base-uri \'self\'">'
     head += '<script type="importmap">' + json.dumps({'imports': imports}) + '</script>'
     head += '<script src="' + PREVIEW + 'demo.js"></script>'

@@ -5,7 +5,7 @@ import {
   makeReceipt,
   validateReceiptCorrection,
   receiptAuditSnapshot,
-} from "./admin-feature-model.js?v=20261101-fees-1";
+} from "./admin-feature-model.js?v=20261101-fees-2";
 import { canonicalRecord } from "./admin-records.js";
 function paise(value) {
   const number = Number(value);

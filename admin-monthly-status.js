@@ -1,6 +1,6 @@
 // Read-only cards projected from the existing ledger; never invent payment dates.
 import {feeStatement} from './admin-fee-statement-model.js?v=20261024-admin-9';
-import {escapeHTML as e,money,dateLabel} from './admin-feature-model.js?v=20261101-fees-1';
+import {escapeHTML as e,money,dateLabel} from './admin-feature-model.js?v=20261101-fees-2';
 export function monthlyStatusHTML(entry,asOf){
  const statement=feeStatement(entry,asOf);
  if(!statement.reliable)return `<section class="monthly-status"><h3>Monthly fee status</h3><p>Review this student's billing details before relying on a balance.</p>${statement.warnings.map(w=>`<p>${e(w)}</p>`).join('')}</section>`;

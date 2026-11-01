@@ -1,7 +1,7 @@
-import {monthlyStatusHTML} from './admin-monthly-status.js?v=20261101-fees-1';
+import {monthlyStatusHTML} from './admin-monthly-status.js?v=20261101-fees-2';
 import {validateSignatureSet,importSignature,decodeSignatures} from './admin-mark-signatures.js?v=20261025-admin-12';
 import {modernMarkHTML,paperPalette,MARK_PAPER_THEMES,DEFAULT_MARK_PAPER} from './admin-mark-layout.js?v=20261026-admin-13';
-import {receiptHTML as refreshedReceiptHTML,presentReceipt,receiptMessage,receiptPalette,DEFAULT_RECEIPT_PAPER} from './admin-receipt-layout.js?v=20261101-fees-1';
+import {receiptHTML as refreshedReceiptHTML,presentReceipt,receiptMessage,receiptPalette,DEFAULT_RECEIPT_PAPER} from './admin-receipt-layout.js?v=20261101-fees-2';
 import {
   escapeHTML as e,
   indiaDate,
@@ -13,8 +13,8 @@ import {
   subjectResult,
   MARK_GRADES,
   validateReceiptCorrection,
-} from "./admin-feature-model.js?v=20261101-fees-1";
-import { receiptPNG, whatsappURL } from "./admin-receipt-image.js?v=20261101-fees-1";
+} from "./admin-feature-model.js?v=20261101-fees-2";
+import { receiptPNG, whatsappURL } from "./admin-receipt-image.js?v=20261101-fees-2";
 let apps = [],
   selected = "",
   receipts = [],
@@ -247,7 +247,7 @@ export async function renderStatementDirectory(view) {
   const marker=view.firstElementChild;
   try {
     services.assertSession?.();
-    const {mountStatementDirectory}=await import('./admin-fee-statement-directory.js?v=20261024-admin-9');
+    const {mountStatementDirectory}=await import('./admin-fee-statement-directory.js?v=20261101-fees-2');
     if(epoch!==sessionEpoch||version!==statementDirectoryVersion||!marker.isConnected||view.hidden||view.firstElementChild!==marker)return;
     mountStatementDirectory({host:view,getRecords:()=>{services.assertSession?.();return services.getRecords?.()||[];},openStatement:openStudentStatement,refreshRecords:()=>{services.assertSession?.();return services.refreshRecords?.();}});
   } catch(error) {
@@ -258,7 +258,7 @@ export async function openStudentStatement(id) {
   const epoch=sessionEpoch;
   try {
     services.assertSession?.();
-    const {openFeeStatement,clearFeeStatement}=await import('./admin-fee-statement.js?v=20261024-admin-9');
+    const {openFeeStatement,clearFeeStatement}=await import('./admin-fee-statement.js?v=20261101-fees-2');
     if(epoch!==sessionEpoch)return;
     clearStatement=clearFeeStatement;
     openFeeStatement({getEntry:()=>{services.assertSession?.();return services.getRecords?.().find(entry=>entry.id===id);}});

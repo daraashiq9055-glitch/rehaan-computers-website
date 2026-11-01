@@ -1,4 +1,4 @@
-import {school,money,dateText,amountWords,receiptPalette} from './admin-receipt-layout.js?v=20261101-fees-1';
+import {school,money,dateText,amountWords,receiptPalette} from './admin-receipt-layout.js?v=20261101-fees-2';
 // Same paper layout, drawn directly at 3200px. No screenshots or image uploads.
 export async function receiptImage(r,{blank=false,numbered=true,photo=null,authorized=null}={}){
     await Promise.all([document.fonts.load('600 32px Inter'),document.fonts.load('700 54px Playfair'),document.fonts.load('600 31px Playfair')]);await document.fonts.ready;
@@ -10,14 +10,14 @@ export async function receiptImage(r,{blank=false,numbered=true,photo=null,autho
     function rule(y,x=left,end=right,dotted=false){ctx.strokeStyle=dotted?palette.line:gold;ctx.lineWidth=1.5;ctx.setLineDash(dotted?[2,5]:[]);ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(end,y);ctx.stroke();ctx.setLineDash([]);}
     const draw=value=>blank?'':value;
     text('Email: '+school.email,left,60,21);text('Cell: '+school.cells,990,60,21);
-    ctx.font='700 45px Playfair,Georgia,serif';const headingWidth=ctx.measureText(school.name).width;text(school.name,(1600-headingWidth)/2,128,45,ink,700,'Playfair',1190);
+    ctx.font='800 48px Playfair,Georgia,serif';const headingWidth=ctx.measureText(school.name).width;text(school.name,(1600-headingWidth)/2,128,48,ink,800,'Playfair',1190);
     if(!blank&&photo){ctx.strokeStyle=palette.line;ctx.strokeRect(1402,96,112,140);contain(photo,1406,100,104,132);}
-    rule(254);ctx.font='500 23px Inter,Arial,sans-serif';const addressWidth=ctx.measureText(school.address).width;text(school.address,(1600-addressWidth)/2,270,23,muted);rule(308);
+    rule(254);ctx.font='750 26px Inter,Arial,sans-serif';const addressWidth=ctx.measureText(school.address).width;text(school.address,(1600-addressWidth)/2,268,26,ink,750);rule(308);
     text('FEE RECEIPT',695,333,22,gold,700);
     text('RECEIPT NO.',left,330,24,ink,700);
-    if(!blank||numbered){ctx.save();ctx.translate(285,309);ctx.rotate(0);text(r.number,0,0,49,ink,700,'Playfair',420);ctx.restore();}else rule(370,280,570,true);
+    if(!blank||numbered){ctx.save();ctx.translate(285,319);ctx.rotate(0);text(r.number,0,0,38,ink,700,'Playfair',420);ctx.restore();}else rule(370,280,570,true);
     text('DATE',1120,330,24,ink,700);text(draw(dateText(r.date)),1230,327,28,ink,650);rule(367,1225,right,true);
-    function field(label,value,y,x=left,end=right,labelWidth=220){text(label,x,y,25,muted);text(draw(value),x+labelWidth,y-2,30,ink,600,'Inter',end-x-labelWidth);rule(y+38,x+labelWidth,end,true);}
+    function field(label,value,y,x=left,end=right,labelWidth=220){text(label,x,y,26,muted,550);text(draw(value),x+labelWidth,y-2,32,ink,650,'Inter',end-x-labelWidth);rule(y+38,x+labelWidth,end,true);}
     field('Received from',r.student.name,410);field('Address',r.student.address,475);
     field('Admission no.',r.student.admission,540,left,550,220);field('Course',r.student.course,540,610,right,115);
     field('Fee month',r.month,610,left,650,170);field('Due date',dateText(r.due),610,700,1125,140);field('Mode',r.method,610,1180,right,100);

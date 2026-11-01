@@ -65,3 +65,23 @@
 .receipt-design .receipt-signatures{margin:1.5mm 0 1mm}
 .receipt-design .receipt-footer{padding-top:1mm}
 }
+
+/* Stronger type hierarchy while keeping the receipt number quiet. */
+.receipt-design .receipt-number{font-size:26px}
+.receipt-design .receipt-legacy-number{font-size:12px}
+.receipt-design .receipt-school h2{font-weight:800;font-size:32px;letter-spacing:.35px}
+.receipt-design .receipt-school p{font:750 12px/1.5 Inter,Arial,sans-serif;color:var(--receipt-ink);letter-spacing:.6px}
+.receipt-design .receipt-line>span{font-size:12.5px;font-weight:550}
+.receipt-design .receipt-line>b{font-size:16px;font-weight:650}
+.receipt-design .receipt-triplet .receipt-line>b{font-size:14px;font-weight:700}
+.receipt-design .receipt-words>b{font-size:16px;font-weight:650}
+@media print{
+.receipt-design .receipt-number{font-size:17pt}
+.receipt-design .receipt-legacy-number{font-size:7pt}
+.receipt-design .receipt-school h2,.blank-receipt .receipt-school h2{font-size:17pt;font-weight:800}
+.receipt-design .receipt-school p,.blank-receipt .receipt-school p{font-size:8pt;font-weight:750;line-height:1.3;letter-spacing:.2px}
+.receipt-design .receipt-line>span{font-size:8pt}
+.receipt-design .receipt-line>b{font-size:9pt;line-height:1.25}
+.receipt-design .receipt-triplet .receipt-line>b{font-size:8.5pt}
+.receipt-design .receipt-words>b{font-size:9pt}
+}

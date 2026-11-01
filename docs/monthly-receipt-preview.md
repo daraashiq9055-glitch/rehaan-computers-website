@@ -67,3 +67,24 @@ No Firestore rules, payment Worker, Razorpay validation, admission billing or
 receipt numbering changes are part of this feature. Existing security audit
 deployment prerequisites still apply. Review the preview before deploying;
 do not replace the live payment Worker with the unverified historical candidate.
+
+## Receipt readability and receipt search refinement
+
+The updated receipt uses a smaller number, stronger heading and bolder institute
+address/detail text in screen, A5 print and PNG output. Photo, authorised R
+signature, paper colours, receipt identity and saved amounts are retained.
+
+In **Fee Statements**, enter `1000` in the **Receipt number** filter to find the
+student linked to that exact saved receipt. Matching receipt numbers and amounts
+appear beside the student. Older letter-based receipt numbers also work, ignoring
+case and surrounding spaces. The general search accepts receipt-number fragments.
+Use **Payment position → Has recorded payments** for students with recorded
+tuition payments, including partial payments. Filters combine; Reset filters clears
+receipt lookup too. This searches loaded saved receipts without reading a new
+collection or changing payments; refresh records for newly recorded receipts.
+Older ledger payments without receipt events do not gain invented receipt numbers.
+
+Validation for this refinement: 114 unit tests, receipt/media/one-page A5 browser
+checks, exact/legacy/general receipt lookup, combined filters, reset, summary/CSV
+and pagination at four widths, full admin candidate and Windows build checks passed.
+No deployment was performed.
