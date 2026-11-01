@@ -9,7 +9,14 @@ export function attendanceValue(month,input,today=indiaDate()){
  if(total!==null&&(!Number.isInteger(total)||total<Number(input.days)||total<1||total>max))throw Error('Class days held must be at least days attended and within the month.');
  return {days:Number(input.days),totalDays:total,note:input.note.trim()};
 }
-export function attendanceMessage(entry,month,value){return ['*REHAAN COMPUTERS*','*Attendance Summary — '+monthLabel(month)+'*','','Hello '+entry.data.fullName+',','Days attended: *'+value.days+'*',value.note?'Notice: '+value.note:'','Based on our attendance register.'].filter(Boolean).join('\n');}
+export function attendanceMessage(entry,month,value){
+ const lines=['*REHAAN COMPUTERS*','*Monthly Attendance — '+monthLabel(month)+'*','','Hello '+entry.data.fullName+', here is your attendance summary:',''];
+ if(value.totalDays)lines.push('• Classes held: *'+value.totalDays+' days*');
+ lines.push('• Days attended: *'+value.days+' days*');
+ if(value.totalDays)lines.push('• Attendance: *'+Math.round(value.days/value.totalDays*100)+'%*');
+ if(value.note)lines.push('','*Note:* '+value.note);
+ return lines.join('\n');
+}
 export function followupMessage(name){return '*REHAAN COMPUTERS*\n*Important Notice*\n\nHello '+name+', you haven’t attended classes recently. Please let us know whether you will continue your course.\n\n*1.* I will return to classes. I will tell you my joining date.\n*2.* I need a break. I will tell you when I can return.\n*3.* Please call me to discuss.\n*4.* I cannot continue. Please cancel my admission.\n\n*Please reply with 1, 2, 3 or 4 within 24 hours. If we do not receive a reply, we may cancel your admission.*';}
 export async function saveAttendance({db,ref,runTransaction,assertSession,actor,month,input,expected}){
  const clean=attendanceValue(month,input);if(!actor)throw Error('Sign in again.');

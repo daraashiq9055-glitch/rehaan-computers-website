@@ -34,3 +34,17 @@ Checked: 116 unit tests, isolated attendance browser save/edit/suggestion/share,
 mobile/logout checks, and full generated admin candidate regression including
 student creation, monthly payments, corrections and exports. No live records,
 messages or payments were used in these tests.
+
+## Approved ivory/navy preview
+
+The working preview now uses the approved ivory panels, navy text and champagne
+accents. It includes batch/search filters, Not recorded and Needs follow-up
+(below 75% of entered class days), progress rings, and editable notice presets.
+Missing class-day totals never produce a percentage or a follow-up flag.
+WhatsApp summaries include classes held and percentage only when totals exist.
+The dedicated launcher seeds fictional attendance for the previous month only;
+those fixtures are never injected into a production release.
+
+The redesigned preview passed attendance browser checks for saves, both status
+filters, WhatsApp totals/percentage, mobile overflow and logout; the three focused
+attendance unit tests and release generation also passed. No live calls were used.
