@@ -454,3 +454,20 @@ body, body:not(.signed-in) { font-size: 15px; }
 @media screen and (max-width:1000px){#adminDashboard .workspace-date{display:none}#adminDashboard .workspace-find span{display:none}#adminDashboard .workspace-find{padding:12px}#adminDashboard .workspace-profile{max-width:none}#adminDashboard .studio-settings-grid{grid-template-columns:1fr}}
 @media screen and (max-width:760px){#adminDashboard .topbar{min-height:78px;padding:12px 16px;gap:9px}#adminDashboard .workspace-profile>.avatar{display:none}#adminDashboard .workspace-clock{padding-right:0;border:0}#adminDashboard .workspace-clock time{font-size:15px}#adminDashboard .workspace-clock small{font-size:8px}#adminDashboard .workspace-find{margin:0 0 0 auto;min-height:42px}#adminDashboard .studio-settings-grid label{padding:16px}}
 @media screen and (max-width:760px){#adminDashboard .workspace-profile{flex-direction:column;align-items:flex-end;gap:4px}#adminDashboard .workspace-profile .workspace-date{display:block;font-size:9px;line-height:1.2}#adminDashboard .workspace-clock{gap:2px}}
+
+/* Keep the navigation chrome continuous while only the tab list scrolls. */
+@media screen {
+ body.admin-premium-preview { --admin-shell-offset:40px; }
+ .demo-strip { position:sticky; top:0; height:40px; min-height:40px; box-sizing:border-box; z-index:80; }
+ #adminDashboard .sidebar { top:var(--admin-shell-offset,0px); bottom:0; height:calc(100vh - var(--admin-shell-offset,0px)); height:calc(100dvh - var(--admin-shell-offset,0px)); overflow:hidden; background-color:#0c192b; }
+ #adminDashboard .sidebar>.brand { flex-shrink:0; }
+ #adminDashboard .sidebar>.nav { flex:1 1 auto; min-height:0; overflow-y:auto; overflow-x:hidden; overscroll-behavior:contain; scrollbar-width:thin; scrollbar-color:#52657c #0c192b; padding-right:4px; }
+ #adminDashboard .sidebar-bottom { flex-shrink:0; padding-top:16px; }
+ #adminDashboard .topbar { position:sticky; top:var(--admin-shell-offset,0px); z-index:40; background:linear-gradient(110deg,#101f32,#142941); }
+ #adminDashboard .application-card,#adminDashboard .workspace-card { scroll-margin-top:calc(110px + var(--admin-shell-offset,0px)); }
+}
+
+@media screen and (max-width:550px) {
+ #adminDashboard .statement-hub-filters { grid-template-columns:minmax(0,1fr); }
+ #adminDashboard .statement-hub-filters input,#adminDashboard .statement-hub-filters select { max-width:100%; box-sizing:border-box; }
+}

@@ -1,6 +1,6 @@
 # Complete admin Settings release
 
-Candidate: `20261102-settings-1`. No production deployment has been performed
+Candidate: `20261102-settings-2`. No production deployment has been performed
 from this workspace. Use the guarded command below, not a Hosting-only deploy.
 
 ## Connected behavior
@@ -46,6 +46,8 @@ Passed in this workspace:
 - Full generated candidate tests: offline add/photo, atomic payments, receipt
   corrections/exports, marks, sign-in/logout, missing optional assets.
 - Attendance, navigation/clock, CSP/XSS and admin-access browser checks.
+- Scroll coverage at four widths: fixed sidebar branding, independently scrolling
+  tabs, sticky opaque header and Settings reachable at the bottom.
 - Windows encoding build and release-command failure-gating tests.
 
 The actual Firestore rule emulator could not run here: Google's emulator download
