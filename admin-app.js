@@ -1,12 +1,14 @@
-import {saveAttendance} from './admin-attendance-model.js?v=20261101-attendance-1';
-import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261101-fees-2";
-import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261101-fees-2";
+import {settingsState,setSettingsState,failSettingsState,clearSettingsState,customMessage} from './admin-settings-state.js?v=20261102-settings-1';
+import {saveSharedSettings,renderSettingsTemplate} from './admin-settings-model.js?v=20261102-settings-1';
+import {saveAttendance} from './admin-attendance-model.js?v=20261102-settings-1';
+import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261102-settings-1";
+import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261102-settings-1";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
 let activePhotoMigration = null;
 
 // Admin features adapted from website-updates d738bb2. The public site keeps its existing script.
-import { recordTime, isSafePhoto, csvCell, fieldValue, paymentPatch, assertUnchanged, validateChanges, canonicalRecord, formatGender, compareAdmissionRecords } from "./admin-records.js";
+import { recordTime, isSafePhoto, csvCell, fieldValue, paymentPatch, assertUnchanged, validateChanges, canonicalRecord, formatGender, compareAdmissionRecords } from "./admin-records.js?v=20261102-settings-1";
 /* =========================================================
    REHAAN COMPUTERS
    MAIN WEBSITE + FIREBASE + ADMIN
@@ -976,6 +978,8 @@ function tuitionWhatsAppMessage(data, bill) {
         minimumFractionDigits: Number.isInteger(bill.remaining) ? 0 : 2,
         maximumFractionDigits: 2
     }).format(bill.remaining);
+    const configured=typeof customMessage==='function'?customMessage('fee',{name:data.fullName||'Student',month:period,amount:'₹'+amount,admission:data.admissionNumber||'—',due:bill.key.split('-').reverse().join('-'),status:bill.diff<0?'Overdue':'Upcoming'}):null;
+    if(configured)return (bill.diff<0?'*OVERDUE FEE · OLDEST UNPAID MONTH*\n\n':'')+renderSettingsTemplate(configured.template,configured.values)+'\n\n*FEE PAYMENT*\nPay to: *6006433125*\nPlease share your payment confirmation after paying.';
     return [
         "*REHAAN COMPUTERS*",
         "Charangam, Beerwah",
@@ -1211,9 +1215,19 @@ async function loadApplications() {
             });
         });
 
+        try {
+            const shared = await getDoc(doc(db,'instituteSettings','workspace'));
+            if (verifiedAdminUid !== requestUid || sequence !== loadSequence) return;
+            setSettingsState(shared.exists()?shared.data():null);
+        } catch {
+            if (verifiedAdminUid !== requestUid || sequence !== loadSequence) return;
+            failSettingsState();
+        }
         adminState.apps.sort(compareAdmissionRecords);
         recordsLoaded = true;
         renderAdminList();
+        getElement('settingsLoadWarning')?.remove();
+        if(settingsState().error){const warning=document.createElement('p');warning.id='settingsLoadWarning';warning.className='workbench-notice';warning.setAttribute('role','alert');warning.textContent='Institute settings could not load. Default document details are in use. Refresh before issuing documents or changing settings.';document.querySelector('#adminDashboard .content')?.prepend(warning);}
 
     } catch (error) {
 
@@ -1745,7 +1759,7 @@ function openAdminDetails(applicationId) {
     );
 
     const editGroup = modal.querySelector(".admin-edit-fields");
-    modal.querySelector('.admin-class-followup').onclick=async()=>{const uid=verifiedAdminUid;try{requireAdmin();const {openFollowup}=await import('./admin-attendance.js?v=20261101-attendance-1');requireAdmin();if(uid!==verifiedAdminUid||!modal.isConnected)return;const entry=adminState.apps.find(a=>a.id===id);if(entry)openFollowup(entry);}catch(error){alert(friendlyError(error));}};
+    modal.querySelector('.admin-class-followup').onclick=async()=>{const uid=verifiedAdminUid;try{requireAdmin();const {openFollowup}=await import('./admin-attendance.js?v=20261102-settings-1');requireAdmin();if(uid!==verifiedAdminUid||!modal.isConnected)return;const entry=adminState.apps.find(a=>a.id===id);if(entry)openFollowup(entry);}catch(error){alert(friendlyError(error));}};
     modal.querySelector(".admin-toggle-edit").addEventListener("click", () => {
         editGroup.hidden = !editGroup.hidden;
         modal.querySelector(".admin-toggle-edit").textContent = editGroup.hidden ? "✎" : "✕";
@@ -1964,6 +1978,8 @@ function admissionConfirmationDate(data) {
 }
 
 function admissionWhatsAppMessage(student) {
+    const configured=typeof customMessage==='function'?customMessage('admission',{name:student.fullName,course:student.coursePreference,admission:student.admissionNumber,batch:student.batch||'Please contact the institute',date:student.admissionDate}):null;
+    if(configured)return renderSettingsTemplate(configured.template,configured.values);
     return [
         "*REHAAN COMPUTERS*",
         "Charangam, Beerwah, Jammu & Kashmir",
@@ -2528,6 +2544,9 @@ function friendlyError(error) {
 }
 
 function clearAdminSession() {
+    clearSettingsState();
+    getElement("settingsLoadWarning")?.remove();
+    document.querySelector("#settingsLiveDialog")?.remove();
     resetAdditions();
     document.querySelector("#classFollowupDialog")?.remove();
     clearPhotoSession();
@@ -2695,7 +2714,7 @@ function updateWorkspace() {
         });
     } else if (workspaceSection === "attendance") {
         const uid=verifiedAdminUid;view.innerHTML='<p>Loading attendance…</p>';
-        import('./admin-attendance.js?v=20261101-attendance-1').then(({mountAttendance})=>{
+        import('./admin-attendance.js?v=20261102-settings-1').then(({mountAttendance})=>{
             if(verifiedAdminUid!==uid||workspaceSection!=='attendance')return;
             const guard=()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');};
             mountAttendance({host:view,assertSession:guard,getRecords:()=>adminState.apps,save:async(id,month,input,expected)=>{guard();const saved=await saveAttendance({db,ref:doc(db,'applications',id),runTransaction,assertSession:guard,actor:uid,month,input,expected});guard();const entry=adminState.apps.find(a=>a.id===id);if(entry)entry.data.monthlyAttendance={...(entry.data.monthlyAttendance||{}),[month]:saved};return saved;}});
@@ -2713,10 +2732,19 @@ function updateWorkspace() {
             downloadFile(text,"rehaan-student-backup-" + new Date().toISOString().slice(0,10) + ".json","application/json");
         };
     } else if (workspaceSection === "settings") {
-        view.innerHTML = `<section class="workspace-card"><h2>Your workspace</h2><dl class="workspace-settings"><dt>Signed in as</dt><dd>${escapeHTML(auth.currentUser?.email || "Administrator")}</dd><dt>Firebase project</dt><dd>${escapeHTML(firebaseConfig.projectId)}</dd><dt>Student register</dt><dd>applications · ${apps.length} loaded records</dd><dt>Admission fee</dt><dd>₹${ADMISSION_FEE} · separate from monthly tuition</dd><dt>Monthly tuition</dt><dd>₹${MONTHLY_TUITION_FEE} · admission anniversary</dd><dt>Session</dt><dd>Memory only · sign-in required after reloading</dd></dl><div class="workspace-report-actions"><button class="admin-save-btn" id="settingsRefresh">Refresh student register</button><button class="admin-ghost-btn" id="settingsLogout">Sign out securely</button><a href="index.html" class="admin-ghost-btn">Visit public website ↗</a><button class="admin-ghost-btn" id="settingsMigratePhotos" ${photoStorageConfig.enabled ? "" : "disabled"}>Transfer existing photos to Cloudinary</button></div><p>${photoStorageConfig.enabled ? `New student photos upload directly to Cloudinary. ${apps.filter(entry=>isPrivateStudentPhoto(entry.data.photo)).length} photos are already linked. ${apps.filter(entry=>isSafePhoto(entry.data.photo)&&entry.data.photo.startsWith("data:")).length} older inline photos remain to transfer. A transfer count of 0 does not mean photos are missing. Download a backup before transferring older photos.` : "Cloudinary uploads will be available after the photo service is configured."}</p></section>`;
-        getElement("settingsRefresh").onclick = loadApplications;
-        getElement("settingsLogout").onclick = handleAdminLogout;
-        getElement("settingsMigratePhotos").onclick = openPhotoMigration;
+        const settingsUid=verifiedAdminUid,settingsSequence=loadSequence;
+        view.innerHTML='<p role="status">Loading workspace settings…</p>';
+        import('./admin-settings-ui.js?v=20261102-settings-1').then(({mountSettings})=>{
+            if(verifiedAdminUid!==settingsUid||loadSequence!==settingsSequence||workspaceSection!=='settings')return;
+            const guard=()=>{requireAdmin();if(verifiedAdminUid!==settingsUid||loadSequence!==settingsSequence)throw Error('Your session changed. Refresh Settings.');};
+            mountSettings({host:view,identity:()=>{guard();return {uid:settingsUid,email:auth.currentUser?.email||''};},guard,
+              save:async(input,expected)=>{guard();if(!settingsState().readable)throw Error('Reload settings before saving.');const saved=await saveSharedSettings({db,ref:doc(db,'instituteSettings','workspace'),runTransaction,assertSession:guard,actor:settingsUid,input,expected});guard();setSettingsState(saved);return saved;},
+              refresh:loadApplications,backup:()=>{guard();selectSection('reports');getElement('reportJson')?.click();},
+              signatures:()=>{guard();selectSection('marks');},documents:kind=>{guard();selectSection(kind==='marks'?'marks':'fees');},
+              photos:()=>{guard();openPhotoMigration();},photoSummary:()=>({enabled:photoStorageConfig.enabled,linked:apps.filter(a=>isPrivateStudentPhoto(a.data.photo)).length,inline:apps.filter(a=>isSafePhoto(a.data.photo)&&a.data.photo.startsWith('data:')).length}),
+              logout:handleAdminLogout,resetPassword:async()=>{guard();const email=auth.currentUser?.email;if(!email)throw Error('Your account email is unavailable.');const {sendPasswordResetEmail}=await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-auth.js');guard();await sendPasswordResetEmail(auth,email);guard();}
+            });
+        }).catch(()=>{if(verifiedAdminUid===settingsUid&&loadSequence===settingsSequence&&workspaceSection==='settings')view.innerHTML='<p role="alert">Settings could not load. Reload the page before making changes.</p>';});
     }
 }
 
@@ -2733,7 +2761,7 @@ function downloadFile(text, name, type) {
 configureAdditions({
 recordMonthlyPayment:id=>{requireAdmin();const entry=adminState.apps.find(a=>a.id===id);if(entry)recordMonthlyTuition(id,entry.data);},
 loadSignatures:async()=>{requireAdmin();const uid=verifiedAdminUid;const snapshot=await getDoc(doc(db,'instituteSettings','markCardSignatures'));requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');return snapshot.exists()?snapshot.data():null;},
-saveSignatures:async(input,expected)=>{requireAdmin();const uid=verifiedAdminUid;const {validateSignatureSet}=await import('./admin-mark-signatures.js?v=20261025-admin-12');const clean=validateSignatureSet(input),ref=doc(db,'instituteSettings','markCardSignatures');const saved={...clean,updatedAt:new Date().toISOString(),updatedBy:uid};await runTransaction(db,async tx=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');const current=await tx.get(ref);requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');if(canonicalRecord(current.exists()?current.data():null)!==canonicalRecord(expected))throw Error('Signatures changed in another session. Reopen Mark Cards and review before saving.');tx.set(ref,saved);});return saved;},
+saveSignatures:async(input,expected)=>{requireAdmin();const uid=verifiedAdminUid;const {validateSignatureSet}=await import('./admin-mark-signatures.js?v=20261102-settings-1');const clean=validateSignatureSet(input),ref=doc(db,'instituteSettings','markCardSignatures');const saved={...clean,updatedAt:new Date().toISOString(),updatedBy:uid};await runTransaction(db,async tx=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');const current=await tx.get(ref);requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');if(canonicalRecord(current.exists()?current.data():null)!==canonicalRecord(expected))throw Error('Signatures changed in another session. Reopen Mark Cards and review before saving.');tx.set(ref,saved);});return saved;},
 assertSession:requireAdmin,refreshRecords:loadApplications,loadMarkPhoto:async(photo)=>{
     requireAdmin();const uid=verifiedAdminUid;
     if(!photo)return null;

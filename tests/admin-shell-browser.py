@@ -21,16 +21,16 @@ try:
   assert page.locator('.studio-nav-caption').count()==3
   assert page.locator('.nav button').evaluate_all('(items)=>items.slice(0,4).map(x=>x.textContent.trim())')==['Overview','Today','Students','Admissions']
   expect(page.locator('#workspaceTime')).not_to_be_empty()
-  page.locator('.nav [data-section=settings]').click();expect(page.locator('#studioSettings')).to_be_visible()
-  page.locator('#studioClock24').check();page.locator('#studioMotion').check()
+  page.locator('.nav [data-section=settings]').click();expect(page.locator('.settings-live')).to_be_visible();page.locator('[data-panel=appearance]').click()
+  page.locator('#clock24').check();page.locator('#motion').check()
   expected=page.evaluate("new Intl.DateTimeFormat('en-IN',{hour:'2-digit',minute:'2-digit',hour12:false,timeZone:'Asia/Kolkata'}).format(new Date())")
   expect(page.locator('#workspaceTime')).to_have_text(expected)
   assert page.locator('#adminDashboard').evaluate("el=>el.classList.contains('studio-reduced-motion')")
   assert page.evaluate('__adminPreview.writes.length')==0
-  page.locator('#studioBackup').click();expect(page.locator('#reportJson')).to_be_visible()
-  page.locator('.nav [data-section=settings]').click();expect(page.locator('#studioClock24')).to_be_checked()
-  page.locator('#studioPersonalise').click();expect(page.locator('.preferences-form')).to_be_visible()
-  page.locator('.nav [data-section=settings]').click();page.locator('#studioResetDisplay').click();expect(page.locator('#studioClock24')).not_to_be_checked()
+  page.locator('[data-panel=backup]').click();page.locator('#backupReview').click();expect(page.locator('#reportJson')).to_be_visible()
+  page.locator('.nav [data-section=settings]').click();expect(page.locator('.settings-live')).to_be_visible();page.locator('[data-panel=appearance]').click();expect(page.locator('#clock24')).to_be_checked()
+  page.locator('.nav [data-workbench=preferences]').click();expect(page.locator('.preferences-form')).to_be_visible()
+  page.locator('.nav [data-section=settings]').click();expect(page.locator('.settings-live')).to_be_visible();page.locator('[data-panel=appearance]').click();page.locator('#resetSection').click();expect(page.locator('#clock24')).not_to_be_checked()
   out=ROOT/'tests/artifacts/admin-shell';out.mkdir(parents=True,exist_ok=True)
   page.screenshot(path=str(out/'settings.png'),full_page=True)
   for width in [320,390,768,1024,1512]:

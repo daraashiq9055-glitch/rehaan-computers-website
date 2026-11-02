@@ -79,6 +79,8 @@ def run():
                     for selector in ['[data-section='+name+']' for name in ['overview','admissions','students','fees','courses','batches','reports','settings','marks','statements']]+['[data-records-centre]','[data-operations=today]','[data-operations=accounts]','[data-workbench=journeys]','[data-workbench=history]','[data-workbench=preferences]']:
                         if width<=760:page.locator('#menuToggle').click()
                         page.locator(selector).click()
+                        if not page.evaluate('document.documentElement.scrollWidth<=innerWidth'):
+                            print('Overflow:',width,selector,page.evaluate("[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&getComputedStyle(e).position!=='fixed').slice(0,12).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])"),flush=True)
                         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,selector)
                 assert page.evaluate('__adminPreview.records')==original and page.evaluate('__adminPreview.writes.length')==0
                 page.locator('[data-workbench=history]').click();expect(page.locator('#adminWorkbench')).to_contain_text('Secure history is not enabled yet');assert page.evaluate('__adminPreview.auditReads||0')==0

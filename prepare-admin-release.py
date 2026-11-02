@@ -12,7 +12,7 @@ import shutil
 import tempfile
 
 ROOT=Path(__file__).resolve().parent
-VERSION='20261101-attendance-1'
+VERSION='20261102-settings-1'
 
 def build(destination, audit_ready=False):
     destination=Path(destination)
@@ -24,7 +24,7 @@ def build(destination, audit_ready=False):
     source=ROOT/'previews/admin-premium'
     def adapt(text):
         text=text.replace('previewAdminBridge','adminWorkspace').replace('../../public/','../').replace('/public/','/')
-        text=text.replace('admin-app.js?v=20261018-login-fix-1','admin-app.js?v='+VERSION)
+        text=re.sub(r'admin-app\.js\?v=[A-Za-z0-9-]+','admin-app.js?v='+VERSION,text)
         return re.sub(r"(from\s+|import\s*)(['\"])(\.{1,2}/[^'\"]+\.js)(['\"])",lambda m:m[1]+m[2]+m[3]+'?v='+VERSION+m[4],text)
     files=['records.js','records-model.js','operations.js','accounts-model.js','payment-service.js','payment-ui.js','journey-service.js','workbench.js','theme.css','records.css','operations.css','workbench.css']
     for name in files:
@@ -87,6 +87,7 @@ def build(destination, audit_ready=False):
     html=html.replace(' admin-premium-preview','').replace('/previews/admin-premium/','admin-ui/').replace('href="/previews/premium-home/"','href="index.html"')
     html=html.replace('This demo resets when you reload the page.','Your session ends when this page is reloaded.').replace('Try the new design.','Private by design.').replace('Demo email','Enter your admin email').replace('Demo password','Enter your password').replace('Open the sample workspace. No real password needed.','Sign in to your admin workspace.')
     html=html.replace("import('./admin-app.js?v=20261018-login-fix-1').catch", "import('./admin-app.js?v="+VERSION+"').catch")
+    html=re.sub(r'(\./admin-app\.js)\?v=[A-Za-z0-9-]+',r'\1?v='+VERSION,html)
     # UI load errors must never replace a working login or create a second auth instance.
     html=html.replace('</body>',"<script type=\"module\">import('./admin-ui/main.js?v="+VERSION+"').catch(()=>{const note=document.createElement('p');note.className='startup-error';note.setAttribute('role','alert');note.textContent='Some workspace tools could not load. Reload the page before making changes.';document.querySelector('#adminDashboard .content').prepend(note);});</script></body>")
     html=re.sub(r'href="(admin-ui/[^\"]+\.css)"',r'href="\1?v='+VERSION+'"',html)
@@ -98,7 +99,7 @@ def build(destination, audit_ready=False):
     config=security.secure_hosting_config(config,[public/'index.html',public/'admin.html'])
     (public/'admin-fix.js').unlink(missing_ok=True)
     (destination/'firebase.json').write_text(json.dumps(config,indent=2)+'\n', encoding='utf-8')
-    (destination/'RELEASE.json').write_text(json.dumps({'generated':True,'version':VERSION,'auditEnabled':audit_ready,'receiptCounterRulesRequired':True,'markSignatureRulesRequired':True,'source':'prepare-admin-release.py'},indent=2)+'\n', encoding='utf-8')
+    (destination/'RELEASE.json').write_text(json.dumps({'generated':True,'version':VERSION,'auditEnabled':audit_ready,'receiptCounterRulesRequired':True,'markSignatureRulesRequired':True,'sharedSettingsRulesRequired':True,'source':'prepare-admin-release.py'},indent=2)+'\n', encoding='utf-8')
     return destination
 
 def main():
@@ -114,7 +115,7 @@ def main():
         shutil.move(str(output),target)
     print('Built separate candidate:',target)
     print('Current public/ and live website were not changed. Nothing was deployed.')
-    print('Before Hosting: publish current receipt counter and private signature rules (see docs/mark-card-premium.md).')
+    print('Before Hosting: verify and publish shared Settings, receipt-counter and private-signature rules. Use python release-admin.py --deploy for the checked sequence.')
     print('Secure history:', 'enabled; verify backend before deployment' if args.audit_ready else 'disabled until backend verification')
 
 if __name__=='__main__':main()

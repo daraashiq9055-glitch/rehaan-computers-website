@@ -1,6 +1,6 @@
-import {previewAdminBridge as app} from '/public/admin-app.js?v=20261018-login-fix-1';
-import {csvCell, isSafePhoto} from '/public/admin-records.js';
-import {validateCard, cardResult} from '/public/admin-feature-model.js?v=20261018-login-fix-1';
+import {previewAdminBridge as app} from '/public/admin-app.js?v=20261102-settings-1';
+import {csvCell, isSafePhoto} from '/public/admin-records.js?v=20261102-settings-1';
+import {validateCard, cardResult} from '/public/admin-feature-model.js?v=20261102-settings-1';
 import {reviewRecords, filterRecords, sortRecords, savedActivity, courseOf} from './records-model.js';
 
 function initRecords() {

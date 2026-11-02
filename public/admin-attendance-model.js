@@ -1,5 +1,7 @@
-import {indiaDate,monthLabel} from './admin-feature-model.js?v=20261101-fees-2';
-import {canonicalRecord} from './admin-records.js';
+import {customMessage} from './admin-settings-state.js?v=20261102-settings-1';
+import {renderSettingsTemplate} from './admin-settings-model.js?v=20261102-settings-1';
+import {indiaDate,monthLabel} from './admin-feature-model.js?v=20261102-settings-1';
+import {canonicalRecord} from './admin-records.js?v=20261102-settings-1';
 export function attendanceValue(month,input,today=indiaDate()){
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)||month>today.slice(0,7)||month<'2000-01')throw Error('Choose a valid current or past month.');
  const max=month===today.slice(0,7)?Number(today.slice(8)):new Date(Number(month.slice(0,4)),Number(month.slice(5)),0).getDate();
@@ -10,6 +12,8 @@ export function attendanceValue(month,input,today=indiaDate()){
  return {days:Number(input.days),totalDays:total,note:input.note.trim()};
 }
 export function attendanceMessage(entry,month,value){
+ const configured=customMessage('attendance',{name:entry.data.fullName,month:monthLabel(month),classes:value.totalDays||null,attended:value.days,percentage:value.totalDays?Math.round(value.days/value.totalDays*100):null,notice:value.note});
+ if(configured)return renderSettingsTemplate(configured.template,configured.values);
  const lines=['*REHAAN COMPUTERS*','*Monthly Attendance — '+monthLabel(month)+'*','','Hello '+entry.data.fullName+', here is your attendance summary:',''];
  if(value.totalDays)lines.push('• Classes held: *'+value.totalDays+' days*');
  lines.push('• Days attended: *'+value.days+' days*');

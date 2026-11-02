@@ -1,6 +1,6 @@
-import {feeStatement,statementWhatsApp} from './admin-fee-statement-model.js?v=20261024-admin-9';
-import {escapeHTML as e,money,dateLabel} from './admin-feature-model.js?v=20261021-admin-5';
-import {canonicalRecord,csvCell} from './admin-records.js';
+import {feeStatement,statementWhatsApp} from './admin-fee-statement-model.js?v=20261102-settings-1';
+import {escapeHTML as e,money,dateLabel} from './admin-feature-model.js?v=20261102-settings-1';
+import {canonicalRecord,csvCell} from './admin-records.js?v=20261102-settings-1';
 let active=null,generation=0;
 function paper(s){
     const warnings=s.warnings.length?`<section class="statement-review"><strong>Review notes</strong>${s.warnings.map(text=>`<p>${e(text)}</p>`).join('')}</section>`:'';
@@ -30,7 +30,7 @@ export function openFeeStatement({getEntry}){
             button.disabled=true;status.textContent='Preparing the complete statement…';await document.fonts.ready;
             if(!current()||token!==generation)throw Error('The record changed while preparing the statement. Refresh before exporting.');
             if(action==='print'){let area=document.querySelector('#rcPrintArea');if(!area){area=document.createElement('div');area.id='rcPrintArea';document.body.append(area);}area.dataset.kind='statement';area.innerHTML=paper(statement);window.print();status.textContent='Full statement prepared for printing.';}
-            if(action==='image'){const {statementPNG}=await import('./admin-fee-statement-image.js?v=20261024-admin-9');if(!current()||token!==generation)throw Error('The record changed while preparing the statement. Refresh before exporting.');const blob=await statementPNG(statement);if(!current()||token!==generation)throw Error('The record changed while preparing the statement. Refresh before exporting.');download(blob,filename+'.png');status.textContent='Full statement image downloaded. Student records and payments are unchanged.';}
+            if(action==='image'){const {statementPNG}=await import('./admin-fee-statement-image.js?v=20261102-settings-1');if(!current()||token!==generation)throw Error('The record changed while preparing the statement. Refresh before exporting.');const blob=await statementPNG(statement);if(!current()||token!==generation)throw Error('The record changed while preparing the statement. Refresh before exporting.');download(blob,filename+'.png');status.textContent='Full statement image downloaded. Student records and payments are unchanged.';}
         }catch(error){if(dialog.isConnected)status.textContent=error.message;}finally{if(button.isConnected)button.disabled=false;}
     };
     dialog.addEventListener('cancel',event=>{event.preventDefault();clearFeeStatement();});render();dialog.showModal();

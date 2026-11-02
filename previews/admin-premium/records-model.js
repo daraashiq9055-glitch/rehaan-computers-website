@@ -1,4 +1,4 @@
-import {compareAdmissionRecords} from '../../public/admin-records.js';
+import {compareAdmissionRecords} from '../../public/admin-records.js?v=20261102-settings-1';
 // Read-only record review. These checks never approve, merge, cancel or edit data.
 const text = value => typeof value === 'string' ? value.trim() : '';
 const normal = value => text(value).toLocaleLowerCase('en-IN');

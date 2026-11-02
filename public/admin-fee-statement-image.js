@@ -1,4 +1,4 @@
-import {money,dateLabel} from './admin-feature-model.js?v=20261021-admin-5';
+import {money,dateLabel} from './admin-feature-model.js?v=20261102-settings-1';
 export async function statementPNG(s){
     if(!s.reliable)throw Error('Review the record before exporting a fee statement.');
     await document.fonts.ready;

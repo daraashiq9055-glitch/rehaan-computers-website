@@ -71,3 +71,5 @@ export const runTransaction = (_db, fn) => {
  transactionQueue = task.catch(() => {});
  return task;
 };
+
+export const sendPasswordResetEmail=async (_auth,email)=>{if(!state.auth.currentUser||email!==state.auth.currentUser.email)throw Error("Current account required.");state.resetEmails=[...(state.resetEmails||[]),email];};

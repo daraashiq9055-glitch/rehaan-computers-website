@@ -1,7 +1,8 @@
-import {monthlyStatusHTML} from './admin-monthly-status.js?v=20261101-fees-2';
-import {validateSignatureSet,importSignature,decodeSignatures} from './admin-mark-signatures.js?v=20261025-admin-12';
-import {modernMarkHTML,paperPalette,MARK_PAPER_THEMES,DEFAULT_MARK_PAPER} from './admin-mark-layout.js?v=20261026-admin-13';
-import {receiptHTML as refreshedReceiptHTML,presentReceipt,receiptMessage,receiptPalette,DEFAULT_RECEIPT_PAPER} from './admin-receipt-layout.js?v=20261101-fees-2';
+import {documentDefaults} from './admin-settings-state.js?v=20261102-settings-1';
+import {monthlyStatusHTML} from './admin-monthly-status.js?v=20261102-settings-1';
+import {validateSignatureSet,importSignature,decodeSignatures} from './admin-mark-signatures.js?v=20261102-settings-1';
+import {modernMarkHTML,paperPalette,MARK_PAPER_THEMES,DEFAULT_MARK_PAPER} from './admin-mark-layout.js?v=20261102-settings-1';
+import {receiptHTML as refreshedReceiptHTML,presentReceipt,receiptMessage,receiptPalette,DEFAULT_RECEIPT_PAPER} from './admin-receipt-layout.js?v=20261102-settings-1';
 import {
   escapeHTML as e,
   indiaDate,
@@ -13,8 +14,8 @@ import {
   subjectResult,
   MARK_GRADES,
   validateReceiptCorrection,
-} from "./admin-feature-model.js?v=20261101-fees-2";
-import { receiptPNG, whatsappURL } from "./admin-receipt-image.js?v=20261101-fees-2";
+} from "./admin-feature-model.js?v=20261102-settings-1";
+import { receiptPNG, whatsappURL } from "./admin-receipt-image.js?v=20261102-settings-1";
 let apps = [],
   selected = "",
   receipts = [],
@@ -33,7 +34,7 @@ export function configureAdditions(options) {
 function storedCard(entry) {
   return entry.data.markCard
     ? validateCard(entry.data.markCard)
-    : defaultCard();
+    : {...defaultCard(),...(documentDefaults('marks')||{})};
 }
 function syncReceipts(records) {
   receipts = records
@@ -127,7 +128,9 @@ function gradeOptions(value="") {
   return `<option value="">Automatic</option>`+MARK_GRADES.map(grade=>`<option value="${grade}" ${grade===value?"selected":""}>${grade}</option>`).join("");
 }
 function formCard() {
+  const profile=storedCard(apps.find(a=>a.id===selected)).documentProfile;
   return {
+    ...(profile?{documentProfile:profile}:{}),
     title: $("#rcExamTitle").value,
     date: $("#rcExamDate").value,
     manualGrade: $("#rcOverallGrade").value,
@@ -209,7 +212,7 @@ export function renderMarkCards(view, records) {
     view.innerHTML = `<section class="workspace-card"><h2>Stored marks need review</h2><p>${e(error.message)} No records were changed.</p></section>`;
   }
 }
-function receiptHTML(r=null,assets={}){return refreshedReceiptHTML(r?presentReceipt(r):{student:{},number:'',date:''},{blank:!r,numbered:false,photoSource:assets.photo?.src,signatureSource:assets.authorized?.src});}
+function receiptHTML(r=null,assets={}){return refreshedReceiptHTML(r?presentReceipt(r):{student:{},number:'',date:'',...(documentDefaults('receipt')||{})},{blank:!r,numbered:false,photoSource:assets.photo?.src,signatureSource:assets.authorized?.src});}
 function receiptEntry(receipt){return (services.getRecords?.()||apps).find(entry=>entry.id===receipt?.studentId);}
 async function receiptAssets(receipt){
  const epoch=sessionEpoch;services.assertSession?.();
@@ -247,7 +250,7 @@ export async function renderStatementDirectory(view) {
   const marker=view.firstElementChild;
   try {
     services.assertSession?.();
-    const {mountStatementDirectory}=await import('./admin-fee-statement-directory.js?v=20261101-fees-2');
+    const {mountStatementDirectory}=await import('./admin-fee-statement-directory.js?v=20261102-settings-1');
     if(epoch!==sessionEpoch||version!==statementDirectoryVersion||!marker.isConnected||view.hidden||view.firstElementChild!==marker)return;
     mountStatementDirectory({host:view,getRecords:()=>{services.assertSession?.();return services.getRecords?.()||[];},openStatement:openStudentStatement,refreshRecords:()=>{services.assertSession?.();return services.refreshRecords?.();}});
   } catch(error) {
@@ -258,7 +261,7 @@ export async function openStudentStatement(id) {
   const epoch=sessionEpoch;
   try {
     services.assertSession?.();
-    const {openFeeStatement,clearFeeStatement}=await import('./admin-fee-statement.js?v=20261101-fees-2');
+    const {openFeeStatement,clearFeeStatement}=await import('./admin-fee-statement.js?v=20261102-settings-1');
     if(epoch!==sessionEpoch)return;
     clearStatement=clearFeeStatement;
     openFeeStatement({getEntry:()=>{services.assertSession?.();return services.getRecords?.().find(entry=>entry.id===id);}});
@@ -536,7 +539,7 @@ document.addEventListener("click", async (event) => {
           for(const [key,image] of Object.entries(signatureImages)){const target=area.querySelector('[data-mark-signature='+key+']');target.src=image.src;await target.decode();target.hidden=false;}
           if(current()){unchanged();window.print();}
         } else {
-          const {markCardPNG}=await import('./admin-mark-image.js?v=20261026-admin-13');
+          const {markCardPNG}=await import('./admin-mark-image.js?v=20261102-settings-1');
           if(!current())return;
           const blob=await markCardPNG(structuredClone(entry),card,{photo,signatures:signatureImages,outputWidth:markImageWidth});
           if(!current())return;

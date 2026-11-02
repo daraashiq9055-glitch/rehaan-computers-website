@@ -1,6 +1,6 @@
 import './records.js';
-import {previewAdminBridge as app} from '/public/admin-app.js?v=20261018-login-fix-1';
-import {csvCell} from '/public/admin-records.js';
+import {previewAdminBridge as app} from '/public/admin-app.js?v=20261102-settings-1';
+import {csvCell} from '/public/admin-records.js?v=20261102-settings-1';
 import {accounts,accountView,dayOf} from './accounts-model.js';
 import {indiaDay} from './payment-service.js';
 import {savedActivity} from './records-model.js';

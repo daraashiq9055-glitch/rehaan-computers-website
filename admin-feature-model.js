@@ -1,3 +1,4 @@
+import {validateProfile} from './admin-settings-model.js?v=20261102-settings-1';
 // Pure formatting and validation for saved mark cards and fee receipts.
 export function indiaDate() {
   const p = new Intl.DateTimeFormat("en-CA", {
@@ -110,7 +111,7 @@ export function validateCard(input) {
   let paperColor=input.paperColor||'';
   if(typeof paperColor!=='string'||(paperColor&&!/^#[a-f0-9]{6}$/i.test(paperColor)))throw Error('Choose a valid mark-card background colour.');
   paperColor=paperColor.toLowerCase();
-  return { title, date, subjects, ...(grade ? {manualGrade:grade} : {}), ...(paperColor&&paperColor!=='#fbf7ec'?{paperColor}:{}) };
+  return { title, date, subjects, ...(input.documentProfile?{documentProfile:validateProfile(input.documentProfile)}:{}), ...(grade ? {manualGrade:grade} : {}), ...(paperColor&&paperColor!=='#fbf7ec'?{paperColor}:{}) };
 }
 export function cardResult(card) {
   const complete = card.subjects.every((s) => s.marks !== null);

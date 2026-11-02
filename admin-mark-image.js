@@ -1,9 +1,9 @@
 // Full-height HD/4K rendering. Portraits and private signatures always retain their original proportions.
-import {validateCard,cardResult,subjectResult,dateLabel} from './admin-feature-model.js?v=20261025-admin-12';
-import {paperPalette,typingLabel} from './admin-mark-layout.js?v=20261026-admin-13';
+import {validateCard,cardResult,subjectResult,dateLabel} from './admin-feature-model.js?v=20261102-settings-1';
+import {paperPalette,typingLabel} from './admin-mark-layout.js?v=20261102-settings-1';
 export async function markCardPNG(entry,input,{photo=null,signatures={},outputWidth=3840}={}){
  if(![1600,3840].includes(outputWidth))throw Error('Choose HD or 4K image size.');
- const card=validateCard(input),result=cardResult(card),data=entry.data,palette=paperPalette(card.paperColor);
+ const card=validateCard(input),profile=card.documentProfile,result=cardResult(card),data=entry.data,palette=paperPalette(card.paperColor);
  await Promise.all([document.fonts.load('600 66px MarkDisplay'),document.fonts.load('700 70px MarkSerif'),document.fonts.load('600 32px MarkSerif')]);await document.fonts.ready;
  const canvas=document.createElement('canvas');canvas.width=1600;canvas.height=1;const ctx=canvas.getContext('2d');if(!ctx)throw Error('Image rendering is unavailable. You can still print the saved mark card.');
  const {ink,muted,gold}=palette,left=90,right=1510,width=1420;
@@ -24,9 +24,9 @@ export async function markCardPNG(entry,input,{photo=null,signatures={},outputWi
  function rule(top,x=left,end=right,color=palette.line){ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(x,top);ctx.lineTo(end,top);ctx.stroke();}
  function block(values,x,top,size,color=ink){values.forEach((line,index)=>text(line,x,top+index*size*1.3,size,color));}
  function contain(image,x,top,w,h){if(!image?.naturalWidth||!image?.naturalHeight)return;const fit=Math.min(w/image.naturalWidth,h/image.naturalHeight),iw=image.naturalWidth*fit,ih=image.naturalHeight*fit;ctx.drawImage(image,x+(w-iw)/2,top+(h-ih)/2,iw,ih);}
- centered('LEARNING · SKILLS · PROGRESS',90,24,muted,600,'Inter',655);centered('REHAAN COMPUTERS',144,66,ink,600,'MarkDisplay',655);centered('CHARANGAM',248,34,ink,600,'Inter',655);centered('STUDENT ACADEMIC RECORD',314,25,muted,600,'Inter',655);
+ centered('LEARNING · SKILLS · PROGRESS',90,24,muted,600,'Inter',655);if(profile){let size=55,rows=lines(profile.institute.name,1100,size,'MarkDisplay');while(rows.length>3&&size>28){size--;rows=lines(profile.institute.name,1100,size,'MarkDisplay');}rows.forEach((line,index)=>centered(line,144+index*size*1.2,size,ink,600,'MarkDisplay',655));}else{centered('REHAAN COMPUTERS',144,66,ink,600,'MarkDisplay',655);centered('CHARANGAM',248,34,ink,600,'Inter',655);}centered('STUDENT ACADEMIC RECORD',314,25,muted,600,'Inter',655);
  const px=1265,py=84,pw=245,ph=306;ctx.fillStyle='#fff';ctx.fillRect(px,py,pw,ph);ctx.strokeStyle=gold;ctx.lineWidth=2;ctx.strokeRect(px,py,pw,ph);if(photo?.naturalWidth)contain(photo,px+10,py+10,pw-20,ph-20);else{text('STUDENT',px+43,py+115,30,'#43556a');text('PHOTO',px+61,py+159,30,'#43556a');}
- rule(425,left,right,gold);centered('MAIN ROAD CHARANGAM · BEERWAH · BUDGAM · KASHMIR 193411',451,28,ink);rule(500,left,right,gold);
+ rule(425,left,right,gold);if(profile){let size=26,rows=lines(profile.institute.address,width,size);while(rows.length>2&&size>10){size--;rows=lines(profile.institute.address,width,size);}rows.forEach((line,index)=>centered(line,438+index*size*1.2,size,ink));}else centered('MAIN ROAD CHARANGAM · BEERWAH · BUDGAM · KASHMIR 193411',451,28,ink);rule(500,left,right,gold);
  centered('Statement of Marks',539,64,ink,600,'MarkSerif');subtitle.forEach((line,index)=>centered(line,625+index*54.6,42,muted,500,'MarkSerif'));
  ctx.fillStyle=palette.panel;ctx.fillRect(left-12,detailRows[0].top+12,width+24,detailsBottom-detailRows[0].top-4);
  detailRows.forEach(row=>{row.fields.forEach((field,index)=>{const x=left+index*740;text(field.label,x+12,row.top+26,28,muted,600);block(field.lines,x+12,row.top+77,48);});rule(row.top+row.height);});
@@ -37,8 +37,8 @@ export async function markCardPNG(entry,input,{photo=null,signatures={},outputWi
  block(policy,left,policyTop,28,muted);
  const sigTop=height-360;for(const [key,x,label] of [['examiner',left,'EXAMINER / ASSESSOR'],['authorized',right-530,'AUTHORIZED SIGNATORY']]){if(signatures[key]){if(palette.ink==='#ffffff'){ctx.fillStyle='#ffffff';ctx.fillRect(x+30,sigTop,470,180);}contain(signatures[key],x+40,sigTop+5,450,165);}rule(sigTop+190,x,x+530,gold);text(label,x,sigTop+216,25,ink,600);}
  rule(height-115,left,right,gold);
- text('CONTACT · CELL',left,height-98,17,muted,600);text('9797205429 · 9149551258',left,height-78,29,ink,600,'MarkSerif');
- const website='rehaan-computers.web.app',motto='LEARN · PRACTISE · GROW';ctx.font='600 29px MarkSerif,Arial,sans-serif';text(website,right-ctx.measureText(website).width,height-78,29,ink,600,'MarkSerif');ctx.font='600 17px Inter,Arial,sans-serif';text(motto,right-ctx.measureText(motto).width,height-98,17,muted,600);
+ text('CONTACT · CELL',left,height-98,17,muted,600);text(profile?[profile.institute.phone,profile.institute.phone2].filter(Boolean).join(' · '):'9797205429 · 9149551258',left,height-78,29,ink,600,'MarkSerif');
+ const website=profile?profile.institute.website.replace(/^https:\/\//,''):'rehaan-computers.web.app',motto=profile?.footer||'LEARN · PRACTISE · GROW';function rightFit(value,top,size,font,color){ctx.font=`600 ${size}px ${font},Arial,sans-serif`;while(ctx.measureText(value).width>680&&size>12){size--;ctx.font=`600 ${size}px ${font},Arial,sans-serif`;}ctx.fillStyle=color;ctx.textBaseline='top';ctx.fillText(value,right-Math.min(680,ctx.measureText(value).width),top,680);}rightFit(website,height-78,29,'MarkSerif',ink);rightFit(motto,height-98,17,'Inter',muted);
  // Fine corner brackets and small diamonds stay within the paper boundary.
  ctx.strokeStyle=gold;ctx.lineWidth=1.5;
  for(const [x,top,dx,dy] of [[54,54,1,1],[1546,54,-1,1],[54,height-54,1,-1],[1546,height-54,-1,-1]]){ctx.beginPath();ctx.moveTo(x+dx*36,top);ctx.lineTo(x,top);ctx.lineTo(x,top+dy*36);ctx.stroke();}

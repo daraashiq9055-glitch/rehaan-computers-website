@@ -155,13 +155,14 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateClock(){const now=new Date();const time=clock.querySelector('time');time.dateTime=now.toISOString();time.textContent=new Intl.DateTimeFormat('en-IN',{hour:'2-digit',minute:'2-digit',hour12:!display.clock24,timeZone:'Asia/Kolkata'}).format(now);const date=document.querySelector('#workspaceDate');if(date)date.textContent=new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Kolkata'}).format(now);}
   function applyDisplay(){document.querySelector('#adminDashboard').classList.toggle('studio-reduced-motion',display.reduceMotion);updateClock();}
   const startClock=()=>setInterval(()=>{if(!document.hidden)updateClock();},15000);
+  window.addEventListener('admin-display-changed',event=>{if(typeof event.detail?.clock24==='boolean'&&typeof event.detail?.reduceMotion==='boolean'){display={clock24:event.detail.clock24,reduceMotion:event.detail.reduceMotion};applyDisplay();}});
   applyDisplay();let clockTimer=startClock();
   window.addEventListener('pagehide',()=>clearInterval(clockTimer));
   window.addEventListener('pageshow',event=>{if(event.persisted){clearInterval(clockTimer);updateClock();clockTimer=startClock();}});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)updateClock();});
   const settingsHost=document.querySelector('#workspaceView');
   function addSettings(){
-    if(!settingsHost.querySelector('#settingsRefresh')||settingsHost.querySelector('#studioSettings'))return;
+    if(!settingsHost.querySelector('#settingsRefresh')||settingsHost.querySelector('.settings-live')||settingsHost.querySelector('#studioSettings'))return;
     const panel=document.createElement('section');panel.id='studioSettings';panel.className='workspace-card studio-settings';
     panel.innerHTML='<div class="workspace-card-heading"><div><span class="workspace-eyebrow">MAKE IT YOURS</span><h2>Display & useful tools</h2></div></div><p>Display choices apply to this browser. Student and fee records are not affected.</p><div class="studio-settings-grid"><label><span><strong>24-hour clock</strong><small>Show India time as 14:30 instead of 02:30 pm.</small></span><input id="studioClock24" type="checkbox"></label><label><span><strong>Reduced motion</strong><small>Keep navigation and cards still for a calmer workspace.</small></span><input id="studioMotion" type="checkbox"></label></div><div class="studio-settings-actions"><button type="button" id="studioBackup">Backups & exports →</button><button type="button" id="studioPersonalise">Shortcuts & workspace preferences →</button><button type="button" id="studioResetDisplay">Reset display choices</button></div><p id="studioSettingsStatus" role="status"></p>';
     settingsHost.append(panel);const clockToggle=panel.querySelector('#studioClock24'),motionToggle=panel.querySelector('#studioMotion');clockToggle.checked=display.clock24;motionToggle.checked=display.reduceMotion;

@@ -1,4 +1,4 @@
-import {canonicalRecord} from '../../public/admin-records.js';
+import {canonicalRecord} from '../../public/admin-records.js?v=20261102-settings-1';
 export const stages=['Active','On hold','Completed','Archived'];
 export function stageOf(data){return stages.includes(data.studentLifecycle?.stage)?data.studentLifecycle.stage:data.status==='Approved'?'Active':'Not enrolled';}
 export function courseKey(course){return encodeURIComponent(String(course||''));}

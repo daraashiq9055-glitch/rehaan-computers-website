@@ -1,6 +1,6 @@
 // Read-only monthly ledger projection. Amounts use integer paise; no persistence.
-import {indiaDate,monthLabel,money} from './admin-feature-model.js?v=20261021-admin-5';
-import {whatsappURL} from './admin-receipt-image.js?v=20261021-admin-5';
+import {indiaDate,monthLabel,money} from './admin-feature-model.js?v=20261102-settings-1';
+import {whatsappURL} from './admin-receipt-image.js?v=20261102-settings-1';
 const MONTHLY=99900;
 const validDate=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&!Number.isNaN(Date.parse(value+'T00:00:00Z'))&&new Date(value+'T00:00:00Z').toISOString().slice(0,10)===value;
 function cents(value){

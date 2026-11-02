@@ -33,6 +33,40 @@ service cloud.firestore {
     }
 
 
+    // Shared institute/document/message defaults; only verified administrators.
+    match /instituteSettings/workspace {
+      function settingsAdmin() {
+        return request.auth != null
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid;
+      }
+      function bounded(v, low, high) { return v is string && v.size() >= low && v.size() <= high; }
+      function institute(v) {
+        return v is map && v.keys().hasOnly(['name','address','email','phone','phone2','website'])
+          && bounded(v.name,2,100) && bounded(v.address,5,240) && bounded(v.email,3,180)
+          && v.phone is string && v.phone.matches('^[0-9]{10}$')
+          && v.phone2 is string && (v.phone2 == '' || v.phone2.matches('^[0-9]{10}$'))
+          && bounded(v.website,8,200) && v.website.matches('^https://[A-Za-z0-9.-]+(:[0-9]+)?(/[^ ]*)?$');
+      }
+      function documentStyle(v) {
+        return v is map && v.keys().hasOnly(['colour','footer'])
+          && v.colour is string && v.colour.matches('^#[a-fA-F0-9]{6}$') && bounded(v.footer,0,120);
+      }
+      function validSettings(d) {
+        return d.keys().hasOnly(['institute','documents','messages','revision','updatedBy','updatedAt'])
+          && institute(d.institute) && d.documents is map && d.documents.keys().hasOnly(['receipt','marks'])
+          && documentStyle(d.documents.receipt) && documentStyle(d.documents.marks)
+          && d.messages is map && d.messages.keys().hasOnly(['attendance','fee','admission'])
+          && bounded(d.messages.attendance,0,1500) && bounded(d.messages.fee,0,1500) && bounded(d.messages.admission,0,1500)
+          && d.revision is int && d.revision > 0 && d.revision < 1000000000
+          && d.updatedBy == request.auth.uid && bounded(d.updatedAt,20,40);
+      }
+      allow get: if settingsAdmin();
+      allow create: if settingsAdmin() && validSettings(request.resource.data) && request.resource.data.revision == 1;
+      allow update: if settingsAdmin() && validSettings(request.resource.data) && request.resource.data.revision == resource.data.revision + 1;
+      allow list, delete: if false;
+    }
+
     // Private shared signature images; administrators only, never public assets.
     match /instituteSettings/markCardSignatures {
       function signatureAdmin() {

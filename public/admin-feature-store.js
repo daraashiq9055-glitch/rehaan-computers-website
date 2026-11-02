@@ -1,3 +1,4 @@
+import {documentDefaults} from './admin-settings-state.js?v=20261102-settings-1';
 // Admin-only persistence. Callers supply Firebase's transaction function and a
 // session guard; no writes happen outside the transaction callback.
 import {
@@ -5,8 +6,8 @@ import {
   makeReceipt,
   validateReceiptCorrection,
   receiptAuditSnapshot,
-} from "./admin-feature-model.js?v=20261101-fees-2";
-import { canonicalRecord } from "./admin-records.js";
+} from "./admin-feature-model.js?v=20261102-settings-1";
+import { canonicalRecord } from "./admin-records.js?v=20261102-settings-1";
 function paise(value) {
   const number = Number(value);
   const cents = Math.round(number * 100);
@@ -76,6 +77,7 @@ export async function saveMonthlyPayment({
     throw Error(
       "Receipt reference could not be generated. Close and reopen the payment form.",
     );
+  const documentStyle = documentDefaults('receipt');
   const added = paise(amount),
     expected = paise(expectedPaid),
     fee = paise(monthly);
@@ -137,6 +139,7 @@ export async function saveMonthlyPayment({
       createdAt: now,
       createdBy: actor,
     });
+    if(documentStyle)Object.assign(receipt,documentStyle);
     if(sequence!==null){receipt.number=String(sequence);transaction.set(counterRef,{last:sequence});}
     transaction.update(ref, {
       ["monthlyFees." + due]: (paid + added) / 100,

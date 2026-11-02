@@ -1,7 +1,7 @@
 // Read-only statement workspace. Uses the loaded register; no financial writes.
-import {feeStatement} from './admin-fee-statement-model.js?v=20261024-admin-9';
-import {escapeHTML as e,money,dateLabel,indiaDate} from './admin-feature-model.js?v=20261021-admin-5';
-import {compareAdmissionRecords,csvCell} from './admin-records.js';
+import {feeStatement} from './admin-fee-statement-model.js?v=20261102-settings-1';
+import {escapeHTML as e,money,dateLabel,indiaDate} from './admin-feature-model.js?v=20261102-settings-1';
+import {compareAdmissionRecords,csvCell} from './admin-records.js?v=20261102-settings-1';
 export function searchableReceipts(entry){
  const stored=entry.data?.feeReceipts;if(!stored||typeof stored!=='object'||Array.isArray(stored))return [];
  return Object.values(stored).filter(r=>r&&r.studentId===entry.id&&/^[a-f0-9]{32}$/.test(r.id||'')&&typeof r.number==='string'&&r.number.trim()&&Number.isSafeInteger(r.amount)&&r.amount>0);
