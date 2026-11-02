@@ -1,0 +1,22 @@
+/* Only injected by preview-clay-admin.py; never included in release builds. */
+@media screen {
+ :root { --gold:#fff1a6; --gold-light:#fff7d1; --teal:#fff1a6; --navy:#321e1a; --surface:#38231e; --surface-raised:#493029; --ink:#fff8ed; --muted:#d3bdb3; --line:#e7c3a52e; }
+ body.admin-premium-preview { background:radial-gradient(ellipse at 70% 0,#6b352a55,transparent 60%),#281b18; }
+ #adminDashboard .sidebar { background:linear-gradient(160deg,#6b352a,#4a2922 65%,#39231d); border-right:1px solid #fff1a625; }
+ #adminDashboard .topbar { background:linear-gradient(110deg,#482820,#6b352a); border-bottom:1px solid #fff1a62e; }
+ #adminDashboard .workspace-find { background:#fff1a610; color:#fff8ed; border-color:#fff1a63a; }
+ #adminDashboard .workspace-clock time { color:#fff1a6; }
+ #adminDashboard .nav button.active { background:#fff1a6; color:#6b352a; border-color:#fff1a6; box-shadow:0 5px 18px #24100e22; font-weight:700; }
+ #adminDashboard .nav button.active i { color:#6b352a; }
+ #adminDashboard .nav button.active::after { background:#6b352a; }
+ #adminDashboard .nav [data-section=settings].active { background:#fff1a6; border-color:#fff1a6; }
+ #adminDashboard button.primary,#adminDashboard .admin-add-student-btn,#adminDashboard .admin-save-btn { background:linear-gradient(110deg,#fff7cd,#fff1a6); color:#6b352a; border-color:#fff1a6; }
+ #adminDashboard .workspace-stat { border-color:#e6bca22e; background:linear-gradient(130deg,#503229,#39251f); }
+ #adminDashboard .workspace-stat strong { color:#fff1a6; }
+ #adminDashboard .workspace-eyebrow { color:#fff1a6; }
+ #adminDashboard :is(input,select,textarea):focus-visible { outline:2px solid #fff1a6; outline-offset:3px; }
+ .demo-strip { background:#fff1a6; border-bottom-color:#6b352a30; }
+ .demo-strip>span,.demo-strip p,.demo-strip button { color:#6b352a; }
+ .demo-strip i { background:#6b352a; box-shadow:none; }
+ .demo-strip button { background:transparent; border-color:#6b352a50; }
+}
