@@ -2,7 +2,8 @@ import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
-const read = name => readFileSync(new URL('../'+name, import.meta.url),'utf8');
+// Git on Windows may check text out with CRLF. Compare code, not checkout line endings.
+const read = name => readFileSync(new URL('../'+name, import.meta.url),'utf8').replace(/\r\n/g,'\n');
 
 test('Hosting uses public and revalidates the visitor module graph without altering admin cache protection',()=>{
   const config=JSON.parse(read('firebase.json'));

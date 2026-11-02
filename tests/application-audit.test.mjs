@@ -59,8 +59,8 @@ test('large histories are explicitly bounded below Firestore size limits, includ
 });
 
 test('candidate rules preserve every existing application/admin rule and add only bounded admin reads for audit history',()=>{
-  const production=readFileSync(new URL('../firestore.rules',import.meta.url),'utf8');
-  const candidate=readFileSync(new URL('../backend/audit/firestore.rules',import.meta.url),'utf8');
+  const production=readFileSync(new URL('../firestore.rules',import.meta.url),'utf8').replace(/\r\n/g,'\n');
+  const candidate=readFileSync(new URL('../backend/audit/firestore.rules',import.meta.url),'utf8').replace(/\r\n/g,'\n');
   const block=candidate.slice(candidate.indexOf('    /* Server-created audit entries:'),candidate.indexOf('    /*\n     * Everything else is denied.'));
   assert.equal(candidate.replace(block,''),production);
   assert.match(block,/allow create, update, delete: if false/);

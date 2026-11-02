@@ -49,6 +49,9 @@ Passed in this workspace:
 - Scroll coverage at four widths: fixed sidebar branding, independently scrolling
   tabs, sticky opaque header and Settings reachable at the bottom.
 - Windows encoding build and release-command failure-gating tests.
+- All 122 unit checks also pass in an isolated Windows CRLF checkout
+  (`python tests/release-windows-line-endings.py`). Source comparisons normalize
+  line endings only; payment hashes and rule-content checks remain enforced.
 
 The actual Firestore rule emulator could not run here: Google's emulator download
 returned a network/proxy 403 even after retrying with expanded execution access.
