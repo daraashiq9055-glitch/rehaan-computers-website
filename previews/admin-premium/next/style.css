@@ -25,3 +25,20 @@
  @media(prefers-reduced-motion:reduce){.next-brief span{animation:none}}
  #adminDashboard.studio-reduced-motion .next-brief span{animation:none}
 }
+@media screen {
+ .next-ticker-window{overflow:hidden;flex:1;min-width:0;mask-image:linear-gradient(90deg,transparent,#000 3%,#000 97%,transparent)}
+ .next-ticker-track{display:flex;width:max-content;animation:next-marquee 38s linear infinite}
+ .next-brief .next-ticker-track span{flex:none;white-space:nowrap;padding-right:70px;animation:none}
+ .next-brief:hover .next-ticker-track,.next-brief:focus-within .next-ticker-track{animation-play-state:paused}
+ .next-search-hint{animation:next-search-reveal .7s cubic-bezier(.2,.7,.2,1) both}
+ #workspaceFind:focus .next-search-hint{animation:none}
+ @keyframes next-marquee{to{transform:translateX(-50%)}}
+ @keyframes next-search-reveal{from{opacity:0;transform:translateY(8px);filter:blur(3px)}to{opacity:1;transform:none;filter:blur(0)}}
+ .followup-image-stage{width:100%}.followup-image-stage img{display:block;width:100%;height:auto;border-radius:12px;margin:15px 0}
+ #cancellationReason{min-height:85px;resize:vertical}
+ @media(prefers-reduced-motion:reduce){.next-ticker-track,.next-search-hint{animation:none!important}.next-ticker-window{mask-image:none}.next-ticker-track{width:auto}.next-brief .next-ticker-track span{white-space:normal;padding:0}.next-ticker-track span[aria-hidden]{display:none}}
+ #adminDashboard.studio-reduced-motion .next-ticker-track,#adminDashboard.studio-reduced-motion .next-search-hint{animation:none!important}
+ #adminDashboard.studio-reduced-motion .next-ticker-track{width:auto}
+ #adminDashboard.studio-reduced-motion .next-ticker-track span{white-space:normal;padding:0}
+ #adminDashboard.studio-reduced-motion .next-ticker-track span[aria-hidden]{display:none}
+}

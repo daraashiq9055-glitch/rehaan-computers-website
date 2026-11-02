@@ -26,6 +26,15 @@ class Handler(base.PreviewHandler):
  if(entry) return (await import('/previews/admin-premium/next/ui.js')).openReminder(entry);
 }
 '''+source[end:]+ '\n'+(ROOT/'previews/admin-premium/bridge-exports.js').read_text(encoding='utf-8')
+   start=source.index('function deleteApplication(');end=source.index('\nasync function handleAdminLogin(',start)
+   block=source[start:end]
+   block=block.replace('<form id="adminDeleteForm">','<form id="adminDeleteForm"><label class="field">Reason for cancellation / withdrawal<textarea id="cancellationReason" required minlength="3" maxlength="200" placeholder="For example: Student requested cancellation"></textarea></label><p>The notice will be available only after deletion succeeds. WhatsApp sending is manual.</p>')
+   block=block.replace('await deleteDoc(doc(db, "applications", applicationId));','''const noticeTools = await import('/previews/admin-premium/next/notices.js');
+            const notice = noticeTools.cancellation(entry, modal.querySelector('#cancellationReason').value, enrolled);
+            await deleteDoc(doc(db, "applications", applicationId));''')
+   block=block.replace('await loadApplications();','''noticeTools.showCancellation(notice);
+            await loadApplications();''')
+   source=source[:start]+block+source[end:]
   elif path=='/public/admin-attendance-model.js':
    source=(ROOT/path.lstrip('/')).read_text(encoding='utf-8')
    source=source.replace("'Enter whole days from 0 to '+max+'.'", "'For '+monthLabel(month)+', enter a whole number from 0 to '+max+'. '+(month===today.slice(0,7)?'Only '+max+' calendar days have elapsed. For last month’s register, select Previous month.':'Use the total from this month’s register.')")

@@ -40,3 +40,22 @@ and production rollout are not part of this preview. Do not deploy to install it
 receipt links, all/partial/single-month reminders, future/invalid/cancelled guards,
 PNG export, attendance month guidance/save/notice and preservation of payment
 fields. All external requests are blocked during the test.
+
+## Follow-up and cancellation extension
+
+- Attendance → Class follow-up now offers a full navy/gold PNG with the existing
+  four replies and 24-hour wording. Nothing cancels automatically.
+- Delete requires a 3–200 character reason, in addition to the existing typed
+  confirmation for enrolled students. The existing permanent-deletion warning
+  remains: deleting removes this record and its fee history. Use the existing
+  lifecycle cancellation option instead when history must be retained.
+- Only a successful mocked deletion produces a short cancellation notice with
+  the captured name, phone and reason. Pending applications use “withdrawn”.
+  Failed deletion retains the student and produces no cancellation notice.
+- Copy the notice or inspect its destination in WhatsApp preview. It is not
+  delivered automatically; a future live integration still requires Send.
+- The information strip moves right to left, pauses on hover/focus, and honours
+  reduced motion. Search suggestions fade/slide in without changing search logic.
+
+The extension remains entirely local to preview-admin-next.py. No production
+student deletion logic or messaging endpoint has been deployed.

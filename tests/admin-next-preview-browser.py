@@ -17,6 +17,8 @@ try:
   assert cases['partial']['total']==159800
   assert cases['single']['total']==99900 and cases['single']['rows'][0]['label']=='October 2026'
   for key in ['newStudent','cancelled','invalid']:assert not cases[key]['canShare'],key
+  assert page.locator('.next-ticker-track').evaluate('el=>getComputedStyle(el).animationName')=='none'
+  page.emulate_media(reduced_motion='no-preference');assert page.locator('.next-ticker-track').evaluate('el=>getComputedStyle(el).animationName')=='next-marquee';page.emulate_media(reduced_motion='reduce')
   initial=page.evaluate('structuredClone(__adminPreview.records)');expect(page.locator('#workspaceProfile')).not_to_be_visible();assert page.locator('.topbar').bounding_box()['height']<80
   page.locator('#workspaceFind').click();expect(page.locator('#finderQuery')).to_be_visible();page.keyboard.press('Escape')
   page.locator('.nav [data-section=statements]').click();expect(page.locator('#nextMonthReview')).to_be_visible()
@@ -24,7 +26,7 @@ try:
    page.set_viewport_size({'width':width,'height':1000});assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
   page.set_viewport_size({'width':1440,'height':1000})
   page.locator('[data-reminder="demo-0"]').click();expect(page.locator('#nextReminder pre')).to_contain_text('₹2,997');assert page.locator('#nextReminder pre').inner_text().count('• *')==3
-  page.locator('#nextReminder [data-action=image]').click();expect(page.locator('#nextReminderImage img')).to_be_visible()
+  page.locator('#nextReminder [data-action=image]').click();expect(page.locator('#nextReminderImage img')).to_be_visible(timeout=15000)
   with page.expect_download() as download:page.locator('#nextReminder [data-action=download]').click()
   path=download.value.path();assert Path(path).read_bytes().startswith(b'\x89PNG');assert Path(path).stat().st_size>10000
   page.locator('#nextReminder [data-action=whatsapp]').click();expect(page.locator('#nextReminderStatus')).to_contain_text('must be attached separately')
@@ -44,7 +46,25 @@ try:
   after=page.evaluate('structuredClone(__adminPreview.records)')
   for key,old in initial.items():
    for field,value in old.items():assert after[key][field]==value,(key,field)
+  page.locator('#attendanceFollowup').click();expect(page.locator('#followupImageTools')).to_be_visible()
+  page.locator('[data-followup-image=preview]').click();expect(page.locator('.followup-image-stage img')).to_be_visible(timeout=15000)
+  with page.expect_download() as notice_download:page.locator('[data-followup-image=download]').click()
+  assert Path(notice_download.value.path()).read_bytes().startswith(b'\x89PNG')
+  page.keyboard.press('Escape')
+  page.locator('.nav [data-section=students]').click();page.locator('[data-tab=all]').click()
+  page.locator('.delete-application-btn[data-application-id="demo-0"]').click()
+  page.locator('#deleteConfirmation').fill('001');page.locator('#deleteConfirm').click()
+  assert page.evaluate("Boolean(__adminPreview.records['demo-0'])")
+  page.locator('#cancellationReason').fill('Student requested cancellation.');page.evaluate('__adminPreview.failWrite=true');page.locator('#deleteConfirm').click()
+  expect(page.locator('#deleteMessage')).to_contain_text('Record kept');expect(page.locator('#nextCancellation')).to_have_count(0);assert page.evaluate("Boolean(__adminPreview.records['demo-0'])")
+  page.evaluate('__adminPreview.failWrite=false');page.locator('#deleteConfirm').click()
+  expect(page.locator('#nextCancellation')).to_be_visible();expect(page.locator('#nextCancellation pre')).to_contain_text('Student requested cancellation.');expect(page.locator('#nextCancellation')).to_contain_text('9000000000')
+  assert not page.evaluate("Boolean(__adminPreview.records['demo-0'])")
+  page.locator('#nextCancellation [data-notice-action=close]').click()
+  remaining=page.evaluate('structuredClone(__adminPreview.records)')
+  for key in initial:
+   if key!='demo-0':assert remaining[key]==after[key],key
   assert not errors,errors
   page.locator('.nav [data-section=statements]').click();out=ROOT/'tests/artifacts/admin-next';out.mkdir(parents=True,exist_ok=True);page.screenshot(path=str(out/'monthly.png'))
-  browser.close();print('PASS: compact header/search, monthly receipt review, all-due and partial reminder PNG, attendance month help/save/notice, three widths; no live requests or payment mutations.')
+  browser.close();print('PASS: compact header/search, monthly receipt review, all-due and partial reminder PNG, attendance month help/save/notice, three widths, follow-up PNG, required cancellation reason, failed-delete notice suppression and successful demo deletion; no live requests.')
 finally:server.shutdown()

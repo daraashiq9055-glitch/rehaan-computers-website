@@ -1,3 +1,4 @@
+import {addFollowupImage} from './notices.js';
 import {previewAdminBridge as app} from '/public/admin-preview-app.js';
 import {feeStatement} from '/public/admin-fee-statement-model.js?v=20261102-settings-1';
 import {indiaDate,monthLabel,money,escapeHTML as e} from '/public/admin-feature-model.js?v=20261102-settings-1';
@@ -81,11 +82,17 @@ function attendanceHelp(){
 function init(){
  const top=document.querySelector('#adminDashboard .topbar'),find=document.querySelector('#workspaceFind');if(!top||!find)return;
  find.setAttribute('aria-label','Search students by name, mobile or admission number, or open a dashboard section');
- const strip=document.createElement('div');strip.className='next-brief';strip.innerHTML='<b>YOUR DESK</b><span></span><button type="button">Fee review →</button>';top.after(strip);
+ const strip=document.createElement('div');strip.className='next-brief';strip.innerHTML='<b>YOUR DESK</b><div class="next-ticker-window"><div class="next-ticker-track"></div></div><button type="button">Fee review →</button>';top.after(strip);
  const prompts=['Search a student by name…','Find an admission number…','Search a saved mobile number…','Open Fees, Attendance or Mark Cards…'];
  const tips=['Review previous-month payments in Fee Statements.','Check every due month before sharing a fee reminder.','Entering last month’s register? Select Previous month in Attendance.'];let i=0;
- function animate(){if(document.hidden||document.activeElement===find||matchMedia('(prefers-reduced-motion: reduce)').matches||document.querySelector('#adminDashboard.studio-reduced-motion'))return;find.querySelector('span').textContent=prompts[i%prompts.length];const text=document.createElement('span');text.textContent=tips[i%tips.length];strip.querySelector('span').replaceWith(text);i++;}
- find.querySelector('span').textContent=prompts[0];strip.querySelector('span').textContent=tips[0];setInterval(animate,5500);
+ const track=strip.querySelector('.next-ticker-track');
+ const tickerText=tips.join('     ✦     ');track.innerHTML='<span>'+e(tickerText)+'</span><span aria-hidden="true">'+e(tickerText)+'</span>';
+ function animate(){if(document.hidden||document.activeElement===find||matchMedia('(prefers-reduced-motion: reduce)').matches||document.querySelector('#adminDashboard.studio-reduced-motion'))return;
+  const hint=document.createElement('span');hint.className='next-search-hint';hint.textContent=prompts[++i%prompts.length];find.querySelector('span').replaceWith(hint);
+ }
+ find.querySelector('span').textContent=prompts[0];setInterval(animate,5500);
+ document.addEventListener('visibilitychange',()=>{track.style.animationPlayState=document.hidden?'paused':'';});
+ new MutationObserver(addFollowupImage).observe(document.body,{childList:true,subtree:true});addFollowupImage();
  strip.querySelector('button').onclick=()=>document.querySelector('.nav [data-section=statements]').click();
  function mount(){const hub=document.querySelector('#feeStatementsWorkspace');if(hub&&!hub.querySelector('#nextMonthReview'))mountMonths(hub);attendanceHelp();}
  new MutationObserver(mount).observe(document.querySelector('#adminDashboard'),{subtree:true,childList:true});mount();
