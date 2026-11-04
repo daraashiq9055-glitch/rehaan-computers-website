@@ -5,7 +5,7 @@ ROOT=Path(__file__).resolve().parent
 FOLDER=ROOT/'backend/notifications'
 
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('--service-account',help='Path to a local JSON key for a dedicated FCM sender service account. Never upload it to chat or Git.');args=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('--service-account',help='Path to a local JSON key for a dedicated FCM sender service account. Never upload it to chat or Git.');p.add_argument('--database-id',help='Existing rehaan-website-updates D1 UUID, used when Wrangler JSON capture is unavailable on Windows.');args=p.parse_args()
  try:
   key_path=args.service_account or input('Paste the full path to your local notification-sender JSON file (not its contents): ').strip().strip('\"')
   if not key_path:raise ValueError('No file selected. Setup cancelled.')
@@ -34,13 +34,17 @@ def main():
   if 'database_id' not in config.read_text(encoding='utf-8'):
    # --update-config does not update some Windows/TOML combinations. Reuse an
    # existing database by ID instead of creating a duplicate.
-   databases=capture_json('d1','list','--json')
-   match=next((row for row in databases if row.get('name')=='rehaan-website-updates'),None)
-   if not match:
-    run('d1','create','rehaan-website-updates','--binding','DB','--location','apac','--update-config')
+   if args.database_id:
+    if not re.fullmatch(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}',args.database_id):raise ValueError('The supplied database ID is not a valid UUID.')
+    database_id=args.database_id
+   else:
     databases=capture_json('d1','list','--json')
     match=next((row for row in databases if row.get('name')=='rehaan-website-updates'),None)
-   database_id=(match or {}).get('uuid') or (match or {}).get('id')
+    if not match:
+     run('d1','create','rehaan-website-updates','--binding','DB','--location','apac','--update-config')
+     databases=capture_json('d1','list','--json')
+     match=next((row for row in databases if row.get('name')=='rehaan-website-updates'),None)
+    database_id=(match or {}).get('uuid') or (match or {}).get('id')
    if not database_id:raise ValueError('The notification database exists but its ID could not be read. Nothing was deployed.')
    with config.open('a',encoding='utf-8',newline='\n') as file:
     file.write('\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "rehaan-website-updates"\ndatabase_id = '+json.dumps(database_id)+'\n')
