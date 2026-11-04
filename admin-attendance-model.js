@@ -5,10 +5,10 @@ import {canonicalRecord} from './admin-records.js?v=20261102-settings-1';
 export function attendanceValue(month,input,today=indiaDate()){
  if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)||month>today.slice(0,7)||month<'2000-01')throw Error('Choose a valid current or past month.');
  const max=month===today.slice(0,7)?Number(today.slice(8)):new Date(Number(month.slice(0,4)),Number(month.slice(5)),0).getDate();
- if(!/^\d{1,2}$/.test(String(input.days??''))||Number(input.days)>max)throw Error('Enter whole days from 0 to '+max+'.');
+ if(!/^\d{1,2}$/.test(String(input.days??''))||Number(input.days)>max)throw Error('For '+monthLabel(month)+', enter a whole number from 0 to '+max+'. '+(month===today.slice(0,7)?'Only '+max+' calendar days have elapsed. For last month’s register, select Previous month.':'Use the total from this month’s register.'));
  if(typeof input.note!=='string'||input.note.trim().length>300)throw Error('Keep the notice within 300 characters.');
  const total=input.totalDays===undefined||input.totalDays===''||input.totalDays===null?null:Number(input.totalDays);
- if(total!==null&&(!Number.isInteger(total)||total<Number(input.days)||total<1||total>max))throw Error('Class days held must be at least days attended and within the month.');
+ if(total!==null&&(!Number.isInteger(total)||total<Number(input.days)||total<1||total>max))throw Error('Classes held must be a whole number from '+Math.max(1,Number(input.days))+' to '+max+' for '+monthLabel(month)+'. Do not enter planned future classes.');
  return {days:Number(input.days),totalDays:total,note:input.note.trim()};
 }
 export function attendanceMessage(entry,month,value){

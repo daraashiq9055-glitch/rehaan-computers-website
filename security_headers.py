@@ -21,8 +21,9 @@ def secure_hosting_config(config,html_paths):
         'style-src':["'self'","'unsafe-inline'",'https://fonts.googleapis.com'],
         'font-src':["'self'",'https://fonts.gstatic.com'],
         'img-src':["'self'",'data:','blob:','https://res.cloudinary.com','https://images.unsplash.com','https://*.razorpay.com'],
-        'connect-src':["'self'",'https://identitytoolkit.googleapis.com','https://securetoken.googleapis.com','https://firestore.googleapis.com','https://*.razorpay.com','https://api.emailjs.com','https://rehaan-razorpay-live.daraashiq9055.workers.dev','https://rehaan-student-photos.daraashiq9055.workers.dev'],
+        'connect-src':["'self'",'https://identitytoolkit.googleapis.com','https://securetoken.googleapis.com','https://firestore.googleapis.com','https://*.razorpay.com','https://api.emailjs.com','https://rehaan-razorpay-live.daraashiq9055.workers.dev','https://rehaan-student-photos.daraashiq9055.workers.dev','https://rehaan-website-updates.daraashiq9055.workers.dev','https://fcmregistrations.googleapis.com','https://firebaseinstallations.googleapis.com','https://fcm.googleapis.com'],
         'frame-src':['https://*.razorpay.com','https://www.google.com'],
+        'worker-src':["'self'"],
         'object-src':["'none'"],
         'base-uri':["'self'"],
         'form-action':["'self'"],
@@ -41,6 +42,8 @@ def secure_hosting_config(config,html_paths):
         'Strict-Transport-Security':'max-age=31536000; includeSubDomains',
     }
     old=config['hosting'].get('headers',[])
+    for path in ['/updates-config.js','/website-updates.js','/website-updates-sw.js']:
+        if not any(entry.get('source')==path for entry in old):old.append({'source':path,'headers':[{'key':'Cache-Control','value':'no-cache'}]})
     existing=[]
     for entry in old:
         retained=[h for h in entry['headers'] if h['key'] not in headers]

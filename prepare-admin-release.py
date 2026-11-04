@@ -12,7 +12,7 @@ import shutil
 import tempfile
 
 ROOT=Path(__file__).resolve().parent
-VERSION='20261102-settings-2'
+VERSION='20261103-desk-1'
 
 def build(destination, audit_ready=False):
     destination=Path(destination)
@@ -57,7 +57,7 @@ def build(destination, audit_ready=False):
     presentation=presentation.rstrip()[:-3]+'}\nsetupShell();\n'
     presentation+="document.querySelector('#workspaceDate').textContent=new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Kolkata'}).format(new Date());\n"
     (ui/'shell.js').write_text(presentation, encoding='utf-8')
-    (ui/'main.js').write_text("import './shell.js?v="+VERSION+"';\nimport './workbench.js?v="+VERSION+"';\nimport {adminWorkspace} from '../admin-app.js?v="+VERSION+"';\nimport {createPaymentUI} from './payment-ui.js?v="+VERSION+"';\nadminWorkspace.installPaymentForm(createPaymentUI);\n", encoding='utf-8')
+    (ui/'main.js').write_text("import './shell.js?v="+VERSION+"';\nimport './workbench.js?v="+VERSION+"';\nimport {adminWorkspace} from '../admin-app.js?v="+VERSION+"';\nimport {createPaymentUI} from './payment-ui.js?v="+VERSION+"';\nadminWorkspace.installPaymentForm(createPaymentUI);\nimport {initDesk} from '../admin-desk.js?v="+VERSION+"';\ninitDesk(adminWorkspace);\n", encoding='utf-8')
     bridge=(source/'bridge-exports.js').read_text(encoding='utf-8')
     bridge=bridge.replace('// Appended to the original admin module by the local preview launcher only.','// Reviewed workspace interface. All saves retain original session/transaction guards.')
     bridge=adapt(bridge).replace('/previews/admin-premium/','/admin-ui/').replace('// The preview uses the same original transaction function with a richer form.','// Richer form, same atomic ledger/receipt transaction.')
@@ -67,6 +67,7 @@ def build(destination, audit_ready=False):
     bridge=bridge.replace('await saveLifecycle(',"await (await import('./admin-ui/journey-service.js?v="+VERSION+"')).saveLifecycle(")
     bridge=bridge.replace('await saveProgress(',"await (await import('./admin-ui/journey-service.js?v="+VERSION+"')).saveProgress(")
     additions="""
+  async idToken(){requireAdmin();const uid=verifiedAdminUid;const token=await auth.currentUser.getIdToken();requireAdmin();if(uid!==verifiedAdminUid)throw Error("Your session changed.");return token;},
   installPaymentForm(factory){recordMonthlyTuition=factory({tuitionPeriod,overdueMonthlyTuition,requireAdmin,createModal:adminCreateModal,closeModal:closeAdminModal,uid:()=>verifiedAdminUid,saveMonthlyPayment,db,doc,runTransaction,refresh:loadApplications,openReceipt});},
   async auditPage(options){requireAdmin();const [{createAuditReader},sdk]=await Promise.all([import('./admin-ui/audit-reader.js?v=VERSION'),import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js')]);return createAuditReader({db,sdk,identity:()=>verifiedAdminUid&&auth.currentUser?.uid===verifiedAdminUid?{uid:verifiedAdminUid}:null})(options);},
 """.replace('VERSION',VERSION)
@@ -89,6 +90,7 @@ def build(destination, audit_ready=False):
     html=html.replace("import('./admin-app.js?v=20261018-login-fix-1').catch", "import('./admin-app.js?v="+VERSION+"').catch")
     html=re.sub(r'(\./admin-app\.js)\?v=[A-Za-z0-9-]+',r'\1?v='+VERSION,html)
     # UI load errors must never replace a working login or create a second auth instance.
+    html=html.replace('</head>','<link rel="stylesheet" href="admin-desk.css?v='+VERSION+'"></head>')
     html=html.replace('</body>',"<script type=\"module\">import('./admin-ui/main.js?v="+VERSION+"').catch(()=>{const note=document.createElement('p');note.className='startup-error';note.setAttribute('role','alert');note.textContent='Some workspace tools could not load. Reload the page before making changes.';document.querySelector('#adminDashboard .content').prepend(note);});</script></body>")
     html=re.sub(r'href="(admin-ui/[^\"]+\.css)"',r'href="\1?v='+VERSION+'"',html)
     if any(value in html for value in ['__adminPreview','previews/','demo-strip','type="importmap"','No real password']):raise RuntimeError('Preview-only markup leaked into the candidate.')

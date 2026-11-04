@@ -1,0 +1,17 @@
+name = "rehaan-website-updates"
+main = "worker.mjs"
+compatibility_date = "2026-11-03"
+[vars]
+FIREBASE_PROJECT_ID = "rehaan-computers"
+ALLOWED_ORIGINS = "https://rehaan-computers.web.app,https://rehaan-computers.firebaseapp.com"
+PUBLIC_SITE = "https://rehaan-computers.web.app"
+# Bind a dedicated D1 database as DB in a local ignored config before deployment.
+# Secrets: FCM_CLIENT_EMAIL, FCM_PRIVATE_KEY. Never put either in website files.
+[[ratelimits]]
+name = "SUBSCRIBE_LIMITER"
+namespace_id = "2001"
+simple = { limit = 6, period = 60 }
+[[ratelimits]]
+name = "ADMIN_LIMITER"
+namespace_id = "2002"
+simple = { limit = 30, period = 60 }

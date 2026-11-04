@@ -1,3 +1,4 @@
+import {studentChatURL} from './admin-whatsapp.js?v=20261104-wa-1';
 import {settingsState,setSettingsState,failSettingsState,clearSettingsState,customMessage} from './admin-settings-state.js?v=20261102-settings-1';
 import {saveSharedSettings,renderSettingsTemplate} from './admin-settings-model.js?v=20261102-settings-1';
 import {saveAttendance} from './admin-attendance-model.js?v=20261102-settings-1';
@@ -1028,43 +1029,14 @@ function actionableFeeReminder(data, now = new Date()) {
     }
     return upcoming && upcoming.diff >= 0 && upcoming.remaining > 0 ? upcoming : null;
 }
-async function openTuitionReminder(id, data, bill) {
-    requireAdmin();
-    // Use the latest loaded balance and oldest unpaid period at the click.
-    // A sent reminder never skips an unpaid month or marks it paid.
-    const latest = adminState.apps.find(entry => entry.id === id);
-    if (!latest || !bill) return;
-    data = latest.data;
-    const current = actionableFeeReminder(data);
-    if (!current || current.key !== bill.key) return;
-    bill = current;
-    const reminderUid = verifiedAdminUid;
-    const digits = String(data.phone || "").replace(/\D/g, "");
-    if (!/^[6-9]\d{9}$/.test(digits)) {
-        window.alert("Student phone must contain 10 digits.");
-        return;
-    }
-    const url = "https://wa.me/91" + digits + "?text=" +
-        encodeURIComponent(tuitionWhatsAppMessage(data, bill));
-    // User gesture opens WhatsApp; this does NOT prove a message was sent.
-    const opened = window.open(url, "_blank");
-    if (opened) opened.opener = null;
-    if (!opened) {
-        window.alert("Pop-up blocked. Please allow WhatsApp pop-ups for this site.");
-        return;
-    }
-    if (window.confirm("WhatsApp opened. Only click OK after you have actually pressed Send in WhatsApp. Record this reminder for the displayed fee period? You can remind again while it is unpaid.")) {
-        try {
-            requireAdmin();
-            if (verifiedAdminUid !== reminderUid) throw new Error("Your session changed. Sign in again before recording reminders.");
-            await updateDoc(doc(db, "applications", id), {
-                ["feeReminders." + bill.key]: new Date().toISOString()
-            });
-            await loadApplications();
-        } catch (error) {
-            window.alert("Reminder status was not saved: " + (error.message || error));
-        }
-    }
+async function openTuitionReminder(id) {
+    requireAdmin();const uid=verifiedAdminUid;
+    try {
+        const {openReminder}=await import('./admin-desk.js?v=20261103-desk-1');
+        requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');
+        const entry=adminState.apps.find(row=>row.id===id);if(!entry)return;
+        openReminder(entry,{identity:()=>verifiedAdminUid&&auth.currentUser?.uid===verifiedAdminUid?{uid:verifiedAdminUid}:null,snapshot:()=>({records:adminState.apps})});
+    } catch(error) { window.alert('Reminder could not open: '+error.message); }
 }
 
 async function recordMonthlyTuition(id, data) {
@@ -1551,12 +1523,16 @@ function renderAdminList() {
                 <button type="button" class="approve-application-btn" data-act="approve" data-next-admission="${nextAdm}" ${approved ? "disabled" : ""}>${approved ? "✓ Approved" : "Approve"}</button>
                 ${tuition ? `<button type="button" class="admin-ghost-btn rc-monthly-action" data-act="monthly-fee" title="Record or update this student’s monthly fee payment">💳 Manage Fee</button>` : ""}
                 ${actionableReminder
-                  ? `<button type="button" class="admin-ghost-btn rc-reminder-action" data-act="monthly-reminder" title="Open WhatsApp reminder for this student's unpaid monthly fee" aria-label="WhatsApp fee reminder for ${escapeHTML(data.fullName || "student")}">🔔 WhatsApp</button>` : ""}
+                  ? `<button type="button" class="admin-ghost-btn rc-reminder-action" data-act="monthly-reminder" title="Open WhatsApp reminder for this student's unpaid monthly fee" aria-label="WhatsApp fee reminder for ${escapeHTML(data.fullName || "student")}">🔔 Fee reminder</button>` : ""}
+                ${studentChatURL(data) ? `<a class="admin-ghost-btn student-whatsapp" data-act="student-whatsapp" href="${escapeHTML(studentChatURL(data))}" target="_blank" rel="noopener noreferrer" aria-label="Open WhatsApp for ${escapeHTML(data.fullName || 'student')}">WhatsApp ↗</a>` : '<button type="button" class="admin-ghost-btn student-whatsapp" disabled title="Add a valid mobile number in Details first">WhatsApp · add number</button>'}
                 <button type="button" class="admin-ghost-btn" data-act="details">Details</button>
                 <button type="button" class="delete-application-btn" data-application-id="${escapeHTML(id)}">Delete</button>
             </div>
         `;
 
+        card.querySelector('[data-act="student-whatsapp"]')?.addEventListener('click',event=>{
+            try {requireAdmin();const current=adminState.apps.find(row=>row.id===id);const url=current&&studentChatURL(current.data);if(!url)throw Error('Save a valid student mobile number first.');event.currentTarget.href=url;}catch(error){event.preventDefault();window.alert(error.message);}
+        });
         card.querySelector("[data-photo-zoom]")?.addEventListener(
             "click",
             () => openAdminPhotoViewer(data.fullName, data.photo, data.admissionNumber)
@@ -1759,7 +1735,7 @@ function openAdminDetails(applicationId) {
     );
 
     const editGroup = modal.querySelector(".admin-edit-fields");
-    modal.querySelector('.admin-class-followup').onclick=async()=>{const uid=verifiedAdminUid;try{requireAdmin();const {openFollowup}=await import('./admin-attendance.js?v=20261102-settings-1');requireAdmin();if(uid!==verifiedAdminUid||!modal.isConnected)return;const entry=adminState.apps.find(a=>a.id===id);if(entry)openFollowup(entry);}catch(error){alert(friendlyError(error));}};
+    modal.querySelector('.admin-class-followup').onclick=async()=>{const uid=verifiedAdminUid;try{requireAdmin();const {openFollowup}=await import('./admin-attendance.js?v=20261103-desk-1');requireAdmin();if(uid!==verifiedAdminUid||!modal.isConnected)return;const entry=adminState.apps.find(a=>a.id===id);if(entry)openFollowup(entry);}catch(error){alert(friendlyError(error));}};
     modal.querySelector(".admin-toggle-edit").addEventListener("click", () => {
         editGroup.hidden = !editGroup.hidden;
         modal.querySelector(".admin-toggle-edit").textContent = editGroup.hidden ? "✎" : "✕";
@@ -2368,6 +2344,7 @@ function adminField(
 ========================================================= */
 
 function deleteApplication(applicationId) {
+    requireAdmin();const deletionUid=verifiedAdminUid;
     const entry = adminState.apps.find(record => record.id === applicationId);
     if (!entry) return;
     const enrolled = adminIsEnrolled(entry.data) || Boolean(entry.data.admissionNumber);
@@ -2379,7 +2356,7 @@ function deleteApplication(applicationId) {
             <h3>Delete ${enrolled ? "student record" : "application"}?</h3>
             <p><strong>${escapeHTML(entry.data.fullName || "Unnamed applicant")}</strong>${entry.data.admissionNumber ? " · ADM " + escapeHTML(String(entry.data.admissionNumber)) : ""}</p>
             <p>This permanently removes this record and its saved fee history. Other students are not affected. This cannot be undone.</p>
-            <form id="adminDeleteForm">
+            <form id="adminDeleteForm"><label class="field">Reason for cancellation / withdrawal<textarea id="cancellationReason" required minlength="3" maxlength="200" placeholder="For example: Student requested cancellation"></textarea></label><p>A notice is prepared only after successful deletion. WhatsApp sending is manual.</p>
                 ${enrolled ? `<label class="field">Type <strong>${escapeHTML(confirmation)}</strong> to confirm<input id="deleteConfirmation" autocomplete="off" required></label>` : '<p class="delete-pending-note">This application has not been enrolled. Confirm below to remove it from awaiting approval.</p>'}
                 <p id="deleteMessage" class="admin-modal-msg" role="alert" hidden></p>
                 <div class="delete-dialog-actions"><button type="button" id="deleteCancel">Keep record</button><button type="submit" class="danger-button" id="deleteConfirm">Delete permanently</button></div>
@@ -2402,9 +2379,13 @@ function deleteApplication(applicationId) {
         button.disabled = true;
         button.textContent = "Deleting…";
         try {
+            const noticeTools=await import('./admin-notices.js?v=20261103-desk-1');
+            requireAdmin();if(verifiedAdminUid!==deletionUid||!modal.isConnected)throw Error('Your session changed.');const noticeUid=verifiedAdminUid;
+            const notice=noticeTools.cancellation(entry,modal.querySelector('#cancellationReason').value,enrolled);
             await deleteDoc(doc(db, "applications", applicationId));
             closeAdminModal(modal);
-            await loadApplications();
+            if(verifiedAdminUid===noticeUid)noticeTools.showCancellation(notice,()=>verifiedAdminUid&&auth.currentUser?.uid===verifiedAdminUid?verifiedAdminUid:null);
+            await loadApplications().catch(()=>window.alert('Record was deleted. Refresh the register to load the latest records.'));
         } catch (error) {
             message.hidden = false;
             message.className = "admin-modal-msg err";
@@ -2521,11 +2502,11 @@ async function addDoc(_collection, data) {
 }
 
 async function deleteDoc(reference) {
-    requireAdmin();
+    requireAdmin();const deletionUid=verifiedAdminUid;
     const original = adminState.apps.find(entry => entry.id === reference.id)?.data;
     if (!original) throw new Error("Refresh the register before deleting.");
     await runTransaction(db, async transaction => {
-        requireAdmin();
+        requireAdmin();if(verifiedAdminUid!==deletionUid)throw Error("Your session changed.");
         const snapshot = await transaction.get(reference);
         if (!snapshot.exists()) throw new Error("Record no longer exists. Refresh the register.");
         // Preserve records changed after the administrator reviewed them.
@@ -2544,6 +2525,7 @@ function friendlyError(error) {
 }
 
 function clearAdminSession() {
+    document.dispatchEvent(new Event("admin-session-cleared"));
     clearSettingsState();
     getElement("settingsLoadWarning")?.remove();
     document.querySelector("#settingsLiveDialog")?.remove();
@@ -2683,13 +2665,15 @@ function updateWorkspace() {
     if (workspaceSection === "overview") {
         const today = indiaCalendarDate();
         const labels = Array.from({ length: 6 }, (_,i) => new Date(Date.UTC(today.year, today.month - 6 + i, 1)));
-        const points = labels.map(month => ({ label: month.toLocaleString("en-IN", { month: "short", timeZone: "UTC" }), count: apps.filter(entry => {
-            if (!recordTime(entry.data.createdAt)) return false;
-            const date = indiaCalendarDate(new Date(recordTime(entry.data.createdAt)));
+        const points = labels.map(month => ({ key:month.toISOString().slice(0,7), label: month.toLocaleString("en-IN", { month: "short", timeZone: "UTC" }), count: apps.filter(entry => {
+            if (!entry.data.admissionNumber) return false;
+            const joined=entry.data.admissionDate||entry.data.approvedAt;
+            if (!recordTime(joined)) return false;
+            const date = indiaCalendarDate(new Date(recordTime(joined)));
             return date.year === month.getUTCFullYear() && date.month === month.getUTCMonth() + 1;
         }).length }));
         const maximum = Math.max(1, ...points.map(point => point.count));
-        view.innerHTML = `<div class="workspace-overview"><section class="workspace-card"><div class="workspace-card-heading"><div><h2>Admissions overview</h2><p>Applications received in the last six months</p></div><span class="workspace-period">India time</span></div><div class="workspace-chart" role="img" aria-label="${escapeHTML(points.map(p => p.label + ' ' + p.count).join(', '))}">${points.map(point => `<div class="workspace-column"><div class="workspace-bar" style="height:${Math.max(1,point.count / maximum * 80)}%"><b>${point.count}</b></div><span>${point.label}</span></div>`).join("")}</div></section><section class="workspace-card"><h2>Quick actions</h2><p>Keep the day moving.</p><button class="workspace-quick" data-go="add"><span>${workspaceIcon("plus")}</span><div><strong>Add offline student</strong><small>Register a walk-in admission</small></div><b>${workspaceIcon("arrowRight")}</b></button><button class="workspace-quick" data-go="admissions"><span>${workspaceIcon("admissions")}</span><div><strong>Review applications</strong><small>${pending.length} awaiting approval</small></div><b>${workspaceIcon("arrowRight")}</b></button><button class="workspace-quick" data-go="fees"><span>${workspaceIcon("fees")}</span><div><strong>Manage fees</strong><small>Payments, balances and reminders</small></div><b>${workspaceIcon("arrowRight")}</b></button></section></div>`;
+        view.innerHTML = `<div class="workspace-overview"><section class="workspace-card"><div class="workspace-card-heading"><div><h2>Admissions overview</h2><p>Students admitted in the last six months</p></div><span class="workspace-period">India time</span></div><div class="workspace-chart" role="group" aria-label="${escapeHTML(points.map(p => p.label + ' ' + p.count).join(', '))}">${points.map(point => `<div class="workspace-column" role="button" tabindex="0" data-admission-month="${point.key}" aria-label="Open ${point.label}: ${point.count} applications"><div class="workspace-bar" style="height:${Math.max(1,point.count / maximum * 80)}%"><b>${point.count}</b></div><span>${point.label}</span></div>`).join("")}</div></section><section class="workspace-card"><h2>Quick actions</h2><p>Keep the day moving.</p><button class="workspace-quick" data-go="add"><span>${workspaceIcon("plus")}</span><div><strong>Add offline student</strong><small>Register a walk-in admission</small></div><b>${workspaceIcon("arrowRight")}</b></button><button class="workspace-quick" data-go="admissions"><span>${workspaceIcon("admissions")}</span><div><strong>Review applications</strong><small>${pending.length} awaiting approval</small></div><b>${workspaceIcon("arrowRight")}</b></button><button class="workspace-quick" data-go="fees"><span>${workspaceIcon("fees")}</span><div><strong>Manage fees</strong><small>Payments, balances and reminders</small></div><b>${workspaceIcon("arrowRight")}</b></button></section></div>`;
         view.querySelectorAll("[data-go]").forEach(button => button.onclick = () => button.dataset.go === "add" ? openAddStudentModal() : selectSection(button.dataset.go));
     } else if (workspaceSection === "courses" || workspaceSection === "batches") {
         const isCourse = workspaceSection === "courses";
@@ -2714,7 +2698,7 @@ function updateWorkspace() {
         });
     } else if (workspaceSection === "attendance") {
         const uid=verifiedAdminUid;view.innerHTML='<p>Loading attendance…</p>';
-        import('./admin-attendance.js?v=20261102-settings-1').then(({mountAttendance})=>{
+        import('./admin-attendance.js?v=20261103-desk-1').then(({mountAttendance})=>{
             if(verifiedAdminUid!==uid||workspaceSection!=='attendance')return;
             const guard=()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');};
             mountAttendance({host:view,assertSession:guard,getRecords:()=>adminState.apps,save:async(id,month,input,expected)=>{guard();const saved=await saveAttendance({db,ref:doc(db,'applications',id),runTransaction,assertSession:guard,actor:uid,month,input,expected});guard();const entry=adminState.apps.find(a=>a.id===id);if(entry)entry.data.monthlyAttendance={...(entry.data.monthlyAttendance||{}),[month]:saved};return saved;}});

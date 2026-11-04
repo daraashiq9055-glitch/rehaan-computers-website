@@ -1,5 +1,5 @@
 import {indiaDate,escapeHTML as e,monthLabel} from './admin-feature-model.js?v=20261102-settings-1';
-import {attendanceValue,attendanceMessage,followupMessage,suggestedNotice} from './admin-attendance-model.js?v=20261102-settings-1';
+import {attendanceValue,attendanceMessage,followupMessage,suggestedNotice} from './admin-attendance-model.js?v=20261103-desk-1';
 import {whatsappURL} from './admin-receipt-image.js?v=20261102-settings-1';
 export function openFollowup(entry){
  document.querySelector('#classFollowupDialog')?.remove();const dialog=document.createElement('dialog');dialog.id='classFollowupDialog';dialog.className='rc-feature-dialog';

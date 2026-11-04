@@ -1,6 +1,6 @@
 """Check the complete admin release; deploy only with --deploy after every check passes."""
 from pathlib import Path
-import argparse, os, re, shutil, subprocess, sys
+import argparse, os, re, shutil, subprocess, sys, json, urllib.request
 ROOT=Path(__file__).resolve().parent
 
 def run(args, *, cwd=ROOT, env=None):
@@ -13,6 +13,14 @@ def tool(name):
     if not value:raise RuntimeError(f'{name} is not installed or not available in CMD.')
     return value
 
+def check_notifications():
+    request=urllib.request.Request('https://rehaan-website-updates.daraashiq9055.workers.dev/health',headers={'Origin':'https://rehaan-computers.web.app'})
+    try:
+        with urllib.request.urlopen(request,timeout=30) as response:
+            if not json.load(response).get('ok'):raise ValueError('not ready')
+    except Exception:
+        raise RuntimeError('Browser notifications are not connected. Complete setup-notifications.py with your local sender key before deploying this release; see docs/next-admin-release.md.')
+
 def main():
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--deploy',action='store_true',help='After successful checks, publish Firestore rules and the full Hosting candidate.')
@@ -23,6 +31,7 @@ def main():
         match=re.search(r'version "(\d+)',version.stdout+version.stderr)
         if version.returncode or not match or int(match[1])<21:
             raise RuntimeError('Java 21 or newer is required for the local Firestore emulator. Install a JDK 21, reopen CMD, then run this command again.')
+        if args.deploy:check_notifications()
         print('Checking code and building a separate candidate. No student data will be migrated.',flush=True)
         run([node,'--test',*[str(p) for p in sorted((ROOT/'tests').glob('*.test.mjs'))]])
         run([node,'tests/admin-fees.test.cjs'])

@@ -35,3 +35,6 @@ build/rehaan-marks-preview.zip
 **/*service-account*.json
 **/credentials.json
 security-artifacts/
+
+# Local notification deployment bindings (sender keys must stay outside this repo).
+backend/notifications/wrangler.local.toml
