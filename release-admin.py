@@ -14,10 +14,10 @@ def tool(name):
     return value
 
 def check_notifications():
-    request=urllib.request.Request('https://rehaan-website-updates.daraashiq9055.workers.dev/health',headers={'Origin':'https://rehaan-computers.web.app'})
     try:
-        with urllib.request.urlopen(request,timeout=30) as response:
-            if not json.load(response).get('ok'):raise ValueError('not ready')
+        curl=tool('curl')
+        result=subprocess.run([curl,'-fsS','--max-time','30','-H','Origin: https://rehaan-computers.web.app','https://rehaan-website-updates.daraashiq9055.workers.dev/health'],capture_output=True,text=True)
+        if result.returncode or not json.loads(result.stdout).get('ok'):raise ValueError('not ready')
     except Exception:
         raise RuntimeError('Browser notifications are not connected. Complete setup-notifications.py with your local sender key before deploying this release; see docs/next-admin-release.md.')
 

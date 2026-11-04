@@ -52,13 +52,14 @@ def main():
   run('deploy')
   print('Saving the FCM sender credentials as Worker secrets. Values will not be printed.',flush=True)
   run('secret','bulk',input=json.dumps({'FCM_CLIENT_EMAIL':credentials['client_email'],'FCM_PRIVATE_KEY':credentials['private_key']}))
-  request=urllib.request.Request('https://rehaan-website-updates.daraashiq9055.workers.dev/health',headers={'Origin':'https://rehaan-computers.web.app'})
-  try:
-   with urllib.request.urlopen(request,timeout=30) as response:
-    if not json.load(response).get('ok'):raise ValueError('Notification health check did not pass.')
-  except urllib.error.HTTPError as error:
-   detail=error.read().decode('utf-8','replace')[:500]
-   raise ValueError('Notification health check returned HTTP '+str(error.code)+': '+detail)
+  curl=shutil.which('curl')
+  if not curl:raise ValueError('curl is required for the Cloudflare health check.')
+  health=subprocess.run([curl,'-fsS','--max-time','30','-H','Origin: https://rehaan-computers.web.app','https://rehaan-website-updates.daraashiq9055.workers.dev/health'],capture_output=True,text=True)
+  if health.returncode:
+   raise ValueError('Notification health check failed: '+(health.stderr.strip() or 'curl exit '+str(health.returncode)))
+  try:ready=json.loads(health.stdout)
+  except json.JSONDecodeError:raise ValueError('Notification health check returned an unreadable response.')
+  if not ready.get('ok'):raise ValueError('Notification health check did not pass: '+health.stdout[:500])
   print('Worker configured. No notification was sent and no student/payment records were touched. Run python release-admin.py --deploy for website checks and publication.',flush=True)
  except (ValueError,OSError,subprocess.CalledProcessError) as error:
   print('Setup stopped. '+('A Cloudflare command failed; review its output.' if isinstance(error,subprocess.CalledProcessError) else str(error)),file=sys.stderr);sys.exit(1)
