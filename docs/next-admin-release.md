@@ -47,7 +47,7 @@ If any check fails, stop and share the non-secret error output. No skip flag.
   an explanation; they are not counted as subscribers.
 - No student data is included. Subscribers are separate from Firestore records.
 - Reports → Load follower count authenticates the admin against Firestore rules.
-  Review each announcement and confirm sending. Sends are batches of 25 with a
+  Review each announcement and confirm sending. Sends are batches of 10 with a
   stable campaign ID; retry skips claimed deliveries. If a network crash leaves
   a send uncertain, it is not automatically resent. Creating a new campaign can
   resend to those devices; review the outcome before doing so.
@@ -97,3 +97,17 @@ Live browser-push delivery remains unverified until the sender service is
 configured and a consenting test browser subscribes. No real notification has
 been sent. Firestore emulator verification remains a mandatory local release
 step; this workspace previously could not download Google's emulator.
+
+## Notification completion check
+
+The Cloudflare runtime entry point is tested with its real ExecutionContext
+argument. Broadcast batches are limited to 10 to leave room for database and
+provider requests on the free Worker tier. Seven focused notification tests pass,
+including the private-browser test: it requires a verified admin plus that
+browser's subscription management secret, and cannot target other followers.
+
+After setup and the guarded website deployment, follow the homepage on your own
+browser, then open Reports → Load follower count → Test on this browser. The test
+sends only to your subscribing browser. Look for “the test update arrived” or the
+actual device notification before publishing an announcement. Provider acceptance
+alone is not delivery confirmation. Do not share the private JSON key in chat.

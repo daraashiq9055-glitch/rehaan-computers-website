@@ -56,10 +56,18 @@ export async function handleRequest(request,env,fetcher=fetch){
    const response=await fcm(env,d.token,{title:'Rehaan Computers',body:'Subscription verification',path:'/'},true,fetcher);if(!response.ok)throw new HttpError(400,'This browser subscription could not be verified. Try again.');
    const saved=await env.DB.prepare('INSERT INTO subscribers(id,token,management_hash,created_at,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET updated_at=excluded.updated_at WHERE management_hash=excluded.management_hash').bind(id,d.token,management,now,now).run();if(!saved.meta.changes)throw new HttpError(409,'Subscription ownership changed.');return reply(200,{subscribed:true});
   }
+  if(path==='/admin/test'){
+   if(typeof d.token!=='string'||!/^[a-zA-Z0-9_:.-]{40,4096}$/.test(d.token)||!/^\w{64}$/.test(d.secret||'')||!/^[-a-zA-Z0-9]{16,80}$/.test(d.testId||''))throw new HttpError(400,'Follow the website on this browser before testing.');
+   const id=await hash(d.token),management=await hash(d.secret),record=await env.DB.prepare('SELECT management_hash FROM subscribers WHERE id=?').bind(id).first();
+   if(!record||record.management_hash!==management)throw new HttpError(403,'This browser does not have a verified subscription.');
+   const response=await fcm(env,d.token,{title:'Rehaan Computers',body:'Test update: your browser is connected to institute notifications.',path:'/',testId:d.testId},false,fetcher);
+   if(!response.ok)throw new HttpError(503,'Test could not be accepted. Check the sender permissions and this browser subscription.');
+   return reply(200,{accepted:true,note:'Sent only to the verified browser subscription. Provider acceptance does not confirm delivery.'});
+  }
   if(path==='/admin/send'){
    const n=validateNotice(d);await env.DB.prepare('INSERT OR IGNORE INTO campaigns(id,title,body,path,created_at,created_by) VALUES(?,?,?,?,?,?)').bind(n.id,n.title,n.body,n.path,now,uid).run();
    const saved=await env.DB.prepare('SELECT * FROM campaigns WHERE id=?').bind(n.id).first();if(saved.title!==n.title||saved.body!==n.body||saved.path!==n.path||saved.created_by!==uid)throw new HttpError(409,'This update ID is already in use.');
-   const rows=await env.DB.prepare('SELECT id,token FROM subscribers WHERE created_at<=? AND id NOT IN (SELECT subscriber_id FROM deliveries WHERE campaign_id=?) ORDER BY id LIMIT 25').bind(saved.created_at,n.id).all();let accepted=0,unknown=0,expired=0;
+   const rows=await env.DB.prepare('SELECT id,token FROM subscribers WHERE created_at<=? AND id NOT IN (SELECT subscriber_id FROM deliveries WHERE campaign_id=?) ORDER BY id LIMIT 10').bind(saved.created_at,n.id).all();let accepted=0,unknown=0,expired=0;
    for(const row of rows.results){
     const claim=await env.DB.prepare('INSERT OR IGNORE INTO deliveries(campaign_id,subscriber_id,state,updated_at) VALUES(?,?,?,?)').bind(n.id,row.id,'processing',now).run();if(!claim.meta.changes)continue;
     let state='unknown';try{const response=await fcm(env,row.token,{title:n.title,body:n.body,path:n.path},false,fetcher);if(response.ok){state='accepted';accepted++;}else{const error=await response.json();if(error.error?.details?.some(d=>d.errorCode==='UNREGISTERED')){state='expired';expired++;await env.DB.prepare('DELETE FROM subscribers WHERE id=?').bind(row.id).run();}else unknown++;}}catch{unknown++;}
@@ -70,4 +78,5 @@ export async function handleRequest(request,env,fetcher=fetch){
   throw new HttpError(404,'Not found.');
  }catch(error){return reply(error.status||503,{error:error.status?error.message:'Notification service is temporarily unavailable.'});}
 }
-export default {fetch:handleRequest};
+// Cloudflare supplies an ExecutionContext as the third argument, not a fetch function.
+export default {fetch(request,env){return handleRequest(request,env);}};
