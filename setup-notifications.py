@@ -1,6 +1,6 @@
 """Configure the separate notification Worker using a local FCM sender key."""
 from pathlib import Path
-import argparse,json,os,shutil,subprocess,sys,urllib.request
+import argparse,json,os,shutil,subprocess,sys,urllib.error,urllib.request
 ROOT=Path(__file__).resolve().parent
 FOLDER=ROOT/'backend/notifications'
 
@@ -16,18 +16,35 @@ def main():
   config=FOLDER/'wrangler.local.toml'
   if not config.exists():config.write_text((FOLDER/'wrangler.toml').read_text(encoding='utf-8'),encoding='utf-8')
   env=os.environ.copy();env['WRANGLER_SEND_METRICS']='false';env['WRANGLER_LOG']='error'
-  def run(*args,input=None):subprocess.run([npx,'--yes','wrangler@4.151.1',*args,'--config',str(config)],cwd=ROOT,env=env,input=input,text=True,check=True)
+  def command(*args):return [npx,'--yes','wrangler@4.151.1',*args,'--config',str(config)]
+  def run(*args,input=None):subprocess.run(command(*args),cwd=ROOT,env=env,input=input,text=True,check=True)
+  def capture(*args):return subprocess.run(command(*args),cwd=ROOT,env=env,text=True,check=True,capture_output=True).stdout
   print('Signing in to Cloudflare for the separate website-updates service.',flush=True)
   run('login')
   if 'database_id' not in config.read_text(encoding='utf-8'):
-   run('d1','create','rehaan-website-updates','--binding','DB','--location','apac','--update-config')
+   # --update-config does not update some Windows/TOML combinations. Reuse an
+   # existing database by ID instead of creating a duplicate.
+   databases=json.loads(capture('d1','list','--json'))
+   match=next((row for row in databases if row.get('name')=='rehaan-website-updates'),None)
+   if not match:
+    run('d1','create','rehaan-website-updates','--binding','DB','--location','apac','--update-config')
+    databases=json.loads(capture('d1','list','--json'))
+    match=next((row for row in databases if row.get('name')=='rehaan-website-updates'),None)
+   database_id=(match or {}).get('uuid') or (match or {}).get('id')
+   if not database_id:raise ValueError('The notification database exists but its ID could not be read. Nothing was deployed.')
+   with config.open('a',encoding='utf-8',newline='\n') as file:
+    file.write('\n[[d1_databases]]\nbinding = "DB"\ndatabase_name = "rehaan-website-updates"\ndatabase_id = '+json.dumps(database_id)+'\n')
   run('d1','execute','rehaan-website-updates','--remote','--file',str(FOLDER/'schema.sql'),'--yes')
   run('deploy')
   print('Saving the FCM sender credentials as Worker secrets. Values will not be printed.',flush=True)
   run('secret','bulk',input=json.dumps({'FCM_CLIENT_EMAIL':credentials['client_email'],'FCM_PRIVATE_KEY':credentials['private_key']}))
   request=urllib.request.Request('https://rehaan-website-updates.daraashiq9055.workers.dev/health',headers={'Origin':'https://rehaan-computers.web.app'})
-  with urllib.request.urlopen(request,timeout=30) as response:
-   if not json.load(response).get('ok'):raise ValueError('Notification health check did not pass.')
+  try:
+   with urllib.request.urlopen(request,timeout=30) as response:
+    if not json.load(response).get('ok'):raise ValueError('Notification health check did not pass.')
+  except urllib.error.HTTPError as error:
+   detail=error.read().decode('utf-8','replace')[:500]
+   raise ValueError('Notification health check returned HTTP '+str(error.code)+': '+detail)
   print('Worker configured. No notification was sent and no student/payment records were touched. Run python release-admin.py --deploy for website checks and publication.',flush=True)
  except (ValueError,OSError,subprocess.CalledProcessError) as error:
   print('Setup stopped. '+('A Cloudflare command failed; review its output.' if isinstance(error,subprocess.CalledProcessError) else str(error)),file=sys.stderr);sys.exit(1)
