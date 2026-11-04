@@ -13,7 +13,7 @@ Run from the repository root in Windows CMD:
 
 ```bat
 git pull --ff-only
-python patches/whatsapp-current.py
+python patches/whatsapp-current.py --deploy
 ```
 
 The script identifies the local build matching the live admin page and verifies
@@ -24,14 +24,12 @@ admin-next/ui.js plus two new WhatsApp helper/style files. It does not include
 unreleased follower/notification features, new rules or payment code changes.
 The existing inline scripts and CSP hashes are preserved.
 
-Only after it prints Ready:
-
-```bat
-cd build\whatsapp-release
-npx --yes firebase-tools@15.34.0 deploy --only hosting --project rehaan-computers
-```
+The `--deploy` option runs Firebase Hosting only from the generated patch folder,
+after every verification passes. There is no manual folder change. Omit this
+option to prepare files without publishing. A mismatch or patch failure prevents
+the deployment command from running. The Monday colours/layout remain intact.
 
 For a build stored elsewhere, specify `--source "C:\absolute\release-folder"`.
-No deployment occurs while preparing or testing the patch. Keep the original
+Preparation and tests do not publish; deployment requires --deploy. Keep the original
 release folder for Hosting rollback. A Hosting rollback does not restore deleted
 student records or undo payments.

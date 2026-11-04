@@ -1,7 +1,7 @@
 """Prepare a small WhatsApp fix from the exact currently deployed local release."""
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-import argparse,datetime,hashlib,json,shutil,urllib.request,urllib.parse
+import argparse,datetime,hashlib,json,shutil,subprocess,urllib.request,urllib.parse
 ROOT=Path(__file__).resolve().parents[1]
 LIVE='https://rehaan-computers.web.app/'
 VERSION='20261104-whatsapp-1'
@@ -47,7 +47,7 @@ def patch(public):
  (public/'admin-whatsapp.css').write_text('.student-whatsapp{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 14px;border:1px solid #63c6a455;border-radius:10px;background:#21443955;color:#d9f5e7;text-decoration:none;font:600 12px Inter,Arial,sans-serif}.student-whatsapp:focus-visible{outline:2px solid #f6db9b;outline-offset:3px}\n',encoding='utf-8')
 
 def main():
- parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--source',help='Folder containing firebase.json and public from the last deployment; normally auto-detected.');args=parser.parse_args()
+ parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('--source',help='Folder containing firebase.json and public from the last deployment; normally auto-detected.');parser.add_argument('--deploy',action='store_true',help='After verification, deploy Hosting from the prepared patch folder only.');args=parser.parse_args()
  if args.source:source=(ROOT/args.source).resolve()
  else:
   with urllib.request.urlopen(LIVE+'admin.html',timeout=30) as response:live_html=response.read()
@@ -57,7 +57,9 @@ def main():
  public=source/'public';output=ROOT/'build/whatsapp-release'
  if not (source/'firebase.json').is_file() or not (public/'admin-next/ui.js').is_file():raise ValueError('Could not find your Monday release at '+str(source)+'. Run with --source followed by the folder you deployed. Nothing was deployed.')
  print('Verifying local release files against the live website. No records are read or changed.',flush=True)
- config=json.loads((source/'firebase.json').read_text(encoding='utf-8'));ignored=config.get('hosting',{}).get('ignore',[])
+ config=json.loads((source/'firebase.json').read_text(encoding='utf-8'))
+ if not isinstance(config.get('hosting'),dict) or config['hosting'].get('public')!='public':raise ValueError('Unexpected Hosting folder configuration. Nothing was deployed.')
+ ignored=config['hosting'].get('ignore',[])
  import fnmatch
  files=[p for p in public.rglob('*') if p.is_file() and not any(fnmatch.fnmatch(p.relative_to(public).as_posix(),pattern) or fnmatch.fnmatch(p.name,pattern.removeprefix('**/')) for pattern in ignored)]
  def verify(path):
@@ -68,7 +70,16 @@ def main():
  if output.exists():output.rename(output.with_name('whatsapp-release-backup-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S')))
  shutil.copytree(source,output);patch(output/'public')
  (output/'WHATSAPP-PATCH.json').write_text(json.dumps({'version':VERSION,'source':str(source),'verifiedFiles':len(files)},indent=2),encoding='utf-8')
- print('Ready: '+str(output)+'\nOnly WhatsApp UI/link files changed. Nothing deployed.\nNext: cd build\\whatsapp-release\nnpx --yes firebase-tools@15.34.0 deploy --only hosting --project rehaan-computers',flush=True)
+ print('Ready: '+str(output)+'\nOnly WhatsApp UI/link files changed.',flush=True)
+ if args.deploy:
+  npx=shutil.which('npx')
+  if not npx:raise ValueError('Node/npm is required. Nothing was deployed.')
+  print('Deploying the verified WhatsApp-only folder. Monday colours and layout are retained.',flush=True)
+  subprocess.run([npx,'--yes','firebase-tools@15.34.0','deploy','--only','hosting','--project','rehaan-computers'],cwd=output,check=True)
+  print('Hosting command completed. Reload the admin page and check both WhatsApp actions.',flush=True)
+ else:
+  print('Nothing deployed. To verify and deploy from the correct folder automatically: python patches/whatsapp-current.py --deploy',flush=True)
+
 if __name__=='__main__':
  try:main()
  except Exception as error:raise SystemExit('Stopped: '+str(error))
