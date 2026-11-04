@@ -11,3 +11,8 @@ CREATE TABLE IF NOT EXISTS deliveries (
  state TEXT NOT NULL, updated_at TEXT NOT NULL,
  PRIMARY KEY (campaign_id, subscriber_id)
 );
+CREATE TABLE IF NOT EXISTS website_metrics (
+ day TEXT PRIMARY KEY,
+ page_views INTEGER NOT NULL DEFAULT 0,
+ last_seen TEXT NOT NULL
+);

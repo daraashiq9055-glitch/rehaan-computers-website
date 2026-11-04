@@ -17,6 +17,15 @@ async function fcm(env,token,data,validate,fetcher){
  const bearer=await access(env,fetcher);
  return fetcher(`https://fcm.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/messages:send`,{method:'POST',headers:{Authorization:'Bearer '+bearer,'Content-Type':'application/json'},body:JSON.stringify({validate_only:validate,message:{token,data,webpush:{headers:{TTL:'86400'}}}}),signal:AbortSignal.timeout(10000)});
 }
+async function fcmFailure(response){
+ let payload={};try{payload=await response.clone().json();}catch{}
+ const status=String(payload.error?.status||'').toUpperCase();
+ const detail=payload.error?.details?.map(row=>row?.errorCode).find(Boolean)||'';
+ if(response.status===403||status==='PERMISSION_DENIED')return {code:'sender_permission',message:'Notification sender permission is not active yet. Enable the Firebase Cloud Messaging API and confirm the sender role.'};
+ if(detail==='SENDER_ID_MISMATCH')return {code:'sender_mismatch',message:'This browser token belongs to a different Firebase sender. Reload the website and try again.'};
+ if(detail==='UNREGISTERED')return {code:'token_expired',message:'This browser subscription expired. Reload the website and follow again.'};
+ return {code:'provider_rejected',message:'The notification provider rejected this browser subscription. Reload and try again.'};
+}
 async function admin(request,env,fetcher){
  const auth=request.headers.get('Authorization')||'';if(!/^Bearer [A-Za-z0-9_.-]+$/.test(auth)||auth.length>8192)throw new HttpError(401,'Sign in as an administrator.');let uid;
  try{const raw=auth.slice(7).split('.')[1];uid=JSON.parse(atob(raw.replace(/-/g,'+').replace(/_/g,'/'))).sub;if(typeof uid!=='string'||!uid||uid.length>128)throw Error();}catch{throw new HttpError(401,'Invalid sign-in.');}
@@ -47,13 +56,23 @@ export async function handleRequest(request,env,fetcher=fetch){
   if(path==='/admin/stats'&&request.method==='GET'){
    const count=await env.DB.prepare('SELECT COUNT(*) AS count FROM subscribers').first();return reply(200,{subscribedBrowsers:count.count,asOf:new Date().toISOString(),definition:'Subscribed browsers/devices, not unique people. Stale subscriptions are removed when FCM reports them invalid.'});
   }
+  if(path==='/admin/visits'&&request.method==='GET'){
+   const month=new URL(request.url).searchParams.get('month')||'';if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new HttpError(400,'Choose a valid report month.');
+   const rows=await env.DB.prepare('SELECT day,page_views FROM website_metrics WHERE day LIKE ? ORDER BY day').bind(month+'-%').all();
+   const days=rows.results.map(row=>({day:row.day,pageViews:row.page_views}));
+   return reply(200,{month,days,totalPageViews:days.reduce((sum,row)=>sum+row.pageViews,0),definition:'Page views, not unique people. Reloads and repeat visits may count again. No visitor identity is stored.'});
+  }
   if(request.method!=='POST')throw new HttpError(405,'Method not allowed.');const d=await body(request),now=new Date().toISOString();
+  if(path==='/visit'){
+   const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+   await env.DB.prepare('INSERT INTO website_metrics(day,page_views,last_seen) VALUES(?,1,?) ON CONFLICT(day) DO UPDATE SET page_views=page_views+1,last_seen=excluded.last_seen').bind(day,now).run();return reply(200,{recorded:true});
+  }
   if(path==='/subscribe'||path==='/unsubscribe'){
    if(typeof d.token!=='string'||!/^[a-zA-Z0-9_:.-]{40,4096}$/.test(d.token)||!/^\w{64}$/.test(d.secret||''))throw new HttpError(400,'Invalid subscription.');
    const id=await hash(d.token),management=await hash(d.secret),prior=await env.DB.prepare('SELECT management_hash FROM subscribers WHERE id=?').bind(id).first();
    if(prior&&prior.management_hash!==management)throw new HttpError(403,'This subscription belongs to another browser profile.');
    if(path==='/unsubscribe'){await env.DB.prepare('DELETE FROM subscribers WHERE id=? AND management_hash=?').bind(id,management).run();return reply(200,{subscribed:false});}
-   const response=await fcm(env,d.token,{title:'Rehaan Computers',body:'Subscription verification',path:'/'},true,fetcher);if(!response.ok)throw new HttpError(400,'This browser subscription could not be verified. Try again.');
+   const response=await fcm(env,d.token,{title:'Rehaan Computers',body:'Subscription verification',path:'/'},true,fetcher);if(!response.ok){const failure=await fcmFailure(response);const error=new HttpError(response.status===403?503:400,failure.message);error.code=failure.code;throw error;}
    const saved=await env.DB.prepare('INSERT INTO subscribers(id,token,management_hash,created_at,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET updated_at=excluded.updated_at WHERE management_hash=excluded.management_hash').bind(id,d.token,management,now,now).run();if(!saved.meta.changes)throw new HttpError(409,'Subscription ownership changed.');return reply(200,{subscribed:true});
   }
   if(path==='/admin/test'){
@@ -76,7 +95,7 @@ export async function handleRequest(request,env,fetcher=fetch){
    const remaining=await env.DB.prepare('SELECT COUNT(*) AS count FROM subscribers WHERE created_at<=? AND id NOT IN (SELECT subscriber_id FROM deliveries WHERE campaign_id=?)').bind(saved.created_at,n.id).first();const uncertain=await env.DB.prepare("SELECT COUNT(*) AS count FROM deliveries WHERE campaign_id=? AND state IN ('processing','unknown')").bind(n.id).first();return reply(200,{accepted,unknown,expired,uncertainTotal:uncertain.count,remaining:remaining.count,note:'Accepted by FCM does not confirm delivery or reading. Uncertain sends are not retried automatically.'});
   }
   throw new HttpError(404,'Not found.');
- }catch(error){return reply(error.status||503,{error:error.status?error.message:'Notification service is temporarily unavailable.'});}
+ }catch(error){return reply(error.status||503,{error:error.status?error.message:'Notification service is temporarily unavailable.',...(error.code?{code:error.code}:{})});}
 }
 // Cloudflare supplies an ExecutionContext as the third argument, not a fetch function.
 export default {fetch(request,env){return handleRequest(request,env);}};

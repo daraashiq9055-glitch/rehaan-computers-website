@@ -1,21 +1,25 @@
 import {updatesConfig as config} from './updates-config.js';
-const panel=document.querySelector('#websiteUpdates'),button=panel?.querySelector('button'),status=panel?.querySelector('[role=status]'),key='rehaan-browser-updates-v1';
+const panel=document.querySelector('#websiteUpdates'),buttons=[...document.querySelectorAll('[data-updates-button]')],status=panel?.querySelector('[role=status]'),key='rehaan-browser-updates-v1';
 let state=null;try{state=JSON.parse(localStorage.getItem(key)||'null');}catch{}
-const render=()=>{button.textContent=state?.subscribed?'Manage updates':'Follow for updates';};
+const render=()=>buttons.forEach(button=>{const compact=!button.closest('#websiteUpdates');button.textContent=state?.subscribed?(compact?'Following':'Manage updates'):(compact?'Follow':'Follow for updates');button.setAttribute('aria-pressed',String(Boolean(state?.subscribed)));});
 async function api(path,data){const response=await fetch(config.endpoint+path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal:AbortSignal.timeout(20000)});const result=await response.json();if(!response.ok)throw Error(result.error||'Could not connect. Please try again later.');return result;}
+// Privacy-safe traffic metric: one page view request per page load. The server
+// stores only a daily counter; no visitor identity, token, IP or page history.
+if(window.top===window)setTimeout(()=>fetch(config.endpoint+'/visit',{method:'POST',headers:{'Content-Type':'application/json'},body:'{}',keepalive:true}).catch(()=>{}),1200);
 let messaging;
 async function client(){const [{initializeApp,getApps},{getMessaging,isSupported,getToken,deleteToken,onMessage}]=await Promise.all([import('https://www.gstatic.com/firebasejs/12.2.1/firebase-app.js'),import('https://www.gstatic.com/firebasejs/12.2.1/firebase-messaging.js')]);if(!await isSupported())throw Error('Notifications are not supported in this browser. On iPhone or iPad, add this website to your Home Screen and open it there.');if(!messaging){const app=getApps().find(a=>a.name==='website-updates')||initializeApp(config.firebase,'website-updates');messaging=getMessaging(app);onMessage(messaging,payload=>{status.textContent=(payload.data?.title||'Institute update')+': '+(payload.data?.body||'');});}return {messaging,getToken,deleteToken};}
-if(button){render();button.onclick=async()=>{
- if(state?.subscribed){if(!confirm('Stop website updates on this browser?'))return;button.disabled=true;try{await api('/unsubscribe',{token:state.token,secret:state.secret});state={secret:state.secret};localStorage.setItem(key,JSON.stringify(state));try{const sdk=await client();await sdk.deleteToken(sdk.messaging);}catch{}status.textContent='You have unfollowed on this browser.';}catch(error){status.textContent=error.message;}finally{button.disabled=false;render();}return;}
+if(buttons.length&&panel){render();buttons.forEach(button=>button.onclick=async()=>{
+ const setBusy=value=>buttons.forEach(item=>item.disabled=value);
+ if(state?.subscribed){if(!confirm('Stop website updates on this browser?'))return;setBusy(true);try{await api('/unsubscribe',{token:state.token,secret:state.secret});state={secret:state.secret};localStorage.setItem(key,JSON.stringify(state));try{const sdk=await client();await sdk.deleteToken(sdk.messaging);}catch{}status.textContent='You have unfollowed on this browser.';}catch(error){status.textContent=error.message;}finally{setBusy(false);render();}return;}
  if(!isSecureContext||!('Notification' in window)||!('serviceWorker' in navigator)){status.textContent='This browser cannot receive updates. On iPhone/iPad, add this site to your Home Screen and open it there. You can also use our WhatsApp contact links.';return;}
  if(Notification.permission==='denied'){status.textContent='Notifications are blocked. Allow them in your browser’s site settings, then try again.';return;}
- button.disabled=true;status.textContent='Waiting for your permission…';
+ setBusy(true);status.textContent='Waiting for your permission…';
  try{const permission=await Notification.requestPermission();if(permission!=='granted'){status.textContent='You are not subscribed. You can choose to follow later.';return;}
  const sdk=await client(),registration=await navigator.serviceWorker.register('/website-updates-sw.js',{scope:'/website-updates/',updateViaCache:'none'});
  if(!registration.active)await new Promise((resolve,reject)=>{const worker=registration.installing||registration.waiting;if(!worker){reject(Error('Notification worker could not start.'));return;}const timer=setTimeout(()=>reject(Error('Notification worker is still loading. Please try again.')),20000);worker.addEventListener('statechange',()=>{if(worker.state==='activated'){clearTimeout(timer);resolve();}else if(worker.state==='redundant'){clearTimeout(timer);reject(Error('Notification worker could not start.'));}});});
  const token=await sdk.getToken(sdk.messaging,{vapidKey:config.vapidKey,serviceWorkerRegistration:registration});if(!token)throw Error('This browser could not create a subscription.');
  const secret=state?.secret||Array.from(crypto.getRandomValues(new Uint8Array(32)),v=>v.toString(16).padStart(2,'0')).join('');
  // Save the management credential before registering, so a storage error cannot strand a subscription.
- localStorage.setItem(key,JSON.stringify({secret,token,subscribed:false}));state={secret,token,subscribed:false};await api('/subscribe',{token,secret});state.subscribed=true;localStorage.setItem(key,JSON.stringify(state));status.textContent='You’re following Rehaan Computers on this browser. Use Manage updates to stop at any time.';
- }catch(error){status.textContent=error.name==='TimeoutError'?'Updates service is taking too long. Please try again later.':error.message||'Updates could not connect. Please try later.';}finally{button.disabled=false;render();}
-};}
+ localStorage.setItem(key,JSON.stringify({secret,token,subscribed:false}));state={secret,token,subscribed:false};await api('/subscribe',{token,secret});state.subscribed=true;localStorage.setItem(key,JSON.stringify(state));status.textContent='You’re following Rehaan Computers on this browser. Use Manage updates to stop at any time.';panel.classList.remove('is-followed');requestAnimationFrame(()=>panel.classList.add('is-followed'));setTimeout(()=>panel.classList.remove('is-followed'),1700);
+ }catch(error){status.textContent=error.name==='TimeoutError'?'Updates service is taking too long. Please try again later.':error.message||'Updates could not connect. Please try later.';}finally{setBusy(false);render();}
+});}

@@ -1032,7 +1032,7 @@ function actionableFeeReminder(data, now = new Date()) {
 async function openTuitionReminder(id) {
     requireAdmin();const uid=verifiedAdminUid;
     try {
-        const {openReminder}=await import('./admin-desk.js?v=20261103-desk-1');
+        const {openReminder}=await import('./admin-desk.js?v=20261104-follow-2');
         requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');
         const entry=adminState.apps.find(row=>row.id===id);if(!entry)return;
         openReminder(entry,{identity:()=>verifiedAdminUid&&auth.currentUser?.uid===verifiedAdminUid?{uid:verifiedAdminUid}:null,snapshot:()=>({records:adminState.apps})});
@@ -1735,7 +1735,7 @@ function openAdminDetails(applicationId) {
     );
 
     const editGroup = modal.querySelector(".admin-edit-fields");
-    modal.querySelector('.admin-class-followup').onclick=async()=>{const uid=verifiedAdminUid;try{requireAdmin();const {openFollowup}=await import('./admin-attendance.js?v=20261103-desk-1');requireAdmin();if(uid!==verifiedAdminUid||!modal.isConnected)return;const entry=adminState.apps.find(a=>a.id===id);if(entry)openFollowup(entry);}catch(error){alert(friendlyError(error));}};
+    modal.querySelector('.admin-class-followup').onclick=async()=>{const uid=verifiedAdminUid;try{requireAdmin();const {openFollowup}=await import('./admin-attendance.js?v=20261104-follow-2');requireAdmin();if(uid!==verifiedAdminUid||!modal.isConnected)return;const entry=adminState.apps.find(a=>a.id===id);if(entry)openFollowup(entry);}catch(error){alert(friendlyError(error));}};
     modal.querySelector(".admin-toggle-edit").addEventListener("click", () => {
         editGroup.hidden = !editGroup.hidden;
         modal.querySelector(".admin-toggle-edit").textContent = editGroup.hidden ? "✎" : "✕";
@@ -2379,7 +2379,7 @@ function deleteApplication(applicationId) {
         button.disabled = true;
         button.textContent = "Deleting…";
         try {
-            const noticeTools=await import('./admin-notices.js?v=20261103-desk-1');
+            const noticeTools=await import('./admin-notices.js?v=20261104-follow-2');
             requireAdmin();if(verifiedAdminUid!==deletionUid||!modal.isConnected)throw Error('Your session changed.');const noticeUid=verifiedAdminUid;
             const notice=noticeTools.cancellation(entry,modal.querySelector('#cancellationReason').value,enrolled);
             await deleteDoc(doc(db, "applications", applicationId));
@@ -2698,7 +2698,7 @@ function updateWorkspace() {
         });
     } else if (workspaceSection === "attendance") {
         const uid=verifiedAdminUid;view.innerHTML='<p>Loading attendance…</p>';
-        import('./admin-attendance.js?v=20261103-desk-1').then(({mountAttendance})=>{
+        import('./admin-attendance.js?v=20261104-follow-2').then(({mountAttendance})=>{
             if(verifiedAdminUid!==uid||workspaceSection!=='attendance')return;
             const guard=()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');};
             mountAttendance({host:view,assertSession:guard,getRecords:()=>adminState.apps,save:async(id,month,input,expected)=>{guard();const saved=await saveAttendance({db,ref:doc(db,'applications',id),runTransaction,assertSession:guard,actor:uid,month,input,expected});guard();const entry=adminState.apps.find(a=>a.id===id);if(entry)entry.data.monthlyAttendance={...(entry.data.monthlyAttendance||{}),[month]:saved};return saved;}});

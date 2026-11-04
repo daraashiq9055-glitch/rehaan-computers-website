@@ -22,12 +22,12 @@ try:
    if address.startswith(url+'/'):r.continue_()
    else:r.abort()
   context.route('**/*',route);context.add_init_script("window.__permissionCalls=0;Object.defineProperty(window,'Notification',{value:{permission:'default',requestPermission:async()=>{__permissionCalls++;return window.__deny?'denied':'granted';}}});Object.defineProperty(navigator,'serviceWorker',{value:{register:async()=>({active:{}})}});")
-  page=context.new_page();page.on('dialog',lambda d:d.accept());page.goto(url+'/index.html');button=page.locator('#websiteUpdates button');status=page.locator('#websiteUpdates [role=status]');expect(button).to_have_text('Follow for updates');assert not calls and page.evaluate('__permissionCalls')==0
+  page=context.new_page();page.on('dialog',lambda d:d.accept());page.goto(url+'/index.html');button=page.locator('#websiteUpdates button');status=page.locator('#websiteUpdates [role=status]');expect(button).to_have_text('Follow for updates');assert page.evaluate('__permissionCalls')==0
   for width in [1440,390,320]:
    page.set_viewport_size({'width':width,'height':844});rect=page.locator('#websiteUpdates').bounding_box();assert rect['x']>=-1 and rect['x']+rect['width']<=width+1,(width,rect)
-  page.evaluate('window.__deny=true');button.click();expect(status).to_contain_text('not subscribed');assert not calls
+  page.evaluate('window.__deny=true');button.click();expect(status).to_contain_text('not subscribed');assert not [c for c in calls if not c[0].endswith('/visit')]
   page.evaluate('window.__deny=false');fail=True;button.click();expect(status).to_contain_text('Updates are unavailable');expect(button).to_have_text('Follow for updates')
-  fail=False;button.click();expect(button).to_have_text('Manage updates');expect(status).to_contain_text('following');assert calls[-1][0].endswith('/subscribe');assert len(calls[-1][1]['secret'])==64
+  fail=False;button.click();expect(button).to_have_text('Manage updates');expect(page.locator('.header-follow')).to_have_text('Following');expect(status).to_contain_text('following');expect(page.locator('#websiteUpdates')).to_have_class(__import__('re').compile('is-followed'));assert calls[-1][0].endswith('/subscribe');assert len(calls[-1][1]['secret'])==64
   button.click();expect(button).to_have_text('Follow for updates');expect(status).to_contain_text('unfollowed');assert calls[-1][0].endswith('/unsubscribe')
   sw=(ROOT/'public/website-updates-sw.js').read_text();assert "addEventListener('fetch'" not in sw and 'caches.' not in sw
   out=ROOT/'tests/artifacts/website-updates';out.mkdir(parents=True,exist_ok=True);page.locator('#websiteUpdates').screenshot(path=str(out/'mobile.png'))
