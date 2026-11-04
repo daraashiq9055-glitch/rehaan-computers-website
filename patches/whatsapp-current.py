@@ -1,10 +1,24 @@
 """Prepare a small WhatsApp fix from the exact currently deployed local release."""
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor
-import argparse,datetime,hashlib,json,shutil,subprocess,urllib.request,urllib.parse
+import argparse,datetime,hashlib,json,os,shutil,subprocess,urllib.request,urllib.parse
 ROOT=Path(__file__).resolve().parents[1]
 LIVE='https://rehaan-computers.web.app/'
 VERSION='20261104-whatsapp-1'
+
+def same_file(local,live,name):
+ if local==live:return True
+ if Path(name).suffix.lower() not in {'.html','.js','.css','.json','.svg','.txt','.xml','.webmanifest'}:return False
+ try:return local.decode('utf-8').replace('\r\n','\n')==live.decode('utf-8').replace('\r\n','\n')
+ except UnicodeDecodeError:return False
+
+def release_pages():
+ roots={ROOT,*[p for p in ROOT.parent.glob('rehaan-*') if p.is_dir()]}
+ for root in sorted(roots):
+  for folder,dirs,files in os.walk(root):
+   dirs[:]=[d for d in dirs if d not in {'.git','node_modules','private-assets','.venv','venv','.cache','attachments'}]
+   here=Path(folder)
+   if here.name=='public' and 'admin.html' in files and (here.parent/'firebase.json').is_file():yield here/'admin.html'
 
 def patch(public):
  app=public/'admin-app.js';ui=public/'admin-next/ui.js';html=public/'admin.html'
@@ -51,8 +65,9 @@ def main():
  if args.source:source=(ROOT/args.source).resolve()
  else:
   with urllib.request.urlopen(LIVE+'admin.html',timeout=30) as response:live_html=response.read()
-  candidates=[p.parent.parent for p in (ROOT/'build').glob('*/public/admin.html') if p.read_bytes()==live_html and (p.parent.parent/'firebase.json').is_file()]
-  if not candidates:raise ValueError('No local build matches the live admin page. Use --source with the folder you last deployed, or share the last deployment CMD path. Nothing was changed.')
+  pages=list(release_pages())
+  candidates=[p.parent.parent for p in pages if same_file(p.read_bytes(),live_html,'admin.html')]
+  if not candidates:raise ValueError('No saved release matches the restored Monday page. The old build may have been overwritten. Nothing was changed. Folders checked: '+', '.join(str(p.parent.parent) for p in pages[:12])+'. Paste this output; do not rebuild or deploy root/public.')
   source=max(candidates,key=lambda p:p.stat().st_mtime)
  public=source/'public';output=ROOT/'build/whatsapp-release'
  if not (source/'firebase.json').is_file() or not (public/'admin-next/ui.js').is_file():raise ValueError('Could not find your Monday release at '+str(source)+'. Run with --source followed by the folder you deployed. Nothing was deployed.')
@@ -65,7 +80,7 @@ def main():
  def verify(path):
   relative=path.relative_to(public).as_posix();request=urllib.request.Request(LIVE+urllib.parse.quote(relative),headers={'Cache-Control':'no-cache'})
   with urllib.request.urlopen(request,timeout=30) as response:live=response.read()
-  if hashlib.sha256(live).digest()!=hashlib.sha256(path.read_bytes()).digest():raise ValueError('Local file differs from live: '+relative+'. Stop; select the exact release you last deployed.')
+  if not same_file(path.read_bytes(),live,relative):raise ValueError('Local file differs from live: '+relative+'. Stop; select the exact release you last deployed.')
  with ThreadPoolExecutor(max_workers=4) as pool:list(pool.map(verify,files))
  if output.exists():output.rename(output.with_name('whatsapp-release-backup-'+datetime.datetime.now().strftime('%Y%m%d-%H%M%S')))
  shutil.copytree(source,output);patch(output/'public')
