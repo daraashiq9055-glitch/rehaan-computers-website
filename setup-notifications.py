@@ -1,6 +1,6 @@
 """Configure the separate notification Worker using a local FCM sender key."""
 from pathlib import Path
-import argparse,json,os,shutil,subprocess,sys,urllib.error,urllib.request
+import argparse,json,os,re,shutil,subprocess,sys,urllib.error,urllib.request
 ROOT=Path(__file__).resolve().parent
 FOLDER=ROOT/'backend/notifications'
 
@@ -18,17 +18,27 @@ def main():
   env=os.environ.copy();env['WRANGLER_SEND_METRICS']='false';env['WRANGLER_LOG']='error'
   def command(*args):return [npx,'--yes','wrangler@4.151.1',*args,'--config',str(config)]
   def run(*args,input=None):subprocess.run(command(*args),cwd=ROOT,env=env,input=input,text=True,check=True)
-  def capture(*args):return subprocess.run(command(*args),cwd=ROOT,env=env,text=True,check=True,capture_output=True).stdout
+  def capture_json(*args):
+   result=subprocess.run(command(*args),cwd=ROOT,env=env,text=True,check=True,capture_output=True)
+   output=re.sub(r'\x1b\[[0-9;]*m','',result.stdout+'\n'+result.stderr)
+   decoder=json.JSONDecoder()
+   for index,char in enumerate(output):
+    if char!='[':continue
+    try:
+     value,_=decoder.raw_decode(output[index:])
+     if isinstance(value,list):return value
+    except json.JSONDecodeError:pass
+   raise ValueError('Cloudflare did not return its database list. Run: npx --yes wrangler@4.151.1 d1 list --json --config backend/notifications/wrangler.local.toml')
   print('Signing in to Cloudflare for the separate website-updates service.',flush=True)
   run('login')
   if 'database_id' not in config.read_text(encoding='utf-8'):
    # --update-config does not update some Windows/TOML combinations. Reuse an
    # existing database by ID instead of creating a duplicate.
-   databases=json.loads(capture('d1','list','--json'))
+   databases=capture_json('d1','list','--json')
    match=next((row for row in databases if row.get('name')=='rehaan-website-updates'),None)
    if not match:
     run('d1','create','rehaan-website-updates','--binding','DB','--location','apac','--update-config')
-    databases=json.loads(capture('d1','list','--json'))
+    databases=capture_json('d1','list','--json')
     match=next((row for row in databases if row.get('name')=='rehaan-website-updates'),None)
    database_id=(match or {}).get('uuid') or (match or {}).get('id')
    if not database_id:raise ValueError('The notification database exists but its ID could not be read. Nothing was deployed.')
