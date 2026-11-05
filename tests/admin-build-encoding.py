@@ -5,6 +5,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+import subprocess
 
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('release_builder',ROOT/'prepare-admin-release.py')
@@ -30,6 +31,17 @@ class ReleaseEncodingTest(unittest.TestCase):
             self.assertNotIn('firestore',json.loads((windows/'firebase.json').read_text(encoding='utf-8')))
             released_html=(windows/'public/admin.html').read_text(encoding='utf-8')
             self.assertNotIn('data-preview-only',released_html)
+            released_app=(windows/'public/admin-app.js').read_text(encoding='utf-8')
+            self.assertNotIn('local-preview-only',released_app)
+            self.assertEqual(released_app.count('async idToken('),1)
+            self.assertIn('await auth.currentUser.getIdToken()',released_app)
+            subprocess.run(['node','--input-type=module','-e',"""
+import fs from 'node:fs';import assert from 'node:assert/strict';
+const app=fs.readFileSync(process.argv[1],'utf8');
+const bridge=app.slice(app.indexOf('export const adminWorkspace = Object.freeze({')).replace('export const adminWorkspace =','return');
+const workspace=new Function('requireAdmin','verifiedAdminUid','auth',bridge)(()=>{},'test-admin',{currentUser:{getIdToken:async()=> 'actual-firebase-token'}});
+assert.equal(await workspace.idToken(),'actual-firebase-token');
+""",str(windows/'public/admin-app.js')],check=True)
             self.assertNotIn('mark-photo-preview',released_html)
             self.assertFalse(list((windows/'public').rglob('mark-photo-*.js')))
 

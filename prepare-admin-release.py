@@ -12,7 +12,7 @@ import shutil
 import tempfile
 
 ROOT=Path(__file__).resolve().parent
-VERSION='20261105-follow-6'
+VERSION='20261105-auth-release-7'
 
 def build(destination, audit_ready=False):
     destination=Path(destination)
@@ -59,6 +59,8 @@ def build(destination, audit_ready=False):
     (ui/'shell.js').write_text(presentation, encoding='utf-8')
     (ui/'main.js').write_text("import './shell.js?v="+VERSION+"';\nimport './workbench.js?v="+VERSION+"';\nimport {adminWorkspace} from '../admin-app.js?v="+VERSION+"';\nimport {createPaymentUI} from './payment-ui.js?v="+VERSION+"';\nadminWorkspace.installPaymentForm(createPaymentUI);\nimport {initDesk} from '../admin-desk.js?v="+VERSION+"';\ninitDesk(adminWorkspace);\n", encoding='utf-8')
     bridge=(source/'bridge-exports.js').read_text(encoding='utf-8')
+    # The preview credential must never override the real Firebase token method.
+    bridge=bridge.replace("  async idToken() {requireAdmin();return 'local-preview-only';},\n",'')
     bridge=bridge.replace('// Appended to the original admin module by the local preview launcher only.','// Reviewed workspace interface. All saves retain original session/transaction guards.')
     bridge=adapt(bridge).replace('/previews/admin-premium/','/admin-ui/').replace('// The preview uses the same original transaction function with a richer form.','// Richer form, same atomic ledger/receipt transaction.')
     # Keep the original sign-in graph independent from optional workspace assets.
@@ -72,6 +74,8 @@ def build(destination, audit_ready=False):
   async auditPage(options){requireAdmin();const [{createAuditReader},sdk]=await Promise.all([import('./admin-ui/audit-reader.js?v=VERSION'),import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js')]);return createAuditReader({db,sdk,identity:()=>verifiedAdminUid&&auth.currentUser?.uid===verifiedAdminUid?{uid:verifiedAdminUid}:null})(options);},
 """.replace('VERSION',VERSION)
     bridge=bridge.replace('export const adminWorkspace = Object.freeze({','export const adminWorkspace = Object.freeze({'+additions)
+    if 'local-preview-only' in bridge or bridge.count('async idToken(')!=1:
+        raise ValueError('Release must contain exactly one real Firebase ID-token method.')
     (public/'admin-app.js').write_text((public/'admin-app.js').read_text(encoding='utf-8')+'\n'+bridge, encoding='utf-8')
     # Use the exact reviewed premium DOM, without fixture scripts/import maps or CSP mocks.
     spec=importlib.util.spec_from_file_location('admin_preview_builder',ROOT/'preview-admin.py')
