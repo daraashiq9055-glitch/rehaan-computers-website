@@ -1,9 +1,20 @@
 const encoder=new TextEncoder();
-const VERSION='20261105-auth-4';
+const VERSION='20261105-auth-5';
 class HttpError extends Error{constructor(status,message){super(message);this.status=status;}}
 const b64=bytes=>btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const hash=async value=>b64(await crypto.subtle.digest('SHA-256',encoder.encode(value)));
 let cachedAccess=null;
+let cachedFirebaseKeys=null;
+const decode64=value=>Uint8Array.from(atob(value.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-value.length%4)%4)),character=>character.charCodeAt(0));
+async function firebaseUid(token,env,fetcher){
+ const parts=token.split('.');if(parts.length!==3)throw new HttpError(401,'Sign in again.');let header,claims;
+ try{header=JSON.parse(new TextDecoder().decode(decode64(parts[0])));claims=JSON.parse(new TextDecoder().decode(decode64(parts[1])));}catch{throw new HttpError(401,'Sign in again.');}
+ if(header.alg!=='RS256'||typeof header.kid!=='string')throw new HttpError(401,'Sign in again.');
+ if(!cachedFirebaseKeys||cachedFirebaseKeys.expires<Date.now()){const response=await fetcher('https://www.googleapis.com/service_accounts/v1/jwk/securetoken@system.gserviceaccount.com',{redirect:'manual',signal:AbortSignal.timeout(10000)});if(!response.ok)throw new HttpError(503,'Sign-in verification is temporarily unavailable.');const value=await response.json();cachedFirebaseKeys={keys:Array.isArray(value.keys)?value.keys:[],expires:Date.now()+3600000};}
+ const jwk=cachedFirebaseKeys.keys.find(key=>key.kid===header.kid);if(!jwk)throw new HttpError(401,'Refresh the page and sign in again.');
+ const key=await crypto.subtle.importKey('jwk',jwk,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['verify']),valid=await crypto.subtle.verify('RSASSA-PKCS1-v1_5',key,decode64(parts[2]),encoder.encode(parts[0]+'.'+parts[1])),now=Math.floor(Date.now()/1000);
+ if(!valid||claims.aud!==env.FIREBASE_PROJECT_ID||claims.iss!==`https://securetoken.google.com/${env.FIREBASE_PROJECT_ID}`||typeof claims.sub!=='string'||!claims.sub||claims.sub.length>128||!Number.isFinite(claims.exp)||claims.exp<=now||!Number.isFinite(claims.iat)||claims.iat>now+300)throw new HttpError(401,'Sign in again.');return claims.sub;
+}
 async function access(env,fetcher){
  if(cachedAccess?.email===env.FCM_CLIENT_EMAIL&&cachedAccess.expires>Date.now())return cachedAccess.token;
  if(!env.FCM_PRIVATE_KEY||!env.FCM_CLIENT_EMAIL)throw new HttpError(503,'Notification sending is not configured.');
@@ -29,8 +40,7 @@ async function fcmFailure(response){
 }
 async function admin(request,env,fetcher){
  const auth=request.headers.get('Authorization')||'',uid=request.headers.get('X-Admin-UID')||'';if(!/^Bearer [A-Za-z0-9_.-]+$/.test(auth)||auth.length>8192||!/^[A-Za-z0-9_-]{1,128}$/.test(uid))throw new HttpError(401,'Invalid sign-in.');
- const identity=await fetcher(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(env.FIREBASE_WEB_API_KEY||'')}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:auth.slice(7)}),redirect:'manual',signal:AbortSignal.timeout(10000)});
- if(!identity.ok)throw new HttpError(401,'Sign in again.');const verified=await identity.json();if(verified.users?.[0]?.localId!==uid)throw new HttpError(403,'Administrator access required.');
+ const verifiedUid=await firebaseUid(auth.slice(7),env,fetcher);if(verifiedUid!==uid)throw new HttpError(403,'Administrator access required.');
  const serviceToken=await access(env,fetcher),response=await fetcher(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/admins/${encodeURIComponent(uid)}`,{headers:{Authorization:'Bearer '+serviceToken},redirect:'manual',signal:AbortSignal.timeout(10000)});
  if(!response.ok)throw new HttpError(403,'Administrator access required.');const record=await response.json();if(record.fields?.uid?.stringValue!==uid||record.fields?.isAdmin?.booleanValue!==true)throw new HttpError(403,'Administrator access required.');return uid;
 }

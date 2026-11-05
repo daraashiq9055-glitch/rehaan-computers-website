@@ -3,7 +3,6 @@ main = "worker.mjs"
 compatibility_date = "2026-11-03"
 [vars]
 FIREBASE_PROJECT_ID = "rehaan-computers"
-FIREBASE_WEB_API_KEY = "AIzaSyBXRQvUZBPP_E3Q0SZBYTsOc6sfzAEiqpE"
 ALLOWED_ORIGINS = "https://rehaan-computers.web.app,https://rehaan-computers.firebaseapp.com"
 PUBLIC_SITE = "https://rehaan-computers.web.app"
 # Bind a dedicated D1 database as DB in a local ignored config before deployment.
