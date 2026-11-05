@@ -29,7 +29,7 @@ try:
   page.evaluate('window.__deny=false');fail=True;button.click();expect(status).to_contain_text('Updates are unavailable');expect(button).to_have_text('Follow for updates')
   fail=False;button.click();expect(button).to_have_text('Manage updates');expect(page.locator('.header-follow')).to_have_text('Following');expect(status).to_contain_text('following');expect(page.locator('#websiteUpdates')).to_have_class(__import__('re').compile('is-followed'));expect(page.locator('.header-follow')).to_have_class(__import__('re').compile('follow-success'));assert calls[-1][0].endswith('/subscribe');assert len(calls[-1][1]['secret'])==64
   button.click();expect(button).to_have_text('Follow for updates');expect(status).to_contain_text('unfollowed');assert calls[-1][0].endswith('/unsubscribe')
-  sw=(ROOT/'public/website-updates-sw.js').read_text();assert "addEventListener('fetch'" not in sw and 'caches.' not in sw
+  sw=(ROOT/'public/website-updates-sw.js').read_text();assert "addEventListener('fetch'" not in sw and 'caches.' not in sw;assert 'rehaan-notification-192.png' in sw and 'rehaan-notification-badge.png' in sw and "title:'Open website'" in sw
   out=ROOT/'tests/artifacts/website-updates';out.mkdir(parents=True,exist_ok=True);page.locator('#websiteUpdates').screenshot(path=str(out/'mobile.png'))
   browser.close();print('PASS: no unsolicited permission, denied/failed/successful subscription, private management credential, unfollow and three widths; no real notifications or student writes.')
 finally:server.shutdown()

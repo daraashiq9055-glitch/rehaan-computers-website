@@ -1,8 +1,10 @@
 import {compareAdmissionRecords} from '/public/admin-records.js?v=20261102-settings-1';
 import './operations.js';
 import {previewAdminBridge as app} from '/public/admin-app.js?v=20261102-settings-1';
+import {initDesk} from '/public/admin-desk.js?v=20261105-follow-4';
 import {stages,stageOf,progressOf,cleanPreferences,preferenceDefaults} from './journey-service.js';
 const $=s=>document.querySelector(s),e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+initDesk(app);
 const actorLabel=id=>id==='preview-admin'?'Demo administrator 1':id==='preview-admin-2'?'Demo administrator 2':String(id||'Administrator');
 const localTime=value=>value&&Number.isFinite(new Date(value).getTime())?new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'short',year:'numeric',hour:'numeric',minute:'2-digit',timeZone:'Asia/Kolkata',timeZoneName:'short'}).format(new Date(value)):'Not recorded';
 const labels={overview:'Overview',today:'Today',students:'Students',fees:'Fees & payments',records:'Records centre',accounts:'Accounts book',journeys:'Student journeys'};

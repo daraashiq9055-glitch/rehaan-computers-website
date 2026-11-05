@@ -3,6 +3,7 @@
 export const previewAdminBridge = Object.freeze({
   refresh() {return loadApplications();},
   identity() {return verifiedAdminUid?{uid:verifiedAdminUid,email:auth.currentUser?.email||''}:null;},
+  async idToken() {requireAdmin();return 'local-preview-only';},
   topics(id) {const data=adminState.apps.find(entry=>entry.id===id)?.data;const course=courses.find(item=>item.title===(data?.coursePreference||data?.course));return structuredClone(course?.learn?.length?course.learn:['Computer fundamentals','Practical coursework','Course assessment']);},
   async lifecycle(id,input) {requireAdmin();const uid=verifiedAdminUid;const result=await saveLifecycle({...input,db,ref:doc(db,'applications',id),runTransaction,actor:uid,assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');}});await loadApplications();return result;},
   async progress(id,input) {requireAdmin();const uid=verifiedAdminUid;const result=await saveProgress({...input,db,ref:doc(db,'applications',id),runTransaction,actor:uid,assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');}});await loadApplications();return result;},

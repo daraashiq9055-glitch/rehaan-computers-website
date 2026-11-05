@@ -1,5 +1,5 @@
-import {mountUpdates} from './admin-updates.js?v=20261105-follow-3';
-import {monthlyReport,admissionMonth,reportDetails} from './admin-report-model.js?v=20261105-follow-3';
+import {mountUpdates} from './admin-updates.js?v=20261105-follow-4';
+import {monthlyReport,admissionMonth,reportDetails} from './admin-report-model.js?v=20261105-follow-4';
 import {indiaDate,monthLabel,money,escapeHTML as e} from './admin-feature-model.js?v=20261102-settings-1';
 export function openAdmissionMonth(app,month){
  if(!app.identity())return;
@@ -23,5 +23,5 @@ export function mountReports(host,app){
  $('#reportAnalysis').querySelectorAll('[data-report-detail]').forEach(button=>button.onclick=()=>openReportDetail(app,$('#reportMonth').value,button.dataset.reportDetail,button.querySelector('small').textContent));
  }catch(error){$('#reportAnalysis').textContent=error.message;}}
  mountUpdates($('#followerReport'),app,()=>$('#reportMonth').value);
- $('#reportMonth').onchange=render;$('#reportRecalculate').onclick=render;$('#reportAdmissions').onclick=()=>openAdmissionMonth(app,$('#reportMonth').value);render();
+ $('#reportMonth').onchange=()=>{render();$('#updatesVisits')?.click();};$('#reportRecalculate').onclick=render;$('#reportAdmissions').onclick=()=>openAdmissionMonth(app,$('#reportMonth').value);render();
 }

@@ -1,4 +1,4 @@
-import {attendanceValue} from './admin-attendance-model.js?v=20261105-follow-3';
+import {attendanceValue} from './admin-attendance-model.js?v=20261105-follow-4';
 import {feeStatement} from './admin-fee-statement-model.js?v=20261102-settings-1';
 import {indiaDate} from './admin-feature-model.js?v=20261102-settings-1';
 export function admissionMonth(data){

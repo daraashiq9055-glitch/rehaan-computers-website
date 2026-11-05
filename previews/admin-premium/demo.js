@@ -29,6 +29,19 @@
   records['demo-0'].customLegacyField = {retained: true};
   const user = {uid: 'preview-admin', email: 'preview@rehaan.example', getIdToken: async () => 'local-preview-only'};
   window.__adminPreview = {records, writes: [], listeners: [], user, auth: {currentUser: user, authStateReady: async () => {}}};
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const url = String(input?.url || input);
+    if (url.startsWith('https://rehaan-website-updates.')) {
+      const path = new URL(url).pathname;
+      if (path === '/admin/stats') return Response.json({subscribedBrowsers: 148, asOf: new Date().toISOString()});
+      if (path === '/admin/visits') return Response.json({month: new URL(url).searchParams.get('month'), uniqueBrowsers: 326, days: [2,4,7,5,9,12,8,14,17,11,20,18,24,19,27,31,25,35].map((visitors,index)=>({day: new Date(Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),index+1)).toISOString().slice(0,10),visitors}))});
+      if (path === '/admin/send') return Response.json({accepted:10,unknown:0,expired:0,uncertainTotal:0,remaining:0});
+      if (path === '/admin/test') return Response.json({accepted:true});
+      return Response.json({error:'Preview endpoint unavailable.'},{status:404});
+    }
+    return nativeFetch(input, init);
+  };
   window.emailjs = {init() {}, async send() { throw Error('Email sending is disabled in this preview. No message was sent.'); }};
   const notify = () => alert('Preview only. No WhatsApp message, email or live request has been sent.');
   const nativeOpen = window.open.bind(window);
