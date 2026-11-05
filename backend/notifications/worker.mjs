@@ -1,5 +1,5 @@
 const encoder=new TextEncoder();
-const VERSION='20261105-auth-2';
+const VERSION='20261105-auth-3';
 class HttpError extends Error{constructor(status,message){super(message);this.status=status;}}
 const b64=bytes=>btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const hash=async value=>b64(await crypto.subtle.digest('SHA-256',encoder.encode(value)));
@@ -28,8 +28,7 @@ async function fcmFailure(response){
  return {code:'provider_rejected',message:'The notification provider rejected this browser subscription. Reload and try again.'};
 }
 async function admin(request,env,fetcher){
- const auth=request.headers.get('Authorization')||'';if(!/^Bearer [A-Za-z0-9_.-]+$/.test(auth)||auth.length>8192)throw new HttpError(401,'Sign in as an administrator.');let uid;
- try{const parts=auth.slice(7).split('.');if(parts.length!==3||!parts[1])throw Error();const raw=parts[1],base64=raw.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-raw.length%4)%4),bytes=Uint8Array.from(atob(base64),character=>character.charCodeAt(0)),claims=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));uid=claims.sub||claims.user_id;if(typeof uid!=='string'||!uid||uid.length>128)throw Error();}catch{throw new HttpError(401,'Invalid sign-in.');}
+ const auth=request.headers.get('Authorization')||'',uid=request.headers.get('X-Admin-UID')||'';if(!/^Bearer [A-Za-z0-9_.-]+$/.test(auth)||auth.length>8192||!/^[A-Za-z0-9_-]{1,128}$/.test(uid))throw new HttpError(401,'Invalid sign-in.');
  // Untrusted decoded UID is only a lookup key. Firestore verifies the signed token and rules.
  const response=await fetcher(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/admins/${encodeURIComponent(uid)}`,{headers:{Authorization:auth},redirect:'manual',signal:AbortSignal.timeout(10000)});
  if(!response.ok)throw new HttpError(403,'Administrator access required.');const record=await response.json();if(record.fields?.uid?.stringValue!==uid||record.fields?.isAdmin?.booleanValue!==true)throw new HttpError(403,'Administrator access required.');return uid;
@@ -44,7 +43,7 @@ async function body(request){
 export async function handleRequest(request,env,fetcher=fetch){
  const origin=request.headers.get('Origin'),allowed=String(env.ALLOWED_ORIGINS||'').split(','),cors={'Content-Type':'application/json','Cache-Control':'no-store','Vary':'Origin','X-Content-Type-Options':'nosniff'};
  const reply=(status,data)=>new Response(JSON.stringify(data),{status,headers:cors});
- if(!origin||!allowed.includes(origin))return reply(403,{error:'Origin is not allowed.'});cors['Access-Control-Allow-Origin']=origin;cors['Access-Control-Allow-Headers']='Authorization,Content-Type';cors['Access-Control-Allow-Methods']='GET,POST,OPTIONS';
+ if(!origin||!allowed.includes(origin))return reply(403,{error:'Origin is not allowed.'});cors['Access-Control-Allow-Origin']=origin;cors['Access-Control-Allow-Headers']='Authorization,Content-Type,X-Admin-UID';cors['Access-Control-Allow-Methods']='GET,POST,OPTIONS';
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers:cors});
  try{
   if(!env.DB||!env.FCM_CLIENT_EMAIL||!env.FCM_PRIVATE_KEY)throw new HttpError(503,'Website updates are not connected yet.');

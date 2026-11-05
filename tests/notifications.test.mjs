@@ -1,7 +1,7 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import worker,{handleRequest,validateNotice} from '../backend/notifications/worker.mjs';
 import {mkdtempSync,rmSync,readFileSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';import {spawnSync} from 'node:child_process';
 const origin='https://rehaan-computers.web.app',token='A'.repeat(180),secret='a'.repeat(64);
-function request(path,body,admin=false,site=origin){const bytes=new TextEncoder().encode(JSON.stringify({sub:'admin',name:'प्रशासक',pad:'x'})),unpadded=btoa(String.fromCharCode(...bytes)).replace(/=+$/,'');return new Request('https://service.example'+path,{method:body?'POST':'GET',headers:{Origin:site,...(body?{'Content-Type':'application/json'}:{}),...(admin?{Authorization:'Bearer a.'+unpadded+'.b'}:{})},...(body?{body:JSON.stringify(body)}:{})});}
+function request(path,body,admin=false,site=origin,uid='admin'){return new Request('https://service.example'+path,{method:body?'POST':'GET',headers:{Origin:site,...(body?{'Content-Type':'application/json'}:{}),...(admin?{Authorization:'Bearer signed.firebase.token','X-Admin-UID':uid}:{})},...(body?{body:JSON.stringify(body)}:{})});}
 function database(){const dir=mkdtempSync(join(tmpdir(),'rehaan-notify-')),file=join(dir,'test.db');
  const execute=(sql,params=[],kind='run')=>{const script=`import sqlite3,json,sys\nd=json.load(sys.stdin)\nc=sqlite3.connect(d['file']);c.row_factory=sqlite3.Row\nif d['kind']=='schema':\n c.executescript(d['sql']);result={}\nelse:\n cur=c.execute(d['sql'],d['params'])\n if d['kind']=='first':\n  row=cur.fetchone();result=dict(row) if row else None\n elif d['kind']=='all':result={'results':[dict(r) for r in cur.fetchall()]}\n else:result={'meta':{'changes':cur.rowcount}}\nc.commit();print(json.dumps(result));c.close()`;
  const r=spawnSync(process.platform==='win32'?'python':'python3',['-c',script],{input:JSON.stringify({file,sql,params,kind}),encoding:'utf8'});if(r.status!==0)throw Error(r.stderr);return JSON.parse(r.stdout);};
@@ -14,7 +14,7 @@ test('subscriptions deduplicate, protect unsubscribe, authenticate admins and se
  for(let i=0;i<2;i++)assert.equal((await handleRequest(request('/subscribe',{token,secret}),env,fetcher)).status,200);
  let stats=await (await handleRequest(request('/admin/stats',null,true),env,fetcher)).json();assert.equal(stats.subscribedBrowsers,1);
  assert.equal((await handleRequest(request('/unsubscribe',{token,secret:'b'.repeat(64)}),env,fetcher)).status,403);
- authAllowed=false;assert.equal((await handleRequest(request('/admin/stats',null,true),env,fetcher)).status,403);authAllowed=true;
+ assert.equal((await handleRequest(request('/admin/stats',null,true,origin,'forged-admin'),env,fetcher)).status,403);authAllowed=false;assert.equal((await handleRequest(request('/admin/stats',null,true),env,fetcher)).status,403);authAllowed=true;
  const notice={id:'n'.repeat(32),title:'Institute update',body:'New batch begins Monday',path:'/#courses'};
  assert.equal((await handleRequest(request('/admin/send',notice,true),env,fetcher)).status,200);assert.equal((await handleRequest(request('/admin/send',notice,true),env,fetcher)).status,200);assert.equal(sends,1);
  assert.equal((await handleRequest(request('/admin/send',{...notice,body:'Different text'},true),env,fetcher)).status,409);

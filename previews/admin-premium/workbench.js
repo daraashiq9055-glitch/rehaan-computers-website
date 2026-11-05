@@ -1,7 +1,7 @@
 import {compareAdmissionRecords} from '/public/admin-records.js?v=20261102-settings-1';
 import './operations.js';
 import {previewAdminBridge as app} from '/public/admin-app.js?v=20261102-settings-1';
-import {initDesk} from '/public/admin-desk.js?v=20261105-follow-4';
+import {initDesk} from '/public/admin-desk.js?v=20261105-follow-6';
 import {stages,stageOf,progressOf,cleanPreferences,preferenceDefaults} from './journey-service.js';
 const $=s=>document.querySelector(s),e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 initDesk(app);

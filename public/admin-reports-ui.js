@@ -1,5 +1,5 @@
-import {mountUpdates} from './admin-updates.js?v=20261105-follow-4';
-import {monthlyReport,admissionMonth,reportDetails} from './admin-report-model.js?v=20261105-follow-4';
+import {mountUpdates} from './admin-updates.js?v=20261105-follow-6';
+import {monthlyReport,admissionMonth,reportDetails} from './admin-report-model.js?v=20261105-follow-6';
 import {indiaDate,monthLabel,money,escapeHTML as e} from './admin-feature-model.js?v=20261102-settings-1';
 export function openAdmissionMonth(app,month){
  if(!app.identity())return;

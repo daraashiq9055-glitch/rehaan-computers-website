@@ -1,11 +1,11 @@
-import {mountReports,openAdmissionMonth} from './admin-reports-ui.js?v=20261105-follow-4';
-import {addFollowupImage} from './admin-notices.js?v=20261105-follow-4';
+import {mountReports,openAdmissionMonth} from './admin-reports-ui.js?v=20261105-follow-6';
+import {addFollowupImage} from './admin-notices.js?v=20261105-follow-6';
 import {canonicalRecord} from './admin-records.js?v=20261102-settings-1';
 import {whatsappURL} from './admin-receipt-image.js?v=20261102-settings-1';
 let app=null;
 import {feeStatement} from './admin-fee-statement-model.js?v=20261102-settings-1';
 import {indiaDate,monthLabel,money,escapeHTML as e} from './admin-feature-model.js?v=20261102-settings-1';
-import {reminder} from './admin-reminder-model.js?v=20261105-follow-4';
+import {reminder} from './admin-reminder-model.js?v=20261105-follow-6';
 const monthNow=()=>indiaDate().slice(0,7);
 const previousMonth=()=>{const [y,m]=monthNow().split('-').map(Number);return new Date(Date.UTC(y,m-2,1)).toISOString().slice(0,7);};
 const records=()=>app.snapshot().records;
