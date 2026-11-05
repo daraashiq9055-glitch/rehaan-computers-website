@@ -63,7 +63,7 @@ def main():
    raise ValueError('Notification health check failed: '+(health.stderr.strip() or 'curl exit '+str(health.returncode)))
   try:ready=json.loads(health.stdout)
   except json.JSONDecodeError:raise ValueError('Notification health check returned an unreadable response.')
-  if not ready.get('ok'):raise ValueError('Notification health check did not pass: '+health.stdout[:500])
+  if not ready.get('ok') or ready.get('version')!='20261105-auth-2':raise ValueError('Notification health check reached an older or unhealthy Worker: '+health.stdout[:500])
   print('Worker configured. No notification was sent and no student/payment records were touched. Run python release-admin.py --deploy for website checks and publication.',flush=True)
  except (ValueError,OSError,subprocess.CalledProcessError) as error:
   print('Setup stopped. '+('A Cloudflare command failed; review its output.' if isinstance(error,subprocess.CalledProcessError) else str(error)),file=sys.stderr);sys.exit(1)

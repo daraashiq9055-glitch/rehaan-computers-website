@@ -1,4 +1,5 @@
 const encoder=new TextEncoder();
+const VERSION='20261105-auth-2';
 class HttpError extends Error{constructor(status,message){super(message);this.status=status;}}
 const b64=bytes=>btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const hash=async value=>b64(await crypto.subtle.digest('SHA-256',encoder.encode(value)));
@@ -28,7 +29,7 @@ async function fcmFailure(response){
 }
 async function admin(request,env,fetcher){
  const auth=request.headers.get('Authorization')||'';if(!/^Bearer [A-Za-z0-9_.-]+$/.test(auth)||auth.length>8192)throw new HttpError(401,'Sign in as an administrator.');let uid;
- try{const raw=auth.slice(7).split('.')[1],base64=raw.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(raw.length/4)*4,'=');uid=JSON.parse(atob(base64)).sub;if(typeof uid!=='string'||!uid||uid.length>128)throw Error();}catch{throw new HttpError(401,'Invalid sign-in.');}
+ try{const parts=auth.slice(7).split('.');if(parts.length!==3||!parts[1])throw Error();const raw=parts[1],base64=raw.replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-raw.length%4)%4),bytes=Uint8Array.from(atob(base64),character=>character.charCodeAt(0)),claims=JSON.parse(new TextDecoder('utf-8',{fatal:true}).decode(bytes));uid=claims.sub||claims.user_id;if(typeof uid!=='string'||!uid||uid.length>128)throw Error();}catch{throw new HttpError(401,'Invalid sign-in.');}
  // Untrusted decoded UID is only a lookup key. Firestore verifies the signed token and rules.
  const response=await fetcher(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/admins/${encodeURIComponent(uid)}`,{headers:{Authorization:auth},redirect:'manual',signal:AbortSignal.timeout(10000)});
  if(!response.ok)throw new HttpError(403,'Administrator access required.');const record=await response.json();if(record.fields?.uid?.stringValue!==uid||record.fields?.isAdmin?.booleanValue!==true)throw new HttpError(403,'Administrator access required.');return uid;
@@ -51,7 +52,7 @@ export async function handleRequest(request,env,fetcher=fetch){
   const isAdmin=path.startsWith('/admin/'),limiter=isAdmin?env.ADMIN_LIMITER:env.SUBSCRIBE_LIMITER;
   if(!limiter)throw new HttpError(503,'Request protection is not configured.');
   if(!(await limiter.limit({key:request.headers.get('CF-Connecting-IP')||'unknown'})).success)throw new HttpError(429,'Please wait a minute and try again.');
-  if(path==='/health'&&request.method==='GET'){await access(env,fetcher);await env.DB.prepare('SELECT COUNT(*) AS count FROM subscribers').first();return reply(200,{ok:true});}
+  if(path==='/health'&&request.method==='GET'){await access(env,fetcher);await env.DB.prepare('SELECT COUNT(*) AS count FROM subscribers').first();return reply(200,{ok:true,version:VERSION});}
   const uid=isAdmin?await admin(request,env,fetcher):null;
   if(path==='/admin/stats'&&request.method==='GET'){
    const count=await env.DB.prepare('SELECT COUNT(*) AS count FROM subscribers').first();return reply(200,{subscribedBrowsers:count.count,asOf:new Date().toISOString(),definition:'Subscribed browsers/devices, not unique people. Stale subscriptions are removed when FCM reports them invalid.'});
