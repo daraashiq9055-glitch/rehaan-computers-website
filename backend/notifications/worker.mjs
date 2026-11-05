@@ -28,7 +28,7 @@ async function fcmFailure(response){
 }
 async function admin(request,env,fetcher){
  const auth=request.headers.get('Authorization')||'';if(!/^Bearer [A-Za-z0-9_.-]+$/.test(auth)||auth.length>8192)throw new HttpError(401,'Sign in as an administrator.');let uid;
- try{const raw=auth.slice(7).split('.')[1];uid=JSON.parse(atob(raw.replace(/-/g,'+').replace(/_/g,'/'))).sub;if(typeof uid!=='string'||!uid||uid.length>128)throw Error();}catch{throw new HttpError(401,'Invalid sign-in.');}
+ try{const raw=auth.slice(7).split('.')[1],base64=raw.replace(/-/g,'+').replace(/_/g,'/').padEnd(Math.ceil(raw.length/4)*4,'=');uid=JSON.parse(atob(base64)).sub;if(typeof uid!=='string'||!uid||uid.length>128)throw Error();}catch{throw new HttpError(401,'Invalid sign-in.');}
  // Untrusted decoded UID is only a lookup key. Firestore verifies the signed token and rules.
  const response=await fetcher(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/admins/${encodeURIComponent(uid)}`,{headers:{Authorization:auth},redirect:'manual',signal:AbortSignal.timeout(10000)});
  if(!response.ok)throw new HttpError(403,'Administrator access required.');const record=await response.json();if(record.fields?.uid?.stringValue!==uid||record.fields?.isAdmin?.booleanValue!==true)throw new HttpError(403,'Administrator access required.');return uid;
