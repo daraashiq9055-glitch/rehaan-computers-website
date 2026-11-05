@@ -1,5 +1,5 @@
 const encoder=new TextEncoder();
-const VERSION='20261105-auth-3';
+const VERSION='20261105-auth-4';
 class HttpError extends Error{constructor(status,message){super(message);this.status=status;}}
 const b64=bytes=>btoa(String.fromCharCode(...new Uint8Array(bytes))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
 const hash=async value=>b64(await crypto.subtle.digest('SHA-256',encoder.encode(value)));
@@ -7,7 +7,7 @@ let cachedAccess=null;
 async function access(env,fetcher){
  if(cachedAccess?.email===env.FCM_CLIENT_EMAIL&&cachedAccess.expires>Date.now())return cachedAccess.token;
  if(!env.FCM_PRIVATE_KEY||!env.FCM_CLIENT_EMAIL)throw new HttpError(503,'Notification sending is not configured.');
- const now=Math.floor(Date.now()/1000),header=b64(encoder.encode(JSON.stringify({alg:'RS256',typ:'JWT'}))),payload=b64(encoder.encode(JSON.stringify({iss:env.FCM_CLIENT_EMAIL,scope:'https://www.googleapis.com/auth/firebase.messaging',aud:'https://oauth2.googleapis.com/token',iat:now,exp:now+3600})));
+ const now=Math.floor(Date.now()/1000),header=b64(encoder.encode(JSON.stringify({alg:'RS256',typ:'JWT'}))),payload=b64(encoder.encode(JSON.stringify({iss:env.FCM_CLIENT_EMAIL,scope:'https://www.googleapis.com/auth/firebase.messaging https://www.googleapis.com/auth/datastore',aud:'https://oauth2.googleapis.com/token',iat:now,exp:now+3600})));
  const der=Uint8Array.from(atob(env.FCM_PRIVATE_KEY.replace(/-----[^-]+-----|\s/g,'')),c=>c.charCodeAt(0));
  const key=await crypto.subtle.importKey('pkcs8',der,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']);const data=header+'.'+payload;
  const assertion=data+'.'+b64(await crypto.subtle.sign('RSASSA-PKCS1-v1_5',key,encoder.encode(data)));
@@ -29,8 +29,9 @@ async function fcmFailure(response){
 }
 async function admin(request,env,fetcher){
  const auth=request.headers.get('Authorization')||'',uid=request.headers.get('X-Admin-UID')||'';if(!/^Bearer [A-Za-z0-9_.-]+$/.test(auth)||auth.length>8192||!/^[A-Za-z0-9_-]{1,128}$/.test(uid))throw new HttpError(401,'Invalid sign-in.');
- // Untrusted decoded UID is only a lookup key. Firestore verifies the signed token and rules.
- const response=await fetcher(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/admins/${encodeURIComponent(uid)}`,{headers:{Authorization:auth},redirect:'manual',signal:AbortSignal.timeout(10000)});
+ const identity=await fetcher(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(env.FIREBASE_WEB_API_KEY||'')}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({idToken:auth.slice(7)}),redirect:'manual',signal:AbortSignal.timeout(10000)});
+ if(!identity.ok)throw new HttpError(401,'Sign in again.');const verified=await identity.json();if(verified.users?.[0]?.localId!==uid)throw new HttpError(403,'Administrator access required.');
+ const serviceToken=await access(env,fetcher),response=await fetcher(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT_ID}/databases/(default)/documents/admins/${encodeURIComponent(uid)}`,{headers:{Authorization:'Bearer '+serviceToken},redirect:'manual',signal:AbortSignal.timeout(10000)});
  if(!response.ok)throw new HttpError(403,'Administrator access required.');const record=await response.json();if(record.fields?.uid?.stringValue!==uid||record.fields?.isAdmin?.booleanValue!==true)throw new HttpError(403,'Administrator access required.');return uid;
 }
 export function validateNotice(d){

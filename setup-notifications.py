@@ -18,6 +18,7 @@ def main():
   else:
    # Keep the ignored local binding while applying the current safe limiter.
    local=config.read_text(encoding='utf-8').replace('simple = { limit = 30, period = 60 }','simple = { limit = 120, period = 60 }')
+   if 'FIREBASE_WEB_API_KEY' not in local:local=local.replace('FIREBASE_PROJECT_ID = "rehaan-computers"','FIREBASE_PROJECT_ID = "rehaan-computers"\nFIREBASE_WEB_API_KEY = "AIzaSyBXRQvUZBPP_E3Q0SZBYTsOc6sfzAEiqpE"')
    config.write_text(local,encoding='utf-8')
   env=os.environ.copy();env['WRANGLER_SEND_METRICS']='false';env['WRANGLER_LOG']='error'
   def command(*args):return [npx,'--yes','wrangler@4.151.1',*args,'--config',str(config)]
@@ -63,7 +64,7 @@ def main():
    raise ValueError('Notification health check failed: '+(health.stderr.strip() or 'curl exit '+str(health.returncode)))
   try:ready=json.loads(health.stdout)
   except json.JSONDecodeError:raise ValueError('Notification health check returned an unreadable response.')
-  if not ready.get('ok') or ready.get('version')!='20261105-auth-3':raise ValueError('Notification health check reached an older or unhealthy Worker: '+health.stdout[:500])
+  if not ready.get('ok') or ready.get('version')!='20261105-auth-4':raise ValueError('Notification health check reached an older or unhealthy Worker: '+health.stdout[:500])
   print('Worker configured. No notification was sent and no student/payment records were touched. Run python release-admin.py --deploy for website checks and publication.',flush=True)
  except (ValueError,OSError,subprocess.CalledProcessError) as error:
   print('Setup stopped. '+('A Cloudflare command failed; review its output.' if isinstance(error,subprocess.CalledProcessError) else str(error)),file=sys.stderr);sys.exit(1)
