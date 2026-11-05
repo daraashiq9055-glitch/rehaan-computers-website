@@ -16,3 +16,12 @@ CREATE TABLE IF NOT EXISTS website_metrics (
  page_views INTEGER NOT NULL DEFAULT 0,
  last_seen TEXT NOT NULL
 );
+CREATE TABLE IF NOT EXISTS website_visitors (
+ month TEXT NOT NULL,
+ visitor_hash TEXT NOT NULL,
+ first_day TEXT NOT NULL,
+ last_seen TEXT NOT NULL,
+ visit_count INTEGER NOT NULL DEFAULT 1,
+ PRIMARY KEY (month, visitor_hash)
+);
+CREATE INDEX IF NOT EXISTS website_visitors_first_day ON website_visitors(month, first_day);

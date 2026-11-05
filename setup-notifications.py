@@ -15,6 +15,10 @@ def main():
   if not npx:raise ValueError('Node/npm is required. Reopen CMD after installation.')
   config=FOLDER/'wrangler.local.toml'
   if not config.exists():config.write_text((FOLDER/'wrangler.toml').read_text(encoding='utf-8'),encoding='utf-8')
+  else:
+   # Keep the ignored local binding while applying the current safe limiter.
+   local=config.read_text(encoding='utf-8').replace('simple = { limit = 30, period = 60 }','simple = { limit = 120, period = 60 }')
+   config.write_text(local,encoding='utf-8')
   env=os.environ.copy();env['WRANGLER_SEND_METRICS']='false';env['WRANGLER_LOG']='error'
   def command(*args):return [npx,'--yes','wrangler@4.151.1',*args,'--config',str(config)]
   def run(*args,input=None):subprocess.run(command(*args),cwd=ROOT,env=env,input=input,text=True,check=True)

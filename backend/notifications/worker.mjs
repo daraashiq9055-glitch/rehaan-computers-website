@@ -58,14 +58,17 @@ export async function handleRequest(request,env,fetcher=fetch){
   }
   if(path==='/admin/visits'&&request.method==='GET'){
    const month=new URL(request.url).searchParams.get('month')||'';if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw new HttpError(400,'Choose a valid report month.');
-   const rows=await env.DB.prepare('SELECT day,page_views FROM website_metrics WHERE day LIKE ? ORDER BY day').bind(month+'-%').all();
-   const days=rows.results.map(row=>({day:row.day,pageViews:row.page_views}));
-   return reply(200,{month,days,totalPageViews:days.reduce((sum,row)=>sum+row.pageViews,0),definition:'Page views, not unique people. Reloads and repeat visits may count again. No visitor identity is stored.'});
+   const rows=await env.DB.prepare('SELECT first_day AS day,COUNT(*) AS visitors FROM website_visitors WHERE month=? GROUP BY first_day ORDER BY first_day').bind(month).all();
+   const count=await env.DB.prepare('SELECT COUNT(*) AS count FROM website_visitors WHERE month=?').bind(month).first();
+   const days=rows.results.map(row=>({day:row.day,visitors:row.visitors}));
+   return reply(200,{month,days,uniqueBrowsers:count.count,definition:'Anonymous browsers counted once in the selected month. Different browsers or cleared browser storage may count separately. No visitor identity is stored.'});
   }
   if(request.method!=='POST')throw new HttpError(405,'Method not allowed.');const d=await body(request),now=new Date().toISOString();
   if(path==='/visit'){
    const day=new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
-   await env.DB.prepare('INSERT INTO website_metrics(day,page_views,last_seen) VALUES(?,1,?) ON CONFLICT(day) DO UPDATE SET page_views=page_views+1,last_seen=excluded.last_seen').bind(day,now).run();return reply(200,{recorded:true});
+   if(typeof d.visitorId!=='string'||!/^[a-f0-9]{32,64}$/.test(d.visitorId))throw new HttpError(400,'Invalid anonymous visitor identifier.');
+   const visitorHash=await hash(d.visitorId),month=day.slice(0,7);
+   await env.DB.prepare('INSERT INTO website_visitors(month,visitor_hash,first_day,last_seen,visit_count) VALUES(?,?,?,?,1) ON CONFLICT(month,visitor_hash) DO UPDATE SET last_seen=excluded.last_seen,visit_count=visit_count+1').bind(month,visitorHash,day,now).run();return reply(200,{recorded:true});
   }
   if(path==='/subscribe'||path==='/unsubscribe'){
    if(typeof d.token!=='string'||!/^[a-zA-Z0-9_:.-]{40,4096}$/.test(d.token)||!/^\w{64}$/.test(d.secret||''))throw new HttpError(400,'Invalid subscription.');

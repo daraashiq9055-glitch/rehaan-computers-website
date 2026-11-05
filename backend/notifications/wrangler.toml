@@ -14,4 +14,4 @@ simple = { limit = 6, period = 60 }
 [[ratelimits]]
 name = "ADMIN_LIMITER"
 namespace_id = "2002"
-simple = { limit = 30, period = 60 }
+simple = { limit = 120, period = 60 }
