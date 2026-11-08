@@ -11,7 +11,7 @@ import webbrowser
 ROOT = Path(__file__).resolve().parent
 PREVIEW = '/previews/admin-premium/'
 
-def preview_html():
+def preview_html(group_marks=False):
     # Reuse the complete current dashboard and its existing application modules.
     # Only preview-specific styling, fixtures and service adapters are injected.
     html = (ROOT / 'public/admin.html').read_text(encoding='utf-8')
@@ -31,6 +31,8 @@ def preview_html():
         images={key:'data:image/png;base64,'+base64.b64encode((signature_folder/(key+'.png')).read_bytes()).decode() for key in ['examiner','authorized']}
         head+='<script data-preview-only>window.__markSignaturePreviewPromise=(async()=>{const {importSignature}=await import("/public/admin-mark-signatures.js?v=20261025-admin-12");const images='+json.dumps(images)+';return Object.fromEntries(await Promise.all(Object.entries(images).map(async([key,value])=>[key,await importSignature(new File([Uint8Array.from(atob(value.split(",")[1]),c=>c.charCodeAt(0))],key+".png",{type:"image/png"}))])));})();</script>'
     html = html.replace('<head>', '<head>' + head, 1)
+    if group_marks:
+        html=html.replace('</head>','<script src="'+PREVIEW+'group-marks-fixtures.js"></script></head>',1)
     head_module = '<script type="module" src="' + PREVIEW + 'workbench.js"></script>'
     html = html.replace('</head>', head_module + '</head>', 1)
     html = html.replace('</head>', '<link rel="stylesheet" href="admin-desk.css?v=20261105-follow-6"><link rel="stylesheet" href="' + PREVIEW + 'theme.css"><link rel="stylesheet" href="' + PREVIEW + 'records.css"><link rel="stylesheet" href="' + PREVIEW + 'operations.css"><link rel="stylesheet" href="' + PREVIEW + 'workbench.css"></head>', 1)
@@ -50,6 +52,7 @@ def preview_html():
     return html.encode('utf-8')
 
 class PreviewHandler(SimpleHTTPRequestHandler):
+    group_marks=False
     def end_headers(self):
         self.send_header('Cache-Control', 'no-store')
         super().end_headers()
@@ -57,7 +60,7 @@ class PreviewHandler(SimpleHTTPRequestHandler):
     def do_GET(self):
         path = urlparse(self.path).path
         if path in [PREVIEW, PREVIEW + 'admin.html', PREVIEW + 'index.html']:
-            body = preview_html()
+            body = preview_html(self.group_marks)
             self.send_response(200)
             self.send_header('Content-Type', 'text/html; charset=utf-8')
             self.send_header('Content-Length', str(len(body)))
@@ -82,7 +85,9 @@ class PreviewHandler(SimpleHTTPRequestHandler):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--no-browser', action='store_true')
+    parser.add_argument('--group-marks', action='store_true', help='Open Group Marksheet with fictional saved assessment records.')
     args = parser.parse_args()
+    PreviewHandler.group_marks=args.group_marks
     for file in ['public/admin.html', 'previews/admin-premium/theme.css', 'previews/admin-premium/sdk.js', 'previews/admin-premium/demo.js', 'previews/admin-premium/photos.js', 'previews/admin-premium/records.css', 'previews/admin-premium/records.js', 'previews/admin-premium/operations.js', 'previews/admin-premium/workbench.js', 'previews/admin-premium/workbench.css', 'previews/admin-premium/journey-service.js', 'previews/admin-premium/operations.css', 'previews/admin-premium/payment-ui.js', 'previews/admin-premium/payment-service.js', 'previews/admin-premium/accounts-model.js', 'previews/admin-premium/records-model.js', 'previews/admin-premium/bridge-exports.js']:
         if not (ROOT / file).is_file():
             parser.exit(1, 'Missing preview files. Run git pull --ff-only first.\n')

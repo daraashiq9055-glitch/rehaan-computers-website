@@ -2,7 +2,7 @@ import {studentChatURL} from './admin-whatsapp.js?v=20261104-wa-1';
 import {settingsState,setSettingsState,failSettingsState,clearSettingsState,customMessage} from './admin-settings-state.js?v=20261102-settings-1';
 import {saveSharedSettings,renderSettingsTemplate} from './admin-settings-model.js?v=20261102-settings-1';
 import {saveAttendance} from './admin-attendance-model.js?v=20261102-settings-1';
-import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261102-settings-1";
+import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261108-group-1";
 import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261102-settings-1";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
