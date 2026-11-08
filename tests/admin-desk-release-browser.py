@@ -25,6 +25,10 @@ try:
   context.route('**/*',route)
   page.goto(url+'/admin.html');expect(page.locator('#adminLoginButton')).to_be_enabled();page.locator('#adminEmail').fill('admin@example.test');page.locator('#adminPassword').fill('test-only');page.locator('#adminLoginButton').click();expect(page.locator('#adminDashboard')).to_be_visible();expect(page.locator('.application-card')).to_have_count(8);expect(page.locator('.next-ticker-track')).to_be_visible()
 
+  expect(page.locator('.next-brief')).to_have_count(1)
+  page.evaluate("""async version=>{const {adminWorkspace}=await import('/admin-app.js?v='+version);const {initDesk}=await import('/admin-desk.js?v=duplicate-start-test');initDesk(adminWorkspace);}""",m.VERSION)
+  expect(page.locator('.next-brief')).to_have_count(1)
+
   cases=page.evaluate('''async()=>{const {reminder}=await import('/admin-reminder-model.js?v=20261103-desk-1');const make=(extra={})=>({id:'test',data:{status:'Approved',admissionNumber:'090',fullName:'Example Student',phone:'9000000000',admissionDate:'2026-08-01',monthlyFees:{},...extra}});return {unpaid:reminder(make(),'2026-11-02'),partial:reminder(make({monthlyFees:{'2026-09-01':400,'2026-10-01':999}}),'2026-11-02'),newStudent:reminder(make({admissionDate:'2026-11-01'}),'2026-11-02'),cancelled:reminder(make({enrolmentStatus:'Cancelled'}),'2026-11-02'),invalid:reminder(make({monthlyFees:{'2026-09-01':'bad'}}),'2026-11-02'),single:reminder(make({admissionDate:'2026-10-01'}),'2026-11-02')};}''')
   assert cases['unpaid']['total']==299700 and len(cases['unpaid']['rows'])==3
   assert [r['label'] for r in cases['unpaid']['rows']]==['August 2026','September 2026','October 2026']

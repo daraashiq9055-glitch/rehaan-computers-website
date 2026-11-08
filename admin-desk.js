@@ -88,7 +88,7 @@ function attendanceHelp(){
  month.addEventListener('change',update);help.onclick=event=>{const b=event.target.closest('[data-month]');if(!b||month.disabled)return;month.value=b.dataset.month==='previous'?previousMonth():monthNow();month.dispatchEvent(new Event('change',{bubbles:true}));update();};update();
 }
 function init(){
- const top=document.querySelector('#adminDashboard .topbar'),find=document.querySelector('#workspaceFind');if(!top||!find)return;
+ const top=document.querySelector('#adminDashboard .topbar'),find=document.querySelector('#workspaceFind');if(!top||!find||document.querySelector('#adminDashboard .next-brief'))return;
  find.setAttribute('aria-label','Search students by name, mobile or admission number, or open a dashboard section');
  const strip=document.createElement('div');strip.className='next-brief';strip.innerHTML='<b>YOUR DESK</b><div class="next-ticker-window"><div class="next-ticker-track"></div></div><button type="button">Fee review →</button>';top.after(strip);
  const prompts=['Search a student by name…','Find an admission number…','Search a saved mobile number…','Open Fees, Attendance or Mark Cards…'];

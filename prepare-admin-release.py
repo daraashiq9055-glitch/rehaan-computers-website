@@ -12,7 +12,7 @@ import shutil
 import tempfile
 
 ROOT=Path(__file__).resolve().parent
-VERSION='20261105-auth-release-7'
+VERSION='20261108-single-desk-1'
 
 def build(destination, audit_ready=False):
     destination=Path(destination)
@@ -35,6 +35,9 @@ def build(destination, audit_ready=False):
             text=text.replace('/* Preview layer only. The original dashboard DOM and transaction code are reused. */','/* Premium administration. Original dashboard and transaction modules retained. */')
             text+='\n.sidebar { top: 0; }\n'
         if name=='workbench.js':
+            # Production main.js owns desk startup; the preview starts it here.
+            text=re.sub(r"^import \{initDesk\} from [^\n]+\n",'',text,flags=re.M)
+            text=re.sub(r'^initDesk\(app\);\n','',text,flags=re.M)
             text=text.replace("const actorLabel=id=>id==='preview-admin'?'Demo administrator 1':id==='preview-admin-2'?'Demo administrator 2':String(id||'Administrator');","const actorLabel=id=>String(id||'Administrator');")
             text=text.replace('rehaan-preview-ui-v1:','rehaan-admin-ui-v1:')
             start=text.index(' function renderHistory(){');end=text.index(' function renderPreferences(',start)
