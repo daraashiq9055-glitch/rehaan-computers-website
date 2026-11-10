@@ -1,5 +1,6 @@
 """Exercise the complete visitor preview without live services or payments."""
 from pathlib import Path
+from browser_visit_fixture import mock_visit_counter
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -37,7 +38,7 @@ def run(production=False):
                     r.fulfill(content_type='application/javascript',body=fixture.MOCK,headers={'Access-Control-Allow-Origin':'*'})
                 elif r.request.url.startswith('https://wa.me/'):whatsapp.append(r.request.url);r.fulfill(content_type='text/html',body='WhatsApp draft intercepted. No message sent.')
                 else:external.append(r.request.url);r.abort()
-            context.route('**/*',route)
+            context.route('**/*',route);mock_visit_counter(context)
             page=context.new_page();
             if production:page.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,auth:{currentUser:null,authStateReady:async()=>{}}};')
             page.on('pageerror',lambda error:errors.append(str(error)))
@@ -55,12 +56,12 @@ def run(production=False):
             expect(page.locator('.hero-studio img')).to_have_count(0)
             expect(page.locator('.journey-progress')).to_have_count(0)
             for id in [1,4,3]:
-                page.locator('.studio-course[data-id="'+str(id)+'"]').click()
+                page.locator(('.course-card [data-action=course]' if production else '.studio-course')+'[data-id="'+str(id)+'"]').click()
                 expect(page.locator('#dialogTitle')).to_have_text(courses[id]['title'])
                 page.locator('#dialogClose').click()
             page.locator('.studio-bottom [data-action=finder]').click();expect(page.locator('#dialogContent')).to_contain_text('What would you like to achieve?')
             page.locator('#dialogClose').click()
-            print('PASS: original computer-learning illustration, all three course shortcuts and course-finder action work',flush=True)
+            print('PASS: computer-learning illustration, catalogue course actions and course-finder action work',flush=True)
 
             page.locator('[data-filter=accounting]').click();expect(page.locator('.course-card')).to_have_count(2)
             page.locator('[data-filter=typing]').click();expect(page.locator('.course-card')).to_have_count(1)
@@ -71,7 +72,7 @@ def run(production=False):
             page.locator('.course-card [data-action=save][data-id="4"]').click();expect(page.locator('#savedCount')).to_have_text('1')
             page.locator('.saved-link').click();expect(page.locator('.course-card')).to_have_count(1)
             page.reload();expect(page.locator('#savedCount')).to_have_text('1');expect(page.locator('.course-card')).to_have_count(7)
-            assert page.evaluate('Object.keys(localStorage)')==['rehaan-visitor-saved-courses-v1']
+            assert page.evaluate('Object.keys(localStorage).filter(key=>key!=="rehaan-anonymous-visitor-v1")')==['rehaan-visitor-saved-courses-v1']
             assert page.evaluate('JSON.parse(localStorage.getItem("rehaan-visitor-saved-courses-v1"))')==['tally-prime-with-gst-detailed-course']
             for id in [0,1,4]:page.locator(f'[data-compare="{id}"]').check()
             page.locator('[data-compare="3"]').click();expect(page.locator('[data-compare="3"]')).not_to_be_checked()
@@ -152,7 +153,7 @@ def run(production=False):
                 page.locator('[data-action=clear-application]').click()
             expect(page.locator('#fullName')).to_have_value('')
             expect(page.locator('#photoPreview')).not_to_have_attribute('src',re.compile('^(blob:|data:)'))
-            assert page.evaluate('Object.keys(localStorage)')==['rehaan-visitor-saved-courses-v1'];assert page.evaluate('sessionStorage.length')==0
+            assert page.evaluate('Object.keys(localStorage).filter(key=>key!=="rehaan-anonymous-visitor-v1")')==['rehaan-visitor-saved-courses-v1'];assert page.evaluate('sessionStorage.length')==0
             print('PASS: all existing form details, validation, photo crop, edit/review/confirmation and clear controls work entirely in memory; no submission/payment',flush=True)
 
             expect(page.locator('#typingInput')).to_have_count(0)

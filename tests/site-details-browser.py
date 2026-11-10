@@ -1,5 +1,6 @@
 """Public-page smoke test. Third-party services are mocked; no payments or messages."""
 from pathlib import Path
+from browser_visit_fixture import mock_visit_counter
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -9,7 +10,7 @@ from playwright.sync_api import sync_playwright, expect
 ROOT = Path(__file__).resolve().parents[1]
 EXACT_MAP = 'https://www.google.com/maps/search/?api=1&query=34.026895%2C74.643088'
 BROWSER_MAP = 'https://www.google.com/maps/dir/?api=1&destination=34.026895%2C74.643088&travelmode=driving&dir_action=navigate'
-SOCIAL_LINKS = ['https://instagram.com/dar_yas_ir?mdxt=NWI0YzZydnF2czNm', 'https://www.facebook.com/share/1EnMSHPNxp/', 'https://www.facebook.com/share/14tvvFj3od1/']
+SOCIAL_LINKS = ['https://instagram.com/dar_yas_ir?mdxt=NWI0YzZydnF2czNm', 'https://www.facebook.com/share/14tvvFj3od1/']
 spec=importlib.util.spec_from_file_location('admin_browser_fixture',ROOT/'tests/admin-browser.py')
 fixture=importlib.util.module_from_spec(spec)
 spec.loader.exec_module(fixture)
@@ -49,7 +50,7 @@ def run():
                 route.fulfill(status=200,content_type='text/html',body='<html><body>Shared Google Maps location</body></html>')
             else:
                 unexpected.append(url);route.abort()
-        context.route('**/*',route_handler)
+        context.route('**/*',route_handler);mock_visit_counter(context)
         page=context.new_page()
         page.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,auth:{currentUser:null,authStateReady:async()=>{}}};')
         page.on('pageerror',lambda error:errors.append(str(error)))
@@ -60,14 +61,11 @@ def run():
         expect(page.locator('#featureDialog')).to_be_visible()
         page.locator('#dialogClose').click()
         print('PASS: existing courses, course modal and admissions form initialize')
-        credit=page.locator('.topbar a[href="#creatorCredit"]')
-        expect(credit).to_contain_text('Created by Dar Yasir')
-        credit.click()
-        expect(page).to_have_url(base+'/index.html#creatorCredit')
-        expect(page.locator('#creatorCredit')).to_be_in_viewport()
         expect(page.locator('.creator-credit strong')).to_have_text('Dar Yasir')
-        expect(page.locator('.manager')).to_have_text('Managed by Dar Yasir')
-        print('PASS: top creator badge opens the styled footer credit and retains management attribution')
+        expect(page.locator('.creator-credit')).to_contain_text('DESIGNED & DEVELOPED BY')
+        page.locator('.creator-credit a[href="#home"]').click()
+        expect(page).to_have_url(base+'/index.html#home')
+        print('PASS: current footer credit retains Dar Yasir attribution and Back to top navigation')
         expect(page.locator('#location')).to_be_hidden()
         assert page.locator('.location-map iframe').get_attribute('src') is None
         assert not map_requests
@@ -104,17 +102,17 @@ def run():
         expect(page.locator('#location')).to_be_visible()
         assert len(map_requests)==1,map_requests
         print('PASS: map hidden until footer click, exact-coordinate directions, hide/reopen, Escape and one-time map load')
-        expect(page.locator('.footer-social > a:not(.footer-location-link)')).to_have_count(3)
+        expect(page.locator('.footer-social > a:not(.footer-location-link)')).to_have_count(2)
         for index,url in enumerate(SOCIAL_LINKS):
             link=page.locator('.footer-social > a:not(.footer-location-link)').nth(index)
             expect(link).to_have_attribute('href',url)
-            expect(link).to_have_css('border-top-left-radius','999px')
+            assert link.evaluate('el=>parseFloat(getComputedStyle(el).borderTopLeftRadius)')>=8
             assert link.bounding_box()['height']>=44
             with page.expect_popup() as popup:link.click()
             expect(popup.value).to_have_url(url)
             popup.value.close()
         expect(page.locator('.footer-social > a:not(.footer-location-link)').last).to_contain_text('Official Facebook')
-        print('PASS: Instagram, existing Facebook, and new official Facebook page open in new tabs')
+        print('PASS: Instagram and the current official Facebook page open in new tabs')
         artifacts=ROOT/'tests/artifacts';artifacts.mkdir(exist_ok=True)
         page.locator('#location').scroll_into_view_if_needed()
         page.screenshot(path=str(artifacts/'site-location.png'),full_page=False)
@@ -134,7 +132,7 @@ def run():
         assert not unexpected,unexpected
         print('PASS: desktop/tablet/mobile layout, mobile menu, no JS errors or live writes/requests')
         fallback=browser.new_context(java_script_enabled=False)
-        fallback.route('**/*',route_handler)
+        fallback.route('**/*',route_handler);mock_visit_counter(fallback)
         plain=fallback.new_page();plain.goto(base+'/index.html')
         expect(plain.locator('#location')).to_be_hidden()
         with plain.expect_popup() as popup:plain.locator('.footer-location-link').click()

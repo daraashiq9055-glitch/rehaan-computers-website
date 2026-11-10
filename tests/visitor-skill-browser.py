@@ -1,5 +1,6 @@
 """Mobile-first skill discovery and decorative laptop object; no live services."""
 from pathlib import Path
+from browser_visit_fixture import mock_visit_counter
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -26,7 +27,7 @@ def run():
                 elif r.request.url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):
                     r.fulfill(content_type='application/javascript',body=fixture.MOCK,headers={'Access-Control-Allow-Origin':'*'})
                 else:external.append(r.request.url);r.abort()
-            context=browser.new_context(reduced_motion='reduce');context.route('**/*',route);context.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,auth:{currentUser:null,authStateReady:async()=>{}}};')
+            context=browser.new_context(reduced_motion='reduce');context.route('**/*',route);mock_visit_counter(context);context.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,auth:{currentUser:null,authStateReady:async()=>{}}};')
             page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
             for width in [320,390,768,1024,1512]:
                 page.set_viewport_size({'width':width,'height':1000});page.goto(base+'/')
@@ -46,10 +47,10 @@ def run():
                 assert page.locator('.learning-pages').evaluate('el=>getComputedStyle(el).animationName')=='none'
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
                 if width in [390,1512]:page.locator('#skillChallenge').screenshot(path=str(OUT/f'challenge-{width}.png'));page.locator('.studio-screen').screenshot(path=str(OUT/f'laptop-{width}.png'))
-                assert page.evaluate('__fixture.writes.length')==0 and page.evaluate('localStorage.length')==0 and page.evaluate('sessionStorage.length')==0
+                assert page.evaluate('__fixture.writes.length')==0 and page.evaluate('Object.keys(localStorage).filter(key=>key!=="rehaan-anonymous-visitor-v1").length')==0 and page.evaluate('sessionStorage.length')==0
             print('PASS: phone-friendly tap/keyboard challenge at five widths, explanations for wrong/correct answers, no double scoring, alternate questions, accessible focus/review and no stored answers or writes',flush=True)
             context.close()
-            context=browser.new_context(viewport={'width':1440,'height':1000});context.route('**/*',route);context.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,auth:{currentUser:null,authStateReady:async()=>{}}};')
+            context=browser.new_context(viewport={'width':1440,'height':1000});context.route('**/*',route);mock_visit_counter(context);context.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,auth:{currentUser:null,authStateReady:async()=>{}}};')
             page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)));page.goto(base+'/');page.locator('.hero-studio').scroll_into_view_if_needed();expect(page.locator('.hero-studio')).to_have_class(__import__('re').compile('studio-live'))
             expect(page.locator('.learning-pages')).to_have_css('animation-play-state','running')
             before=page.locator('.learning-pages').evaluate('el=>getComputedStyle(el).transform');page.wait_for_timeout(250);after=page.locator('.learning-pages').evaluate('el=>getComputedStyle(el).transform');assert before!=after

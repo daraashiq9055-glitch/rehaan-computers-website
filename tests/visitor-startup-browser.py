@@ -1,5 +1,6 @@
 """Public release cache/loading checks, using an isolated SDK and no live writes."""
 from pathlib import Path
+from browser_visit_fixture import mock_visit_counter
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -36,7 +37,7 @@ def run():
                         if mode=='sdk-unavailable':r.abort()
                         else:r.fulfill(content_type='application/javascript',body=fixture.MOCK,headers={'Access-Control-Allow-Origin':'*'})
                     else:external.append(url);r.abort()
-                context.route('**/*',route)
+                context.route('**/*',route);mock_visit_counter(context)
                 page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
                 page.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,auth:{currentUser:null,authStateReady:async()=>{}}};')
                 if mode=='storage-unavailable':page.add_init_script('Storage.prototype.getItem=Storage.prototype.setItem=Storage.prototype.removeItem=function(){throw new DOMException("Storage blocked","SecurityError")};')
@@ -46,7 +47,7 @@ def run():
                     expect(page.locator('#admissionServiceState')).to_have_text('CONNECTION REQUIRED')
                     expect(page.locator('#serviceStatus')).to_contain_text('No application has been submitted')
                 else:expect(page.locator('#admissionServiceState')).to_have_text('SECURE APPLICATION')
-                page.locator('.studio-course[data-id="4"]').click()
+                page.locator('.course-card [data-action=course][data-id="4"]').click()
                 expect(page.locator('#dialogTitle')).to_contain_text('Tally Prime')
                 page.locator('#dialogClose').click()
                 page.locator('.studio-bottom [data-action=finder]').click()

@@ -1,6 +1,7 @@
 """Refined visitor design: brand access, top skills line and real course imagery."""
 import sys,importlib.util
 from pathlib import Path
+from browser_visit_fixture import mock_visit_counter
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -30,7 +31,7 @@ def run(production=False):
                 elif production and r.request.url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):
                     r.fulfill(content_type='application/javascript',body=fixture.MOCK,headers={'Access-Control-Allow-Origin':'*'})
                 else:external.append(r.request.url);r.abort()
-            context.route('**/*',route);page=context.new_page()
+            context.route('**/*',route);mock_visit_counter(context);page=context.new_page()
             if production:page.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,auth:{currentUser:null,authStateReady:async()=>{}}};')
             page.on('pageerror',lambda error:errors.append(str(error)))
             page.on('response',lambda response:failed.append(response.url) if response.status>=400 else None)
@@ -108,6 +109,7 @@ def run(production=False):
             print('PASS: one image at a time, timed sequence, manual controls, pause and reduced-motion stop work for the learning slideshow',flush=True)
 
             expected=['hero-library.jpg','word-doc.jpg','excel-desk.jpg','typing-keys.jpg','tally-prime.jpg','excel-sheet.jpg','marg-erp.jpg']
+            if production:expected=['cover-diploma.webp','cover-office.webp','cover-basics.webp','cover-typing.webp','cover-tally.webp','cover-crash.webp','cover-marg.webp']
             for id,file in enumerate(expected):
                 image=page.locator('.course-card').filter(has=page.locator('[data-action=course][data-id="'+str(id)+'"]')).locator('.course-image img')
                 image.scroll_into_view_if_needed()
@@ -121,6 +123,7 @@ def run(production=False):
             for width in [320,390,700,768,1024,1440]:
                 page.set_viewport_size({'width':width,'height':1000});page.goto(base+path);expect(page.locator('.course-card')).to_have_count(7)
                 assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),width
+                if production:expect(page.locator('.studio-course')).to_have_count(0)
                 for card in page.locator('.studio-course').all():
                     box=card.bounding_box()
                     assert box['x']>=0 and box['x']+box['width']<=width,(width,box)
@@ -144,7 +147,7 @@ def run(production=False):
             assert not writes,writes
             assert not errors,errors
             assert not failed,failed
-            print('PASS: seven distinct real course-image mappings, larger typography, six responsive widths and no live requests or writes',flush=True)
+            print('PASS: seven distinct approved course-image mappings, larger typography, six responsive widths and no live requests or writes',flush=True)
             browser.close()
     finally:server.shutdown()
 
