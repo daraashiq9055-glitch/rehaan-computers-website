@@ -174,37 +174,45 @@ function categoryMatches(course) {
   if (filter === "accounting") return course.category.includes("Accounting");
   return course.category === "Typing";
 }
-// Original photographs and actual software interfaces, selected per course.
-// Keep the curriculum snapshot intact; presentation assets are mapped separately.
+// Generated illustrative course photography; existing curriculum and actions are unchanged.
 const courseImages = {
   "One Year Computer Diploma Course": [
-    "hero-library.jpg",
-    "Learners studying together with a laptop",
+    "cover-diploma.webp",
+    "Illustrative diploma workspace progressing from documents through spreadsheets to data charts"
   ],
   "Six Month Computer Certificate Course": [
-    "word-doc.jpg",
-    "Microsoft Word document tools and workspace",
+    "cover-office.webp",
+    "Illustrative professional office workspace with documents, spreadsheets and presentations"
   ],
   "Three Month Computer Certificate Course": [
-    "excel-desk.jpg",
-    "A learner working with a spreadsheet on a laptop",
+    "cover-basics.webp",
+    "Illustrative beginner computer workstation with folders and a simple document"
   ],
   "Typing Diploma Course": [
-    "typing-keys.jpg",
-    "Hands practising on a computer keyboard",
+    "cover-typing.webp",
+    "Illustrative close-up of hands practising touch typing on a keyboard"
   ],
   "Tally Prime with GST — Detailed Course": [
-    "tally-prime.jpg",
-    "Actual Tally Prime educational interface and company menu",
+    "cover-tally.webp",
+    "Illustrative accounting workspace with ledgers and a GST invoice, not an actual Tally screenshot"
   ],
   "Crash Computer Course": [
-    "excel-sheet.jpg",
-    "A practical spreadsheet with quantities, prices and formulas",
+    "cover-crash.webp",
+    "Illustrative practical workspace combining document, spreadsheet, invoice and design tasks"
   ],
   "Marg ERP 9 Course": [
-    "marg-erp.jpg",
-    "Actual Marg ERP billing, inventory and business reports interface",
-  ],
+    "cover-marg.webp",
+    "Illustrative billing and inventory workstation with a scanner and receipt printer, not an actual Marg screenshot"
+  ]
+};
+const courseImageLevels = {
+  "One Year Computer Diploma Course": "Basic → Advanced",
+  "Six Month Computer Certificate Course": "Basic → Intermediate",
+  "Three Month Computer Certificate Course": "Start with the basics",
+  "Typing Diploma Course": "Basic → Advanced",
+  "Tally Prime with GST — Detailed Course": "Fundamentals → GST workflows",
+  "Crash Computer Course": "Build practical skills",
+  "Marg ERP 9 Course": "Billing → Inventory"
 };
 function courseArtwork(course) {
   const [file, alt] = courseImages[course.title];
@@ -232,7 +240,7 @@ function cards() {
   $("#courseGrid").innerHTML = visible
     .map(
       ({ course, id }) =>
-        `<article class="course-card"><div class="course-image${course.category.includes("Accounting") ? " course-software" : ""}"><img src="${courseArtwork(course).src}" alt="${escape(courseArtwork(course).alt)}" loading="lazy"><span class="course-number">LEARNING PATH / ${String(id + 1).padStart(2, "0")}</span><button class="save-course" data-action="save" data-id="${id}" aria-label="${saved.has(courseSlug(course)) ? "Unsave" : "Save"} ${escape(course.title)}" aria-pressed="${saved.has(courseSlug(course))}">${icon("bookmark")}</button></div><div class="course-body"><span class="course-category">${escape(course.category)}</span><h3>${escape(course.title)}</h3><p>${escape(course.overview)}</p><div class="course-meta"><span>${escape(course.duration)}</span><span>${escape(course.level)}</span></div></div><div class="course-actions"><button data-action="course" data-id="${id}">Explore syllabus ${icon("arrow")}</button><button data-action="apply" data-id="${id}">Apply now ${icon("arrow")}</button></div><div class="course-bottom"><label><input type="checkbox" data-compare="${id}" ${comparison.has(id) ? "checked" : ""}>Compare</label><button data-action="pdf" data-id="${id}">${icon("download")}Brochure</button></div></article>`,
+        `<article class="course-card"><div class="course-image course-art${course.category.includes("Accounting") ? " course-software" : ""}" data-art="${courseSlug(course)}"><a class="course-cover-open" href="course-gallery.html#cover-${courseSlug(course)}" target="_blank" rel="noopener" aria-label="View full course cover for ${escape(course.title)}"><img src="${courseArtwork(course).src}" alt="${escape(course.title)} course cover with application logos, key skills and Rehaan Computers branding" loading="lazy"></a><span class="course-number">LEARNING PATH / ${String(id + 1).padStart(2, "0")}</span><span class="course-image-level">${escape(courseImageLevels[course.title])}</span><button class="save-course" data-action="save" data-id="${id}" aria-label="${saved.has(courseSlug(course)) ? "Unsave" : "Save"} ${escape(course.title)}" aria-pressed="${saved.has(courseSlug(course))}">${icon("bookmark")}</button></div><div class="course-body"><span class="course-category">${escape(course.category)}</span><h3>${escape(course.title)}</h3><p>${escape(course.overview)}</p><div class="course-meta"><span>${escape(course.duration)}</span><span>${escape(course.level)}</span></div></div><div class="course-actions"><button data-action="course" data-id="${id}">Explore syllabus ${icon("arrow")}</button><button data-action="apply" data-id="${id}">Apply now ${icon("arrow")}</button></div><div class="course-bottom"><label><input type="checkbox" data-compare="${id}" ${comparison.has(id) ? "checked" : ""}>Compare</label><button data-action="pdf" data-id="${id}">${icon("download")}Brochure</button></div></article>`,
     )
     .join("");
   $("#courseCount").textContent =

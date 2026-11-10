@@ -13,7 +13,7 @@ test('Hosting uses public and revalidates the visitor module graph without alter
   const html=read('public/index.html');
   assert.match(html,/data-visitor-design="premium"/);
   assert.doesNotMatch(html,/COMPLETE DESIGN PREVIEW|PREVIEW MODE|data-action="sample-photo"|localhost|127\.0\.0\.1|previews\//);
-  assert.match(html,/visitor\/app\.js\?v=20261020-visitor-5/);
+  assert.match(html,/visitor\/app\.js\?v=20261110-home-covers-1/);
   assert.ok(html.indexOf('</header>')<html.indexOf('class="skills-line"'));
   const js=read('public/visitor/admission.js');
   assert.match(js,/import\("\.\.\/script\.js\?v=20261020-visitor-5"\)/);

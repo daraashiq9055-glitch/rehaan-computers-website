@@ -1,0 +1,92 @@
+/* Focused presentation changes: application CTA and skill discovery visual. */
+.apply-special{position:relative!important;isolation:isolate;overflow:hidden!important;border-color:#f8d68b!important;background:#d6b371!important;box-shadow:0 0 0 1px #f6d68b22,0 6px 23px #d6ad6b25;animation:apply-aura 5s ease-in-out infinite;color:#192332!important;transform:translateZ(0)}
+.apply-special::before{content:'';position:absolute;inset:-180%;background:conic-gradient(from 0deg,transparent 0deg,transparent 240deg,#fff8dc 285deg,#b9dfff 305deg,transparent 335deg);animation:apply-border-orbit 6s linear infinite;z-index:-2;pointer-events:none}
+.apply-special::after{content:'';position:absolute;inset:1.5px;border-radius:inherit;background:linear-gradient(118deg,#f8e5b5 0%,#dfba72 48%,#f3d89c 100%);z-index:-1;pointer-events:none}
+.apply-special .apply-label{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:10px;min-width:0;z-index:1;font-weight:750;letter-spacing:.1px}
+.apply-special .apply-label::after{content:'';position:absolute;inset:-25px -35px;background:linear-gradient(110deg,transparent 35%,#fffdf3a0 48%,transparent 61%);transform:translateX(-160%);animation:apply-light-pass 6s ease-in-out infinite;pointer-events:none}
+.apply-special .apply-label>.icon{width:15px;height:15px;animation:apply-arrow-nudge 6s ease-in-out infinite}
+.apply-special:hover,.apply-special:focus-visible{box-shadow:0 0 0 3px #ffe9af30,0 10px 32px #d8b36c4d!important;animation-play-state:paused}
+.apply-special:hover .apply-label>.icon,.apply-special:focus-visible .apply-label>.icon{transform:translate(2px,-2px);animation:none}
+@keyframes apply-border-orbit{to{transform:rotate(360deg)}}
+@keyframes apply-light-pass{0%,50%{transform:translateX(-160%)}75%,100%{transform:translateX(160%)}}
+@keyframes apply-aura{0%,100%{box-shadow:0 0 0 1px #f6d68b20,0 5px 18px #d6ad6b18}50%{box-shadow:0 0 0 3px #f6d68b0d,0 7px 27px #d6ad6b3d}}
+@keyframes apply-arrow-nudge{0%,53%,76%,100%{transform:none}63%,68%{transform:translate(2px,-2px)}}
+/* The original challenge card supplies the visual; no separate illustration. */
+.skill-card-stage{position:relative;isolation:isolate;min-width:0;padding:1px;border-radius:25px;overflow:hidden;background:#8faed338;align-self:start}
+.skill-card-stage::before{content:'';position:absolute;inset:-100%;z-index:-1;background:conic-gradient(from 20deg,transparent 0deg,transparent 190deg,#9ec5e7 235deg,#f6daa0 270deg,transparent 305deg);opacity:0;pointer-events:none}
+.skill-card-stage #skillChallenge{position:relative;z-index:1;border-radius:24px;width:100%;min-width:0;margin:0;background:radial-gradient(ellipse at top right,#37649238,transparent 60%),#101e31}
+.skill-effects-live .skill-card-stage::before{opacity:1;animation:challenge-edge-turn 5s linear infinite}
+.skill-effects-live .skill-card-stage{animation:challenge-halo 4.8s ease-in-out infinite}
+.skill-effects-live #skillChallenge{animation:skill-card-welcome 1.8s ease-out both}
+.skill-effects-live #skillChallenge::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,transparent 30%,#b6d5fa12 48%,#edc47018 52%,transparent 70%);animation:skill-card-sweep 5.4s ease-in-out infinite;z-index:0}
+#skillChallenge>*{position:relative;z-index:1}
+@keyframes challenge-edge-turn{to{transform:rotate(360deg)}}
+@keyframes challenge-halo{0%,100%{box-shadow:0 20px 60px #0004}50%{box-shadow:0 0 30px #b3ccf014,0 20px 65px #c9a55715}}
+@keyframes skill-card-welcome{0%{border-color:#cba65b55;box-shadow:0 24px 60px #0004}40%{border-color:#edc470b3;box-shadow:0 0 0 3px #edc4700a,0 20px 65px #4479bb24}100%{border-color:#cba65b77;box-shadow:0 24px 60px #0004}}
+@keyframes skill-card-sweep{0%,12%{transform:translateX(-110%);opacity:0}25%{opacity:1}52%,100%{transform:translateX(110%);opacity:0}}
+@media(max-width:700px){.mobile-actions .apply-special{background:#d6b371!important;color:#192332!important;border:1px solid #f6d695!important}.mobile-actions .apply-special .apply-label{gap:5px;font-size:10px}.header-actions .apply-special .apply-label{gap:4px;font-size:10px}.header-actions .apply-special .apply-label>.icon{width:12px;height:12px}.mobile-actions .apply-special .apply-label>.icon{width:14px;height:14px}}
+@media(prefers-reduced-motion:reduce){.apply-special,.apply-special::before,.apply-special .apply-label::after,.apply-special .apply-label>.icon,.skill-effects-live #skillChallenge,.skill-effects-live #skillChallenge::after{animation:none!important}.apply-special .apply-label::after,.skill-effects-live #skillChallenge::after{display:none}}
+/* Hero application button, positioned in the former fee slot. */
+.hero-apply-slot{margin:25px 0 22px;max-width:100%;padding:3px 0}
+.apply-special{animation-duration:3.6s}
+.apply-special::before{animation-duration:3.5s}
+.apply-special .apply-label::after{animation-duration:3.4s}
+.apply-special .apply-label>.icon{animation-duration:3.4s}
+.apply-hero.button{width:min(100%,310px);min-height:72px;padding:16px 22px;border-radius:15px;overflow:hidden!important;border:1px solid #ffe9b3!important;box-shadow:0 0 0 4px #e4be7210,0 12px 36px #d5af6c30;animation:hero-apply-halo 3.6s ease-in-out infinite}
+.apply-hero::after{inset:2px;background:linear-gradient(115deg,#e0b76b,#ffedbe,#d6a85c,#f9dfa1);background-size:250% 100%;animation:hero-gold-flow 6s ease-in-out infinite}
+.apply-hero .apply-label{width:100%;justify-content:space-between;gap:28px;font-size:19px;font-weight:750;letter-spacing:.1px}
+.apply-hero .apply-label::after{inset:-50px;animation:hero-cta-sheen 3.4s ease-in-out infinite}
+.hero-apply-arrow{display:grid;place-items:center;width:38px;height:38px;flex:none;border:1px solid #13233726;background:#1b2a37;border-radius:50%;box-shadow:inset 0 1px #ffffff26;color:#ffe8ad}
+.hero-apply-arrow .icon{width:20px;height:20px;animation:hero-arrow-lift 3.4s ease-in-out infinite}
+.cta-sparkles{position:absolute;inset:0;pointer-events:none;z-index:2;overflow:hidden;border-radius:inherit}
+.cta-sparkles i{position:absolute;width:3px;height:3px;background:#fff4cd;border-radius:50%;box-shadow:0 0 6px #fff4cd;animation:hero-gold-particle 4s ease-in-out infinite;opacity:0}
+.cta-sparkles i:nth-child(1){left:12%;top:76%;animation-delay:0s}.cta-sparkles i:nth-child(2){left:32%;top:87%;animation-delay:1.2s}.cta-sparkles i:nth-child(3){left:58%;top:73%;animation-delay:2.5s}.cta-sparkles i:nth-child(4){left:74%;top:92%;animation-delay:.7s}.cta-sparkles i:nth-child(5){left:90%;top:70%;animation-delay:1.8s}
+.apply-hero:hover,.apply-hero:focus-visible{transform:translateY(-2px);box-shadow:0 0 0 5px #e4be7220,0 16px 48px #d5af6c4d!important}
+@keyframes hero-apply-halo{0%,100%{box-shadow:0 0 0 3px #e4be720b,0 10px 30px #d5af6c20}50%{box-shadow:0 0 0 6px #e4be7212,0 14px 44px #d5af6c40}}
+@keyframes hero-gold-flow{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+@keyframes hero-cta-sheen{0%,20%{transform:translateX(-150%)}65%,100%{transform:translateX(150%)}}
+@keyframes hero-arrow-lift{0%,25%,70%,100%{transform:none}45%,55%{transform:translate(3px,-3px)}}
+@keyframes hero-gold-particle{0%,20%{transform:translateY(0) scale(.4);opacity:0}40%{opacity:.85}80%,100%{transform:translateY(-40px) scale(.2);opacity:0}}
+@media(max-width:700px){.hero-apply-slot{margin:23px 0 19px}.apply-hero.button{width:100%;min-height:69px;padding:14px 20px}.apply-hero .apply-label{font-size:19px}.skill-card-stage{border-radius:21px}.skill-card-stage #skillChallenge{border-radius:20px}}
+@media(prefers-reduced-motion:reduce){.apply-hero,.apply-hero::after,.apply-hero .apply-label::after,.hero-apply-arrow .icon,.cta-sparkles i,.skill-effects-live .skill-card-stage,.skill-effects-live .skill-card-stage::before{animation:none!important}.cta-sparkles{display:none}.skill-effects-live .skill-card-stage::before{opacity:0}}
+/* Retain original layout rules and provide a page-motion control. */
+
+.fit-motion-control{border:1px solid #bca87755;border-radius:20px;background:#14253b;color:#e7c987;min-height:40px;padding:8px 14px;font:500 11px var(--sans)}
+.motion-paused *,.motion-paused *::before,.motion-paused *::after{animation-play-state:paused!important;scroll-behavior:auto!important}
+/* Compact cards keep all text and every existing action. No clipping or line clamps. */
+.courses-section .course-image{height:145px}
+.courses-section .course-body{padding:17px 20px 14px}
+.courses-section .course-card h3{font-size:23px;line-height:1.3;margin-top:7px}
+.courses-section .course-card p{font-size:13px;line-height:1.7;margin-top:9px}
+.courses-section .course-meta{margin-top:12px}
+.courses-section .course-actions{padding:7px 20px}
+.courses-section .course-actions button{min-height:40px}
+.courses-section .course-bottom{padding:5px 20px}
+.courses-section .course-bottom button,.courses-section .course-bottom label{min-height:36px}
+@media(max-width:700px){.courses-section .course-image{height:145px}.courses-section .course-body{padding:18px 20px 14px}.courses-section .course-card h3{font-size:24px;line-height:1.3}.courses-section .course-card p{font-size:14px;line-height:1.75}.courses-section .course-actions{padding:5px 20px}.courses-section .course-actions button{min-height:42px}.courses-section .course-bottom{padding:3px 20px}.courses-section .course-bottom button,.courses-section .course-bottom label{min-height:40px}}
+@media(max-width:360px){.courses-section .course-body{padding-inline:17px}.courses-section .course-actions,.courses-section .course-bottom{padding-inline:17px}.courses-section .course-card h3{font-size:23px}}
+/* Original brand sparkle, brought to life as the challenge scrolls into view. */
+.skill-signature{width:min(100%,260px);margin-top:22px;line-height:0;pointer-events:none;contain:layout paint}
+.skill-signature svg{display:block;width:100%;height:auto}
+.signature-core{transform-origin:130px 50px}.signature-dust{transform-origin:130px 50px}.signature-ring{transform-origin:130px 50px}
+.skill-effects-live .signature-float{animation:signature-rise 4.8s ease-in-out infinite}
+.skill-effects-live .signature-core{animation:signature-turn 12s cubic-bezier(.4,0,.6,1) infinite}
+.skill-effects-live .signature-dust{animation:signature-stardust 5s ease-in-out infinite}
+.skill-effects-live .signature-ring{animation:signature-trace 9s linear infinite}
+.skill-effects-live .signature-light{animation:signature-light 3.4s ease-in-out infinite;transform-origin:130px 89px}
+@keyframes signature-rise{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes signature-turn{0%,12%{transform:rotate(0) scale(1)}38%,50%{transform:rotate(90deg) scale(.88)}75%,100%{transform:rotate(180deg) scale(1)}}
+@keyframes signature-stardust{0%,100%{opacity:.45;transform:scale(.93)}50%{opacity:1;transform:scale(1.06)}}
+@keyframes signature-trace{to{stroke-dashoffset:-172}}
+@keyframes signature-light{0%,100%{opacity:.3;transform:scaleX(.7)}50%{opacity:1;transform:scaleX(1)}}
+@media(prefers-reduced-motion:reduce){.skill-effects-live .signature-float,.skill-effects-live .signature-core,.skill-effects-live .signature-dust,.skill-effects-live .signature-ring,.skill-effects-live .signature-light{animation:none!important}}
+
+/* Keep all four original mobile actions visible; override legacy gold-on-gold text. */
+@media(max-width:700px){
+ .mobile-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important}
+ .mobile-actions>a,.mobile-actions>button{width:100%!important;min-width:0}
+ .mobile-actions>a.apply-special{color:#142536!important;min-width:0}
+ .mobile-actions>a.apply-special .apply-label{color:#142536!important;display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:10px;line-height:1.4;white-space:nowrap;max-width:100%;isolation:isolate}
+ .mobile-actions>a.apply-special .apply-label>.icon{width:12px;height:12px;flex-shrink:0;color:#142536}
+ .mobile-actions>a.apply-special .apply-label::after{z-index:-1;opacity:.4}
+}

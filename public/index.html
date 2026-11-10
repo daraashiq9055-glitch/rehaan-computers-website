@@ -29,7 +29,7 @@
     />
     <link rel="stylesheet" href="visitor/studio.css?v=20261020-visitor-5" />
     <link rel="stylesheet" href="visitor/admission.css?v=20261020-visitor-5" />
-    <script type="module" src="visitor/app.js?v=20261020-visitor-5"></script>
+    <script type="module" src="visitor/app.js?v=20261110-home-covers-1"></script>
     <script type="module" src="site-details.js?v=20261020-visitor-5"></script>
     <link rel="stylesheet" href="visitor/location.css?v=20261020-visitor-5" />
     <link
@@ -38,7 +38,7 @@
       type="image/svg+xml"
     />
       <link rel="stylesheet" href="visitor/challenge.css?v=20261020-visitor-5" />
-  <link rel="stylesheet" href="website-updates.css?v=20261105-follow-5"></head>
+  <link rel="stylesheet" href="website-updates.css?v=20261105-follow-5"><link rel="stylesheet" href="homepage-enhancements.css?v=20261110-1"><link rel="stylesheet" href="course-art.css?v=20261110-1"></head>
   <body data-visitor-design="premium">
     <svg class="sprite" aria-hidden="true">
       <symbol id="i-arrow" viewBox="0 0 24 24">
@@ -112,7 +112,7 @@
       <span
         ><svg class="icon"><use href="#i-pin" /></svg>Charangam, Beerwah,
         Kashmir</span
-      ><span class="top-open"><i></i> Admissions open all year</span
+      ><span class="top-open"><i></i> Admissions are open</span
       >
       <div class="top-contacts" aria-label="Call the institute">
         <a class="top-contact" href="tel:+919149551258">+91 9149551258</a>
@@ -175,8 +175,8 @@
           >
             <svg class="icon"><use href="#i-bookmark" /></svg
             ><span id="savedCount">0</span></button
-          ><a class="button gold small" href="#admission"
-            >Apply online<svg class="icon"><use href="#i-arrow" /></svg></a
+          ><a class="button gold small apply-special" href="#admission"
+            ><span class="apply-label">Apply now<svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg></span></a
           ><button
             id="menuButton"
             class="menu-button"
@@ -234,7 +234,7 @@
           <p class="hero-lead">
             Practical classes. Individual attention. Skills you can use.
           </p>
-          <div class="hero-tuition"><span>MONTHLY TUITION</span><strong>₹999/month</strong><small>₹100 one-time admission fee, paid separately.</small></div>
+          <div class="hero-apply-slot"><a class="button gold apply-special apply-hero" href="#admission" aria-label="Apply now — go to admission"><span class="cta-sparkles" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></span><span class="apply-label"><span>Apply now</span><span class="hero-apply-arrow" aria-hidden="true"><svg class="icon"><use href="#i-arrow" /></svg></span></span></a></div>
           <p class="hero-text">
             Computer training for students, job-seekers and business learners in
             Charangam, Beerwah. Find your starting point. Build confidence, one
@@ -326,59 +326,9 @@
               </div>
               <div class="studio-device-edge"></div>
             </div>
-            <button
-              class="studio-course studio-office"
-              data-action="course"
-              data-id="1"
-              aria-label="Explore the six month computer course: office skills"
-            >
-              <span class="studio-course-icon office-icon" aria-hidden="true"
-                ><svg viewBox="0 0 28 28">
-                  <path
-                    d="M6 3h11l5 5v17H6zM17 3v6h5M10 13h8m-8 4h8m-8 4h5"
-                  /></svg></span
-              ><span
-                ><small>CREATE &amp; ORGANISE</small
-                ><strong>Office skills</strong
-                ><em>Word · Excel · PowerPoint</em></span
-              ><svg class="icon"><use href="#i-arrow" /></svg>
-            </button>
-            <button
-              class="studio-course studio-accounting"
-              data-action="course"
-              data-id="4"
-              aria-label="Explore the Tally Prime with GST course"
-            >
-              <span class="studio-course-icon accounts-icon" aria-hidden="true"
-                ><svg viewBox="0 0 28 28">
-                  <rect x="6" y="3" width="17" height="22" rx="2" />
-                  <path
-                    d="M10 7h9M10 12h2m5 0h2m-9 5h2m5 0h2m-9 4h2m5 0h2"
-                  /></svg></span
-              ><span
-                ><small>UNDERSTAND BUSINESS</small
-                ><strong>Tally Prime + GST</strong
-                ><em>Accounts · Billing · Reports</em></span
-              ><svg class="icon"><use href="#i-arrow" /></svg>
-            </button>
-            <button
-              class="studio-course studio-typing"
-              data-action="course"
-              data-id="3"
-              aria-label="Explore the typing diploma course"
-            >
-              <span class="studio-course-icon typing-icon" aria-hidden="true"
-                ><svg viewBox="0 0 28 28">
-                  <rect x="2" y="7" width="24" height="15" rx="2" />
-                  <path
-                    d="M6 11h2m3 0h2m3 0h2m3 0h1M6 15h2m3 0h2m3 0h2m3 0h1M8 19h12"
-                  /></svg></span
-              ><span
-                ><small>BUILD EVERYDAY CONFIDENCE</small
-                ><strong>Typing &amp; accuracy</strong
-                ><em>Practice · Speed · Precision</em></span
-              ><svg class="icon"><use href="#i-arrow" /></svg>
-            </button>
+
+
+
             <div class="studio-note" aria-hidden="true">
               <span>✦</span>
               <div>Small steps.<br /><b>Lasting skills.</b></div>
@@ -611,10 +561,11 @@
             <p class="eyebrow">SMALL DISCOVERIES. REAL CONFIDENCE.</p>
             <h2 id="skillHeading">A smart little break.<br /><em>A useful little skill.</em></h2>
             <p>Three everyday computer questions. Tap what you think, discover why it works, and take one more useful idea with you.</p>
-            <div class="skill-pills"><span>Made for mobile</span><span>No timer</span><span>Learn with every tap</span></div>
+
+            <div class="skill-signature" aria-hidden="true"><svg viewBox="0 0 260 100" fill="none"><defs><linearGradient id="signatureGold" x1="112" y1="24" x2="154" y2="77" gradientUnits="userSpaceOnUse"><stop stop-color="#fff0c1"/><stop offset=".4" stop-color="#e7c477"/><stop offset="1" stop-color="#a87831"/></linearGradient><radialGradient id="signatureGlow"><stop stop-color="#e7c477" stop-opacity=".22"/><stop offset="1" stop-color="#e7c477" stop-opacity="0"/></radialGradient></defs><ellipse cx="130" cy="50" rx="110" ry="45" fill="url(#signatureGlow)"/><ellipse class="signature-ring" cx="130" cy="50" rx="90" ry="25" stroke="#d7b36a" stroke-opacity=".25" stroke-dasharray="8 13 2 20" transform="rotate(-12 130 50)"/><g class="signature-float"><g class="signature-core"><path d="m130 19 8.2 22.8L161 50l-22.8 8.2L130 81l-8.2-22.8L99 50l22.8-8.2Z" fill="url(#signatureGold)"/><path d="m130 19-8.2 22.8L130 50l8.2-8.2Z" fill="#fff0bf" fill-opacity=".5"/><path d="m130 50-8.2 8.2L130 81l8.2-22.8Z" fill="#97692e" fill-opacity=".35"/></g></g><g class="signature-dust" fill="#f3d390"><path d="m53 32 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"/><path d="m213 59 2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"/><circle cx="80" cy="70" r="1.6"/><circle cx="194" cy="30" r="1.8"/><circle cx="230" cy="43" r="1"/><circle cx="31" cy="61" r="1.2"/></g><path class="signature-light" d="M25 89h210" stroke="url(#signatureGold)" stroke-opacity=".3" stroke-linecap="round"/></svg></div>
             <p class="skill-footnote">A friendly practice activity, not an admission test or official assessment. Your answers stay on this page.</p>
           </div>
-          <div id="skillChallenge" class="skill-card" aria-label="Everyday computer skill challenge"><p class="skill-privacy">Enable JavaScript to try this tap-based activity, or explore our courses below.</p></div>
+          <div class="skill-card-stage"><div id="skillChallenge" class="skill-card" aria-label="Everyday computer skill challenge"><p class="skill-privacy">Enable JavaScript to try this tap-based activity, or explore our courses below.</p></div></div>
         </div>
       </section>
       <section class="section" id="process">
@@ -1102,8 +1053,7 @@
           <span class="eyebrow">LEARN • PRACTICE • GROW</span>
           <h3>Bring your curiosity.<br /><em>We’ll help you begin.</em></h3>
           <p>
-            Practical computer education. Individual attention. Admissions open
-            throughout the year, with no last date.
+            Practical computer education. Individual attention. Admissions are open.
           </p>
           <div class="institute-phones" aria-label="Institute phone numbers">
             <a class="contact-phone" href="tel:+919149551258">+91 9149551258</a>
@@ -1306,7 +1256,7 @@
           Future With Computer Skills</span
         ><span>LEARN · PRACTISE · GROW</span>
       </div>
-    </footer>
+    <div class="wrap" style="padding-bottom:24px"><button type="button" class="fit-motion-control" id="fitMotion" aria-pressed="false">Pause page effects</button></div></footer>
     <!-- ₹100 ADMISSION FEE PAYMENT STEP -->
     <div id="paymentModal" class="payment-modal" hidden>
       <div
@@ -1401,8 +1351,8 @@
         ><svg class="icon"><use href="#i-grid" /></svg>Courses</a
       ><button data-action="enquiry">
         <svg class="icon"><use href="#i-chat" /></svg>Enquire</button
-      ><a href="#admission"
-        ><svg class="icon"><use href="#i-arrow" /></svg>Apply</a
+      ><a href="#admission" class="apply-special"
+        ><span class="apply-label">Apply now<svg class="icon" aria-hidden="true"><use href="#i-arrow" /></svg></span></a
       ><button type="button" data-updates-button aria-controls="websiteUpdates">
         <svg class="icon"><use href="#i-bookmark" /></svg>Follow</button
       >
@@ -1423,5 +1373,5 @@
         application. Please contact the institute if you need help applying.
       </p></noscript
     >
-  <script type="module" src="website-updates.js?v=20261105-follow-5"></script></body>
+  <script type="module" src="website-updates.js?v=20261105-follow-5"></script><script type="module" src="homepage-enhancements.js?v=20261110-1"></script></body>
 </html>
