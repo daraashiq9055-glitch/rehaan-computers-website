@@ -1,5 +1,6 @@
 """Isolated admissions/payment regression: all Firebase, Razorpay, email and API calls mocked."""
 from pathlib import Path
+from browser_visit_fixture import mock_visit_counter
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -80,7 +81,7 @@ def run(enabled=False, edge=False):
       if endpoint=='verify' and mode=='reconcile':response={'verified':False};code=202
       route.fulfill(status=code,content_type='application/json',body=json.dumps(response),headers={'Access-Control-Allow-Origin':'*'})
      else:unexpected.append(url);route.abort()
-    context.route('**/*',route_handler)
+    context.route('**/*',route_handler);mock_visit_counter(context)
     page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
     page.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,deny:'+str(mode=='denied').lower()+',auth:{currentUser:null,authStateReady:async()=>{}}};')
     page.goto(base+'/index.html');expect(page.locator('#courseGrid .course-card')).to_have_count(7)

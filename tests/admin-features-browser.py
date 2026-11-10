@@ -16,6 +16,7 @@ class Quiet(SimpleHTTPRequestHandler):
 def run():
  server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT/'public')));Thread(target=server.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{server.server_port}'
  checks=[]
+ print_counts={}
  def passed(text):checks.append(text);print('PASS:',text,flush=True)
  with sync_playwright() as p:
   browser=p.chromium.launch(executable_path='/usr/bin/chromium',headless=True,args=['--no-sandbox'])
@@ -39,7 +40,9 @@ def run():
    page.goto(base+'/admin.html');expect(page.locator('#adminLoginButton')).to_be_enabled();expect(page.locator('#adminDashboard')).to_be_hidden();assert page.evaluate('__fixture.writes.length')==0
    page.locator('#adminEmail').fill('admin@example.test');page.locator('#adminPassword').fill('valid-password');page.locator('#adminLoginButton').click();expect(page.locator('#adminDashboard')).to_be_visible();return page
   def pdf(page,name,kind,count=1):
-   assert page.locator('#rcPrintArea').get_attribute('data-kind')==kind
+   expect(page.locator('#rcPrintArea')).to_have_attribute('data-kind',kind)
+   page.wait_for_function('(previous)=>(window.__printed||0)>previous',arg=print_counts.get(page,0))
+   print_counts[page]=page.evaluate('window.__printed')
    path=OUT/(name+'.pdf');page.pdf(path=str(path),prefer_css_page_size=True,print_background=True);doc=fitz.open(path);assert len(doc)==count,(name,len(doc));pix=doc[0].get_pixmap(matrix=fitz.Matrix(1.3,1.3));assert pix.pixel(0,0)==(255,255,255);pix.save(OUT/(name+'.png'));return '\n'.join(p.get_text() for p in doc)
   fixtures=json.loads(json.dumps(baseline.FIXTURES));fixtures['enrolled']['phone']='9999999991'
   page=open_page(fixtures);page.locator('[data-section=marks]').click();expect(page.locator('#rcMarkStudent option')).to_have_count(4);page.locator('#rcMarkStudent').select_option('enrolled');expect(page.locator('[data-new=printMarks]')).to_be_disabled()

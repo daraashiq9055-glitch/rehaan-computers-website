@@ -45,7 +45,8 @@ def run():
    page.locator('#rcPaymentForm [type=submit]').click();page.locator('#rcPaymentForm').evaluate("form=>form.dispatchEvent(new Event('submit',{bubbles:true,cancelable:true}))")
    expect(page.locator('#rcPaymentMessage')).to_contain_text('Payment saved');expect(page.locator('#rcPaymentForm [type=submit]')).to_be_disabled()
    record=page.evaluate('__adminPreview.records["demo-1"]');receipt=next(iter(record['feeReceipts'].values()));assert receipt['method']=='UPI' and receipt['date']==yesterday and 'UPI-TEST-123' in receipt['note'];assert record['payment']==before['demo-1']['payment'];assert len(record['feeReceipts'])==1 and sum(record['monthlyFees'].values())==400
-   assert len(page.evaluate('__adminPreview.writes'))==1
+   assert len([write for write in page.evaluate('__adminPreview.writes') if write['id']=='demo-1'])==1
+   assert {write['id'] for write in page.evaluate('__adminPreview.writes')}=={'demo-1','tuition'}
    with page.expect_download() as download:page.locator('#paymentDownloadImage').click()
    assert Path(download.value.path()).read_bytes().startswith(b'\x89PNG')
    page.locator('#rcOpenSavedReceipt').click();expect(page.locator('#rcFeatureDialog')).to_contain_text('UPI-TEST-123')
@@ -60,8 +61,8 @@ def run():
    print('PASS: richer payment stores amount/method/date/reference atomically; repeated submit is blocked; PNG/PDF/CSV match saved receipt; corrections update daily method totals once',flush=True)
    page.locator('[data-section=fees]').click();page.locator('[data-fee-pay="demo-0"]').click();page.locator('#rcPaymentMethod').select_option('Cash');page.locator('#rcPaymentAmount').fill('50')
    unchanged=page.evaluate('structuredClone(__adminPreview.records)');page.evaluate('__adminPreview.failWrite=true');page.locator('#rcPaymentForm [type=submit]').click();expect(page.locator('#rcPaymentMessage')).to_contain_text('Payment not confirmed');assert page.evaluate('__adminPreview.records')==unchanged;assert page.locator('#rcOpenSavedReceipt').count()==0
-   page.evaluate('__adminPreview.failWrite=false;__adminPreview.loseAcknowledgementOnce=true');count=page.evaluate('__adminPreview.writes.length');page.locator('#rcPaymentForm [type=submit]').click();expect(page.locator('#rcPaymentMessage')).to_contain_text('Payment not confirmed');assert page.evaluate('__adminPreview.writes.length')==count+1
-   page.locator('#rcPaymentForm [type=submit]').click();expect(page.locator('#rcPaymentMessage')).to_contain_text('Payment saved');assert page.evaluate('__adminPreview.writes.length')==count+1;assert len(page.evaluate('__adminPreview.records["demo-0"].feeReceipts'))==1
+   page.evaluate('__adminPreview.failWrite=false;__adminPreview.loseAcknowledgementOnce=true');count=page.evaluate('__adminPreview.writes.length');page.locator('#rcPaymentForm [type=submit]').click();expect(page.locator('#rcPaymentMessage')).to_contain_text('Payment not confirmed');assert page.evaluate('__adminPreview.writes.length')==count+2
+   page.locator('#rcPaymentForm [type=submit]').click();expect(page.locator('#rcPaymentMessage')).to_contain_text('Payment saved');assert page.evaluate('__adminPreview.writes.length')==count+2;assert len(page.evaluate('__adminPreview.records["demo-0"].feeReceipts'))==1
    page.locator('#rcTuitionModal .admin-modal-close').click()
    page.locator('[data-fee-pay="demo-0"]').click();page.locator('#rcPaymentMethod').select_option('Cash');page.locator('#rcPaymentAmount').fill('10')
    due=page.locator('.payment-review').inner_text();key=next(iter(page.evaluate('__adminPreview.records["demo-0"].monthlyFees')))
@@ -77,7 +78,7 @@ def run():
     if width<=760:page.locator('#menuToggle').click()
     page.locator('[data-section=fees]').click();page.locator('[data-fee-pay="demo-1"]').click();assert page.locator('#rcTuitionModal .admin-modal-card').evaluate('el=>el.scrollWidth<=el.clientWidth+1'),('payment',width);page.locator('#rcTuitionModal .admin-modal-close').click()
    page.set_viewport_size({'width':1512,'height':1100});open_view('accounts');page.locator('#accountFrom').fill('2099-12-01');page.locator('#accountTo').fill('2000-01-01');page.locator('#accountTo').dispatch_event('change');expect(page.locator('#accountsStatus')).to_contain_text('valid date range');expect(page.locator('#accountsExport')).to_be_disabled()
-   page.locator('#adminLogoutBtn').click();expect(page.locator('#operationsWorkspace')).to_be_hidden();assert page.locator('#operationsWorkspace').inner_text()==''
+   page.locator('#adminLogoutBtn').click();expect(page.locator('#operationsWorkspace')).to_be_hidden();expect(page.locator('#operationsWorkspace')).to_have_text('')
    assert not errors,errors;assert not external,external;assert not writes,writes;assert not failed,failed
    print('PASS: Today/accounts/payment fit five widths; invalid date ranges block export; logout clears private views; zero external requests or network writes',flush=True)
    browser.close()

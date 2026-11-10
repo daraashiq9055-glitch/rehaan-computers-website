@@ -1,5 +1,6 @@
 """Homepage contact/content regression. No live requests, calls or messages."""
 from pathlib import Path
+from browser_visit_fixture import mock_visit_counter
 from functools import partial
 from http.server import ThreadingHTTPServer, SimpleHTTPRequestHandler
 from threading import Thread
@@ -28,15 +29,18 @@ def run():
                     elif r.request.url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):
                         r.fulfill(content_type='application/javascript',body=fixture.MOCK,headers={'Access-Control-Allow-Origin':'*'})
                     else:external.append(r.request.url);r.abort()
-                context.route('**/*',route)
+                context.route('**/*',route);mock_visit_counter(context)
                 if js:context.add_init_script('window.__fixture={records:{},writes:[],listeners:[],authorized:false,auth:{currentUser:null,authStateReady:async()=>{}}};')
                 page=context.new_page();page.on('pageerror',lambda e:errors.append(str(e)))
                 page.goto(base+'/')
                 if js:expect(page.locator('.course-card')).to_have_count(7)
                 for width in [320,390,768,1024,1512]:
                     page.set_viewport_size({'width':width,'height':900})
-                    page.locator('.header-call').scroll_into_view_if_needed()
-                    expect(page.locator('.header-call')).to_be_visible()
+                    if width>900:
+                        page.locator('.header-call').scroll_into_view_if_needed()
+                        expect(page.locator('.header-call')).to_be_visible()
+                    else:
+                        expect(page.locator('.header-call')).to_be_hidden()
                     expect(page.locator('.top-contact')).to_have_count(2)
                     for contact in page.locator('.top-contact').all():expect(contact).to_be_visible()
                     expect(page.locator('.floating-whatsapp')).to_be_visible()
@@ -46,16 +50,17 @@ def run():
                     assert page.locator('a[href*="facebook.com"]').count()==1
                     assert '14tvvFj3od1' in page.locator('a[href*="facebook.com"]').get_attribute('href')
                     assert 'dar_yas_ir' in page.locator('a[href*="instagram.com"]').get_attribute('href')
-                    expect(page.locator('.hero-tuition strong')).to_have_text('₹999/month')
+                    expect(page.locator('.hero-tuition')).to_have_count(0)
+                    expect(page.locator('.hero-apply-slot a')).to_have_attribute('href','#admission')
                     expect(page.locator('.monthly-tuition')).to_contain_text('₹999/month')
                     page.locator('.floating-whatsapp').click()
                     for number in ['919149551258','919797205429']:
                         expect(page.locator('.whatsapp-options a[href^="https://wa.me/'+number+'?"]')).to_be_visible()
                     page.locator('.floating-whatsapp').click()
                     body=page.locator('body').inner_text()
-                    assert body.count('Dar Yasir')==1 and body.count('₹999/month')==2
+                    assert body.count('Dar Yasir')==1 and body.count('₹999/month')==1
                     assert 'learning images already' not in body and 'Created by' not in body and 'Managed by' not in body
-                    for selector in ['.header-call','.top-contacts','.floating-whatsapp','.header-inner','.creator-credit']:
+                    for selector in (['.header-call'] if width>900 else [])+['.top-contacts','.floating-whatsapp','.header-inner','.creator-credit']:
                         box=page.locator(selector).bounding_box()
                         assert box and box['x']>=-1 and box['x']+box['width']<=width+1,(js,width,selector,box)
                 if js:
@@ -71,7 +76,7 @@ def run():
                     page.locator('#brandMenuButton').click();expect(page.locator('#brandAdminLogin')).to_have_attribute('href','admin.html')
                     assert page.evaluate('__fixture.writes.length')==0
                 assert not errors and not external and not writes,(errors,external,writes)
-                print(f'PASS: JavaScript {js}; five widths, visible direct contacts, correct official social links, one footer credit, exactly two tuition labels, unchanged admission fee and zero writes/messages',flush=True)
+                print(f'PASS: JavaScript {js}; five widths, visible direct contacts, correct official social links, one footer credit, hero Apply CTA with tuition retained below, unchanged admission fee and zero writes/messages',flush=True)
                 context.close()
             browser.close()
     finally:server.shutdown()
