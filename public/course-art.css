@@ -1,0 +1,8 @@
+/* Show the complete cover so embedded titles and application logos are never cropped. */
+.courses-section .course-image.course-art{background:#080f1b;isolation:isolate}
+.course-cover-open{display:block;width:100%;height:100%;position:relative}
+.courses-section .course-image.course-art img{object-fit:contain;object-position:center;padding:0;filter:none;width:100%;height:100%}
+.courses-section .course-card:hover .course-image.course-art img{transform:none}
+.courses-section .course-art .course-number,.courses-section .course-art .course-image-level{display:none}
+.courses-section .course-art .save-course{z-index:2}
+.course-cover-open:focus-visible{outline:2px solid #f3d18b;outline-offset:-3px}
