@@ -1,6 +1,5 @@
-import {initSkillChallenge} from "./challenge.js?v=20261020-visitor-5";
 import { initStudio } from "./studio.js?v=20261020-visitor-5";
-import { initMotion } from "./motion.js?v=20261020-visitor-5";
+import { initMotion } from "./motion.js?v=20261111-image-fit-1";
 import {
   courseSlug,
   matchesDuration,
@@ -657,7 +656,6 @@ document.addEventListener("click", (event) => {
 });
 initMotion();
 initStudio();
-initSkillChallenge();
 $("#year").textContent = new Date().getFullYear();
 Promise.all(
   ["courses.json", "site.json"].map((name) =>
