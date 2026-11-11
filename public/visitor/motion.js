@@ -58,10 +58,7 @@ export function initMotion() {
   const region = $(".experience-visual");
   const slides = [...document.querySelectorAll(".experience-slide")];
   const dots = [...document.querySelectorAll("[data-experience-slide]")];
-  const captions = [
-    "Understanding comes<br>from trying.",
-    "Practise real tasks.<br>Build real confidence.",
-  ];
+  const captions = slides.map(slide => slide.dataset.caption || "Practical learning.<br>Real progress.");
   const reduce = matchMedia("(prefers-reduced-motion: reduce)");
   let selected = 0,
     paused = false,
