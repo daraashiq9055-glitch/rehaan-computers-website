@@ -72,6 +72,23 @@ branches preserve the committed code.
 
 ## Deploy the reviewed frontend
 
+If Firebase reports upload timeouts, use the tested slow-connection wrapper from
+the updated repository instead of repeating the default upload command:
+
+```bat
+cd /d "%USERPROFILE%\rehaan-admin-preview"
+git pull --ff-only origin codex/admin-dashboard-redesign
+npx --yes --package=firebase-tools@15.34.0 -c "node tools/deploy-hosting.cjs"
+```
+
+The wrapper loads this exact Firebase CLI version, uploads one file at a time,
+and extends each small-file upload attempt from 30 seconds to two minutes. It
+keeps longer built-in timeouts and Firebase's existing retries. It changes the
+running process only; installed CLI files, authentication, and website assets
+are unchanged. It deploys only Hosting to `rehaan-computers`. Add `--check` after
+the script filename to verify the configuration without uploading or publishing.
+This can help a slow connection; it cannot repair an unreachable upload server.
+
 Stop the Python server with Ctrl+C, then run:
 
 ```bat
