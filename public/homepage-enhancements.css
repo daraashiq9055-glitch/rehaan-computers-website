@@ -63,4 +63,7 @@
 }
 
 /* The five guidance photographs keep the existing crossfade, controls and motion preferences. */
-.experience-slide[data-slide="0"]{object-position:48% 40%}.experience-slide[data-slide="2"]{object-position:46% 40%}
+.experience-slide[data-slide="0"]{object-position:50% 35%}.experience-slide[data-slide="2"]{object-position:50% 35%}
+
+/* Seven accessible slide controls fit narrow phones. */
+@media(max-width:600px){.experience-dots{gap:0;flex:1;min-width:0;justify-content:space-between}.experience-dots button{width:20px;min-width:20px;flex:none}.experience-controls{gap:7px}}
