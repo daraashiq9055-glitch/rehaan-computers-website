@@ -28,13 +28,42 @@ function configureUploads(Uploader) {
   process.env.FIREBASE_HOSTING_UPLOAD_CONCURRENCY = '1';
 }
 
+function selectRelease(repositoryRoot) {
+  const release = path.join(repositoryRoot, 'build', 'admin-release');
+  const manifest = path.join(release, 'RELEASE.json');
+  const fail = () => { throw new Error('Build the premium admin release first: python prepare-admin-release.py. No deployment started.'); };
+  if (!fs.existsSync(manifest)) fail();
+  const marker = JSON.parse(fs.readFileSync(manifest, 'utf8'));
+  if (!marker.generated || marker.source !== 'prepare-admin-release.py') fail();
+  const config = JSON.parse(fs.readFileSync(path.join(release, 'firebase.json'), 'utf8'));
+  if (config.hosting?.public !== 'public' || config.firestore) fail();
+  for (const name of ['main.js', 'theme.css']) {
+    if (!fs.existsSync(path.join(release, 'public/admin-ui', name))) fail();
+  }
+  const html = fs.readFileSync(path.join(release, 'public/admin.html'), 'utf8');
+  if (!html.includes('admin-ui/main.js') || !html.includes('admin-ui/theme.css')) fail();
+  // The generated admin files intentionally differ; every other source asset
+  // must match, so an old build cannot replace the approved homepage.
+  function verify(directory, relative = '') {
+    for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+      const name = path.join(relative, entry.name);
+      if (entry.isDirectory()) verify(path.join(directory, entry.name), name);
+      else if (!['admin.html', 'admin-app.js', 'admin-fix.js'].includes(name)) {
+        const generated = path.join(release, 'public', name);
+        if (!fs.existsSync(generated) || !fs.readFileSync(path.join(directory, entry.name)).equals(fs.readFileSync(generated))) {
+          throw new Error(`Stale release asset: ${name}. Run python prepare-admin-release.py again. No deployment started.`);
+        }
+      }
+    }
+  }
+  verify(path.join(repositoryRoot, 'public'));
+  return release;
+}
+
 function main(args = process.argv.slice(2)) {
   if (args.some(arg => arg !== '--check')) throw new Error('Only --check is supported.');
   const root = path.resolve(__dirname, '..');
-  const config = JSON.parse(fs.readFileSync(path.join(root, 'firebase.json'), 'utf8'));
-  if (config.hosting?.public !== 'public' || !fs.existsSync(path.join(root, 'public/index.html'))) {
-    throw new Error('Expected Hosting source public/; no deployment started.');
-  }
+  const release = selectRelease(root);
   const cliRoot = findCliRoot();
   const { Uploader } = require(path.join(cliRoot, 'lib/deploy/hosting/uploader.js'));
   configureUploads(Uploader);
@@ -44,17 +73,18 @@ function main(args = process.argv.slice(2)) {
     throw new Error('Upload timeout verification failed; no deployment started.');
   }
   console.log(`Firebase ${CLI_VERSION}: one upload at a time; minimum upload timeout 120 seconds.`);
+  console.log('Hosting source: build/admin-release/public (premium admin and current homepage).');
   if (args.includes('--check')) {
     console.log('Configuration verified. No upload or release was started.');
     return;
   }
-  process.chdir(root);
+  process.chdir(release);
   const cli = path.join(cliRoot, 'lib/bin/firebase.js');
   process.argv = [process.execPath, cli, 'deploy', '--only', 'hosting', '--project', 'rehaan-computers'];
   require(cli);
 }
 
-module.exports = { findCliRoot, configureUploads, UPLOAD_TIMEOUT_MS };
+module.exports = { findCliRoot, configureUploads, selectRelease, UPLOAD_TIMEOUT_MS };
 if (require.main === module) {
   try { main(); } catch (error) {
     console.error(error.message);

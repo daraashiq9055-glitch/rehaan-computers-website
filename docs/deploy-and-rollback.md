@@ -1,5 +1,24 @@
 # Save, deploy and roll back the website
 
+## Current deployment source — premium admin restoration, 11 November 2026
+
+The deployed premium administration is assembled by `prepare-admin-release.py`.
+Deploying the repository's normal `public/` directly replaces it with the older
+base admin interface. The deploy helper now requires `build/admin-release/public/`
+and refuses to publish if its homepage assets differ from the current source.
+
+From the repository root in Windows CMD:
+
+```bat
+git pull --ff-only origin codex/admin-dashboard-redesign
+python prepare-admin-release.py && npx --yes --package=firebase-tools@15.34.0 -c "node tools/deploy-hosting.cjs"
+```
+
+This restores the existing sapphire/gold admin presentation alongside the approved
+homepage. The helper publishes Hosting only; it does not publish rules or Workers.
+The older direct-public deployment instructions below are historical and must
+not be used for this assembled premium release.
+
 The [homepage admin-link fix](admin-navigation-fix-2026-10-20.md) restores the logo-menu link and opens both Admin login links in the same tab.
 
 ## Current visitor website release — 20 October 2026
@@ -78,6 +97,7 @@ the updated repository instead of repeating the default upload command:
 ```bat
 cd /d "%USERPROFILE%\rehaan-admin-preview"
 git pull --ff-only origin codex/admin-dashboard-redesign
+python prepare-admin-release.py
 npx --yes --package=firebase-tools@15.34.0 -c "node tools/deploy-hosting.cjs"
 ```
 
