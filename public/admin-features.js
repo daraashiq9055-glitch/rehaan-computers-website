@@ -506,7 +506,7 @@ document.addEventListener("click", async (event) => {
     if (action === "groupMarks") {
       services.assertSession();
       const epoch=sessionEpoch;
-      const {openGroupMarks}=await import('./admin-group-marks.js?v=20261108-3');
+      const {openGroupMarks}=await import('./admin-group-marks.js?v=20261112-1');
       if(epoch!==sessionEpoch)return;
       services.assertSession();
       openGroupMarks({getRecords:()=>services.getRecords?.()||apps,assertSession:services.assertSession});
