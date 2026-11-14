@@ -4,7 +4,7 @@
       }
       function sessionAllowed() {
         let path = /databases/$(database)/documents/rcLearnAccess/$(uid);
-        return !exists(path) || (get(path).data.disabled == false && request.auth.token.auth_time > get(path).data.cutoff.seconds());
+        return !exists(path) || (get(path).data.disabled == false && request.auth.token.auth_time * 1000 > get(path).data.cutoff.toMillis());
       }
       allow get: if request.auth != null && ((request.auth.uid == uid && sessionAllowed()) || registrar());
       allow create, update: if registrar() && request.resource.data.keys().hasOnly(['admissionNumber','pendingRupees']) && request.resource.data.admissionNumber is string && request.resource.data.pendingRupees is number && request.resource.data.pendingRupees >= 0;
