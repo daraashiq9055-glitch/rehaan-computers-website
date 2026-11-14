@@ -22,6 +22,26 @@ function paise(value) {
     );
   return cents;
 }
+// The mobile pilot publishes only the total tuition due as of the payment date.
+async function writePilotSummary(transaction, db, data, due, paid, monthly, now) {
+  if (data.admissionNumber !== '040' || data.status !== 'Approved' || data.enrolmentStatus === 'Cancelled') return;
+  const joined = String(data.admissionDate || data.approvedAt || '').slice(0,10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(joined)) throw Error('Review admission date for 040.');
+  const [year,month,day] = joined.split('-').map(Number);
+  const parts = new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(now));
+  const local = Object.fromEntries(parts.map(p => [p.type,p.value]));
+  const today = [local.year,local.month,local.day].join('-');
+  const fees = {...data.monthlyFees,[due]:paid};
+  let cents = 0;
+  for (let offset=0; ; offset++) {
+    const last = new Date(Date.UTC(year,month+offset+1,0)).getUTCDate();
+    const date = new Date(Date.UTC(year,month+offset,Math.min(day,last))).toISOString().slice(0,10);
+    if (date > today) break;
+    cents += Math.max(0,paise(monthly)-paise(fees[date] ?? 0));
+  }
+  const {doc} = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
+  transaction.set(doc(db,'studentFeeSummaries','ShnX2EUQARbWwD2plwEZhnLrbcZ2'),{admissionNumber:'040',pendingRupees:cents/100});
+}
 export async function saveMarkCard({
   db,
   ref,
@@ -147,6 +167,7 @@ export async function saveMonthlyPayment({
       updatedAt: now,
       updatedBy: actor,
     });
+    await writePilotSummary(transaction, db, data, due, (paid + added) / 100, monthly, now);
     return receipt;
   });
 }
@@ -261,6 +282,7 @@ export async function correctReceipt({
     };
     if (delta !== 0) patch["monthlyFees." + stored.due] = total / 100;
     transaction.update(ref, patch);
+    await writePilotSummary(transaction, db, data, stored.due, total / 100, stored.billed / 100, now);
     return { receipt, totalPaid: total / 100 };
   });
 }
