@@ -1732,15 +1732,48 @@ function openAdminDetails(applicationId) {
 
     const linkButton = modal.querySelector('.rc-link-account');
     if (linkButton) linkButton.onclick = async () => {
-        const uid = window.prompt('Enter the Firebase UID for the student account you verified for admission '+data.admissionNumber+'.');
-        if (!uid) return;
-        const actor = verifiedAdminUid;
+        requireAdmin();
+        if (data.rcLearnUid) { window.alert('This student already has an RC Learn login.'); return; }
         linkButton.disabled = true;
-        try {
-            await linkStudentAccount({db,ref:doc(db,'applications',applicationId),uid:uid.trim(),doc,runTransaction,
-                assertSession:()=>{requireAdmin();if(verifiedAdminUid!==actor)throw Error('Sign in again.');}});
-            linkButton.textContent='RC Learn login linked';
-        } catch(error) { linkButton.disabled=false; window.alert(error.message); }
+        const panel = document.createElement('div');
+        panel.innerHTML = '<label>Student username <input class="rc-username" placeholder="rc.ayaan" autocapitalize="none" autocomplete="off"></label><label>Initial password <input class="rc-password" type="password" autocomplete="new-password" minlength="12" maxlength="128"></label><button type="button" class="admin-save-btn">Create student login</button><p role="status"></p>';
+        linkButton.after(panel);
+        const button = panel.querySelector('button');
+        const username = panel.querySelector('.rc-username');
+        const password = panel.querySelector('.rc-password');
+        const status = panel.querySelector('[role=status]');
+        const actor = verifiedAdminUid;
+        const guard = () => { requireAdmin(); if (actor !== verifiedAdminUid) throw Error('Admin session changed.'); };
+        let createdUid;
+        button.onclick = async () => {
+            const login = username.value.trim().toLowerCase();
+            if (!/^rc\.[a-z0-9][a-z0-9._-]{2,39}$/.test(login)) { status.textContent='Use rc. followed by 3–40 letters, numbers, dots, underscores or hyphens.'; return; }
+            button.disabled=true;
+            try {
+                guard();
+                if (!createdUid) {
+                    if (password.value.length < 12 || password.value.length > 128) throw Error('Choose a password of 12–128 characters.');
+                    const result = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+encodeURIComponent(firebaseConfig.apiKey), {
+                        method:'POST',headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify({email:login+'@students.rclearn.invalid',password:password.value,returnSecureToken:true})
+                    });
+                    const identity = await result.json();
+                    if (!result.ok || !identity.localId) throw Error(identity.error?.message==='EMAIL_EXISTS'?'Username already taken. Choose another.':'Account creation failed. Check the connection or choose another username.');
+                    createdUid=identity.localId;
+                    username.disabled=true;
+                    password.value='';
+                    password.disabled=true;
+                }
+                guard();
+                await linkStudentAccount({db,ref:doc(db,'applications',applicationId),uid:createdUid,doc,runTransaction,assertSession:guard});
+                status.textContent='Student login ready: '+login;
+                button.hidden=true;
+                linkButton.textContent='RC Learn login linked';
+            } catch(error) {
+                status.textContent=createdUid?'Account created. Linking failed: '+error.message+' Retry here.':error.message;
+                button.disabled=false;
+            }
+        };
     };
     modal.querySelector("[data-photo-zoom]")?.addEventListener(
         "click",
