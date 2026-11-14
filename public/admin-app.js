@@ -1744,7 +1744,16 @@ function openAdminDetails(applicationId) {
         const status = panel.querySelector('[role=status]');
         const actor = verifiedAdminUid;
         const guard = () => { requireAdmin(); if (actor !== verifiedAdminUid) throw Error('Admin session changed.'); };
-        let createdUid;
+        const retryKey = 'rc-learn-pending:'+actor+':'+applicationId;
+        const pending = JSON.parse(localStorage.getItem(retryKey) || 'null');
+        let createdUid = pending?.uid;
+        if (createdUid) {
+            username.value=pending.login;
+            username.disabled=true;
+            password.disabled=true;
+            button.textContent='Finish linking';
+            status.textContent='Account created. Finish linking it to this student.';
+        }
         button.onclick = async () => {
             const login = username.value.trim().toLowerCase();
             if (!/^rc\.[a-z0-9][a-z0-9._-]{2,39}$/.test(login)) { status.textContent='Use rc. followed by 3–40 letters, numbers, dots, underscores or hyphens.'; return; }
@@ -1760,12 +1769,14 @@ function openAdminDetails(applicationId) {
                     const identity = await result.json();
                     if (!result.ok || !identity.localId) throw Error(identity.error?.message==='EMAIL_EXISTS'?'Username already taken. Choose another.':'Account creation failed. Check the connection or choose another username.');
                     createdUid=identity.localId;
+                    localStorage.setItem(retryKey,JSON.stringify({uid:createdUid,login}));
                     username.disabled=true;
                     password.value='';
                     password.disabled=true;
                 }
                 guard();
                 await linkStudentAccount({db,ref:doc(db,'applications',applicationId),uid:createdUid,doc,runTransaction,assertSession:guard});
+                localStorage.removeItem(retryKey);
                 status.textContent='Student login ready: '+login;
                 button.hidden=true;
                 linkButton.textContent='RC Learn login linked';
