@@ -3,7 +3,7 @@ import {settingsState,setSettingsState,failSettingsState,clearSettingsState,cust
 import {saveSharedSettings,renderSettingsTemplate} from './admin-settings-model.js?v=20261102-settings-1';
 import {saveAttendance} from './admin-attendance-model.js?v=20261102-settings-1';
 import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261108-group-1";
-import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261102-settings-1";
+import {linkStudentAccount,saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261102-settings-1";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
 let activePhotoMigration = null;
@@ -1664,6 +1664,7 @@ function openAdminDetails(applicationId) {
                     <p>${data.admissionNumber ? "Admission No " + escapeHTML(String(data.admissionNumber)) : "No admission number yet"} · ${data.channel === "offline" ? "Added offline by admin" : "Online application"} · Applied ${escapeHTML(formatDate(data.createdAt))}</p>
                 </div>
             </div>
+            ${data.status==='Approved' && data.enrolmentStatus!=='Cancelled' && data.admissionNumber && data.admissionNumber!=='040' ? '<button type="button" class="admin-ghost-btn rc-link-account">Link RC Learn login</button>' : ''}
             <button type="button" class="admin-ghost-btn admin-class-followup">Class follow-up</button>
             <div class="admin-details-grid">
                 ${adminField("Parent / Guardian", data.parentName)}
@@ -1729,6 +1730,18 @@ function openAdminDetails(applicationId) {
         </div>
     `);
 
+    const linkButton = modal.querySelector('.rc-link-account');
+    if (linkButton) linkButton.onclick = async () => {
+        const uid = window.prompt('Enter the Firebase UID for the student account you verified for admission '+data.admissionNumber+'.');
+        if (!uid) return;
+        const actor = verifiedAdminUid;
+        linkButton.disabled = true;
+        try {
+            await linkStudentAccount({db,ref:doc(db,'applications',applicationId),uid:uid.trim(),doc,runTransaction,
+                assertSession:()=>{requireAdmin();if(verifiedAdminUid!==actor)throw Error('Sign in again.');}});
+            linkButton.textContent='RC Learn login linked';
+        } catch(error) { linkButton.disabled=false; window.alert(error.message); }
+    };
     modal.querySelector("[data-photo-zoom]")?.addEventListener(
         "click",
         () => openAdminPhotoViewer(data.fullName, data.photo, data.admissionNumber)
