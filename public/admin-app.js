@@ -2656,6 +2656,13 @@ function openRegisterTab(tab) {
 }
 
 function setupWorkspace() {
+    const studentsNav=document.querySelector('[data-section="students"]');
+    if(studentsNav && !document.querySelector('[data-section="studentApp"]')){
+        const appNav=studentsNav.cloneNode(false);
+        appNav.removeAttribute('id');appNav.dataset.section='studentApp';
+        appNav.innerHTML=workspaceIcon('students')+'<span>Student App</span>';
+        studentsNav.after(appNav);
+    }
     getElement("workspaceSummary").addEventListener("click", event => {
         const card = event.target.closest("[data-summary]");
         if (card && !card.disabled) {
@@ -2727,7 +2734,7 @@ function updateWorkspace() {
         [distinct("coursePreference"), "Courses with students", "Browse the course directory", "courses", "courses"],
         [distinct("batch"), "Batches with students", "Browse batch assignments", "batches", "batches"]
     ].map(([count,label,note,icon,target]) => `<button type="button" class="workspace-stat" data-summary="${target}" aria-label="Open ${label.toLowerCase()}${recordsLoaded ? ': ' + count : ''}" ${recordsLoaded ? "" : "disabled"}><span class="workspace-stat-icon" aria-hidden="true">${workspaceIcon(icon)}</span><span class="workspace-stat-body"><span class="workspace-stat-label">${label}</span><strong>${recordsLoaded ? count : "—"}</strong><small>${note}</small></span><span class="workspace-stat-arrow" aria-hidden="true">${workspaceIcon("arrow")}</span></button>`).join("");
-    const titles = { attendance:"Attendance", statements: "Fee Statements", marks: "Student mark cards", overview: "Your institute, at a glance.", admissions: "Admission applications", students: "Enrolled students", fees: "Fees & payments", courses: "Course directory", batches: "Batch directory", reports: "Reports & exports", settings: "Workspace settings" };
+    const titles = { studentApp:"Student App", attendance:"Attendance", statements: "Fee Statements", marks: "Student mark cards", overview: "Your institute, at a glance.", admissions: "Admission applications", students: "Enrolled students", fees: "Fees & payments", courses: "Course directory", batches: "Batch directory", reports: "Reports & exports", settings: "Workspace settings" };
     getElement("workspaceHeading").textContent = titles[workspaceSection];
     getElement("workspaceBreadcrumb").textContent = workspaceSection === "statements" ? "Fee Statements" : workspaceSection[0].toUpperCase() + workspaceSection.slice(1);
     getElement("workspaceProfile").textContent = auth.currentUser?.email || "Administrator";
@@ -2741,11 +2748,36 @@ function updateWorkspace() {
     document.querySelectorAll(".admin-tab").forEach(button => { const active = button.dataset.tab === adminState.tab; button.classList.toggle("is-active", active); button.setAttribute("aria-selected", String(active)); button.tabIndex = active ? 0 : -1; });
     getElement("applicationsList").setAttribute("role", "tabpanel");
     getElement("applicationsList").setAttribute("aria-labelledby", "registerTab-" + adminState.tab);
-    const directory = ["courses", "batches", "reports", "settings", "marks", "statements", "attendance"].includes(workspaceSection);
+    const directory = ["studentApp","courses", "batches", "reports", "settings", "marks", "statements", "attendance"].includes(workspaceSection);
     getElement("registerPanel").hidden = directory && recordsLoaded;
     getElement("workspaceView").hidden = !recordsLoaded || (!["overview"].includes(workspaceSection) && !directory);
     if (!recordsLoaded) return;
     const view = getElement("workspaceView");
+    if (workspaceSection === 'studentApp') {
+        view.innerHTML='<section class="workspace-card"><h2>Student app accounts</h2><label>Search students <input type="search" placeholder="Name or admission number"></label> <label>Access <select><option>All</option><option>Active</option><option>Disabled</option><option>No login yet</option></select></label> <a href="student-app.html">Student app guide</a><div data-accounts></div></section>';
+        const list=view.querySelector('[data-accounts]'), search=view.querySelector('input'), filter=view.querySelector('select');
+        const rows=enrolled.filter(e=>e.data.enrolmentStatus!=='Cancelled').map(entry=>{
+            const uid=entry.data.rcLearnUid || (entry.data.admissionNumber==='040'?'ShnX2EUQARbWwD2plwEZhnLrbcZ2':'');
+            return {entry,uid,status:uid?'Checking…':'No login yet'};
+        });
+        const render=()=>{
+            list.replaceChildren();
+            for(const {entry,status} of rows){
+                const label=[entry.data.fullName,entry.data.admissionNumber].join(' · ');
+                if(!label.toLowerCase().includes(search.value.trim().toLowerCase()) || (filter.value!=='All'&&filter.value!==status))continue;
+                const button=document.createElement('button');
+                button.type='button';button.className='workspace-quick';button.textContent=label+' · '+status;
+                button.onclick=()=>openAdminDetails(entry.id);list.append(button);
+            }
+            if(!list.childElementCount)list.textContent='No matching students.';
+        };
+        search.oninput=filter.onchange=render;render();
+        Promise.all(rows.filter(r=>r.uid).map(async r=>{
+            try{const access=await getDoc(doc(db,'rcLearnAccess',r.uid));r.status=access.data()?.disabled?'Disabled':'Active';}
+            catch{r.status='Status unavailable';}
+        })).then(()=>{if(list.isConnected)render();});
+        return;
+    }
     if (workspaceSection === "overview") {
         const today = indiaCalendarDate();
         const labels = Array.from({ length: 6 }, (_,i) => new Date(Date.UTC(today.year, today.month - 6 + i, 1)));
