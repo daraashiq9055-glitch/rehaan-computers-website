@@ -3,7 +3,7 @@ import {settingsState,setSettingsState,failSettingsState,clearSettingsState,cust
 import {saveSharedSettings,renderSettingsTemplate} from './admin-settings-model.js?v=20261102-settings-1';
 import {saveAttendance} from './admin-attendance-model.js?v=20261102-settings-1';
 import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261108-group-1";
-import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261102-settings-1";
+import {linkStudentAccount,saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261102-settings-1";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
 let activePhotoMigration = null;
@@ -36,7 +36,7 @@ import {
     doc,
     getDoc,
 
-    runTransaction,
+    runTransaction, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
@@ -1664,6 +1664,7 @@ function openAdminDetails(applicationId) {
                     <p>${data.admissionNumber ? "Admission No " + escapeHTML(String(data.admissionNumber)) : "No admission number yet"} · ${data.channel === "offline" ? "Added offline by admin" : "Online application"} · Applied ${escapeHTML(formatDate(data.createdAt))}</p>
                 </div>
             </div>
+            ${data.status==='Approved' && data.enrolmentStatus!=='Cancelled' && data.admissionNumber && data.admissionNumber!=='040' ? '<button type="button" class="admin-ghost-btn rc-link-account">Link RC Learn login</button>' : ''}
             <button type="button" class="admin-ghost-btn admin-class-followup">Class follow-up</button>
             <div class="admin-details-grid">
                 ${adminField("Parent / Guardian", data.parentName)}
@@ -1729,6 +1730,89 @@ function openAdminDetails(applicationId) {
         </div>
     `);
 
+    const accessUid = data.rcLearnUid || (data.admissionNumber === '040' ? 'ShnX2EUQARbWwD2plwEZhnLrbcZ2' : '');
+    if (accessUid) {
+        const panel=document.createElement('fieldset');
+        panel.innerHTML='<legend>App access</legend><button type="button" data-session>Sign out on all devices</button> <button type="button" data-state disabled>Loading access…</button><p role="status"></p>';
+        modal.querySelector('.admin-details-grid').before(panel);
+        const state=panel.querySelector('[data-state]'), session=panel.querySelector('[data-session]'), message=panel.querySelector('[role=status]');
+        const ref=doc(db,'rcLearnAccess',accessUid);
+        const render=disabled=>{state.textContent=disabled?'Restore app access':'Disable app access';state.disabled=false;session.disabled=disabled;};
+        getDoc(ref).then(s=>render(s.data()?.disabled===true)).catch(()=>{session.disabled=true;message.textContent='Could not read access settings.';});
+        panel.onclick=async event=>{
+            const action=event.target;
+            if(action!==session && action!==state)return;
+            if(!window.confirm(action.textContent+' for admission '+data.admissionNumber+'?'))return;
+            const desired=action===state?state.textContent==='Disable app access':null;
+            state.disabled=session.disabled=true;
+            try {
+                requireAdmin();
+                const disabled=await runTransaction(db,async tx=>{
+                    const current=(await tx.get(ref)).data()?.disabled===true;
+                    const next=desired===null?current:desired;
+                    tx.set(ref,{disabled:next,cutoff:serverTimestamp()});
+                    return next;
+                });
+                render(disabled);message.textContent='App access updated.';
+            } catch(error){message.textContent='Access update failed. Reopen student details and retry.';}
+        };
+    }
+    const linkButton = modal.querySelector('.rc-link-account');
+    if (linkButton) linkButton.onclick = async () => {
+        requireAdmin();
+        if (data.rcLearnUid) { window.alert('This student already has an RC Learn login.'); return; }
+        linkButton.disabled = true;
+        const panel = document.createElement('div');
+        panel.innerHTML = '<label>Student username <input class="rc-username" placeholder="rc.ayaan" autocapitalize="none" autocomplete="off"></label><label>Initial password <input class="rc-password" type="password" autocomplete="new-password" minlength="12" maxlength="128"></label><button type="button" class="admin-save-btn">Create student login</button><p role="status"></p>';
+        linkButton.after(panel);
+        const button = panel.querySelector('button');
+        const username = panel.querySelector('.rc-username');
+        const password = panel.querySelector('.rc-password');
+        const status = panel.querySelector('[role=status]');
+        const actor = verifiedAdminUid;
+        const guard = () => { requireAdmin(); if (actor !== verifiedAdminUid) throw Error('Admin session changed.'); };
+        const retryKey = 'rc-learn-pending:'+actor+':'+applicationId;
+        const pending = JSON.parse(localStorage.getItem(retryKey) || 'null');
+        let createdUid = pending?.uid;
+        if (createdUid) {
+            username.value=pending.login;
+            username.disabled=true;
+            password.disabled=true;
+            button.textContent='Finish linking';
+            status.textContent='Account created. Finish linking it to this student.';
+        }
+        button.onclick = async () => {
+            const login = username.value.trim().toLowerCase();
+            if (!/^rc\.[a-z0-9][a-z0-9._-]{2,39}$/.test(login)) { status.textContent='Use rc. followed by 3–40 letters, numbers, dots, underscores or hyphens.'; return; }
+            button.disabled=true;
+            try {
+                guard();
+                if (!createdUid) {
+                    if (password.value.length < 12 || password.value.length > 128) throw Error('Choose a password of 12–128 characters.');
+                    const result = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+encodeURIComponent(firebaseConfig.apiKey), {
+                        method:'POST',headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify({email:login+'@students.rclearn.invalid',password:password.value,returnSecureToken:true})
+                    });
+                    const identity = await result.json();
+                    if (!result.ok || !identity.localId) throw Error(identity.error?.message==='EMAIL_EXISTS'?'Username already taken. Choose another.':'Account creation failed. Check the connection or choose another username.');
+                    createdUid=identity.localId;
+                    localStorage.setItem(retryKey,JSON.stringify({uid:createdUid,login}));
+                    username.disabled=true;
+                    password.value='';
+                    password.disabled=true;
+                }
+                guard();
+                await linkStudentAccount({db,ref:doc(db,'applications',applicationId),uid:createdUid,doc,runTransaction,assertSession:guard});
+                localStorage.removeItem(retryKey);
+                status.textContent='Student login ready: '+login;
+                button.hidden=true;
+                linkButton.textContent='RC Learn login linked';
+            } catch(error) {
+                status.textContent=createdUid?'Account created. Linking failed: '+error.message+' Retry here.':error.message;
+                button.disabled=false;
+            }
+        };
+    };
     modal.querySelector("[data-photo-zoom]")?.addEventListener(
         "click",
         () => openAdminPhotoViewer(data.fullName, data.photo, data.admissionNumber)
