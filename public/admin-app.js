@@ -36,7 +36,7 @@ import {
     doc,
     getDoc,
 
-    runTransaction,
+    runTransaction, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
@@ -1730,6 +1730,33 @@ function openAdminDetails(applicationId) {
         </div>
     `);
 
+    const accessUid = data.rcLearnUid || (data.admissionNumber === '040' ? 'ShnX2EUQARbWwD2plwEZhnLrbcZ2' : '');
+    if (accessUid) {
+        const panel=document.createElement('fieldset');
+        panel.innerHTML='<legend>App access</legend><button type="button" data-session>Sign out on all devices</button> <button type="button" data-state disabled>Loading access…</button><p role="status"></p>';
+        modal.querySelector('.admin-details-grid').before(panel);
+        const state=panel.querySelector('[data-state]'), session=panel.querySelector('[data-session]'), message=panel.querySelector('[role=status]');
+        const ref=doc(db,'rcLearnAccess',accessUid);
+        const render=disabled=>{state.textContent=disabled?'Restore app access':'Disable app access';state.disabled=false;session.disabled=disabled;};
+        getDoc(ref).then(s=>render(s.data()?.disabled===true)).catch(()=>{session.disabled=true;message.textContent='Could not read access settings.';});
+        panel.onclick=async event=>{
+            const action=event.target;
+            if(action!==session && action!==state)return;
+            if(!window.confirm(action.textContent+' for admission '+data.admissionNumber+'?'))return;
+            const desired=action===state?state.textContent==='Disable app access':null;
+            state.disabled=session.disabled=true;
+            try {
+                requireAdmin();
+                const disabled=await runTransaction(db,async tx=>{
+                    const current=(await tx.get(ref)).data()?.disabled===true;
+                    const next=desired===null?current:desired;
+                    tx.set(ref,{disabled:next,cutoff:serverTimestamp()});
+                    return next;
+                });
+                render(disabled);message.textContent='App access updated.';
+            } catch(error){message.textContent='Access update failed. Reopen student details and retry.';}
+        };
+    }
     const linkButton = modal.querySelector('.rc-link-account');
     if (linkButton) linkButton.onclick = async () => {
         requireAdmin();
