@@ -1,0 +1,15 @@
+    match /studentFeeSummaries/{uid} {
+      function registrar() {
+        return request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+      }
+      allow get: if request.auth != null && (request.auth.uid == uid || registrar());
+      allow create, update: if registrar() && request.resource.data.keys().hasOnly(['admissionNumber','pendingRupees']) && request.resource.data.admissionNumber is string && request.resource.data.pendingRupees is number && request.resource.data.pendingRupees >= 0;
+    }
+    match /rcLearnLinks/{uid} {
+      function registrar() {
+        return request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+      }
+      allow get: if registrar();
+      allow create: if registrar() && request.resource.data.keys().hasOnly(['applicationId']) && request.resource.data.applicationId is string;
+      allow update: if registrar() && request.resource.data == resource.data;
+    }
