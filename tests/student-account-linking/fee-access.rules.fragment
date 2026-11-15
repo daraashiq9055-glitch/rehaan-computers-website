@@ -1,0 +1,26 @@
+    match /studentFeeSummaries/{uid} {
+      function registrar() {
+        return request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+      }
+      function sessionAllowed() {
+        let path = /databases/$(database)/documents/rcLearnAccess/$(uid);
+        return !exists(path) || (get(path).data.disabled == false && request.auth.token.auth_time * 1000 > get(path).data.cutoff.toMillis());
+      }
+      allow get: if request.auth != null && ((request.auth.uid == uid && sessionAllowed()) || registrar());
+      allow create, update: if registrar() && request.resource.data.keys().hasOnly(['admissionNumber','pendingRupees']) && request.resource.data.admissionNumber is string && request.resource.data.pendingRupees is number && request.resource.data.pendingRupees >= 0;
+    }
+    match /rcLearnLinks/{uid} {
+      function registrar() {
+        return request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+      }
+      allow get: if registrar();
+      allow create: if registrar() && request.resource.data.keys().hasOnly(['applicationId']) && request.resource.data.applicationId is string;
+      allow update: if registrar() && request.resource.data == resource.data;
+    }
+    match /rcLearnAccess/{uid} {
+      function registrar() {
+        return request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+      }
+      allow get: if registrar();
+      allow create, update: if registrar() && request.resource.data.keys().hasOnly(['disabled','cutoff']) && request.resource.data.disabled is bool && request.resource.data.cutoff == request.time;
+    }

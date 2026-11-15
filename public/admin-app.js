@@ -3,7 +3,7 @@ import {settingsState,setSettingsState,failSettingsState,clearSettingsState,cust
 import {saveSharedSettings,renderSettingsTemplate} from './admin-settings-model.js?v=20261102-settings-1';
 import {saveAttendance} from './admin-attendance-model.js?v=20261102-settings-1';
 import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261108-group-1";
-import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261102-settings-1";
+import {linkStudentAccount,saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261102-settings-1";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
 let activePhotoMigration = null;
@@ -36,7 +36,7 @@ import {
     doc,
     getDoc,
 
-    runTransaction,
+    runTransaction, serverTimestamp,
 } from "https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js";
 
 
@@ -1664,6 +1664,7 @@ function openAdminDetails(applicationId) {
                     <p>${data.admissionNumber ? "Admission No " + escapeHTML(String(data.admissionNumber)) : "No admission number yet"} · ${data.channel === "offline" ? "Added offline by admin" : "Online application"} · Applied ${escapeHTML(formatDate(data.createdAt))}</p>
                 </div>
             </div>
+            ${data.status==='Approved' && data.enrolmentStatus!=='Cancelled' && data.admissionNumber && data.admissionNumber!=='040' ? '<button type="button" class="admin-ghost-btn rc-link-account">Link RC Learn login</button>' : ''}
             <button type="button" class="admin-ghost-btn admin-class-followup">Class follow-up</button>
             <div class="admin-details-grid">
                 ${adminField("Parent / Guardian", data.parentName)}
@@ -1729,6 +1730,89 @@ function openAdminDetails(applicationId) {
         </div>
     `);
 
+    const accessUid = data.rcLearnUid || (data.admissionNumber === '040' ? 'ShnX2EUQARbWwD2plwEZhnLrbcZ2' : '');
+    if (accessUid) {
+        const panel=document.createElement('fieldset');
+        panel.innerHTML='<legend>App access</legend><button type="button" data-session>Sign out on all devices</button> <button type="button" data-state disabled>Loading access…</button><p role="status"></p>';
+        modal.querySelector('.admin-details-grid').before(panel);
+        const state=panel.querySelector('[data-state]'), session=panel.querySelector('[data-session]'), message=panel.querySelector('[role=status]');
+        const ref=doc(db,'rcLearnAccess',accessUid);
+        const render=disabled=>{state.textContent=disabled?'Restore app access':'Disable app access';state.disabled=false;session.disabled=disabled;};
+        getDoc(ref).then(s=>render(s.data()?.disabled===true)).catch(()=>{session.disabled=true;message.textContent='Could not read access settings.';});
+        panel.onclick=async event=>{
+            const action=event.target;
+            if(action!==session && action!==state)return;
+            if(!window.confirm(action.textContent+' for admission '+data.admissionNumber+'?'))return;
+            const desired=action===state?state.textContent==='Disable app access':null;
+            state.disabled=session.disabled=true;
+            try {
+                requireAdmin();
+                const disabled=await runTransaction(db,async tx=>{
+                    const current=(await tx.get(ref)).data()?.disabled===true;
+                    const next=desired===null?current:desired;
+                    tx.set(ref,{disabled:next,cutoff:serverTimestamp()});
+                    return next;
+                });
+                render(disabled);message.textContent='App access updated.';
+            } catch(error){message.textContent='Access update failed. Reopen student details and retry.';}
+        };
+    }
+    const linkButton = modal.querySelector('.rc-link-account');
+    if (linkButton) linkButton.onclick = async () => {
+        requireAdmin();
+        if (data.rcLearnUid) { window.alert('This student already has an RC Learn login.'); return; }
+        linkButton.disabled = true;
+        const panel = document.createElement('div');
+        panel.innerHTML = '<label>Student username <input class="rc-username" placeholder="rc.ayaan" autocapitalize="none" autocomplete="off"></label><label>Initial password <input class="rc-password" type="password" autocomplete="new-password" minlength="12" maxlength="128"></label><button type="button" class="admin-save-btn">Create student login</button><p role="status"></p>';
+        linkButton.after(panel);
+        const button = panel.querySelector('button');
+        const username = panel.querySelector('.rc-username');
+        const password = panel.querySelector('.rc-password');
+        const status = panel.querySelector('[role=status]');
+        const actor = verifiedAdminUid;
+        const guard = () => { requireAdmin(); if (actor !== verifiedAdminUid) throw Error('Admin session changed.'); };
+        const retryKey = 'rc-learn-pending:'+actor+':'+applicationId;
+        const pending = JSON.parse(localStorage.getItem(retryKey) || 'null');
+        let createdUid = pending?.uid;
+        if (createdUid) {
+            username.value=pending.login;
+            username.disabled=true;
+            password.disabled=true;
+            button.textContent='Finish linking';
+            status.textContent='Account created. Finish linking it to this student.';
+        }
+        button.onclick = async () => {
+            const login = username.value.trim().toLowerCase();
+            if (!/^rc\.[a-z0-9][a-z0-9._-]{2,39}$/.test(login)) { status.textContent='Use rc. followed by 3–40 letters, numbers, dots, underscores or hyphens.'; return; }
+            button.disabled=true;
+            try {
+                guard();
+                if (!createdUid) {
+                    if (password.value.length < 12 || password.value.length > 128) throw Error('Choose a password of 12–128 characters.');
+                    const result = await fetch('https://identitytoolkit.googleapis.com/v1/accounts:signUp?key='+encodeURIComponent(firebaseConfig.apiKey), {
+                        method:'POST',headers:{'Content-Type':'application/json'},
+                        body:JSON.stringify({email:login+'@students.rclearn.invalid',password:password.value,returnSecureToken:true})
+                    });
+                    const identity = await result.json();
+                    if (!result.ok || !identity.localId) throw Error(identity.error?.message==='EMAIL_EXISTS'?'Username already taken. Choose another.':'Account creation failed. Check the connection or choose another username.');
+                    createdUid=identity.localId;
+                    localStorage.setItem(retryKey,JSON.stringify({uid:createdUid,login}));
+                    username.disabled=true;
+                    password.value='';
+                    password.disabled=true;
+                }
+                guard();
+                await linkStudentAccount({db,ref:doc(db,'applications',applicationId),uid:createdUid,doc,runTransaction,assertSession:guard});
+                localStorage.removeItem(retryKey);
+                status.textContent='Student login ready: '+login;
+                button.hidden=true;
+                linkButton.textContent='RC Learn login linked';
+            } catch(error) {
+                status.textContent=createdUid?'Account created. Linking failed: '+error.message+' Retry here.':error.message;
+                button.disabled=false;
+            }
+        };
+    };
     modal.querySelector("[data-photo-zoom]")?.addEventListener(
         "click",
         () => openAdminPhotoViewer(data.fullName, data.photo, data.admissionNumber)
@@ -2572,6 +2656,13 @@ function openRegisterTab(tab) {
 }
 
 function setupWorkspace() {
+    const studentsNav=document.querySelector('[data-section="students"]');
+    if(studentsNav && !document.querySelector('[data-section="studentApp"]')){
+        const appNav=studentsNav.cloneNode(false);
+        appNav.removeAttribute('id');appNav.dataset.section='studentApp';
+        appNav.innerHTML=workspaceIcon('students')+'<span>Student App</span>';
+        studentsNav.after(appNav);
+    }
     getElement("workspaceSummary").addEventListener("click", event => {
         const card = event.target.closest("[data-summary]");
         if (card && !card.disabled) {
@@ -2643,7 +2734,7 @@ function updateWorkspace() {
         [distinct("coursePreference"), "Courses with students", "Browse the course directory", "courses", "courses"],
         [distinct("batch"), "Batches with students", "Browse batch assignments", "batches", "batches"]
     ].map(([count,label,note,icon,target]) => `<button type="button" class="workspace-stat" data-summary="${target}" aria-label="Open ${label.toLowerCase()}${recordsLoaded ? ': ' + count : ''}" ${recordsLoaded ? "" : "disabled"}><span class="workspace-stat-icon" aria-hidden="true">${workspaceIcon(icon)}</span><span class="workspace-stat-body"><span class="workspace-stat-label">${label}</span><strong>${recordsLoaded ? count : "—"}</strong><small>${note}</small></span><span class="workspace-stat-arrow" aria-hidden="true">${workspaceIcon("arrow")}</span></button>`).join("");
-    const titles = { attendance:"Attendance", statements: "Fee Statements", marks: "Student mark cards", overview: "Your institute, at a glance.", admissions: "Admission applications", students: "Enrolled students", fees: "Fees & payments", courses: "Course directory", batches: "Batch directory", reports: "Reports & exports", settings: "Workspace settings" };
+    const titles = { studentApp:"Student App", attendance:"Attendance", statements: "Fee Statements", marks: "Student mark cards", overview: "Your institute, at a glance.", admissions: "Admission applications", students: "Enrolled students", fees: "Fees & payments", courses: "Course directory", batches: "Batch directory", reports: "Reports & exports", settings: "Workspace settings" };
     getElement("workspaceHeading").textContent = titles[workspaceSection];
     getElement("workspaceBreadcrumb").textContent = workspaceSection === "statements" ? "Fee Statements" : workspaceSection[0].toUpperCase() + workspaceSection.slice(1);
     getElement("workspaceProfile").textContent = auth.currentUser?.email || "Administrator";
@@ -2657,11 +2748,36 @@ function updateWorkspace() {
     document.querySelectorAll(".admin-tab").forEach(button => { const active = button.dataset.tab === adminState.tab; button.classList.toggle("is-active", active); button.setAttribute("aria-selected", String(active)); button.tabIndex = active ? 0 : -1; });
     getElement("applicationsList").setAttribute("role", "tabpanel");
     getElement("applicationsList").setAttribute("aria-labelledby", "registerTab-" + adminState.tab);
-    const directory = ["courses", "batches", "reports", "settings", "marks", "statements", "attendance"].includes(workspaceSection);
+    const directory = ["studentApp","courses", "batches", "reports", "settings", "marks", "statements", "attendance"].includes(workspaceSection);
     getElement("registerPanel").hidden = directory && recordsLoaded;
     getElement("workspaceView").hidden = !recordsLoaded || (!["overview"].includes(workspaceSection) && !directory);
     if (!recordsLoaded) return;
     const view = getElement("workspaceView");
+    if (workspaceSection === 'studentApp') {
+        view.innerHTML='<section class="workspace-card"><h2>Student app accounts</h2><label>Search students <input type="search" placeholder="Name or admission number"></label> <label>Access <select><option>All</option><option>Active</option><option>Disabled</option><option>No login yet</option></select></label> <a href="student-app.html">Student app guide</a><div data-accounts></div></section>';
+        const list=view.querySelector('[data-accounts]'), search=view.querySelector('input'), filter=view.querySelector('select');
+        const rows=enrolled.filter(e=>e.data.enrolmentStatus!=='Cancelled').map(entry=>{
+            const uid=entry.data.rcLearnUid || (entry.data.admissionNumber==='040'?'ShnX2EUQARbWwD2plwEZhnLrbcZ2':'');
+            return {entry,uid,status:uid?'Checking…':'No login yet'};
+        });
+        const render=()=>{
+            list.replaceChildren();
+            for(const {entry,status} of rows){
+                const label=[entry.data.fullName,entry.data.admissionNumber].join(' · ');
+                if(!label.toLowerCase().includes(search.value.trim().toLowerCase()) || (filter.value!=='All'&&filter.value!==status))continue;
+                const button=document.createElement('button');
+                button.type='button';button.className='workspace-quick';button.textContent=label+' · '+status;
+                button.onclick=()=>openAdminDetails(entry.id);list.append(button);
+            }
+            if(!list.childElementCount)list.textContent='No matching students.';
+        };
+        search.oninput=filter.onchange=render;render();
+        Promise.all(rows.filter(r=>r.uid).map(async r=>{
+            try{const access=await getDoc(doc(db,'rcLearnAccess',r.uid));r.status=access.data()?.disabled?'Disabled':'Active';}
+            catch{r.status='Status unavailable';}
+        })).then(()=>{if(list.isConnected)render();});
+        return;
+    }
     if (workspaceSection === "overview") {
         const today = indiaCalendarDate();
         const labels = Array.from({ length: 6 }, (_,i) => new Date(Date.UTC(today.year, today.month - 6 + i, 1)));

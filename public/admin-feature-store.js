@@ -24,14 +24,15 @@ function paise(value) {
 }
 // The mobile pilot publishes only the total tuition due as of the payment date.
 async function writePilotSummary(transaction, db, data, due, paid, monthly, now) {
-  if (data.admissionNumber !== '040' || data.status !== 'Approved' || data.enrolmentStatus === 'Cancelled') return;
+  const uid = data.rcLearnUid || (data.admissionNumber === '040' ? 'ShnX2EUQARbWwD2plwEZhnLrbcZ2' : '');
+  if (!uid || data.status !== 'Approved' || data.enrolmentStatus === 'Cancelled') return;
   const joined = String(data.admissionDate || data.approvedAt || '').slice(0,10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(joined)) throw Error('Review admission date for 040.');
   const [year,month,day] = joined.split('-').map(Number);
   const parts = new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(now));
   const local = Object.fromEntries(parts.map(p => [p.type,p.value]));
   const today = [local.year,local.month,local.day].join('-');
-  const fees = {...data.monthlyFees,[due]:paid};
+  const fees = due ? {...data.monthlyFees,[due]:paid} : (data.monthlyFees || {});
   let cents = 0;
   for (let offset=0; ; offset++) {
     const last = new Date(Date.UTC(year,month+offset+1,0)).getUTCDate();
@@ -40,7 +41,24 @@ async function writePilotSummary(transaction, db, data, due, paid, monthly, now)
     cents += Math.max(0,paise(monthly)-paise(fees[date] ?? 0));
   }
   const {doc} = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
-  transaction.set(doc(db,'studentFeeSummaries','ShnX2EUQARbWwD2plwEZhnLrbcZ2'),{admissionNumber:'040',pendingRupees:cents/100});
+  transaction.set(doc(db,'studentFeeSummaries',uid),{admissionNumber:String(data.admissionNumber),pendingRupees:cents/100});
+}
+export async function linkStudentAccount({db, ref, uid, runTransaction, doc, assertSession}) {
+  if (!/^[A-Za-z0-9]{28}$/.test(uid) || uid === 'ShnX2EUQARbWwD2plwEZhnLrbcZ2') throw Error('Choose a separate test login.');
+  await runTransaction(db, async tx => {
+    assertSession();
+    const student = await tx.get(ref);
+    const linkRef = doc(db,'rcLearnLinks',uid);
+    const link = await tx.get(linkRef);
+    const summary = await tx.get(doc(db,'studentFeeSummaries',uid));
+    assertSession();
+    const data = student.data();
+    if (!data || data.status !== 'Approved' || data.enrolmentStatus === 'Cancelled' || !data.admissionNumber || data.admissionNumber === '040') throw Error('Choose a second enrolled test student.');
+    if ((data.rcLearnUid && data.rcLearnUid !== uid) || (link.exists() && link.data().applicationId !== ref.id) || (!link.exists() && summary.exists())) throw Error('This student or login already has a link.');
+    tx.set(linkRef,{applicationId:ref.id});
+    tx.update(ref,{rcLearnUid:uid});
+    await writePilotSummary(tx,db,{...data,rcLearnUid:uid},null,0,999,new Date());
+  });
 }
 export async function saveMarkCard({
   db,
