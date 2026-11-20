@@ -25,7 +25,13 @@ with tempfile.TemporaryDirectory() as tmp:
     else:r.abort()
    page.context.route('**/*',route)
    page.goto(url+'/admin.html');expect(page.locator('#adminLoginButton')).to_be_enabled();page.locator('#adminEmail').fill('admin@example.test');page.locator('#adminPassword').fill('test-only');page.locator('#adminLoginButton').click();expect(page.locator('#adminDashboard')).to_be_visible();before=page.evaluate('structuredClone(__adminPreview.records)')
-   page.locator('.nav [data-section=marks]').click();page.locator('[data-new=groupMarks]').click();expect(page.locator('#rcGroupMarks')).to_be_visible();expect(page.locator('.group-students input')).to_have_count(7);page.locator('#groupLabel').fill('November · Morning batch');page.locator('#groupPreview').click();expect(page.locator('#groupStatus')).to_contain_text('7 students · 5 passed · 1 failed · 1 incomplete');expect(page.locator('#groupSheet')).to_be_visible()
+   page.locator('.nav [data-section=marks]').click();page.locator('[data-new=groupMarks]').click();expect(page.locator('#rcGroupMarks')).to_be_visible();expect(page.locator('.group-students input:checked')).to_have_count(0)
+   # Manual source includes learners without saved cards; select one and choose typing only.
+   assert page.locator('.group-students input').count()>7
+   page.locator('.group-students input').first.check();page.locator('#groupSubjects input').first.uncheck();page.locator('#groupPreview').click();expect(page.locator('#groupStatus')).to_contain_text('1 students');page.locator('#groupSheet').evaluate('(image)=>image.decode()');manual=page.locator('#groupSheet').evaluate('async i=>(await fetch(i.src)).text()');assert 'SPEED' in manual and 'ACCURACY' in manual and 'MS Word · MARKS' not in manual
+   page.locator('#groupSubjects input').last.uncheck();page.locator('#groupPreview').click();expect(page.locator('#groupStatus')).to_contain_text('Select at least one subject')
+   page.locator('#groupNewSubject').fill('Excel practical');page.locator('#groupAddSubject').click();expect(page.locator('#groupSubjects input')).to_have_count(3);page.locator('#groupPreview').click();expect(page.locator('#groupStatus')).to_contain_text('1 incomplete')
+   page.locator('#groupExam').select_option('1');expect(page.locator('.group-students input')).to_have_count(7);page.locator('#groupLabel').fill('November · Morning batch');page.locator('#groupPreview').click();expect(page.locator('#groupStatus')).to_contain_text('7 students · 5 passed · 1 failed · 1 incomplete');expect(page.locator('#groupSheet')).to_be_visible()
    page.locator('#groupSheet').evaluate('(image)=>image.decode()')
    svg=page.locator('#groupSheet').evaluate('async image=>await (await fetch(image.src)).text()');assert 'Highest Typing speed (WPM)' in svg and 'FAIL' in svg and 'INCOMPLETE' in svg
    assert 'SUBJECT PERFORMANCE' in svg and 'PERCENTAGE' in svg and '6 complete results' in svg and 'Morning' in svg

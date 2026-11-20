@@ -1,5 +1,5 @@
 import {escapeHTML, dateLabel} from './admin-feature-model.js?v=20261102-settings-1';
-import {SHEET_LABELS} from './admin-group-draft.js?v=20261112-1';
+import {SHEET_LABELS} from './admin-group-draft.js?v=20261120-2';
 
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const mean = values => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
@@ -56,10 +56,10 @@ export function groupSVG(result, label, profile, labels = SHEET_LABELS) {
       {label:subject.name+' · '+labels.speed, width:126, get:row=>number(row.card.subjects[index].typing?.speed)},
       {label:subject.name+' · '+labels.accuracy, width:144, get:row=>percent(row.card.subjects[index].typing?.accuracy)}
     );
-    columns.push({label:subject.name+' / '+subject.max, width:142, get:row=>number(row.card.subjects[index].marks)});
+    columns.push({label:subject.name+' · MARKS / '+subject.max, width:142, get:row=>number(row.card.subjects[index].marks)+' / '+subject.max});
   });
   columns.push(
-    {label:labels.total+' / '+rows[0].result.maximum, width:126, get:row=>number(row.result.total)},
+    {label:labels.total+' / '+rows[0].result.maximum, width:126, get:row=>number(row.result.total)+' / '+row.result.maximum},
     {label:labels.percentage || 'PERCENTAGE', width:135, get:row=>percent(row.result.percentage)},
     {label:labels.grade, width:110, get:row=>row.result.complete ? row.result.grade : '—'},
     {label:labels.result, width:164, get:row=>!row.result.complete ? 'INCOMPLETE' : row.result.passed ? 'PASS' : 'FAIL'}
@@ -98,7 +98,10 @@ export function groupSVG(result, label, profile, labels = SHEET_LABELS) {
     const highest = Math.max(...eligible.map(get));
     highlights.push(`${title}: ${number(highest)}${unit} · ${eligible.filter(row=>get(row)===highest).map(row=>row.name).join(', ')}`);
   };
-  best('Highest total',row=>row.result.total);
+  best('Overall topper · Highest total',row=>row.result.complete?row.result.total:null);
+  const support=rows.filter(row=>!row.result.complete||!row.result.passed||row.card.subjects.some(s=>s.marks!==null&&s.marks/s.max<.75||s.typing&&(s.typing.speed!==null&&s.typing.speed<25||s.typing.accuracy!==null&&s.typing.accuracy<90)));
+  highlights.push('Needs improvement / completion: '+(support.length?support.map(row=>row.name).join(', '):'All selected students meet the practice targets.'));
+  highlights.push('Assessment coverage: '+insight.completed+' complete results out of '+summary.students+' selected students.');
   card.subjects.forEach((subject,index)=>{
     best('Highest '+subject.name+' marks',row=>row.card.subjects[index].marks);
     if (subject.typing) {

@@ -50,3 +50,16 @@
 @media(max-width:650px){.group-dialog-head{padding:19px}.group-dialog-head h2{font-size:29px}.group-controls{padding:18px}.group-note{margin:10px 18px 18px}.group-actions{padding:0 18px 18px}.group-selection-head{margin:0 18px;align-items:stretch;flex-direction:column;gap:12px}.group-students{grid-template-columns:1fr;margin:14px 18px 20px}.group-student-search{min-width:0}.group-draft-editor{margin:18px;padding:15px}.group-preview-toolbar{padding:16px 18px;align-items:start}.group-preview-toolbar label{flex-direction:column;align-items:start;gap:5px}.group-sheet-stage{padding:12px}.group-sheet-stage img{min-width:0}#groupStatus{margin:12px 18px}.group-empty{padding:18px;min-height:220px}.group-empty h3{font-size:25px}}
 @media(prefers-reduced-motion:reduce){.group-sheet-stage img{animation:none}}
 @media print{.group-sheet-stage{background:white!important}.group-sheet-stage img{box-shadow:none!important}.group-empty,.group-preview-toolbar{display:none!important}}
+
+/* Selection-led report builder. */
+.group-subject-panel{margin:20px 30px;padding:22px;border:1px solid #b99d6250;border-radius:14px;background:linear-gradient(120deg,#19334b,#102237)}
+.group-subject-panel h3{margin:6px 0 16px;font:400 23px Georgia,serif;color:#f3dfb4}
+#groupSubjects{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px}
+#groupSubjects>label{display:flex;align-items:center;gap:12px;padding:13px;background:#0c1d30;border:1px solid #cdb47740;border-radius:9px;cursor:pointer}
+#groupSubjects span{display:grid;overflow-wrap:anywhere}#groupSubjects small{color:#aabfd3;font-size:11px}
+#groupSubjects input,.group-add-subject input[type=checkbox]{accent-color:#dec386;width:18px;height:18px}
+.group-add-subject{display:flex;align-items:center;flex-wrap:wrap;gap:12px;margin-top:18px}
+.group-add-subject>input{flex:1;min-width:160px;background:#091a2b;color:#f1f4f8;border:1px solid #abc2d340;border-radius:8px;padding:12px}
+.group-add-subject label{display:flex;align-items:center;gap:8px;font-size:12px}.group-add-subject button{padding:12px;border-radius:8px}
+.draft-student-list>details[hidden]{display:none}
+@media(max-width:650px){.group-subject-panel{margin:18px;padding:16px}.group-add-subject>input{width:100%;box-sizing:border-box}.group-add-subject button{width:100%}}

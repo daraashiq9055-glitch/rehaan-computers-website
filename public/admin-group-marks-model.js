@@ -5,3 +5,18 @@ export function assessmentGroups(records){const groups=new Map(),review=[];let m
 export function groupResults(records,key,ids){const wanted=new Set(ids),seen=new Set();const rows=[];for(const entry of [...records].sort(compareAdmissionRecords)){if(!wanted.has(entry.id)||seen.has(entry.id))continue;seen.add(entry.id);const card=validateCard(entry.data.markCard);if(assessmentKey(card)!==key)throw Error('Selected students must have the same assessment date, title, subjects and maximum marks.');const result=cardResult(card),notes=[];for(const s of card.subjects){if(s.marks===null)notes.push(s.name+': marks not recorded');else if(!subjectResult(s).passed)notes.push(s.name+': review this subject');else if(s.marks/s.max<.75)notes.push(s.name+': practise to improve');if(s.typing){if(s.typing.speed===null||s.typing.speed===undefined)notes.push(s.name+': speed not recorded');else if(s.typing.speed<25)notes.push(s.name+': practise typing speed');if(s.typing.accuracy===null||s.typing.accuracy===undefined)notes.push(s.name+': accuracy not recorded');else if(s.typing.accuracy<90)notes.push(s.name+': improve accuracy');}}
 rows.push({id:entry.id,name:String(entry.data.fullName||'Unnamed student'),admission:String(entry.data.admissionNumber||'—'),batch:String(entry.data.batch||'Not recorded'),card,result,note:notes.join(' · ')||'Maintain performance and continue regular practice.'});}
 if(!rows.length)throw Error('Select at least one student with saved marks.');const summary={students:rows.length,passed:rows.filter(r=>r.result.passed).length,failed:rows.filter(r=>r.result.complete&&!r.result.passed).length,incomplete:rows.filter(r=>!r.result.complete).length,grades:{}};for(const row of rows)summary.grades[row.result.grade]=(summary.grades[row.result.grade]||0)+1;return {rows,summary,card:rows[0].card};}
+
+// Build a local assessment without changing any stored student card.
+export function composeGroup(records, template) {
+ const card=validateCard(template);
+ const entries=records.map(entry=>{
+  let saved;try{saved=validateCard(entry.data.markCard);}catch{}
+  const same=saved&&saved.title.trim().toLowerCase()===card.title.trim().toLowerCase()&&saved.date===card.date;
+  const subjects=card.subjects.map(subject=>{
+   const match=same?saved.subjects.find(s=>s.name.trim().toLowerCase()===subject.name.trim().toLowerCase()&&s.max===subject.max&&Boolean(s.typing)===Boolean(subject.typing)):null;
+   return {...subject,marks:match?.marks??null,manualGrade:match?.manualGrade??'',...(subject.typing?{typing:match?.typing||{speed:null,accuracy:null}}:{})};
+  });
+  return {...entry,data:{...entry.data,markCard:validateCard({...card,manualGrade:'',subjects})}};
+ });
+ return {key:assessmentKey(card),card,entries};
+}
