@@ -14,6 +14,7 @@ import {
   subjectResult,
   MARK_GRADES,
   validateReceiptCorrection,
+  validateReceiptDeletion,
 } from "./admin-feature-model.js?v=20261102-settings-1";
 import { receiptPNG, whatsappURL } from "./admin-receipt-image.js?v=20261102-settings-1";
 let apps = [],
@@ -74,6 +75,7 @@ function modal(title, html) {
     d = document.createElement("dialog");
     d.id = "rcFeatureDialog";
     d.className = "rc-feature-dialog";
+    d.addEventListener('cancel',event=>{if(saving)event.preventDefault();});
     d.addEventListener("close", () => {
       renderVersion++;
       if (imageURL) {
@@ -232,7 +234,8 @@ async function hydrateReceiptPaper(paper,receipt){
  const note=paper.querySelector('.receipt-student-photo span');if(note&&!assets.photo)note.textContent='No photo saved';return assets;
 }
 export function openReceipt(receipt){
- const dialog=modal('Payment receipt',`<div class="rc-paper-stage">${receiptHTML(receipt)}</div><p id="rcReceiptMediaStatus" role="status">Preparing student photo and authorised signature…</p><div class="rc-feature-actions"><button class="admin-save-btn" data-new="printReceipt" data-id="${receipt.id}" disabled>Print / Save PDF</button><button data-new="image" data-id="${receipt.id}" disabled>Download image</button><button data-new="whatsapp" data-id="${receipt.id}" disabled>WhatsApp receipt</button><button data-new="editReceipt" data-id="${receipt.id}">Edit / correct receipt</button><button data-new="receiptHistory" data-id="${receipt.id}">Correction history (${receipt.amendments?.length||0})</button><button data-new="openReceipt" data-id="${receipt.id}">Reload photo / signature</button></div><p class="rc-feature-note">${receipt.balanceBasis==='correction'?'Corrected receipt. Totals show the balance at the financial correction.':'Amounts and balances are preserved from when this payment was recorded.'}</p>`);
+ receipts=[...receipts.filter(row=>row.id!==receipt.id),receipt];
+ const dialog=modal('Payment receipt',`<div class="rc-paper-stage">${receiptHTML(receipt)}</div><p id="rcReceiptMediaStatus" role="status">Preparing student photo and authorised signature…</p><div class="rc-feature-actions"><button class="admin-save-btn" data-new="printReceipt" data-id="${receipt.id}" disabled>Print / Save PDF</button><button data-new="image" data-id="${receipt.id}" disabled>Download image</button><button data-new="whatsapp" data-id="${receipt.id}" disabled>WhatsApp receipt</button><button data-new="editReceipt" data-id="${receipt.id}">Edit / correct receipt</button><button type="button" class="rc-receipt-delete" data-new="deleteReceipt" data-id="${receipt.id}">Delete receipt</button><button data-new="receiptHistory" data-id="${receipt.id}">Correction history (${receipt.amendments?.length||0})</button><button data-new="openReceipt" data-id="${receipt.id}">Reload photo / signature</button></div><p class="rc-feature-note">${receipt.balanceBasis==='correction'?'Corrected receipt. Totals show the balance at the financial correction.':'Amounts and balances are preserved from when this payment was recorded.'}</p>`);
  const paper=dialog.querySelector('.receipt-design'),epoch=sessionEpoch;
  hydrateReceiptPaper(paper,receipt).then(assets=>{if(epoch!==sessionEpoch||!paper.isConnected)return;dialog.querySelector('#rcReceiptMediaStatus').textContent=(assets.authorized?'Authorised R signature ready.':'No authorised signature saved yet. Add it in Mark Cards to include it here.')+(assets.photo?' Student photo ready.':' No student photo saved.');dialog.querySelectorAll('[data-new=printReceipt],[data-new=image],[data-new=whatsapp]').forEach(b=>b.disabled=false);}).catch(error=>{if(epoch===sessionEpoch&&paper.isConnected)dialog.querySelector('#rcReceiptMediaStatus').textContent='Could not prepare receipt: '+error.message+' Reload the photo/signature before exporting.';});
 }
@@ -415,7 +418,7 @@ function editReceipt(receipt) {
     `<label>${label}<input name="${key}" value="${e(value)}" maxlength="${max}" required></label>`;
   modal(
     "Correct payment receipt",
-    `<p>${e(receipt.number)} · Due ${e(receipt.due)} · Monthly total currently ${money(Math.round(paid * 100))}</p><form id="rcReceiptEditForm" data-id="${receipt.id}" data-paid="${paid}" data-correction="${crypto.randomUUID().replaceAll("-", "")}"><div class="rc-receipt-edit-grid">${field("name", "Student name on receipt", receipt.student.name, 120)}${field("admission", "Admission number on receipt", receipt.student.admission, 20)}${field("course", "Course on receipt", receipt.student.course, 120)}<label>Payment date<input name="date" type="date" value="${receipt.date}" max="${indiaDate()}" required></label><label>Correct receipt amount (₹)<input name="amount" type="number" min="0.01" max="${receipt.billed / 100}" step="0.01" value="${receipt.amount / 100}" required></label><label>Recorded method<select name="method">${["Manually recorded", "Cash", "UPI", "Bank transfer"].map((method) => `<option ${receipt.method === method ? "selected" : ""}>${method}</option>`).join("")}</select></label><label class="rc-receipt-colour">Receipt background<input type="color" name="paperColor" value="${e(receipt.paperColor||DEFAULT_RECEIPT_PAPER)}"></label><label class="rc-full">Receipt note (printed, optional)<input name="note" maxlength="160" value="${e(receipt.note || "")}"></label><label class="rc-full">Reason for correction (required, private history)<textarea name="reason" minlength="5" maxlength="500" required></textarea></label></div><details class="rc-receipt-edit-preview" open><summary>Receipt appearance preview</summary><div class="rc-paper-stage">${receiptHTML(receipt)}</div></details><p id="rcCorrectionPreview" class="rc-feature-note">Correcting the amount adjusts this due's monthly ledger by the difference. The original receipt values are retained in history. This does not charge or refund an online payment.</p><p class="rc-feature-note">Student profile, admission fee, due date, receipt number and other receipts stay unchanged. A zero/reversed payment requires separate review.</p><label class="rc-correction-confirm"><input type="checkbox" name="confirmed" required>I reviewed the correction and its effect on the monthly balance.</label><p id="rcReceiptEditStatus" role="status"></p><div class="rc-feature-actions"><button class="admin-save-btn" type="submit">Save correction with history</button><button type="button" data-new="openReceipt" data-id="${receipt.id}">Cancel</button></div></form>`,
+    `<p>${e(receipt.number)} · Due ${e(receipt.due)} · Monthly total currently ${money(Math.round(paid * 100))}</p><form id="rcReceiptEditForm" data-id="${receipt.id}" data-paid="${paid}" data-correction="${crypto.randomUUID().replaceAll("-", "")}"><div class="rc-receipt-edit-grid">${field("name", "Student name on receipt", receipt.student.name, 120)}${field("admission", "Admission number on receipt", receipt.student.admission, 20)}${field("course", "Course on receipt", receipt.student.course, 120)}<label>Payment date<input name="date" type="date" value="${receipt.date}" max="${indiaDate()}" required></label><label>Correct receipt amount (₹)<input name="amount" type="number" min="0.01" max="${receipt.billed / 100}" step="0.01" value="${receipt.amount / 100}" required></label><label>Recorded method<select name="method">${["Manually recorded", "Cash", "UPI", "Bank transfer"].map((method) => `<option ${receipt.method === method ? "selected" : ""}>${method}</option>`).join("")}</select></label><label class="rc-receipt-colour">Receipt background<input type="color" name="paperColor" value="${e(receipt.paperColor||DEFAULT_RECEIPT_PAPER)}"></label><label class="rc-full">Receipt note (printed, optional)<input name="note" maxlength="160" value="${e(receipt.note || "")}"></label><label class="rc-full">Reason for correction (required, private history)<textarea name="reason" minlength="5" maxlength="500" required></textarea></label></div><details class="rc-receipt-edit-preview" open><summary>Receipt appearance preview</summary><div class="rc-paper-stage">${receiptHTML(receipt)}</div></details><p id="rcCorrectionPreview" class="rc-feature-note">Correcting the amount adjusts this due's monthly ledger by the difference. The original receipt values are retained in history. This does not charge or refund an online payment.</p><p class="rc-feature-note">Student profile, admission fee, due date, receipt number and other receipts stay unchanged. Use Delete receipt to remove an accidental payment completely.</p><label class="rc-correction-confirm"><input type="checkbox" name="confirmed" required>I reviewed the correction and its effect on the monthly balance.</label><p id="rcReceiptEditStatus" role="status"></p><div class="rc-feature-actions"><button class="admin-save-btn" type="submit">Save correction with history</button><button type="button" data-new="openReceipt" data-id="${receipt.id}">Cancel</button></div></form>`,
   );
   const form = $("#rcReceiptEditForm");
   const paper=form.querySelector('.receipt-design');hydrateReceiptPaper(paper,receipt).catch(()=>{if(paper.isConnected){const note=document.createElement('p');note.textContent='Photo or signature could not load. Reopen the saved receipt before exporting.';paper.after(note);}});
@@ -427,6 +430,47 @@ function editReceipt(receipt) {
       `Amount change: ${money(Math.round((next - receipt.amount / 100) * 100))}. Monthly total after correction: ${money(Math.round(total * 100))}. Remaining: ${money(Math.round((receipt.billed / 100 - total) * 100))}. No online charge or refund is made.`;
   });
 }
+function showSavedReceipts(studentId='',message='') {
+  services.assertSession?.();
+  syncReceipts(services.getRecords?.()||apps);
+  const selected=receipts.filter(receipt=>!studentId||receipt.studentId===studentId);
+  modal(studentId?'Student receipts':'Saved payment receipts',`${message?`<p class="rc-receipt-deleted" role="status">${e(message)}</p>`:''}<p>Open a receipt to view or correct it. Delete receipt also removes that payment from the monthly fee total.</p><div class="rc-receipt-list">${selected.map(receipt=>`<div class="rc-receipt-item"><button type="button" data-new="openReceipt" data-id="${receipt.id}"><strong>${e(receipt.student.name)}</strong><span>${e(receipt.number)} · ${money(receipt.amount)} · ${e(presentReceipt(receipt).month)}</span></button><button type="button" class="rc-receipt-delete" data-new="deleteReceipt" data-id="${receipt.id}" data-receipt-student="${e(studentId)}" aria-label="Delete receipt ${e(receipt.number)} for ${e(receipt.student.name)}">Delete receipt</button></div>`).join('')||'<p>No saved receipts remain.</p>'}</div>`);
+}
+
+function confirmReceiptDeletion(receipt,studentId='') {
+  services.assertSession();
+  if(typeof services.deleteReceipt!=='function')throw Error('Reload the dashboard before deleting receipts.');
+  const record=(services.getRecords?.()||apps).find(entry=>entry.id===receipt.studentId);
+  if(!record)throw Error('Refresh the student register before deleting this receipt.');
+  const paid=Number(record.data.monthlyFees?.[receipt.due]??0),after=Math.round(paid*100)-receipt.amount;
+  if(!Number.isFinite(paid)||after<0)throw Error('The monthly ledger needs review before this receipt can be deleted.');
+  modal('Delete receipt & payment',`<form id="rcReceiptDeleteForm" data-paid="${paid}" data-deletion="${crypto.randomUUID().replaceAll('-','')}" data-student="${e(studentId)}"><p>Delete this saved receipt and remove its amount from the recorded monthly payment. This action cannot be undone.</p><dl class="rc-delete-summary"><div><dt>Student</dt><dd>${e(receipt.student.name)}</dd></div><div><dt>Receipt</dt><dd>${e(receipt.number)}</dd></div><div><dt>Fee month / due date</dt><dd>${e(presentReceipt(receipt).month)} · ${e(dateLabel(receipt.due))}</dd></div><div><dt>Payment to remove</dt><dd>${money(receipt.amount)}</dd></div><div><dt>Recorded monthly payment</dt><dd>${money(Math.round(paid*100))} → ${money(after)}</dd></div><div><dt>Balance after deletion</dt><dd>${money(Math.max(0,receipt.billed-after))}</dd></div></dl><p class="rc-feature-note">The removed amount will become due again. Other receipts, admission fees and student details stay unchanged. This does not refund money through UPI, a bank or a payment provider.</p><label class="rc-delete-reason">Reason for deletion<textarea name="reason" minlength="5" maxlength="500" rows="3" required></textarea></label><label class="rc-correction-confirm"><input type="checkbox" name="confirmed" required>I reviewed the receipt and confirm removing this payment.</label><p id="rcReceiptDeleteStatus" role="status"></p><div class="rc-feature-actions"><button type="submit" class="rc-receipt-delete">Delete receipt & payment</button><button type="button" data-new="openReceipt" data-id="${receipt.id}">Cancel</button></div></form>`);
+  $('#rcReceiptDeleteForm')._receipt=structuredClone(receipt);
+}
+
+async function submitReceiptDeletion(form) {
+  if(saving)return;
+  const epoch=sessionEpoch,controls=[...form.elements].filter(control=>!control.disabled),close=$('#rcFeatureDialog [data-new=close]');
+  try {
+    services.assertSession();
+    if(!form.elements.confirmed.checked)throw Error('Review and confirm the receipt deletion first.');
+    const input=validateReceiptDeletion({reason:form.elements.reason.value});
+    saving=true;controls.forEach(control=>control.disabled=true);if(close)close.disabled=true;
+    $('#rcReceiptDeleteStatus').textContent='Deleting receipt and updating the monthly balance…';
+    const result=await services.deleteReceipt(form._receipt,input,Number(form.dataset.paid),form.dataset.deletion);
+    if(epoch!==sessionEpoch||!form.isConnected)return;
+    const message=`Receipt ${form._receipt.number} deleted. ${money(Math.round(result.amount*100))} removed from the recorded monthly payment.`;
+    if($('#rcPrintArea')?.dataset.kind!=='marks')$('#rcPrintArea')?.replaceChildren();
+    syncReceipts(services.getRecords?.()||apps);
+    if(result.refreshed===false)modal('Receipt deleted',`<p role="status">${e(message)} Refresh the student register to reload the remaining receipts.</p><button type="button" data-new="refreshReceiptList">Refresh saved receipts</button>`);
+    else showSavedReceipts(form.dataset.student,message);
+  } catch(error) {
+    if(epoch===sessionEpoch&&form.isConnected)$('#rcReceiptDeleteStatus').textContent='Deletion not confirmed: '+error.message;
+  } finally {
+    if(epoch===sessionEpoch){saving=false;controls.forEach(control=>{if(control.isConnected)control.disabled=false;});if(close?.isConnected)close.disabled=false;}
+  }
+}
+
 function receiptHistory(receipt) {
   const labels = [
     ["Student name", (r) => r.student.name],
@@ -460,6 +504,7 @@ function receiptHistory(receipt) {
 
 document.addEventListener("submit", async (event) => {
   const form = event.target;
+  if(form.id==='rcReceiptDeleteForm'){event.preventDefault();await submitReceiptDeletion(form);return;}
   if (form.id !== "rcReceiptEditForm") return;
   event.preventDefault();
   if (saving) return;
@@ -571,6 +616,8 @@ document.addEventListener("click", async (event) => {
     if (action === "whatsapp" && receipt) await whatsapp(receipt);
     if (action === "openReceipt" && receipt) openReceipt(receipt);
     if (action === "editReceipt" && receipt) editReceipt(receipt);
+    if (action === 'deleteReceipt' && receipt) confirmReceiptDeletion(receipt,button.dataset.receiptStudent||'');
+    if (action === 'refreshReceiptList') {await services.refreshRecords();services.assertSession();showSavedReceipts();}
     if (action === "receiptHistory" && receipt) receiptHistory(receipt);
     if (action === "blank"){
       modal(
@@ -583,21 +630,8 @@ document.addEventListener("click", async (event) => {
     if (action === "printSheet") await printReceiptPaper(null,true);
     if(action==='monthlyStatus')openMonthlyStatus(button.dataset.student);
     if(action==='monthlyPayment'){const id=button.dataset.student;services.assertSession?.();$('#rcFeatureDialog')?.close();services.recordMonthlyPayment?.(id);}
-    if(action==='studentReceipts'){const id=button.dataset.student;syncReceipts(services.getRecords?.()||apps);modal('Student receipts',`<div class="rc-receipt-list">${receipts.filter(r=>r.studentId===id).map(r=>`<button type="button" data-new="openReceipt" data-id="${r.id}"><strong>${e(r.number)}</strong><span>${e(presentReceipt(r).month)} · ${money(r.amount)}</span></button>`).join('')||'<p>No dated receipts recorded for this student. Older monthly ledger payments are kept.</p>'}</div>`);}
-    if (action === "receipts")
-      modal(
-        "Saved payment receipts",
-        `<p>Receipts are saved with each new monthly payment. Older fee totals have no individual receipt events and are kept unchanged.</p><div class="rc-receipt-list">${
-          receipts
-            .slice()
-            .reverse()
-            .map(
-              (r) =>
-                `<button data-new="openReceipt" data-id="${r.id}"><strong>${e(r.student.name)}</strong><span>${e(r.number)} · ${money(r.amount)} · ${monthLabel(r.period)}</span></button>`,
-            )
-            .join("") || "<p>No saved receipts yet.</p>"
-        }</div>`,
-      );
+    if(action==='studentReceipts')showSavedReceipts(button.dataset.student);
+    if(action==='receipts')showSavedReceipts();
   } catch (error) {
     if ($("#rcMarksStatus") && ["printMarks","downloadMarks"].includes(action))
       $("#rcMarksStatus").textContent = error.message;
