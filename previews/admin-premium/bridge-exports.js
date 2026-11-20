@@ -3,6 +3,21 @@
 export const previewAdminBridge = Object.freeze({
   refresh() {return loadApplications();},
   identity() {return verifiedAdminUid?{uid:verifiedAdminUid,email:auth.currentUser?.email||''}:null;},
+  async mobileUpdates(){
+    requireAdmin();const uid=verifiedAdminUid,snapshot=await getDocs(collection(db,'rcLearnUpdates'));requireAdmin();if(uid!==verifiedAdminUid)throw Error('Your session changed.');
+    return snapshot.docs.map(item=>({id:item.id,...item.data()})).sort((a,b)=>String(b.createdAt||b.day||'').localeCompare(String(a.createdAt||a.day||'')));
+  },
+  async publishMobileUpdate(input){
+    requireAdmin();const uid=verifiedAdminUid,kinds=['Class notes','Homework','Notice','Exam'];
+    const clean={kind:String(input.kind||''),title:String(input.title||'').trim(),body:String(input.body||'').trim(),day:String(input.day||''),batch:String(input.batch||'').trim(),examDay:input.examDay?String(input.examDay):'',photo:String(input.photo||''),published:true,createdAt:new Date().toISOString(),createdBy:uid};
+    if(!kinds.includes(clean.kind)||clean.title.length<2||clean.title.length>140||clean.body.length<2||clean.body.length>4000||!/^\d{4}-\d{2}-\d{2}$/.test(clean.day)||clean.batch.length>80||clean.photo.length>500000)throw Error('Review the update details and image size.');
+    if(clean.kind==='Exam'&&clean.examDay&&!/^\d{4}-\d{2}-\d{2}$/.test(clean.examDay))throw Error('Choose a valid exam date.');
+    const id=crypto.randomUUID();await runTransaction(db,async tx=>{requireAdmin();if(uid!==verifiedAdminUid)throw Error('Your session changed.');tx.set(doc(db,'rcLearnUpdates',id),clean);});return id;
+  },
+  async setMobileUpdatePublished(id,published){
+    requireAdmin();const uid=verifiedAdminUid;if(!/^[a-f0-9-]{36}$/.test(id)||typeof published!=='boolean')throw Error('This update reference is invalid.');
+    await runTransaction(db,async tx=>{requireAdmin();const ref=doc(db,'rcLearnUpdates',id),snap=await tx.get(ref);requireAdmin();if(uid!==verifiedAdminUid||!snap.exists())throw Error('Update no longer exists.');tx.update(ref,{published,updatedAt:new Date().toISOString(),updatedBy:uid});});
+  },
   async idToken() {requireAdmin();return 'local-preview-only';},
   topics(id) {const data=adminState.apps.find(entry=>entry.id===id)?.data;const course=courses.find(item=>item.title===(data?.coursePreference||data?.course));return structuredClone(course?.learn?.length?course.learn:['Computer fundamentals','Practical coursework','Course assessment']);},
   async lifecycle(id,input) {requireAdmin();const uid=verifiedAdminUid;const result=await saveLifecycle({...input,db,ref:doc(db,'applications',id),runTransaction,actor:uid,assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');}});await loadApplications();return result;},
