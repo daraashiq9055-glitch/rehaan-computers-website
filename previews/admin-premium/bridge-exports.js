@@ -4,7 +4,7 @@ export const previewAdminBridge = Object.freeze({
   refresh() {return loadApplications();},
   identity() {return verifiedAdminUid?{uid:verifiedAdminUid,email:auth.currentUser?.email||''}:null;},
   async androidRelease(){
-    requireAdmin();const uid=verifiedAdminUid,snapshot=await getDoc(doc(db,'rcLearnPublic','androidRelease'));requireAdmin();if(uid!==verifiedAdminUid)throw Error('Your session changed.');return snapshot.exists()?snapshot.data():null;
+    requireAdmin();const uid=verifiedAdminUid;let value=null;await runTransaction(db,async tx=>{const snapshot=await tx.get(doc(db,'rcLearnPublic','androidRelease'));value=snapshot.exists()?snapshot.data():null;});requireAdmin();if(uid!==verifiedAdminUid)throw Error('Your session changed.');return value;
   },
   async publishAndroidRelease(input){
     requireAdmin();const uid=verifiedAdminUid;
