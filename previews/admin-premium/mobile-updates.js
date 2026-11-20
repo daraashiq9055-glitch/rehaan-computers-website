@@ -23,7 +23,7 @@ function initMobileUpdates(){
  async function render(){
   if(!active)return;busy=true;
   try{
-   const rows=await app.mobileUpdates(),records=app.snapshot().records,batches=[...new Set(records.map(row=>String(row.data.batch||'').trim()).filter(Boolean))].sort();
+   const [rows,release]=await Promise.all([app.mobileUpdates(),app.androidRelease()]),records=app.snapshot().records,batches=[...new Set(records.map(row=>String(row.data.batch||'').trim()).filter(Boolean))].sort();
    host.innerHTML=`<div class="mobile-updates-head"><span>RC LEARN · LIVE STUDENT FEED</span><h2>Publish once. Reach every student.</h2><p>Share class notes, homework, announcements and exam dates. Published items appear in the Android app automatically.</p></div>
    <form id="mobileUpdateForm" class="mobile-update-form">
     <label>Update type<select name="kind"><option>Class notes</option><option>Homework</option><option>Notice</option><option>Exam</option></select></label>
@@ -35,7 +35,17 @@ function initMobileUpdates(){
     <label class="wide">Optional image · up to 350 KB<input name="photo" type="file" accept="image/jpeg,image/png,image/webp"></label>
     <button class="primary" type="submit">Publish to RC Learn</button><p role="status">${e(notice)}</p>
    </form>
+   <details class="android-release-panel"><summary>Publish an Android app update</summary><form id="androidReleaseForm" class="mobile-update-form">
+    <label>Version code<input name="versionCode" type="number" min="2" required value="${e(release?.versionCode||2)}"></label>
+    <label>Version name<input name="versionName" maxlength="30" required value="${e(release?.versionName||'1.1')}"></label>
+    <label class="wide">Update title<input name="title" maxlength="100" required value="${e(release?.title||'RC Learn update available')}"></label>
+    <label class="wide">What changed<textarea name="message" maxlength="500" required>${e(release?.message||'New features, live updates and performance improvements are ready.')}</textarea></label>
+    <label class="wide">Secure APK download link<input name="apkUrl" type="url" required placeholder="https://…" value="${e(release?.apkUrl||'')}"></label>
+    <label class="wide notice-audience"><input name="required" type="checkbox" ${release?.required?'checked':''}>Require students to install before continuing</label>
+    <button class="primary" type="submit">Publish update notice</button>
+   </form></details>
    <div class="mobile-update-list"><h3>Recent app updates</h3>${rows.length?rows.map(row=>`<article><div><small>${e(row.kind)} · ${e(row.day)}${row.batch?' · '+e(row.batch):' · All students'}</small><h3>${e(row.title)}</h3><p>${e(row.body)}</p></div><button type="button" data-update-id="${e(row.id)}" data-published="${row.published===true}">${row.published===true?'Unpublish':'Publish again'}</button></article>`).join(''):'<p>No RC Learn updates have been created yet.</p>'}</div>`;
+   $('#androidReleaseForm').onsubmit=async event=>{event.preventDefault();if(busy)return;busy=true;const data=Object.fromEntries(new FormData(event.currentTarget));try{await app.publishAndroidRelease(data);notice='Android update notice published.';}catch(error){notice=error.message;}busy=false;await render();};
    $('#mobileUpdateForm').onsubmit=async event=>{event.preventDefault();if(busy)return;busy=true;const form=event.currentTarget,data=Object.fromEntries(new FormData(form));try{data.photo=await imageValue(form.elements.photo.files[0]);await app.publishMobileUpdate(data);notice='Published. Students will receive it automatically.';await render();}catch(error){notice=error.message;busy=false;await render();}};
    host.querySelectorAll('[data-update-id]').forEach(button=>button.onclick=async()=>{if(busy)return;busy=true;try{await app.setMobileUpdatePublished(button.dataset.updateId,button.dataset.published!=='true');notice=button.dataset.published==='true'?'Update unpublished.':'Update published again.';}catch(error){notice=error.message;}busy=false;await render();});
   }catch(error){host.innerHTML='<p role="alert">RC Learn updates could not load: '+e(error.message)+'</p>';}finally{busy=false;}
