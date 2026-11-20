@@ -3,6 +3,15 @@
 export const previewAdminBridge = Object.freeze({
   refresh() {return loadApplications();},
   identity() {return verifiedAdminUid?{uid:verifiedAdminUid,email:auth.currentUser?.email||''}:null;},
+  async androidRelease(){
+    requireAdmin();const uid=verifiedAdminUid,snapshot=await getDoc(doc(db,'rcLearnPublic','androidRelease'));requireAdmin();if(uid!==verifiedAdminUid)throw Error('Your session changed.');return snapshot.exists()?snapshot.data():null;
+  },
+  async publishAndroidRelease(input){
+    requireAdmin();const uid=verifiedAdminUid;
+    const clean={versionCode:Number(input.versionCode),versionName:String(input.versionName||'').trim(),title:String(input.title||'').trim(),message:String(input.message||'').trim(),apkUrl:String(input.apkUrl||'').trim(),required:input.required===true||input.required==='on',publishedAt:new Date().toISOString()};
+    if(!Number.isInteger(clean.versionCode)||clean.versionCode<1||clean.versionCode>1000000||clean.versionName.length<1||clean.versionName.length>30||clean.title.length<2||clean.title.length>100||clean.message.length<2||clean.message.length>500||!/^https:\/\//.test(clean.apkUrl)||clean.apkUrl.length>500)throw Error('Review the version and secure APK download link.');
+    await runTransaction(db,async tx=>{requireAdmin();if(uid!==verifiedAdminUid)throw Error('Your session changed.');tx.set(doc(db,'rcLearnPublic','androidRelease'),clean);});return clean;
+  },
   async mobileUpdates(){
     requireAdmin();const uid=verifiedAdminUid,snapshot=await getDocs(collection(db,'rcLearnUpdates'));requireAdmin();if(uid!==verifiedAdminUid)throw Error('Your session changed.');
     return snapshot.docs.map(item=>({id:item.id,...item.data()})).sort((a,b)=>String(b.createdAt||b.day||'').localeCompare(String(a.createdAt||a.day||'')));
