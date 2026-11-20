@@ -11,6 +11,8 @@ const labels={overview:'Overview',today:'Today',students:'Students',fees:'Fees &
 function initWorkbench(){
  let active='',selected='',query='',stageFilter='',tab='lifecycle',dirty=false,busy=false,notice='',currentUid='',prefs=cleanPreferences(),journalQuery='',journalActor='';
  const preferenceCache=new Map(),navs={};
+ const mobileJourneyRefresh=setInterval(()=>{if(active==='journeys'&&!dirty&&!busy)app.refresh().catch(()=>{});},60000);
+ window.addEventListener('pagehide',()=>clearInterval(mobileJourneyRefresh),{once:true});
  const host=document.createElement('section');host.id='adminWorkbench';host.hidden=true;$('#workspaceSummary').before(host);
  const shortcuts=document.createElement('div');shortcuts.id='personalShortcuts';$('.content > header').after(shortcuts);
  for(const [key,title,path]of [['journeys','Student journeys','<path d="M3 19h18M6 16V9m6 7V4m6 12v-5"/>'],['history','Change history','<path d="M3 12a9 9 0 1 0 3-6M3 3v5h5M12 7v5l3 2"/>'],['preferences','My workspace','<circle cx="12" cy="8" r="4"/><path d="M4 21v-2a8 8 0 0 1 16 0v2"/>']]){
