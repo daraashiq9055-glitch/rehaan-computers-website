@@ -6,6 +6,7 @@ import {
   makeReceipt,
   validateReceiptCorrection,
   receiptAuditSnapshot,
+  validateReceiptDeletion,
 } from "./admin-feature-model.js?v=20261102-settings-1";
 import { canonicalRecord } from "./admin-records.js?v=20261102-settings-1";
 function paise(value) {
@@ -109,6 +110,8 @@ export async function saveMonthlyPayment({
     if (!snapshot.exists()) throw Error("Student record no longer exists.");
     const data = snapshot.data();
     // A stable per-form ID makes retry after a lost acknowledgement idempotent.
+    if(data.feeReceiptDeletions?.[receiptId])
+      throw Error('This receipt was deleted. Reopen the payment form to record a new payment.');
     const recorded = data.feeReceipts?.[receiptId];
     if (recorded) {
       if (
@@ -169,6 +172,65 @@ export async function saveMonthlyPayment({
     });
     await writePilotSummary(transaction, db, data, due, (paid + added) / 100, monthly, now);
     return receipt;
+  });
+}
+
+// Receipt removal and its ledger reversal are one optimistic transaction.
+// A small private marker prevents an acknowledged-late retry from restoring or
+// subtracting the same payment again. It contains no printed student details.
+export async function deleteReceipt({
+  db, ref, runTransaction, assertSession, actor, id, receiptId, deletionId,
+  input, expected, expectedPaid, now=new Date().toISOString(),
+}) {
+  const clean=validateReceiptDeletion(input),paidExpected=paise(expectedPaid);
+  if(!/^[a-f0-9]{32}$/.test(receiptId||'')||!/^[a-f0-9]{32}$/.test(deletionId||'')||
+     !actor||!id||expected?.id!==receiptId||expected?.studentId!==id||
+     !Number.isSafeInteger(expected?.amount)||expected.amount<=0||
+     !Number.isSafeInteger(expected?.billed)||expected.billed<=0||
+     typeof expected?.due!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(expected.due)||
+     !Number.isFinite(Date.parse(expected.due+'T00:00:00Z'))||
+     new Date(expected.due+'T00:00:00Z').toISOString().slice(0,10)!==expected.due)
+    throw Error('Invalid receipt deletion reference. Reopen the saved receipt.');
+  const isMap=value=>value&&typeof value==='object'&&!Array.isArray(value);
+  return runTransaction(db,async transaction=>{
+    assertSession();const snapshot=await transaction.get(ref);assertSession();
+    if(!snapshot.exists())throw Error('Student record no longer exists. Refresh the register.');
+    const data=snapshot.data(),stored=data.feeReceipts?.[receiptId],marker=data.feeReceiptDeletions?.[receiptId];
+    if(!stored){
+      if(marker?.id===deletionId&&marker.by===actor&&marker.reason===clean.reason&&
+         marker.amount===expected.amount&&marker.due===expected.due&&
+         marker.revision===(expected.revision||0)&&marker.ledgerBefore===paidExpected)
+        return {receiptId,studentId:id,due:marker.due,amount:marker.amount/100,totalPaid:paise(data.monthlyFees?.[marker.due]??0)/100};
+      throw Error('Receipt was already deleted or no longer exists. Refresh the saved receipts.');
+    }
+    if(marker)throw Error('This receipt has conflicting deletion metadata. Refresh and review the record.');
+    if(canonicalRecord(stored)!==canonicalRecord(expected))
+      throw Error('This receipt changed in another session. Refresh and review before deleting.');
+    if(!isMap(data.feeReceipts)||!isMap(data.monthlyFees)||(data.feeReceiptDeletions!==undefined&&!isMap(data.feeReceiptDeletions)))
+      throw Error('The stored receipt or fee ledger needs review before deleting.');
+    const paid=paise(data.monthlyFees[stored.due]??0);
+    if(paid!==paidExpected)throw Error('The fee ledger changed. Refresh and review the balance before deleting.');
+    if(paid<stored.amount)throw Error('The recorded monthly payment is smaller than this receipt. Review the ledger before deleting.');
+    const total=paid-stored.amount,remaining={...data.feeReceipts};delete remaining[receiptId];
+    let otherReceipts=0;
+    for(const receipt of Object.values(remaining)){
+      if(receipt?.due!==stored.due)continue;
+      if(!Number.isSafeInteger(receipt.amount)||receipt.amount<=0)throw Error('Another receipt for this month needs review. Nothing was deleted.');
+      otherReceipts+=receipt.amount;
+    }
+    if(!Number.isSafeInteger(otherReceipts)||otherReceipts>total)
+      throw Error('The remaining receipts do not match the monthly ledger. Review the other payments before deleting.');
+    const monthlyFees={...data.monthlyFees};
+    if(total===0)delete monthlyFees[stored.due];else monthlyFees[stored.due]=total/100;
+    transaction.update(ref,{
+      feeReceipts:remaining,monthlyFees,
+      ['feeReceiptDeletions.'+receiptId]:{id:deletionId,by:actor,at:now,reason:clean.reason,
+        number:String(stored.number||stored.id),due:stored.due,amount:stored.amount,revision:stored.revision||0,
+        ledgerBefore:paid,ledgerAfter:total},
+      updatedAt:now,updatedBy:actor,
+    });
+    await writePilotSummary(transaction,db,data,stored.due,total/100,stored.billed/100,now);
+    assertSession();return {receiptId,studentId:id,due:stored.due,amount:stored.amount/100,totalPaid:total/100};
   });
 }
 

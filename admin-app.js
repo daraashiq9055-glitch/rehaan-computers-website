@@ -2,8 +2,8 @@ import {studentChatURL} from './admin-whatsapp.js?v=20261104-wa-1';
 import {settingsState,setSettingsState,failSettingsState,clearSettingsState,customMessage} from './admin-settings-state.js?v=20261102-settings-1';
 import {saveSharedSettings,renderSettingsTemplate} from './admin-settings-model.js?v=20261102-settings-1';
 import {saveAttendance} from './admin-attendance-model.js?v=20261102-settings-1';
-import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261108-group-1";
-import {saveMarkCard,saveMonthlyPayment,correctReceipt} from "./admin-feature-store.js?v=20261102-settings-1";
+import {configureAdditions,renderMarkCards,openReceipt,receiptTools,resetAdditions,openStudentStatement,renderStatementDirectory} from "./admin-features.js?v=20261116-receipts-1";
+import {saveMarkCard,saveMonthlyPayment,correctReceipt,deleteReceipt} from "./admin-feature-store.js?v=20261116-receipts-1";
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
 let activePhotoMigration = null;
@@ -2763,6 +2763,16 @@ assertSession:requireAdmin,refreshRecords:loadApplications,loadMarkPhoto:async(p
         actor:uid,receiptId:receipt.id,correctionId,input,expected:receipt,expectedPaid});
     if(verifiedAdminUid!==uid)throw new Error("Correction saved. Sign in again to view it.");
     await loadApplications();return result.receipt;
+},deleteReceipt:async(receipt,input,expectedPaid,deletionId)=>{
+    requireAdmin();const uid=verifiedAdminUid;
+    const result=await deleteReceipt({db,ref:doc(db,'applications',receipt.studentId),runTransaction,
+        assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed. Sign in again before deleting receipts.');},
+        actor:uid,id:receipt.studentId,receiptId:receipt.id,deletionId,input,expected:receipt,expectedPaid});
+    if(verifiedAdminUid!==uid||auth.currentUser?.uid!==uid)throw Error('Receipt deleted. Sign in again to refresh the register.');
+    const entry=adminState.apps.find(row=>row.id===receipt.studentId);
+    if(entry){const feeReceipts={...entry.data.feeReceipts},monthlyFees={...entry.data.monthlyFees};delete feeReceipts[receipt.id];if(result.totalPaid===0)delete monthlyFees[result.due];else monthlyFees[result.due]=result.totalPaid;entry.data={...entry.data,feeReceipts,monthlyFees};}
+    await loadApplications();if(verifiedAdminUid!==uid||auth.currentUser?.uid!==uid)throw Error('Receipt deleted. Sign in again to refresh the register.');
+    return {...result,refreshed:recordsLoaded};
 },saveMarks:async(id,card,expected)=>{
     requireAdmin();const uid=verifiedAdminUid;
     const saved=await saveMarkCard({db,ref:doc(db,"applications",id),runTransaction,

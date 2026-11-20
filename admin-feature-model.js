@@ -113,6 +113,13 @@ export function validateCard(input) {
   paperColor=paperColor.toLowerCase();
   return { title, date, subjects, ...(input.documentProfile?{documentProfile:validateProfile(input.documentProfile)}:{}), ...(grade ? {manualGrade:grade} : {}), ...(paperColor&&paperColor!=='#fbf7ec'?{paperColor}:{}) };
 }
+export function validateReceiptDeletion(input) {
+  const reason=typeof input?.reason==='string'?input.reason.trim():'';
+  if(reason.length<5||reason.length>500||/[\u0000-\u0008\u000b\u000c\u000e-\u001f]/.test(reason))
+    throw Error('Enter a deletion reason between 5 and 500 characters.');
+  return {reason};
+}
+
 export function cardResult(card) {
   const complete = card.subjects.every((s) => s.marks !== null);
   const maximum = card.subjects.reduce((a, s) => a + s.max, 0);

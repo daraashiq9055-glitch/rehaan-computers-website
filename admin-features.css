@@ -947,3 +947,18 @@
 @media(max-width:1100px){.attendance-summary{grid-template-columns:repeat(2,minmax(0,1fr))}.attendance-layout{grid-template-columns:1fr}#attendanceList{max-height:320px}}
 @media(max-width:650px){.attendance-workspace{padding:14px!important}.attendance-workspace .attendance-hero h2{font-size:27px!important}.attendance-summary>div{padding:12px;gap:7px}.attendance-summary strong{font-size:25px}.attendance-metric-icon{width:28px;height:28px;font-size:18px}.attendance-controls{flex-direction:column;gap:0}.attendance-layout>div{padding:14px}.attendance-person strong{font-size:13px}.attendance-days{width:75px}.attendance-days progress{width:65px}}
 @media(prefers-reduced-motion:reduce){.attendance-workspace{animation:none}.attendance-workspace button{transition:none}}
+
+/* Receipt removal is scoped to the receipt tools and confirmation dialog. */
+.rc-receipt-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:stretch}
+.rc-receipt-item>button{min-width:0;overflow-wrap:anywhere}
+#rcFeatureDialog .rc-receipt-delete{color:#ffd9d5;background:#492329;border:1px solid #cb737c80;min-height:42px;border-radius:8px;padding:10px 14px;white-space:normal}
+#rcFeatureDialog .rc-receipt-delete:hover:enabled{background:#633038;border-color:#e8999f}
+#rcFeatureDialog .rc-receipt-delete:disabled{opacity:.5;cursor:wait}
+.rc-delete-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:18px;border:1px solid #9db1ca40;border-radius:10px;background:#102033}
+.rc-delete-summary div{min-width:0;overflow-wrap:anywhere}
+.rc-delete-summary dt{font-size:11px;color:#b5c7db}
+.rc-delete-summary dd{margin:5px 0 0;font-size:14px;font-weight:600;color:#f2e4c5}
+.rc-delete-reason{display:grid;gap:8px;color:#d0deec;font-size:12px}
+.rc-delete-reason textarea{box-sizing:border-box;width:100%;max-width:100%;padding:12px;border:1px solid #a9bfd64d;border-radius:8px;background:#0b1b2e;color:#f1f4fa;font:inherit;resize:vertical}
+.rc-receipt-deleted{padding:14px 16px;border:1px solid #75b99a66;background:#204b3d55;border-radius:9px;color:#d1ebde}
+@media(max-width:520px){.rc-receipt-item{grid-template-columns:minmax(0,1fr)}.rc-receipt-item>.rc-receipt-delete{text-align:center}.rc-delete-summary{grid-template-columns:minmax(0,1fr);padding:14px}}

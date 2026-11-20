@@ -17,6 +17,7 @@ with tempfile.TemporaryDirectory() as tmp:
    b=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);page=b.new_page(viewport={'width':1440,'height':1000});errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.on('dialog',lambda d:d.accept())
    setup=(ROOT/'previews/admin-premium/demo.js').read_text().split('  const notify =')[0]+'})();'
    setup+="""for(let i=0;i<7;i++){__adminPreview.records['demo-'+i].markCard={title:'MS Word & Typing Examination',date:'2026-11-01',subjects:[{name:'MS Word',max:20,marks:i===6?2:14+i%3},{name:'Typing',max:50,marks:33+i,typing:{speed:25+i,accuracy:88+i}}]};}__adminPreview.records['demo-5'].markCard.subjects[0].marks=null;"""
+   setup+="""const sc=document.createElement('canvas');sc.width=180;sc.height=60;const sx=sc.getContext('2d');sx.strokeStyle='#142a66';sx.lineWidth=3;sx.beginPath();sx.moveTo(10,45);sx.bezierCurveTo(45,0,80,65,160,10);sx.stroke();window.testGroupSignature=sc.toDataURL('image/png');__adminPreview.settings={...__adminPreview.settings,markCardSignatures:{examiner:testGroupSignature,authorized:testGroupSignature}};"""
    page.context.add_init_script(setup)
    def route(r):
     if r.request.url.startswith('https://www.gstatic.com/firebasejs/12.2.1/'):r.fulfill(content_type='application/javascript',body=(ROOT/'previews/admin-premium/sdk.js').read_text(),headers={'Access-Control-Allow-Origin':'*'})
@@ -25,10 +26,17 @@ with tempfile.TemporaryDirectory() as tmp:
     else:r.abort()
    page.context.route('**/*',route)
    page.goto(url+'/admin.html');expect(page.locator('#adminLoginButton')).to_be_enabled();page.locator('#adminEmail').fill('admin@example.test');page.locator('#adminPassword').fill('test-only');page.locator('#adminLoginButton').click();expect(page.locator('#adminDashboard')).to_be_visible();before=page.evaluate('structuredClone(__adminPreview.records)')
-   page.locator('.nav [data-section=marks]').click();page.locator('[data-new=groupMarks]').click();expect(page.locator('#rcGroupMarks')).to_be_visible();expect(page.locator('.group-students input')).to_have_count(7);page.locator('#groupLabel').fill('November · Morning batch');page.locator('#groupPreview').click();expect(page.locator('#groupStatus')).to_contain_text('7 students · 5 passed · 1 failed · 1 incomplete');expect(page.locator('#groupSheet')).to_be_visible()
+   page.locator('.nav [data-section=marks]').click();page.locator('[data-new=groupMarks]').click();expect(page.locator('#rcGroupMarks')).to_be_visible();expect(page.locator('.group-students input:checked')).to_have_count(0)
+   # Manual source includes learners without saved cards; select one and choose typing only.
+   assert page.locator('.group-students input').count()>7
+   page.locator('.group-students input').first.check();page.locator('#groupSubjects input').first.uncheck();page.locator('#groupPreview').click();expect(page.locator('#groupStatus')).to_contain_text('1 students');page.locator('#groupSheet').evaluate('(image)=>image.decode()');manual=page.locator('#groupSheet').evaluate('async i=>(await fetch(i.src)).text()');assert 'SPEED' in manual and 'ACCURACY' in manual and 'MS Word · MARKS' not in manual
+   page.locator('#groupSubjects input').last.uncheck();page.locator('#groupPreview').click();expect(page.locator('#groupStatus')).to_contain_text('Select at least one subject')
+   page.locator('#groupNewSubject').fill('Excel practical');page.locator('#groupAddSubject').click();expect(page.locator('#groupSubjects input')).to_have_count(3);page.locator('#groupPreview').click();expect(page.locator('#groupStatus')).to_contain_text('1 incomplete')
+   page.locator('#groupExam').select_option('1');expect(page.locator('.group-students input')).to_have_count(7);page.locator('#groupLabel').fill('November · Morning batch');page.locator('#groupPreview').click();expect(page.locator('#groupStatus')).to_contain_text('7 students · 5 passed · 1 failed · 1 incomplete');expect(page.locator('#groupSheet')).to_be_visible()
    page.locator('#groupSheet').evaluate('(image)=>image.decode()')
-   svg=page.locator('#groupSheet').evaluate('async image=>await (await fetch(image.src)).text()');assert 'Highest Typing speed (WPM)' in svg and 'FAIL' in svg and 'INCOMPLETE' in svg
-   assert 'SUBJECT PERFORMANCE' in svg and 'PERCENTAGE' in svg and '6 complete results' in svg and 'Morning' in svg
+   svg=page.locator('#groupSheet').evaluate('async image=>await (await fetch(image.src)).text()');assert 'TOP 3 STUDENTS' in svg and 'FAIL' in svg and 'INCOMPLETE' in svg
+   assert svg.count('<image ')==2 and svg.count(page.evaluate('testGroupSignature'))==2
+   assert 'PERCENTAGE' in svg and 'Morning' in svg;assert all(t not in svg for t in ['SUBJECT PERFORMANCE','CLASS AVERAGE','PASS RATE','HIGHEST SCORE','AWAITING MARKS','RESULT SUMMARY','INSTITUTE SEAL']);assert 'EXAMINER / ASSESSOR' in svg and 'AUTHORIZED SIGNATORY' in svg
    expect(page.locator('#groupSelectionCount')).to_have_text('7 of 7 students selected')
    page.locator('#groupStudentSearch').fill('Sara');expect(page.locator('.group-students label:visible')).to_have_count(1);assert page.locator('.group-students input:checked').count()==7;page.locator('#groupStudentSearch').fill('')
    page.locator('#groupZoom').select_option('150');assert page.locator('#groupSheet').evaluate('e=>e.clientWidth/e.parentElement.clientWidth')>1.3;page.locator('#groupZoom').select_option('100')
@@ -36,10 +44,10 @@ with tempfile.TemporaryDirectory() as tmp:
    data=Path(download.value.path()).read_bytes();assert data[:8]==b'\x89PNG\r\n\x1a\n';assert int.from_bytes(data[16:20],'big')==3840
    out=ROOT/'tests/artifacts/group-marks';out.mkdir(parents=True,exist_ok=True);(out/'group-sheet.png').write_bytes(data)
    page.evaluate("document.body.classList.add('printing-group-marks')");page.emulate_media(media='print');expect(page.locator('#groupSheet')).to_be_visible();assert page.locator('#adminDashboard').evaluate('el=>getComputedStyle(el).display')=='none';pdf=page.pdf(print_background=True);assert pdf.startswith(b'%PDF');(out/'group-sheet.pdf').write_bytes(pdf);page.emulate_media(media='screen');page.evaluate("document.body.classList.remove('printing-group-marks')")
-   page.locator('.group-draft-editor>summary').click();page.locator('[data-draft="labels.student"]').fill('LEARNER DETAILS');page.locator('[data-draft="profile.name"]').fill('REHAAN COMPUTERS PREMIUM');page.locator('.draft-student-list>details').first.locator('summary').click();page.locator('[data-draft="student.0.name"]').fill('Edited student');page.locator('[data-draft="student.0.marks.0"]').fill('20');page.locator('[data-draft="student.0.marks.1"]').fill('50');page.locator('[data-draft="student.0.note"]').fill('Keep up this excellent progress.');expect(page.locator('#groupPNG')).to_be_disabled();page.locator('#groupPreview').click();page.locator('#groupSheet').evaluate('(image)=>image.decode()');edited=page.locator('#groupSheet').evaluate('async image=>await (await fetch(image.src)).text()');assert 'LEARNER DETAILS' in edited and 'Edited student' in edited and 'Keep up this excellent progress.' in edited and '70' in edited;assert page.evaluate('__adminPreview.records')==before;assert page.evaluate('__adminPreview.writes.length')==0
+   page.locator('.group-draft-editor>summary').click();page.locator('[data-draft="labels.student"]').fill('LEARNER DETAILS');page.locator('[data-draft="profile.name"]').fill('REHAAN COMPUTERS PREMIUM');page.locator('.draft-student-list>details').first.locator('summary').click();page.locator('[data-draft="student.0.name"]').fill('Edited student');page.locator('[data-draft="student.0.marks.0"]').fill('20');page.locator('[data-draft="student.0.marks.1"]').fill('50');page.locator('[data-draft="student.0.note"]').fill('Keep up this excellent progress.');expect(page.locator('#groupPNG')).to_be_disabled();page.locator('#groupPreview').click();page.locator('#groupSheet').evaluate('(image)=>image.decode()');edited=page.locator('#groupSheet').evaluate('async image=>await (await fetch(image.src)).text()');assert 'LEARNER DETAILS' in edited and 'Edited student' in edited and '70' in edited;assert page.evaluate('__adminPreview.records')==before;assert page.evaluate('__adminPreview.writes.length')==0
    # A draft changed during image decoding must cancel the old download.
    downloads=[];page.on('download',lambda item:downloads.append(item))
-   page.evaluate("()=>{window.originalGroupDecode=Image.prototype.decode;Image.prototype.decode=function(){return new Promise(resolve=>window.releaseGroupDecode=resolve)};}")
+   page.evaluate("()=>{window.originalGroupDecode=Image.prototype.decode;Image.prototype.decode=function(){if(!this.src.startsWith('blob:'))return window.originalGroupDecode.call(this);return new Promise(resolve=>window.releaseGroupDecode=resolve)};}")
    page.locator('#groupPNG').click();page.wait_for_function('typeof window.releaseGroupDecode==="function"');page.locator('#groupLabel').fill('Updated while exporting');page.locator('#groupPreview').click();page.evaluate('Image.prototype.decode=window.originalGroupDecode;window.releaseGroupDecode()');expect(page.locator('#groupStatus')).to_contain_text('Create the sheet again');assert not downloads
    page.locator('#groupResetDraft').click();expect(page.locator('#groupPNG')).to_be_disabled();expect(page.locator('[data-draft="student.0.name"]')).to_have_value('Ayaan Mir');page.locator('#groupPreview').click()
    # Wide subjects, long identity fields and maximum-length guidance stay in bounds.
@@ -53,5 +61,16 @@ with tempfile.TemporaryDirectory() as tmp:
    page.locator('#groupSelectNone').click();expect(page.locator('#groupPNG')).to_be_disabled();page.locator('#groupPreview').click();expect(page.locator('#groupStatus')).to_contain_text('Select at least one');page.locator('#groupSelectAll').click();page.locator('#groupPreview').click()
    assert page.evaluate('__adminPreview.records')==before;assert page.evaluate('__adminPreview.writes.length')==0
    page.evaluate("document.dispatchEvent(new Event('admin-session-cleared'))");expect(page.locator('#rcGroupMarks')).to_have_count(0);assert not errors,errors
-   b.close();print('PASS: seven-student sheet, truthful fail/incomplete, typing highlights, 4K PNG, three widths, selection and logout cleanup; no record/payment writes.')
+   # A long list must download as one complete image, including the final student and footer.
+   page.evaluate('''async()=>{const {openGroupMarks}=await import('./admin-group-marks.js?v=20261120-4');const records=Array.from({length:100},(_,i)=>({id:'long-'+i,data:{fullName:'Learner '+String(i+1).padStart(3,'0'),admissionNumber:String(i+1),markCard:{title:'Full list export',date:'2026-11-01',subjects:[{name:'Typing',max:100,marks:i,typing:{speed:30,accuracy:95}}]}}}));openGroupMarks({getRecords:()=>records,assertSession:()=>{}});}''')
+   page.locator('#groupExam').select_option('1');page.locator('#groupPreview').click();page.locator('#groupSheet').evaluate('i=>i.decode()');longsvg=page.locator('#groupSheet').evaluate('async i=>(await fetch(i.src)).text()');assert 'Learner 100' in longsvg and 'AUTHORIZED SIGNATORY' in longsvg
+   ratio=page.locator('#groupSheet').evaluate('i=>i.naturalHeight/i.naturalWidth')
+   with page.expect_download() as full:page.locator('#groupPNG').click()
+   png=Path(full.value.path()).read_bytes();w=int.from_bytes(png[16:20],'big');h=int.from_bytes(png[20:24],'big');assert w*h<=48000000 and abs(h-w*ratio)<=1 and h<=30000
+   from PIL import Image
+   import io
+   im=Image.open(io.BytesIO(png));assert im.getpixel((w//2,h-10))[3]>0
+   (out/'full-list-100.png').write_bytes(png)
+   assert not errors,errors
+   b.close();print('PASS: seven-student sheet, truthful fail/incomplete, top/lowest-three panels, 4K PNG and full 100-student export, three widths, selection and logout cleanup; no record/payment writes.')
  finally:server.shutdown()
