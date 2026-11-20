@@ -2,10 +2,15 @@ import {canonicalRecord} from '../../public/admin-records.js?v=20261102-settings
 export const stages=['Active','On hold','Completed','Archived'];
 export function stageOf(data){return stages.includes(data.studentLifecycle?.stage)?data.studentLifecycle.stage:data.status==='Approved'?'Active':'Not enrolled';}
 export function courseKey(course){return encodeURIComponent(String(course||''));}
+export const rcLearnPrograms=['Notepad','WordPad','MS Word','MS Excel','PowerPoint','MS Access','Outlook','Marg ERP','TallyPrime','Photoshop','InPage'];
 export function progressOf(data,course,topics){
  const map=data.learningProgress?.byCourse,key=courseKey(course);
  const saved=map&&Object.hasOwn(map,key)?map[key]:null;
- return saved||{course,topics:topics.map((title,index)=>({id:'topic-'+index,title,done:false}))};
+ const current=String(data.rcLearnCurrentProgram||'');
+ if(!current||!rcLearnPrograms.includes(current))return saved||{course,topics:topics.map((title,index)=>({id:'topic-'+index,title,done:false}))};
+ const selected=rcLearnPrograms.indexOf(current),standard=new Set(rcLearnPrograms.map(title=>title.toLocaleLowerCase('en-IN')));
+ const custom=(saved?.topics||[]).filter(topic=>topic&&typeof topic.title==='string'&&!standard.has(topic.title.toLocaleLowerCase('en-IN')));
+ return {course,currentProgram:current,topics:[...rcLearnPrograms.map((title,index)=>({id:'program-'+index,title,done:index<selected})),...custom],updatedAt:saved?.updatedAt,updatedBy:saved?.updatedBy};
 }
 export async function saveLifecycle({runTransaction,db,ref,assertSession,actor,expected,stage,reason,now=new Date().toISOString()}){
  if(!stages.includes(stage))throw Error('Choose a student stage.');
