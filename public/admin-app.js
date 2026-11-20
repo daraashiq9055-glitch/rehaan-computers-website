@@ -1186,6 +1186,17 @@ async function loadApplications() {
                 data: entry.data() || {}
             });
         });
+        await Promise.all(adminState.apps.map(async entry => {
+            const uid = entry.data.rcLearnUid || (entry.data.admissionNumber === '040' ? 'ShnX2EUQARbWwD2plwEZhnLrbcZ2' : '');
+            if (!uid) return;
+            try {
+                const mobile = await getDoc(doc(db,'studentFeeSummaries',uid));
+                if (mobile.exists()) entry.data.rcLearnCurrentProgram = String(mobile.data().currentProgram||'');
+            } catch {
+                entry.data.rcLearnCurrentProgram = '';
+            }
+        }));
+        if (!requestUid || verifiedAdminUid !== requestUid || sequence !== loadSequence) return;
 
         try {
             const shared = await getDoc(doc(db,'instituteSettings','workspace'));
@@ -2567,6 +2578,15 @@ async function updateDoc(reference, requested) {
         const latest = snapshot.data();
         assertUnchanged(original, latest, patch);
         transaction.update(reference, { ...patch, updatedAt: new Date().toISOString(), updatedBy: verifiedAdminUid });
+        const next = {...latest,...patch};
+        const mobileUid = next.rcLearnUid || (next.admissionNumber === '040' ? 'ShnX2EUQARbWwD2plwEZhnLrbcZ2' : '');
+        if (mobileUid) transaction.set(doc(db,'studentFeeSummaries',mobileUid),{
+            admissionNumber:String(next.admissionNumber||''),
+            fullName:String(next.fullName||''),
+            dob:String(next.dob||''),
+            batch:String(next.batch||''),
+            course:String(next.coursePreference||next.course||'')
+        },{merge:true});
     });
 }
 
@@ -2817,7 +2837,7 @@ function updateWorkspace() {
         import('./admin-attendance.js?v=20261105-follow-6').then(({mountAttendance})=>{
             if(verifiedAdminUid!==uid||workspaceSection!=='attendance')return;
             const guard=()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');};
-            mountAttendance({host:view,assertSession:guard,getRecords:()=>adminState.apps,save:async(id,month,input,expected)=>{guard();const saved=await saveAttendance({db,ref:doc(db,'applications',id),runTransaction,assertSession:guard,actor:uid,month,input,expected});guard();const entry=adminState.apps.find(a=>a.id===id);if(entry)entry.data.monthlyAttendance={...(entry.data.monthlyAttendance||{}),[month]:saved};return saved;}});
+            mountAttendance({host:view,assertSession:guard,getRecords:()=>adminState.apps,save:async(id,month,input,expected)=>{guard();const linkedEntry=adminState.apps.find(a=>a.id===id);const mobileUid=linkedEntry?.data.rcLearnUid||(linkedEntry?.data.admissionNumber==='040'?'ShnX2EUQARbWwD2plwEZhnLrbcZ2':'');const saved=await saveAttendance({db,ref:doc(db,'applications',id),summaryRef:mobileUid?doc(db,'studentFeeSummaries',mobileUid):null,runTransaction,assertSession:guard,actor:uid,month,input,expected});guard();const entry=adminState.apps.find(a=>a.id===id);if(entry)entry.data.monthlyAttendance={...(entry.data.monthlyAttendance||{}),[month]:saved};return saved;}});
         }).catch(()=>{if(verifiedAdminUid===uid&&workspaceSection==='attendance')view.textContent='Attendance could not load. Reload the dashboard.';});
     } else if (workspaceSection === "statements") {
         renderStatementDirectory(view);
