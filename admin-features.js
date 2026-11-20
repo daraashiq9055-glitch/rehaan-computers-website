@@ -551,10 +551,10 @@ document.addEventListener("click", async (event) => {
     if (action === "groupMarks") {
       services.assertSession();
       const epoch=sessionEpoch;
-      const {openGroupMarks}=await import('./admin-group-marks.js?v=20261120-3');
+      const {openGroupMarks}=await import('./admin-group-marks.js?v=20261120-4');
       if(epoch!==sessionEpoch)return;
       services.assertSession();
-      openGroupMarks({getRecords:()=>services.getRecords?.()||apps,assertSession:services.assertSession});
+      openGroupMarks({getRecords:()=>services.getRecords?.()||apps,assertSession:services.assertSession,loadSignatures:()=>ensureMarkSignatures(true)});
       return;
     }
     if (action === "close") $("#rcFeatureDialog").close();

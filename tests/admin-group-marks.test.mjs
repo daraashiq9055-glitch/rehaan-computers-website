@@ -17,7 +17,7 @@ test('report averages exclude incomplete results and missing values but include 
  assert.equal(insights.subjects[0].average,10);assert.equal(insights.subjects[0].recorded,2);assert.equal(insights.subjects[1].speed,25);assert.equal(insights.subjects[1].speedCount,2);assert.equal(insights.subjects[1].accuracy,50);assert.equal(insights.subjects[1].accuracyCount,2);
  assert.deepEqual(result,before);
  const incomplete=groupResults([records[2]],assessmentKey(card()),['3']);const pending=groupInsights(incomplete);assert.equal(pending.average,null);assert.equal(pending.highest,null);assert.equal(pending.passRate,null);
- const svg=groupSVG(incomplete,'',{name:'REHAAN COMPUTERS',address:'Charangam',website:'https://rehaan-computers.web.app'});assert.doesNotMatch(svg,/NaN|Infinity|undefined/);assert.match(svg,/0 complete results/);assert.match(svg,/INCOMPLETE/);
+ const svg=groupSVG(incomplete,'',{name:'REHAAN COMPUTERS',address:'Charangam',website:'https://rehaan-computers.web.app'});assert.doesNotMatch(svg,/NaN|Infinity|undefined/);assert.match(svg,/No complete results yet/);assert.match(svg,/INCOMPLETE/);
 });
 test('editable sheet draft recalculates totals and grades while leaving original marks and payments untouched',()=>{const records=[entry('1','Original')],before=structuredClone(records),draft={title:'Edited exam',date:'2026-11-01',labels:{...SHEET_LABELS,student:'LEARNER'},profile:{name:'REHAAN COMPUTERS',address:'Charangam Beerwah',email:'rehaancomputers881@gmail.com',phone:'9797205429',phone2:'9149551258',website:'https://rehaan-computers.web.app'},subjects:[{name:'Word Practical',max:20},{name:'Typing',max:50}],students:{'1':{name:'Edited name',admission:'101',serial:'5',marks:{0:20,1:50},typing:{1:{speed:45,accuracy:98}},note:'Excellent progress.'}}};const out=applyGroupDraft(records,assessmentKey(card()),['1'],draft);assert.equal(out.result.rows[0].result.total,70);assert.equal(out.result.rows[0].result.grade,'A+');assert.equal(out.result.rows[0].note,'Excellent progress.');assert.equal(out.labels.student,'LEARNER');assert.deepEqual(records,before);draft.students['1'].marks[0]=21;assert.throws(()=>applyGroupDraft(records,assessmentKey(card()),['1'],draft),/Obtained marks/);assert.deepEqual(records,before);});
 
@@ -38,4 +38,11 @@ test('rankings contain exactly the three highest and three lowest complete score
  const result=groupResults(records,assessmentKey(records[0].data.markCard),records.map(r=>r.id)),before=structuredClone(result);
  const ranked=groupRankings(result);assert.deepEqual(ranked.top.map(r=>r.id),['5','1','4']);assert.deepEqual(ranked.lowest.map(r=>r.id),['3','0','6']);assert.deepEqual(result,before);
  const none=groupRankings({...result,rows:[]});assert.deepEqual(none,{top:[],lowest:[]});
+});
+test('compact sheet omits summary panels and accepts only validated private PNG signatures',()=>{
+ const records=[entry('1','Student')],result=groupResults(records,assessmentKey(card()),['1']);
+ const svg=groupSVG(result,'',{name:'Rehaan',address:'Charangam'});
+ for(const title of ['CLASS AVERAGE','PASS RATE','HIGHEST SCORE','AWAITING MARKS','SUBJECT PERFORMANCE','RESULT SUMMARY','INSTITUTE SEAL'])assert.ok(!svg.includes(title));
+ assert.match(svg,/EXAMINER \/ ASSESSOR/);assert.match(svg,/AUTHORIZED SIGNATORY/);assert.match(svg,/#176343/);
+ assert.throws(()=>groupSVG(result,'',{name:'Rehaan'},undefined,{examiner:'https://example.test/signature.png'}),/PNG/);
 });
