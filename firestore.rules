@@ -404,12 +404,17 @@ service cloud.firestore {
           && d.photo is string && d.photo.size() <= 500000
           && d.published is bool
           && d.createdAt is string && d.createdAt.size() >= 20 && d.createdAt.size() <= 40
-          && d.createdBy == request.auth.uid
+          && d.createdBy is string && d.createdBy.size() >= 20 && d.createdBy.size() <= 128
           && (!('updatedAt' in d) || (d.updatedAt is string && d.updatedAt.size() >= 20 && d.updatedAt.size() <= 40))
           && (!('updatedBy' in d) || d.updatedBy == request.auth.uid);
       }
       allow get, list: if request.auth != null && (resource.data.published == true || updatesAdmin());
-      allow create, update: if updatesAdmin() && validUpdate(request.resource.data);
+      allow create: if updatesAdmin() && validUpdate(request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if updatesAdmin() && validUpdate(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedBy == request.auth.uid;
       allow delete: if false;
     }
 
