@@ -9,7 +9,7 @@ test('different exam/date/subject maxima cannot be silently merged; invalid card
 test('saved manual grade and all subjects survive grouping; print image escapes every user field',()=>{const records=[entry('1','<script>alert(1)</script>',{manualGrade:'A+'})],result=groupResults(records,assessmentKey(card()),['1']);assert.equal(result.rows[0].result.grade,'A+');const svg=groupSVG(result,'<img onerror=alert(1)>',{name:'REHAAN COMPUTERS',address:'Charangam',phone:'9797205429',phone2:'9149551258',website:'https://rehaan-computers.web.app'});assert.doesNotMatch(svg,/<script>|<img /);assert.match(svg,/&lt;script&gt;/);assert.match(svg,/ACCURACY/);assert.match(svg,/9797205429/);assert.match(svg,/88/);assert.match(svg,/PASS/);});
 
 import {applyGroupDraft,SHEET_LABELS} from '../admin-group-draft.js';
-import {groupInsights} from '../admin-group-sheet.js';
+import {groupInsights,groupRankings} from '../admin-group-sheet.js';
 test('report averages exclude incomplete results and missing values but include recorded zeroes',()=>{
  const records=[entry('1','Zero',{subjects:[{name:'MS Word',max:20,marks:0},{name:'Typing',max:50,marks:0,typing:{speed:0,accuracy:0}}]}),entry('2','Full',{subjects:[{name:'MS Word',max:20,marks:20},{name:'Typing',max:50,marks:50,typing:{speed:null,accuracy:null}}]}),entry('3','Pending',{subjects:[{name:'MS Word',max:20,marks:null},{name:'Typing',max:50,marks:0,typing:{speed:50,accuracy:100}}]})];
  const result=groupResults(records,assessmentKey(card()),records.map(r=>r.id)),before=structuredClone(result),insights=groupInsights(result);
@@ -31,5 +31,11 @@ test('manual source includes students without cards and never borrows marks from
 test('incomplete students cannot be overall toppers even with high partial totals',()=>{
  const records=[entry('1','Complete',{subjects:[{name:'MS Word',max:20,marks:10},{name:'Typing',max:50,marks:20,typing:{speed:25,accuracy:95}}]}),entry('2','Pending',{subjects:[{name:'MS Word',max:20,marks:null},{name:'Typing',max:50,marks:50,typing:{speed:40,accuracy:99}}]})];
  const svg=groupSVG(groupResults(records,assessmentKey(card()),['1','2']),'',{name:'Rehaan',address:'Charangam'});
- assert.match(svg,/Overall topper · Highest total: 30 · Complete/);assert.match(svg,/Needs improvement \/ completion/);
+ assert.match(svg,/TOP 3 STUDENTS/);assert.deepEqual(groupRankings(groupResults(records,assessmentKey(card()),['1','2'])).top.map(r=>r.id),['1']);assert.match(svg,/TOP 3 IMPROVEMENT PRIORITIES/);
+});
+test('rankings contain exactly the three highest and three lowest complete scores with stable ties',()=>{
+ const records=[10,80,50,0,80,90,40].map((marks,i)=>entry(String(i),`Student ${i}`,{subjects:[{name:'Exam',max:100,marks}]}));
+ const result=groupResults(records,assessmentKey(records[0].data.markCard),records.map(r=>r.id)),before=structuredClone(result);
+ const ranked=groupRankings(result);assert.deepEqual(ranked.top.map(r=>r.id),['5','1','4']);assert.deepEqual(ranked.lowest.map(r=>r.id),['3','0','6']);assert.deepEqual(result,before);
+ const none=groupRankings({...result,rows:[]});assert.deepEqual(none,{top:[],lowest:[]});
 });

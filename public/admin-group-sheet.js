@@ -1,5 +1,5 @@
 import {escapeHTML, dateLabel} from './admin-feature-model.js?v=20261102-settings-1';
-import {SHEET_LABELS} from './admin-group-draft.js?v=20261120-2';
+import {SHEET_LABELS} from './admin-group-draft.js?v=20261120-3';
 
 const finite = value => typeof value === 'number' && Number.isFinite(value);
 const mean = values => values.length ? values.reduce((sum, value) => sum + value, 0) / values.length : null;
@@ -25,6 +25,14 @@ export function groupInsights(result) {
         speed: mean(speeds), speedCount: speeds.length, accuracy: mean(accuracy), accuracyCount: accuracy.length};
     })
   };
+}
+
+export function groupRankings(result) {
+ const complete=result.rows.filter(row=>row.result.complete);
+ const score=row=>row.result.total/row.result.maximum;
+ // Stable admission order resolves equal scores; a tie never becomes a different score.
+ return {top:[...complete].sort((a,b)=>score(b)-score(a)).slice(0,3),
+ lowest:[...complete].sort((a,b)=>score(a)-score(b)).slice(0,3)};
 }
 
 function wrap(value, limit) {
@@ -91,30 +99,16 @@ export function groupSVG(result, label, profile, labels = SHEET_LABELS) {
   const subjectTop = summaryTop+summaryHeight+28;
   const subjectRows = insight.subjects.map((subject,index)=>({subject,index,name:[...wrap(subject.name,Math.floor(inner*.25/13)),`MAXIMUM ${subject.maximum}`]}));
   const subjectHeight = 116+subjectRows.reduce((sum,row)=>sum+Math.max(64,row.name.length*29+24),0)+46;
-  const highlights = [];
-  const best = (title,get,unit='') => {
-    const eligible = rows.filter(row=>finite(get(row)));
-    if (!eligible.length) return;
-    const highest = Math.max(...eligible.map(get));
-    highlights.push(`${title}: ${number(highest)}${unit} · ${eligible.filter(row=>get(row)===highest).map(row=>row.name).join(', ')}`);
-  };
-  best('Overall topper · Highest total',row=>row.result.complete?row.result.total:null);
-  const support=rows.filter(row=>!row.result.complete||!row.result.passed||row.card.subjects.some(s=>s.marks!==null&&s.marks/s.max<.75||s.typing&&(s.typing.speed!==null&&s.typing.speed<25||s.typing.accuracy!==null&&s.typing.accuracy<90)));
-  highlights.push('Needs improvement / completion: '+(support.length?support.map(row=>row.name).join(', '):'All selected students meet the practice targets.'));
-  highlights.push('Assessment coverage: '+insight.completed+' complete results out of '+summary.students+' selected students.');
-  card.subjects.forEach((subject,index)=>{
-    best('Highest '+subject.name+' marks',row=>row.card.subjects[index].marks);
-    if (subject.typing) {
-      best('Highest '+subject.name+' speed (WPM)',row=>row.card.subjects[index].typing?.speed);
-      best('Highest '+subject.name+' accuracy (%)',row=>row.card.subjects[index].typing?.accuracy);
-    }
-  });
-  const highlightTop = subjectTop+subjectHeight+28;
-  const highlightLines = highlights.flatMap(value=>wrap(value,sectionChars-6));
-  const highlightHeight = 86+Math.max(1,highlightLines.length)*31;
-  const guidanceTop = highlightTop+highlightHeight+28;
-  const guidance = rows.map(row=>({row,name:wrap(row.name,27),admission:wrap('ADM '+row.admission,34),note:wrap(row.note,Math.floor((inner-445)/12))}));
-  const guidanceHeight = 80+guidance.reduce((sum,item)=>sum+Math.max(item.name.length+item.admission.length,item.note.length)*29+30,0);
+  const ranking=groupRankings(result);
+  const ranked=(items,improve)=>items.map((row,index)=>({row,
+   name:wrap(`${index+1}. ${row.name}`,27),admission:wrap('ADM '+row.admission,34),
+   note:wrap(`${number(row.result.total)} / ${row.result.maximum} marks · ${percent(row.result.percentage)} · Grade ${row.result.grade} · ${row.result.passed?'PASS':'FAIL'}${improve?' — '+row.note:''}`,Math.floor((inner-445)/12))}));
+  const highlights=ranked(ranking.top,false),guidance=ranked(ranking.lowest,true);
+  const rowHeight=item=>Math.max(item.name.length+item.admission.length,item.note.length)*29+30;
+  const highlightTop=subjectTop+subjectHeight+28;
+  const highlightHeight=110+Math.max(65,highlights.reduce((sum,item)=>sum+rowHeight(item),0));
+  const guidanceTop=highlightTop+highlightHeight+28;
+  const guidanceHeight=110+Math.max(65,guidance.reduce((sum,item)=>sum+rowHeight(item),0));
   const footerTop = guidanceTop+guidanceHeight+30;
   const policy = [
     'Pass requires at least 33% in every subject. Saved manual grades are respected; unmarked subjects remain incomplete.',
@@ -180,15 +174,20 @@ export function groupSVG(result, label, profile, labels = SHEET_LABELS) {
     x+=inner*subjectWidths[0];values.forEach((value,i)=>{text(value,x+18,y+35,22);x+=inner*subjectWidths[i+1];});y+=h;
   });
   text('Typing values in brackets show the number of recorded measurements. Missing marks and measurements are excluded.',margin+18,y+29,18,muted);
-  rect(margin,highlightTop,inner,highlightHeight,'#f3f5f3',line,9);heading(labels.highlights,'Equal highest values include every tied student',highlightTop);
-  (highlightLines.length?highlightLines:['No recorded marks or typing measurements yet.']).forEach((value,index)=>text(value,margin+24,highlightTop+88+index*31,22));
-  rect(margin,guidanceTop,inner,guidanceHeight,'#ffffff',line,9);heading(labels.guidance,'Student-specific next steps',guidanceTop);
-  y=guidanceTop+70;
-  guidance.forEach(({row,name,admission,note},index)=>{
-    const h=Math.max(name.length+admission.length,note.length)*29+30;if(index%2===0)rect(margin+10,y,inner-20,h,'#f1f4f2','none',5);
-    name.forEach((value,j)=>text(value,margin+26,y+30+j*29,23,navy,700));admission.forEach((value,j)=>text(value,margin+26,y+30+(name.length+j)*29,18,muted));
-    note.forEach((value,j)=>text(value,margin+425,y+30+j*29,21,muted));y+=h;
-  });
+  const rankPanel=(items,top,height,title,kicker,improve)=>{
+    rect(margin,top,inner,height,improve?'#fffaf4':'#fffdf5',improve?'#dfcdb8':'#d8c590',9);
+    heading(title,kicker,top);let ry=top+70;
+    if(!items.length)text('No complete results yet. Missing marks are not treated as zero.',margin+26,ry+32,22,muted);
+    items.forEach((item,index)=>{const h=rowHeight(item);rect(margin+10,ry,inner-20,h,index%2?'#ffffff':improve?'#f6eee3':'#f2ecd9','none',6);
+      rect(margin+10,ry+12,4,h-24,improve?'#b27b4d':'#b9994d');
+      item.name.forEach((value,j)=>text(value,margin+26,ry+30+j*29,23,navy,700));
+      item.admission.forEach((value,j)=>text(value,margin+26,ry+30+(item.name.length+j)*29,18,muted));
+      item.note.forEach((value,j)=>text(value,margin+425,ry+30+j*29,21,muted));ry+=h;
+    });
+    text('Complete results only · Equal scores use the student list order · Up to three students',margin+26,top+height-15,17,muted);
+  };
+  rankPanel(highlights,highlightTop,highlightHeight,'TOP 3 STUDENTS','Highest overall scores',false);
+  rankPanel(guidance,guidanceTop,guidanceHeight,'TOP 3 IMPROVEMENT PRIORITIES','Lowest overall scores · Focus for the next assessment',true);
   ['PREPARED BY','CHECKED BY','INSTITUTE SEAL'].forEach((value,index)=>{const x=margin+index*inner/3;rule(x+22,footerTop+68,inner/3-80,'#b5b5a8');text(value,x+22,footerTop+98,17,muted,700);});
   y=footerTop+150;policy.forEach(value=>{text(value,margin,y,18,muted);y+=26;});
   rule(margin,y+12,inner,'#c5b17e');y+=48;
