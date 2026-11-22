@@ -18,8 +18,8 @@ with tempfile.TemporaryDirectory() as tmp:
    browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);context=browser.new_context(viewport={'width':1440,'height':1000},reduced_motion='reduce')
    errors=[];failed=[];external=[]
    sdk=(ROOT/'previews/admin-premium/sdk.js').read_text()
-   sdk=sdk.replace('export const getDocs = async () => {',"export const getDocs = async () => {if(state.failNextListRead){state.failNextListRead=false;throw Error('Preview list read unavailable');}")
-   sdk=sdk.replace('const settings=structuredClone(state.settings||{});','const settings=structuredClone(state.settings||{});const summaries=structuredClone(state.summaries||{});')
+   sdk=sdk.replace('export const getDocs = async ref => {',"export const getDocs = async ref => {if(state.failNextListRead){state.failNextListRead=false;throw Error('Preview list read unavailable');}")
+   sdk=sdk.replace('const settings=structuredClone(state.settings||{}),growth=structuredClone(state.growth||{});','const settings=structuredClone(state.settings||{}),growth=structuredClone(state.growth||{}),summaries=structuredClone(state.summaries||{});')
    sdk=sdk.replace("if(ref.col==='instituteSettings'){", "if(ref.col==='studentFeeSummaries'){summaries[ref.id]=structuredClone(data);continue;}if(ref.col==='instituteSettings'){")
    sdk=sdk.replace('state.settings=settings;','state.settings=settings;state.summaries=summaries;')
    sdk=sdk.replace("ref.col!=='receiptCounters'&&ref.col!=='instituteSettings'", "ref.col!=='studentFeeSummaries'&&ref.col!=='receiptCounters'&&ref.col!=='instituteSettings'")

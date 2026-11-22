@@ -2017,7 +2017,7 @@ async function displayAdminPhoto(image,photo) {
     if(!ready){status.textContent='Retry photo';status.tabIndex=0;}
 }
 
-function openAddStudentModal() {
+function openAddStudentModal(prefill = {}) {
     if (!recordsLoaded) { window.alert("Load the student register successfully before adding students."); return; }
 
     let photoData = "";
@@ -2066,6 +2066,10 @@ function openAddStudentModal() {
 
     const todayIndia = indiaCalendarDate();
     modal.querySelector("#addAdmissionDate").value = `${todayIndia.year}-${String(todayIndia.month).padStart(2, "0")}-${String(todayIndia.day).padStart(2, "0")}`;
+    modal.querySelector("#addName").value = String(prefill.name || "");
+    modal.querySelector("#addPhone").value = String(prefill.phone || "");
+    modal.querySelector("#addNote").value = String(prefill.note || "");
+    if ([...modal.querySelector("#addCourse").options].some(option => option.value === prefill.course)) modal.querySelector("#addCourse").value = prefill.course;
     const box = modal.querySelector("#addPhotoBox");
     const input = modal.querySelector("#addPhotoInput");
     const img = modal.querySelector("#addPhotoImg");
@@ -2204,6 +2208,7 @@ function openAddStudentModal() {
             msg.textContent = "Student saved to the register ✓";
             btn.dataset.saved = "true";
             btn.textContent = "Student saved";
+            if (prefill.prospectId) document.dispatchEvent(new CustomEvent("growth-prospect-admitted", {detail:{id:prefill.prospectId}}));
             modal.querySelectorAll("input,select,textarea").forEach(field => field.disabled = true);
             const wa = document.createElement("button");
             wa.type = "button";

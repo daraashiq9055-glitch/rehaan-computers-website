@@ -26,7 +26,7 @@ def run():
         server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(output/'public')))
         Thread(target=server.serve_forever,daemon=True).start();base=f'http://127.0.0.1:{server.server_port}'
         mock=(ROOT/'previews/admin-premium/sdk.js').read_text()
-        mock=mock.replace('export const getDocs = async () => {','''export const getDocs = async ref => {
+        mock=mock.replace('export const getDocs = async ref => {','''export const getDocs = async ref => {
           if(ref?.ref?.name==='applicationAudit') {
             state.auditReads=(state.auditReads||0)+1;
             if(state.delayAudit)await new Promise(resolve=>window.resolveAudit=resolve);

@@ -17,8 +17,8 @@ function rupeeCents(value) {
   if((typeof value!=='number'&&typeof value!=='string')||value==='')return null;
   const n=Number(value),c=Math.round(n*100);return Number.isFinite(n)&&n>=0&&Number.isSafeInteger(c)&&Math.abs(n*100-c)<.00001?c:null;
 }
-export function accounts(entries) {
-  const rows=[],warnings=[],legacy=[],receiptIds=new Map();
+export function accounts(entries,otherIncome=[]) {
+  const rows=[],warnings=[],legacy=[],concessions=[],receiptIds=new Map();
   for(const entry of entries)for(const r of Object.values(entry.data.feeReceipts||{}))if(r&&r.id&&r.studentId===entry.id)receiptIds.set(r.id,(receiptIds.get(r.id)||0)+1);
   for(const {id,data:d} of entries) {
     if(d.payment?.status==='paid') {
@@ -37,18 +37,21 @@ export function accounts(entries) {
     for(const [due,value] of Object.entries(d.monthlyFees||{})) {
       const amount=rupeeCents(value);
       if(amount===null){warnings.push({id,message:'A monthly ledger value needs review.'});continue;}
-      const difference=amount-(receipted.get(due)||0);
+      const concession=rupeeCents(d.feeConcessions?.[due]?.concession/100)||0;
+      if(concession)concessions.push({studentId:id,name:String(d.fullName||'Student'),due,amount:concession,type:d.feeConcessions[due].type||'Concession'});
+      const difference=amount-(receipted.get(due)||0)-concession;
       if(difference>0)legacy.push({studentId:id,name:String(d.fullName||'Student'),due,amount:difference});
       if(difference<0)warnings.push({id,message:'Saved receipts exceed the monthly ledger for '+due+'.'});
     }
   }
+  for(const entry of otherIncome){const d=entry.data||entry,amount=rupeeCents(Number(d.amount)/100),date=dayOf(d.date);if(amount&&date)rows.push({key:'income:'+entry.id,studentId:'',name:String(d.category||'Other income'),admission:'',kind:'Other income',amount,date,dateBasis:'Saved received date',method:methodGroup(d.method),reference:String(d.reference||d.note||''),receiptId:'',corrected:false});else warnings.push({id:'',message:'A manual income entry needs review.'});}
   rows.sort((a,b)=>b.date.localeCompare(a.date)||a.name.localeCompare(b.name));
-  return {rows,warnings,legacy};
+  return {rows,warnings,legacy,concessions};
 }
 export function accountView(report,{from,to,method='',kind=''}={}) {
   if(!validDay(from)||!validDay(to)||from>to)throw Error('Choose a valid date range. The start must be on or before the end.');
   const rows=report.rows.filter(row=>row.date>=from&&row.date<=to&&(!method||row.method===method)&&(!kind||row.kind===kind));
-  const summary={total:0,Admission:0,Tuition:0,methods:{Cash:0,UPI:0,'Bank transfer':0,'Online / other':0,Unspecified:0}};
+  const summary={total:0,Admission:0,Tuition:0,'Other income':0,methods:{Cash:0,UPI:0,'Bank transfer':0,'Online / other':0,Unspecified:0}};
   for(const row of rows){summary.total+=row.amount;summary[row.kind]+=row.amount;summary.methods[row.method]+=row.amount;if(!Number.isSafeInteger(summary.total))throw Error('Recorded totals exceed the supported monetary range. Review the entries.');}
   return {rows,summary};
 }

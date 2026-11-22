@@ -23,9 +23,9 @@ export const doc = (_db, col, id) => ({col, id});
 function snapshot(id, data) {
   return {id, exists: () => data !== undefined, data: () => structuredClone(data)};
 }
-export const getDoc = async ref => snapshot(ref.id, ref.col === 'instituteSettings' ? state.settings?.[ref.id] ?? (ref.id==='markCardSignatures'?await window.__markSignaturePreviewPromise:undefined) : ref.col === 'receiptCounters' ? state.counters?.[ref.id] : ref.col === 'admins' ? {uid: state.user.uid, isAdmin: true} : state.records[ref.id]);
-export const getDocs = async () => {
-  const rows = Object.entries(state.records).map(([id, data]) => snapshot(id, data));
+export const getDoc = async ref => snapshot(ref.id, ref.col === 'instituteSettings' ? state.settings?.[ref.id] ?? (ref.id==='markCardSignatures'?await window.__markSignaturePreviewPromise:undefined) : ref.col === 'receiptCounters' ? state.counters?.[ref.id] : ref.col === 'admins' ? {uid: state.user.uid, isAdmin: true} : ref.col==='applications'?state.records[ref.id]:(state.growth?.[ref.col]||{})[ref.id]);
+export const getDocs = async ref => {
+  const source=ref.name==='applications'||!ref.name?state.records:(state.growth?.[ref.name]||{}),rows = Object.entries(source).map(([id, data]) => snapshot(id, data));
   return {empty: !rows.length, forEach: fn => rows.forEach(fn)};
 };
 let transactionQueue = Promise.resolve();
@@ -40,10 +40,11 @@ export const runTransaction = (_db, fn) => {
   const beforeRecords=structuredClone(state.records);
   const next = structuredClone(state.records);
   const counters=structuredClone(state.counters||{});
-  const settings=structuredClone(state.settings||{});
+  const settings=structuredClone(state.settings||{}),growth=structuredClone(state.growth||{});
   for (const [kind, ref, data] of staged) {
     if(ref.col==='instituteSettings'){settings[ref.id]=structuredClone(data);continue;}
     if(ref.col==='receiptCounters'){counters[ref.id]=structuredClone(data);continue;}
+    if(['growthProspects','growthIncome','growthLeagues'].includes(ref.col)){growth[ref.col]=growth[ref.col]||{};growth[ref.col][ref.id]=structuredClone(data);continue;}
     if (kind === 'delete') delete next[ref.id];
     else if (kind === 'set') next[ref.id] = structuredClone(data);
     else for (const [path, value] of Object.entries(data)) {
@@ -63,6 +64,7 @@ export const runTransaction = (_db, fn) => {
   state.records = next;
   state.counters=counters;
   state.settings=settings;
+  state.growth=growth;
   state.audit=state.audit||[];state.audit.push(...events);
   state.writes.push(...staged.map(([kind, ref, data]) => ({kind, id: ref.id, data})));
   if (state.loseAcknowledgementOnce && staged.length) {state.loseAcknowledgementOnce=false;throw Object.assign(new Error('Connection ended before acknowledgement'),{code:'unavailable'});}

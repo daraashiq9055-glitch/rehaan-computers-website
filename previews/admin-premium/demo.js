@@ -28,7 +28,9 @@
   records['demo-7'].coursePreference = '';
   records['demo-0'].customLegacyField = {retained: true};
   const user = {uid: 'preview-admin', email: 'preview@rehaan.example', getIdToken: async () => 'local-preview-only'};
-  window.__adminPreview = {records, writes: [], listeners: [], user, auth: {currentUser: user, authStateReady: async () => {}}};
+  const settings={feeApprovalPin:{salt:'demo-salt',hash:'90820f8d2a15c2e2234f9a16657501322d46b14902d35c8a6701da9ff14c3fa2',updatedAt:new Date().toISOString(),updatedBy:user.uid}};
+  const growth={growthProspects:{sample001:{name:'Aamir Shah',phone:'9000000101',course:courses[0],visitDate:new Date().toISOString().slice(0,10),followUpDate:new Date().toISOString().slice(0,10),status:'Interested',source:'Physical register',notes:'Asked about the morning batch.',revision:1,createdAt:new Date().toISOString(),createdBy:user.uid,updatedAt:new Date().toISOString(),updatedBy:user.uid}},growthIncome:{},growthLeagues:{}};
+  window.__adminPreview = {records, settings, growth, writes: [], listeners: [], user, auth: {currentUser: user, authStateReady: async () => {}}};
   const nativeFetch = window.fetch.bind(window);
   window.fetch = async (input, init) => {
     const url = String(input?.url || input);

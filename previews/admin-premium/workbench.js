@@ -3,6 +3,7 @@ import './operations.js';
 import {previewAdminBridge as app} from '/public/admin-app.js?v=20261102-settings-1';
 import {initDesk} from '/public/admin-desk.js?v=20261105-follow-6';
 import {stages,stageOf,progressOf,cleanPreferences,preferenceDefaults} from './journey-service.js';
+import {initGrowthSuite} from './growth-ui.js';
 const $=s=>document.querySelector(s),e=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 initDesk(app);
 const actorLabel=id=>id==='preview-admin'?'Demo administrator 1':id==='preview-admin-2'?'Demo administrator 2':String(id||'Administrator');
@@ -107,6 +108,8 @@ function initWorkbench(){
  $('#finderQuery').addEventListener('input',()=>requestAnimationFrame(searchActions));$('#workspaceFind').addEventListener('click',()=>requestAnimationFrame(searchActions));document.addEventListener('keydown',event=>{if((event.ctrlKey||event.metaKey)&&event.key.toLowerCase()==='k')requestAnimationFrame(searchActions);});
  let queued=false;function sync(){if(!queued){queued=true;requestAnimationFrame(()=>{queued=false;render();});}}
  for(const id of ['workspaceSummary','applicationsList'])new MutationObserver(sync).observe($('#'+id),{childList:true});new MutationObserver(sync).observe($('#adminDashboard'),{attributes:true,attributeFilter:['style']});
+ $('#adminLogoutBtn').addEventListener('click',()=>{leave();host.replaceChildren();});
  render();
 }
 if(document.querySelector('#operationsWorkspace'))initWorkbench();else document.addEventListener('DOMContentLoaded',initWorkbench,{once:true});
+if(document.querySelector('#operationsWorkspace'))initGrowthSuite(app);else document.addEventListener('DOMContentLoaded',()=>initGrowthSuite(app),{once:true});
