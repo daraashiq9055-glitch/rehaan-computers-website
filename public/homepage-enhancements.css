@@ -81,6 +81,7 @@
 .student-mobile-float{display:none}
 @media(max-width:700px){.student-mobile-float{position:fixed;z-index:79;right:14px;bottom:calc(78px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border:1px solid #f1ce7b;border-radius:40px;background:linear-gradient(120deg,#153b5a,#081b2d);box-shadow:0 8px 25px #0008,0 0 14px #e5c17855;color:#ffe5a9;text-decoration:none;font-size:12px;font-weight:750;animation:portal-aura 4.2s ease-in-out infinite}.student-mobile-float span{font-size:15px}body:has(#paymentModal:not([hidden]),#paymentSuccessModal:not([hidden])) .student-mobile-float{visibility:hidden}}
 @media(prefers-reduced-motion:reduce){.student-mobile-float{animation:none}}
+@media(max-width:700px){.whatsapp-contacts{display:none!important}}
 
 /* The five guidance photographs keep the existing crossfade, controls and motion preferences. */
 .experience-slide[data-slide="0"]{object-position:50% 35%}.experience-slide[data-slide="2"]{object-position:50% 35%}
