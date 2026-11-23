@@ -16,21 +16,27 @@ function attempt(){const entry=state.attempts?.[dateKey];return entry?.stage===c
 function ensureAttempt(){if(!state.attempts||typeof state.attempts!=='object')state.attempts={};if(!attempt()){state.attempts[dateKey]={stage:currentStage,answers:[]};saveState();}return state.attempts[dateKey];}
 function setActiveTab(name){document.querySelectorAll('[data-demo-tab]').forEach(button=>{const active=button.dataset.demoTab===name;button.classList.toggle('active',active);button.setAttribute('aria-current',active?'page':'false');});}
 function refreshBell(){const read=Array.isArray(state.readUpdates)?state.readUpdates:[];$('#studentBell i').hidden=sampleUpdates.every(item=>read.includes(item.id));}
-function enterSetup(){publicPage.hidden=true;document.body.classList.add('demo-active');onboarding.hidden=false;interior.hidden=true;window.scrollTo(0,0);if(state.followed)chooseStage();}
+function showFollowStep(){
+ $('#onboardingTitle').textContent='Follow Rehaan Computers';
+ $('#onboardingDescription').textContent='Get class and exam updates before entering your student space.';
+ $('#onboardingStep').innerHTML='<button class="gold-button" type="button" id="demoFollow">Follow and continue</button><p>This preview simulates following. Real notifications require browser permission on the published website.</p>';
+ $('#demoFollow').addEventListener('click',()=>{state.followed=true;saveState();chooseStage();});
+}
+function enterSetup(){publicPage.hidden=true;document.body.classList.add('demo-active');interior.hidden=true;showFollowStep();onboarding.hidden=false;window.scrollTo(0,0);}
 function chooseStage(){
  $('#onboardingTitle').textContent='What are you learning now?';
  $('#onboardingDescription').textContent='Select your current subject. Earlier subjects are included in your learning journey.';
- $('#onboardingStep').innerHTML=`<div class="stage-list">${stages.map((stage,index)=>`<button type="button" data-stage="${escapeText(stage)}"><span>${String(index+1).padStart(2,'0')}</span>${escapeText(stage)}<b>→</b></button>`).join('')}</div><p>Demo selection only. A secure student account is needed before this can update the live admin Student Journey.</p>`;
+ const savedAttempt=state.attempts?.[dateKey],lockedStage=Array.isArray(savedAttempt?.answers)&&savedAttempt.answers.length&&stages.includes(savedAttempt.stage)?savedAttempt.stage:'';
+ $('#onboardingStep').innerHTML=`<div class="stage-list">${stages.map((stage,index)=>`<button type="button" data-stage="${escapeText(stage)}" ${lockedStage&&lockedStage!==stage?'disabled':''}><span>${String(index+1).padStart(2,'0')}</span>${escapeText(stage)}<b>${lockedStage===stage?'Current':'→'}</b></button>`).join('')}</div><p>${lockedStage?`Today's scored attempt belongs to ${escapeText(lockedStage)}. You can choose another subject tomorrow.`:'Demo selection only. A secure student account is needed before this can update the live admin Student Journey.'}</p>`;
  $('#onboardingStep').querySelectorAll('[data-stage]').forEach(button=>button.addEventListener('click',()=>openAccount(button.dataset.stage)));
 }
 function openAccount(stage){
  currentStage=stage;state.stage=stage;saveState();
  mainQuestions=dailyQuestions(stage,dayOfWeek);practiceBank=practiceQuestions(stage,mainQuestions,dayOfWeek);
- homeMode='dashboard';onboarding.hidden=true;interior.hidden=false;refreshBell();showPanel('home');history.pushState({portal:'home'},'','#student-home');window.scrollTo(0,0);
+ publicPage.hidden=true;document.body.classList.add('demo-active');homeMode='dashboard';onboarding.hidden=true;interior.hidden=false;refreshBell();showPanel('home');history.pushState({portal:'home'},'','#student-home');window.scrollTo(0,0);
 }
 $('#togglePassword')?.addEventListener('click',event=>{const input=$('#studentPassword'),show=input.type==='password';input.type=show?'text':'password';event.currentTarget.setAttribute('aria-label',show?'Hide password':'Show password');});
-form.addEventListener('submit',event=>{event.preventDefault();if(form.elements.studentId.value.trim().toUpperCase()!=='DEMO001'||form.elements.password.value!=='Rehaan2026'){status.textContent='For the demo, enter DEMO001 and Rehaan2026.';return;}if(state.followed&&stages.includes(state.stage))openAccount(state.stage);else enterSetup();});
-$('#demoFollow').addEventListener('click',()=>{state.followed=true;saveState();chooseStage();});
+form.addEventListener('submit',event=>{event.preventDefault();if(form.elements.studentId.value.trim().toUpperCase()!=='DEMO001'||form.elements.password.value!=='Rehaan2026'){status.textContent='For the demo, enter DEMO001 and Rehaan2026.';return;}enterSetup();});
 function logout(){interior.hidden=true;onboarding.hidden=true;document.body.classList.remove('demo-active');publicPage.hidden=false;form.reset();status.textContent='Demo account: DEMO001 / Rehaan2026';history.replaceState({portal:'login'},'','student.html#login');window.scrollTo(0,0);}
 $('#studentBell').addEventListener('click',()=>navigate('updates'));
 
