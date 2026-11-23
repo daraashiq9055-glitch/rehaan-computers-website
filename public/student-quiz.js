@@ -9,7 +9,7 @@ const bank={
  'PowerPoint':[['What is a slide?',['One presentation page','A spreadsheet cell','A text file','A printer'],0],['Which view helps reorder slides?',['Slide Sorter','Reading pane','Formula bar','Mail Merge'],0],['What controls a change between slides?',['Transition','Filter','Formula','Margin'],0],['Which key begins a slide show from the start?',['F5','F1','F12','Esc'],0],['What is a slide master used for?',['Consistent layout','Video editing','File compression','Accounting'],0],['Why use short bullet points?',['Clarity','More ink','Slower reading','Larger files'],0]],
  'Tally Prime':[['What records money received and paid?',['Voucher','Slide','Cell','Paragraph'],0],['Which voucher records a sale?',['Sales','Purchase','Contra','Journal'],0],['What does GST stand for?',['Goods and Services Tax','General Sales Table','Goods Stock Transfer','Government Service Tool'],0],['What is a ledger?',['Account record','Keyboard setting','Slide design','Image format'],0],['Which report shows balances of ledger accounts?',['Trial Balance','Slide Sorter','Spell Check','Page Layout'],0],['Why back up company data?',['To recover records','To change font','To print faster','To add a monitor'],0]]};
 const challengeBank={
- 'Computer basics':[['Which shortcut locks a Windows computer?',['Win+L','Ctrl+L','Alt+L','Shift+L'],0],['Which storage keeps files after shutdown?',['RAM','SSD','Cache','Clipboard'],1]],
+ 'Computer basics':[['Which shortcut locks a Windows computer?',['Win+L','Ctrl+L','Alt+L','Shift+L'],0],['Which storage keeps files after shutdown?',['RAM','SSD','Cache','Clipboard'],1],['Which device produces a paper copy?',['Printer','Scanner','Monitor','Keyboard'],0],['What is RAM mainly used for?',['Temporary working memory','Permanent paper files','Internet cables','Sound output'],0],['What does a web browser open?',['Web pages','Printer trays','Power sockets','Keyboard keys'],0],['Which file extension is commonly used for a PDF?',['.pdf','.mp3','.exe','.png'],0],['Which action makes a duplicate of a file?',['Copy','Cut','Rename','Delete'],0],['What does Ctrl+C do?',['Copy selected content','Close the computer','Create a chart','Clear a disk'],0],['What does Ctrl+V do?',['Paste copied content','Verify a password','View a folder','Start a video'],0]],
  'Notepad':[['Which encoding supports many world languages?',['UTF-8','ASCII only','BMP','MP3'],0],['What does word wrap change?',['Visual line breaks','File encoding','Font colour','File name'],0]],
  'WordPad':[['Which format can preserve rich text?',['RTF','TXT only','MP3','CSV'],0],['What happens when you justify a paragraph?',['Both edges align','Text is deleted','Only the title moves','File closes'],0]],
  'MS Word':[['Which feature can create personalised letters from a list?',['Mail Merge','Page Break','Word Count','Track Changes'],0],['Which review feature records edits for approval?',['Track Changes','WordArt','Margins','Zoom'],0]],
@@ -20,11 +20,13 @@ const challengeBank={
 export function dailyQuestions(stage,day=1){
  const index=stages.indexOf(stage);if(index<0)throw Error('Choose a learning stage.');
  const level=Math.max(1,Math.min(7,Math.floor(day)));
- const make=(name,advanced=false)=>[...bank[name],...(advanced?challengeBank[name]:[])].map(([question,options,answer])=>({question,options,answer,stage:name}));
- const previous=stages.slice(0,index).flatMap(name=>make(name,level>=4));
- const current=make(stage,level>=4);
- const rotate=(rows,count,offset)=>Array.from({length:count},(_,i)=>rows[(offset+i)%rows.length]);
- const earlier=previous.length?rotate(previous,6,(level-1)*5):rotate(current,6,(level-1)*3);
- const currentFour=level>=5?rotate(current,4,current.length-4+(level-5)):rotate(current,4,(level-1)*2);
+ const previous=stages.slice(0,index).flatMap(name=>questionPool(name));
+ const current=questionPool(stage);
+ const pick=(rows,count,offset)=>{const selected=[];for(let i=0;i<rows.length&&selected.length<count;i++){const row=rows[(offset+i)%rows.length];if(!selected.some(item=>item.question===row.question))selected.push(row);}return selected;};
+ const earlier=previous.length?pick(previous,6,(level-1)*5):pick(current,6,(level-1)*3);
+ const currentFour=pick(current.filter(item=>!earlier.some(previousItem=>previousItem.question===item.question)),4,(level-1)*2);
+ if(earlier.length!==6||currentFour.length!==4)throw Error('The quiz question bank needs more unique questions.');
  return [...earlier,...currentFour].map((item,i)=>({...item,difficulty:level>=5?'Challenge':level>=3?'Practice':'Foundation',number:i+1}));
 }
+export function questionPool(stage){if(!stages.includes(stage))throw Error('Choose a learning stage.');return [...bank[stage],...challengeBank[stage]].map(([question,options,answer])=>({question,options,answer,stage}));}
+export function practiceQuestions(stage,mainQuestions,day=1){const used=new Set(mainQuestions.map(item=>item.question));const eligible=stages.slice(0,stages.indexOf(stage)+1).flatMap(questionPool).filter(item=>!used.has(item.question));const offset=(Math.max(1,day)-1)*3;return Array.from({length:Math.min(5,eligible.length)},(_,index)=>eligible[(offset+index)%eligible.length]);}
