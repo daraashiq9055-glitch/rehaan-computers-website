@@ -4,7 +4,7 @@ import {saveGrowthRecord,saveConcession} from '../previews/admin-premium/growth-
 
 test('provisional registry validates contact details and prepares respectful reminder/cancellation text',()=>{
  const row=validateProspect({name:' Aamir Shah ',phone:'90000 00101',course:'Excel',visitDate:'2026-11-22',followUpDate:'2026-11-24',status:'Interested',source:'Physical register',notes:''});
- assert.equal(row.phone,'9000000101');assert.match(prospectMessage(row),/continue with admission/);assert.match(prospectMessage(row,'followup'),/Class Follow-Up Notice/);assert.match(prospectMessage(row,'cancel'),/No admission record was created/);
+ assert.equal(row.phone,'9000000101');assert.match(prospectMessage(row),/continue with admission/);assert.match(prospectMessage(row,'followup'),/reply with 1, 2, 3 or 4 within 24 hours/);assert.match(prospectMessage(row,'cancel'),/Your admission has been cancelled/);
  assert.throws(()=>validateProspect({...row,phone:'123'}),/10-digit/);assert.throws(()=>validateProspect({...row,name:'<\u0000'}),/Student name/);
 });
 test('manual income is paise-safe and expenses are not an accepted category or data shape',()=>{
@@ -35,4 +35,8 @@ test('growth saves reject stale edits and concession transaction preserves unrel
  const h=harness(undefined),input={name:'Aamir Shah',phone:'9000000101',course:'Excel',visitDate:'2026-11-22',followUpDate:'',status:'Interested',source:'Register',notes:''};
  const saved=await saveGrowthRecord({db:{},ref:{},runTransaction:h.runTransaction,assertSession(){},actor:'admin',kind:'prospect',input,expected:null,now:'2026-11-22T10:00:00.000Z'});assert.equal(saved.revision,1);await assert.rejects(saveGrowthRecord({db:{},ref:{},runTransaction:h.runTransaction,assertSession(){},actor:'admin',kind:'prospect',input,expected:null}),/changed/);
  const student=harness({fullName:'Student',status:'Approved',admissionNumber:'001',monthlyFees:{},custom:{kept:true}});const concession=await saveConcession({db:{},ref:{},runTransaction:student.runTransaction,assertSession(){},actor:'admin',id:'s1',input:{due:'2026-11-12',type:'Full concession',concession:999,reason:'Approved no-fee month.'},expectedPaid:0,now:'2026-11-22T10:00:00.000Z'});assert.equal(student.value.monthlyFees['2026-11-12'],999);assert.equal(student.value.feeConcessions['2026-11-12'].concession,99900);assert.deepEqual(student.value.custom,{kept:true});assert.equal(concession.studentId,'s1');
+});
+test('prospect updates retain immutable creation fields required by Firestore rules',async()=>{
+ const original={name:'Aamir Shah',phone:'9000000101',course:'Excel',visitDate:'2026-11-22',followUpDate:'',status:'Interested',source:'Register',notes:'',revision:1,createdAt:'2026-11-22T10:00:00.000Z',createdBy:'admin',updatedAt:'2026-11-22T10:00:00.000Z',updatedBy:'admin'},h=harness(original);
+ const saved=await saveGrowthRecord({db:{},ref:{},runTransaction:h.runTransaction,assertSession(){},actor:'admin',kind:'prospect',input:{...original,status:'Not joining'},expected:original,now:'2026-11-23T10:00:00.000Z'});assert.equal(saved.createdAt,original.createdAt);assert.equal(saved.createdBy,original.createdBy);assert.equal(saved.status,'Not joining');assert.equal(saved.revision,2);
 });

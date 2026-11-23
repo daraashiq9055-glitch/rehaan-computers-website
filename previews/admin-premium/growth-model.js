@@ -12,8 +12,8 @@ export function validateProspect(input){
 }
 export function prospectMessage(row,kind='reminder'){
  const name=row.name||'Student',course=row.course||'your selected course';
- if(kind==='followup')return `*REHAAN COMPUTERS*\n*Class Follow-Up Notice*\n\nHello ${name},\nYou had enquired about *${course}*. Please reply with the class or batch you want to join, or tell us if you need fee, timing or course guidance.\n\nIf you wish to continue, please reply to this message so we can confirm your next step.`;
- if(kind==='cancel')return `*REHAAN COMPUTERS*\n*Important Notice*\n\nHello ${name},\nYour provisional admission enquiry for *${course}* has been closed.\n*Reason:* No reply received after the follow-up notice.\n\nNo admission record was created. Please contact the institute if you need clarification or wish to enquire again.`;
+ if(kind==='followup')return `*REHAAN COMPUTERS*\n*Important Notice*\n\nHello ${name}, you haven’t attended classes recently. Please let us know whether you will continue your course.\n\n*1.* I will return to classes. I will tell you my joining date.\n*2.* I need a break. I will tell you when I can return.\n*3.* Please call me to discuss.\n*4.* I cannot continue. Please cancel my admission.\n\n*Please reply with 1, 2, 3 or 4 within 24 hours. If we do not receive a reply, we may cancel your admission.*`;
+ if(kind==='cancel')return `*REHAAN COMPUTERS*\n*Important Notice*\n\nHello ${name},\nYour admission has been cancelled.\n*Reason:* No reply received after the class follow-up notice.\n\nPlease contact the institute if you need clarification.`;
  return `Hello ${name}, you recently visited Rehaan Computers regarding ${course}. Please let us know whether you would like to continue with admission, need more information, or prefer us to close this enquiry.`;
 }
 export function validateIncome(input){

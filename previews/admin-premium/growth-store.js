@@ -3,7 +3,7 @@ const stable=value=>Array.isArray(value)?value.map(stable):value&&typeof value==
 const canonical=value=>JSON.stringify(stable(value??null));
 export async function saveGrowthRecord({db,ref,runTransaction,assertSession,actor,kind,input,expected,now=new Date().toISOString()}){
  const clean=kind==='prospect'?validateProspect(input):kind==='income'?validateIncome(input):input;
- const saved={...clean,revision:Number(expected?.revision||0)+1,updatedAt:now,updatedBy:actor,...(!expected?{createdAt:now,createdBy:actor}:{})};
+ const saved={...clean,revision:Number(expected?.revision||0)+1,updatedAt:now,updatedBy:actor,...(expected?{createdAt:expected.createdAt,createdBy:expected.createdBy}:{createdAt:now,createdBy:actor})};
  await runTransaction(db,async tx=>{assertSession();const snap=await tx.get(ref);assertSession();if(canonical(snap.exists()?snap.data():null)!==canonical(expected))throw Error('This entry changed in another session. Refresh and review it.');tx.set(ref,saved);});return saved;
 }
 export async function saveConcession({db,ref,runTransaction,assertSession,actor,id,input,expectedPaid,monthly=999,now=new Date().toISOString()}){
