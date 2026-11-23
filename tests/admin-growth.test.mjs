@@ -1,5 +1,5 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {validateProspect,prospectMessage,validateIncome,validateConcession,leagueRankings,improvementMessage} from '../previews/admin-premium/growth-model.js';
+import {validateProspect,prospectMessage,validateIncome,validateConcession,leagueRankings,genderLeagueRankings,improvementMessage} from '../previews/admin-premium/growth-model.js';
 import {saveGrowthRecord,saveConcession} from '../previews/admin-premium/growth-store.js';
 
 test('provisional registry validates contact details and prepares respectful reminder/cancellation text',()=>{
@@ -19,6 +19,12 @@ test('a concession must exactly settle the month and remains distinct from recei
 test('weekly league ranks only complete results and creates targeted improvement guidance',()=>{
  const row=(id,p,complete=true,subject={name:'Typing',max:100,marks:p,typing:{speed:20,accuracy:82}})=>({id,name:'Student '+id,result:{complete,percentage:p,total:p,maximum:100,grade:'B'},card:{subjects:[subject]}}),rows=[row('a',90),row('b',30),row('c',70),row('d',99,false)];
  const rank=leagueRankings(rows,3);assert.deepEqual(rank.top.map(r=>r.id),['a','c','b']);assert.deepEqual(rank.improve.map(r=>r.id),['b','c','a']);assert.doesNotMatch(JSON.stringify(rank),/"d"/);assert.match(improvementMessage(rows[1]),/accuracy/);
+});
+test('weekly league keeps boys and girls in separate rankings',()=>{
+ const result=percentage=>({complete:true,percentage,total:percentage,maximum:100,grade:'A'}),rows=[{id:'b1',name:'Boy One',gender:'male',result:result(91)},{id:'g1',name:'Girl One',gender:'female',result:result(97)},{id:'b2',name:'Boy Two',gender:'male',result:result(84)},{id:'g2',name:'Girl Two',gender:'female',result:result(86)}];
+ assert.deepEqual(genderLeagueRankings(rows,'male',3).top.map(row=>row.id),['b1','b2']);
+ assert.deepEqual(genderLeagueRankings(rows,'female',3).top.map(row=>row.id),['g1','g2']);
+ assert.throws(()=>genderLeagueRankings(rows,'',3),/Boys or Girls/);
 });
 function harness(data){let value=structuredClone(data),writes=0;return {get value(){return value},get writes(){return writes},runTransaction:async(_db,fn)=>fn({get:async()=>({exists:()=>value!==undefined,data:()=>structuredClone(value)}),set:(_ref,next)=>{value=structuredClone(next);writes++},update:(_ref,patch)=>{for(const [path,next] of Object.entries(patch)){const keys=path.split('.');let target=value;for(const key of keys.slice(0,-1))target=target[key]??=( {});target[keys.at(-1)]=structuredClone(next);}writes++;}})}}
 test('growth saves reject stale edits and concession transaction preserves unrelated student data',async()=>{

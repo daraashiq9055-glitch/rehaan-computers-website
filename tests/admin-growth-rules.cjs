@@ -6,7 +6,7 @@ const fs=require('fs'),{initializeTestEnvironment,assertSucceeds,assertFails}=re
  const common={revision:1,createdAt:now,createdBy:'admin1',updatedAt:now,updatedBy:'admin1'};
  await assertSucceeds(setDoc(doc(admin,'growthProspects','p1'),{...common,name:'Aamir Shah',phone:'9000000101',course:'Excel',visitDate:'2026-11-22',followUpDate:'',status:'Interested',source:'Register',notes:''}));
  await assertSucceeds(setDoc(doc(admin,'growthIncome','i1'),{...common,date:'2026-11-22',amount:25000,category:'Certificate fee',method:'UPI',reference:'UPI-1',note:''}));
- await assertSucceeds(setDoc(doc(admin,'growthLeagues','l1'),{...common,title:'Weekly exam',date:'2026-11-22',count:3,top:['s1'],improve:['s2']}));
+ await assertSucceeds(setDoc(doc(admin,'growthLeagues','l1'),{...common,title:'Weekly exam',date:'2026-11-22',category:'Girls',count:3,top:['s1'],improve:['s2']}));
  await assertFails(getDocs(collection(publicDb,'growthProspects')));await assertFails(setDoc(doc(publicDb,'growthIncome','i2'),{...common,date:'2026-11-22',amount:1,category:'Income',method:'Cash',reference:'',note:''}));await assertFails(setDoc(doc(admin,'growthIncome','bad'),{...common,date:'2026-11-22',amount:-1,category:'Expense',method:'Cash',reference:'',note:''}));
  await assertSucceeds(updateDoc(doc(admin,'applications','student1'),{'monthlyFees.2026-11-12':999,'feeConcessions.2026-11-12':{concession:99900}}));await assertFails(updateDoc(doc(publicDb,'applications','student1'),{'monthlyFees.2026-11-12':999}));
  console.log('PASS: growth collections and approval PIN are admin-only; bounded income/prospects/leagues and application concessions follow existing admin rules.');

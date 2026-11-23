@@ -138,9 +138,9 @@ service cloud.firestore {
 
     match /growthLeagues/{entryId} {
       function leagueAdmin() { return request.auth != null && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid; }
-      function leagueValid(d) { return d.keys().hasOnly(['title','date','count','top','improve','revision','createdAt','createdBy','updatedAt','updatedBy'])
+      function leagueValid(d) { return d.keys().hasOnly(['title','date','category','count','top','improve','revision','createdAt','createdBy','updatedAt','updatedBy'])
         && d.title is string && d.title.size() >= 1 && d.title.size() <= 120 && d.date.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
-        && d.count is int && d.count >= 3 && d.count <= 20 && d.top is list && d.top.size() <= 20 && d.improve is list && d.improve.size() <= 20
+        && d.category in ['Boys','Girls'] && d.count is int && d.count >= 3 && d.count <= 20 && d.top is list && d.top.size() <= 20 && d.improve is list && d.improve.size() <= 20
         && d.revision is int && d.revision > 0 && d.createdBy is string && d.createdAt is string && d.updatedBy == request.auth.uid && d.updatedAt is string; }
       allow read: if verifiedAdmin();allow create: if verifiedAdmin() && leagueValid(request.resource.data) && request.resource.data.revision == 1;
       allow update: if verifiedAdmin() && leagueValid(request.resource.data) && request.resource.data.revision == resource.data.revision + 1;

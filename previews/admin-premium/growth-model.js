@@ -32,6 +32,10 @@ export function leagueRankings(rows,count=3){
  const score=row=>row.result.percentage;
  return {top:[...complete].sort((a,b)=>score(b)-score(a)||String(a.name).localeCompare(String(b.name))).slice(0,limit),improve:[...complete].sort((a,b)=>score(a)-score(b)||String(a.name).localeCompare(String(b.name))).slice(0,limit)};
 }
+export function genderLeagueRankings(rows,gender,count=3){
+ if(!['male','female'].includes(gender))throw Error('Choose Boys or Girls for this leaderboard.');
+ return leagueRankings(rows.filter(row=>String(row.gender||'').toLowerCase()===gender),count);
+}
 export function improvementMessage(row){
  const weak=(row.card?.subjects||[]).filter(s=>Number.isFinite(s.marks)&&s.marks/s.max<.75).sort((a,b)=>a.marks/a.max-b.marks/b.max)[0];
  const typing=(row.card?.subjects||[]).find(s=>s.typing&&(Number(s.typing.speed)<25||Number(s.typing.accuracy)<90));
