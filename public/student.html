@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#071827">
+  <meta name="description" content="Rehaan Computers Student Portal: weekly skills league, institute updates and student access.">
+  <title>Student Portal | Rehaan Computers</title>
+  <link rel="icon" href="visitor/assets/rehaan-mark.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="student-portal.css?v=20261123-student-1">
+</head>
+<body>
+  <header class="portal-header">
+    <a class="portal-brand" href="index.html" aria-label="Rehaan Computers home"><img src="visitor/assets/rehaan-mark.svg" alt="" width="42" height="42"><span>REHAAN COMPUTERS<small>STUDENT PORTAL</small></span></a>
+    <a class="portal-login-top" href="#login">Student Login <span aria-hidden="true">↗</span></a>
+  </header>
+  <main>
+    <section class="portal-hero">
+      <div class="hero-copy"><span class="eyebrow">YOUR LEARNING. YOUR NEXT STEP.</span><h1>Learn. Compete.<br><em>Grow.</em></h1><p>A place for Rehaan Computers students to follow their progress, celebrate achievement and keep up with institute updates.</p><a class="gold-button" href="#login">Open Student Login <span aria-hidden="true">↗</span></a></div>
+      <div class="hero-art" aria-hidden="true"><div class="hero-orbit orbit-a"></div><div class="hero-orbit orbit-b"></div><div class="hero-medal"><span>RC</span><b>✦</b></div><div class="hero-caption">SKILLS · CONSISTENCY · PROGRESS</div></div>
+    </section>
+    <section class="league-section" id="leaderboard">
+      <div class="section-heading"><div><span class="eyebrow">WEEKLY RECOGNITION</span><h2>Skills League</h2><p>One leaderboard for all joined students, ranked from saved weekly exam results.</p></div><span class="live-tag"><i></i> Weekly standings</span></div>
+      <div class="league-card">
+        <div class="league-tabs" role="tablist" aria-label="Leaderboard category"><button class="active" role="tab" aria-selected="true" data-league="all">All students</button><button role="tab" aria-selected="false" data-league="boys">Boys</button><button role="tab" aria-selected="false" data-league="girls">Girls</button></div>
+        <div class="top-three" aria-label="Top three leaderboard positions">
+          <article class="podium second"><span class="rank-medal silver">2</span><div class="avatar avatar-two">F</div><strong>Rank 2</strong><small>Student name</small><b>—%</b></article>
+          <article class="podium first"><span class="rank-medal gold">1</span><div class="avatar avatar-one">★</div><strong>Rank 1</strong><small>Student name</small><b>—%</b></article>
+          <article class="podium third"><span class="rank-medal bronze">3</span><div class="avatar avatar-three">3</div><strong>Rank 3</strong><small>Student name</small><b>—%</b></article>
+        </div>
+        <div class="leaderboard-list"><div class="list-heading"><span>RANK · STUDENT</span><span>RESULT</span></div><div class="empty-rankings"><span>✦</span><strong>Weekly results will appear here</strong><p>Rankings show after exam results have been reviewed and published by the institute.</p></div></div>
+        <p class="league-footnote">Top 3 are highlighted above. Positions 4–10 appear in the list. Students can view their own rank after logging in.</p>
+      </div>
+    </section>
+    <section class="updates-section"><div class="section-heading"><div><span class="eyebrow">FROM YOUR INSTITUTE</span><h2>Important Updates</h2></div><a href="index.html#contact" class="quiet-link">Contact institute ↗</a></div><div class="updates-grid"><article class="update-card"><span class="update-icon">◷</span><div><small>WEEKLY EXAM</small><h3>Sunday Skills Exam</h3><p>Exam schedule and subjects will be shared here by your institute.</p></div></article><article class="update-card"><span class="update-icon">▦</span><div><small>COURSES</small><h3>New batch updates</h3><p>Check here for upcoming course batches and class timing notices.</p></div></article><article class="update-card"><span class="update-icon">◉</span><div><small>INSTITUTE NOTICE</small><h3>Class announcements</h3><p>Important schedule changes and student notices will appear here.</p></div></article></div></section>
+    <section class="login-section" id="login"><div class="login-intro"><span class="eyebrow">A PRIVATE SPACE FOR EVERY STUDENT</span><h2>Welcome back.</h2><p>Sign in to see your personal learning progress, quiz activity, badges and published results.</p><div class="privacy-note"><span>⌑</span><span><b>Your details stay private</b><small>Your account information is visible only after secure sign in.</small></span></div></div><form class="login-card" id="studentLoginForm"><label for="studentId">Student ID / Admission No.</label><input id="studentId" name="studentId" autocomplete="username" placeholder="Enter your Student ID" required><label for="studentPassword">Password</label><div class="password-wrap"><input id="studentPassword" name="password" type="password" autocomplete="current-password" placeholder="Enter your password" required><button type="button" id="togglePassword" aria-label="Show password">◉</button></div><button class="gold-button login-submit" type="submit">Secure Login <span aria-hidden="true">↗</span></button><p id="loginStatus" role="status">Student sign in will be available after individual accounts are issued by the institute.</p><a class="help-link" href="index.html#contact">Contact institute for login help</a></form></section>
+  </main>
+  <footer class="portal-footer"><a href="index.html">← Rehaan Computers home</a><span>REHAAN COMPUTERS · STUDENT PORTAL</span><a href="index.html#contact">Get help</a></footer>
+  <nav class="portal-bottom-nav" aria-label="Student portal shortcuts"><a class="selected" href="#top"><span>⌂</span>Home</a><a href="#leaderboard"><span>♛</span>League</a><a href="#login"><span>◉</span>Login</a></nav>
+  <script src="student-portal.js?v=20261123-student-1" defer></script>
+</body>
+</html>

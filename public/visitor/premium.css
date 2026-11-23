@@ -2702,10 +2702,26 @@ summary:focus-visible,
   .site-header nav a:last-child {
     border: 0;
   }
+  .site-header nav .student-portal-link {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    margin-top: 8px;
+    padding: 12px 14px;
+    border: 1px solid #d8b96f85;
+    border-radius: 9px;
+    color: #f4dda2;
+    background: linear-gradient(120deg, #173b59, #0b2035);
+    box-shadow: 0 0 20px #d8b96f1d;
+  }
+  .site-header nav .student-portal-link small { color:#b6c9d8; font-size:10px; }
+  .site-header nav .student-portal-link::after { display:none; }
   .header-actions {
     margin-left: auto;
     gap: 20px;
   }
+  .header-actions > .student-portal-link { display:none; }
   .menu-button {
     display: flex;
     flex-direction: column;

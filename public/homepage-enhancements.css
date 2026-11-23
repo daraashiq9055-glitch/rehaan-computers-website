@@ -11,8 +11,22 @@
 @keyframes apply-light-pass{0%,50%{transform:translateX(-160%)}75%,100%{transform:translateX(160%)}}
 @keyframes apply-aura{0%,100%{box-shadow:0 0 0 1px #f6d68b20,0 5px 18px #d6ad6b18}50%{box-shadow:0 0 0 3px #f6d68b0d,0 7px 27px #d6ad6b3d}}
 @keyframes apply-arrow-nudge{0%,53%,76%,100%{transform:none}63%,68%{transform:translate(2px,-2px)}}
-@media(max-width:700px){.mobile-actions .apply-special{background:#d6b371!important;color:#192332!important;border:1px solid #f6d695!important}.mobile-actions .apply-special .apply-label{gap:5px;font-size:10px}.header-actions .apply-special .apply-label{gap:4px;font-size:10px}.header-actions .apply-special .apply-label>.icon{width:12px;height:12px}.mobile-actions .apply-special .apply-label>.icon{width:14px;height:14px}}
+@media(max-width:700px){.mobile-actions .apply-special{background:#d6b371!important;color:#192332!important;border:1px solid #f6d695!important}.mobile-actions .apply-special .apply-label{gap:5px;font-size:10px}.header-actions .apply-special .apply-label{gap:4px;font-size:10px}.header-actions .apply-special .apply-label>.icon{width:12px;height:12px}.mobile-actions .apply-special .apply-label>.icon{width:14px;height:14px}.mobile-actions .student-portal-quick{width:auto;min-height:40px;border:1px solid #d8b96f9c!important;border-radius:6px;background:linear-gradient(120deg,#173b59,#0b2035)!important;color:#f6dfa2!important;box-shadow:0 0 13px #d8b96f23}.mobile-actions .student-portal-quick::after{display:none}}
 @media(prefers-reduced-motion:reduce){.apply-special,.apply-special::before,.apply-special .apply-label::after,.apply-special .apply-label>.icon{animation:none!important}.apply-special .apply-label::after{display:none}}
+
+/* Student portal entry: same moving gold finish as Apply Now, while preserving every existing action. */
+.student-portal-link,.student-portal-quick{position:relative;isolation:isolate;overflow:hidden;text-decoration:none!important;display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid #e9c66d;border-radius:12px;color:#f7e8bd!important;background:linear-gradient(125deg,#163b5b,#0b2035 62%,#183956);box-shadow:0 0 0 1px #e7c36a22,0 6px 24px #d6ad6b22;animation:portal-aura 4.2s ease-in-out infinite;transform:translateZ(0)}
+.student-portal-link::before,.student-portal-quick::before{content:'';position:absolute;inset:-180%;background:conic-gradient(from 0deg,transparent 0deg,transparent 245deg,#fff8dc 286deg,#b9dfff 307deg,transparent 335deg);animation:apply-border-orbit 5s linear infinite;z-index:-2;pointer-events:none}
+.student-portal-link::after,.student-portal-quick::after{content:'';position:absolute;inset:1.5px;border-radius:inherit;background:linear-gradient(120deg,#173b59,#0b2035 55%,#143553);z-index:-1;pointer-events:none}
+.student-portal-link{min-height:41px;padding:8px 15px;font-size:11px;font-weight:750;white-space:nowrap}
+.student-portal-link small{font-size:9px;color:#d0d9e1;border-left:1px solid #d2b77170;padding-left:8px}
+.student-portal-icon{color:#efcf79;font-size:15px;filter:drop-shadow(0 0 5px #efcf79aa)}
+.student-portal-link:hover,.student-portal-link:focus-visible,.student-portal-quick:hover,.student-portal-quick:focus-visible{box-shadow:0 0 0 3px #ffe9af30,0 10px 32px #d8b36c4d!important;transform:translateY(-2px)}
+.student-portal-quick{display:none}
+@keyframes portal-aura{0%,100%{box-shadow:0 0 0 1px #f6d68b22,0 5px 22px #d6ad6b22}50%{box-shadow:0 0 0 2px #f6d68b42,0 8px 29px #d6ad6b46}}
+@media(max-width:700px){.header-actions>.student-portal-link{display:none}.mobile-actions .student-portal-quick{display:inline-flex;flex-direction:column;gap:2px;min-width:0;padding:5px 3px;font-size:9px;line-height:1.2;color:#f6dfa2!important}.student-portal-quick>span:first-child{font-size:15px;line-height:1}}
+@media(min-width:701px) and (max-width:1120px){.student-portal-link small{display:none}.student-portal-link{padding-inline:10px;font-size:10px}}
+@media(prefers-reduced-motion:reduce){.student-portal-link,.student-portal-quick,.student-portal-link::before,.student-portal-quick::before{animation:none!important}}
 /* Hero application button, positioned in the former fee slot. */
 .hero-apply-slot{margin:25px 0 22px;max-width:100%;padding:3px 0}
 .apply-special{animation-duration:3.6s}
@@ -54,7 +68,7 @@
 @media(max-width:360px){.courses-section .course-body{padding-inline:17px}.courses-section .course-actions,.courses-section .course-bottom{padding-inline:17px}.courses-section .course-card h3{font-size:23px}}
 /* Keep all four original mobile actions visible; override legacy gold-on-gold text. */
 @media(max-width:700px){
- .mobile-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important}
+ .mobile-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px!important}
  .mobile-actions>a,.mobile-actions>button{width:100%!important;min-width:0}
  .mobile-actions>a.apply-special{color:#142536!important;min-width:0}
  .mobile-actions>a.apply-special .apply-label{color:#142536!important;display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:10px;line-height:1.4;white-space:nowrap;max-width:100%;isolation:isolate}
