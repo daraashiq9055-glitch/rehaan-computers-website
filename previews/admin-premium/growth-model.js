@@ -11,8 +11,9 @@ export function validateProspect(input){
  return {name:text(input.name,'Student name',2,120),phone,course:text(input.course,'Interested course',1,140),visitDate:visit,followUpDate:follow,status,source:text(input.source||'Walk-in','Source',2,80),notes:text(input.notes||'','Notes',0,800)};
 }
 export function prospectMessage(row,kind='reminder'){
- const name=row.name.split(/\s+/)[0]||'Student',course=row.course||'your selected course';
- if(kind==='cancel')return `Hello ${name}, as requested, your provisional enquiry for ${course} at Rehaan Computers has been closed. No admission was created. You are welcome to contact us again whenever you wish to continue.`;
+ const name=row.name||'Student',course=row.course||'your selected course';
+ if(kind==='followup')return `*REHAAN COMPUTERS*\n*Class Follow-Up Notice*\n\nHello ${name},\nYou had enquired about *${course}*. Please reply with the class or batch you want to join, or tell us if you need fee, timing or course guidance.\n\nIf you wish to continue, please reply to this message so we can confirm your next step.`;
+ if(kind==='cancel')return `*REHAAN COMPUTERS*\n*Important Notice*\n\nHello ${name},\nYour provisional admission enquiry for *${course}* has been closed.\n*Reason:* No reply received after the follow-up notice.\n\nNo admission record was created. Please contact the institute if you need clarification or wish to enquire again.`;
  return `Hello ${name}, you recently visited Rehaan Computers regarding ${course}. Please let us know whether you would like to continue with admission, need more information, or prefer us to close this enquiry.`;
 }
 export function validateIncome(input){
@@ -35,6 +36,11 @@ export function leagueRankings(rows,count=3){
 export function genderLeagueRankings(rows,gender,count=3){
  if(!['male','female'].includes(gender))throw Error('Choose Boys or Girls for this leaderboard.');
  return leagueRankings(rows.filter(row=>String(row.gender||'').toLowerCase()===gender),count);
+}
+export function selectedLeagueRankings(rows,gender,count=3,topIds=[],improveIds=[]){
+ const automatic=genderLeagueRankings(rows,gender,count),eligible=rows.filter(row=>String(row.gender||'').toLowerCase()===gender&&row.result?.complete&&Number.isFinite(row.result.percentage)),byId=new Map(eligible.map(row=>[String(row.id),row])),limit=Math.max(1,Math.min(20,Number(count)||3));
+ const select=(ids,fallback)=>{const picked=[];for(const id of ids){const row=byId.get(String(id));if(row&&!picked.includes(row)&&picked.length<limit)picked.push(row);}return picked.length?picked:fallback;},score=row=>row.result.percentage;
+ return {top:select(topIds,automatic.top).sort((a,b)=>score(b)-score(a)||String(a.name).localeCompare(String(b.name))),improve:select(improveIds,automatic.improve).sort((a,b)=>score(a)-score(b)||String(a.name).localeCompare(String(b.name)))};
 }
 export function improvementMessage(row){
  const weak=(row.card?.subjects||[]).filter(s=>Number.isFinite(s.marks)&&s.marks/s.max<.75).sort((a,b)=>a.marks/a.max-b.marks/b.max)[0];

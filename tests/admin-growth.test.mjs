@@ -1,10 +1,10 @@
 import test from 'node:test';import assert from 'node:assert/strict';
-import {validateProspect,prospectMessage,validateIncome,validateConcession,leagueRankings,genderLeagueRankings,improvementMessage} from '../previews/admin-premium/growth-model.js';
+import {validateProspect,prospectMessage,validateIncome,validateConcession,leagueRankings,genderLeagueRankings,selectedLeagueRankings,improvementMessage} from '../previews/admin-premium/growth-model.js';
 import {saveGrowthRecord,saveConcession} from '../previews/admin-premium/growth-store.js';
 
 test('provisional registry validates contact details and prepares respectful reminder/cancellation text',()=>{
  const row=validateProspect({name:' Aamir Shah ',phone:'90000 00101',course:'Excel',visitDate:'2026-11-22',followUpDate:'2026-11-24',status:'Interested',source:'Physical register',notes:''});
- assert.equal(row.phone,'9000000101');assert.match(prospectMessage(row),/continue with admission/);assert.match(prospectMessage(row,'cancel'),/No admission was created/);
+ assert.equal(row.phone,'9000000101');assert.match(prospectMessage(row),/continue with admission/);assert.match(prospectMessage(row,'followup'),/Class Follow-Up Notice/);assert.match(prospectMessage(row,'cancel'),/No admission record was created/);
  assert.throws(()=>validateProspect({...row,phone:'123'}),/10-digit/);assert.throws(()=>validateProspect({...row,name:'<\u0000'}),/Student name/);
 });
 test('manual income is paise-safe and expenses are not an accepted category or data shape',()=>{
@@ -25,6 +25,10 @@ test('weekly league keeps boys and girls in separate rankings',()=>{
  assert.deepEqual(genderLeagueRankings(rows,'male',3).top.map(row=>row.id),['b1','b2']);
  assert.deepEqual(genderLeagueRankings(rows,'female',3).top.map(row=>row.id),['g1','g2']);
  assert.throws(()=>genderLeagueRankings(rows,'',3),/Boys or Girls/);
+});
+test('weekly league permits reviewed manual selections from eligible mark cards',()=>{
+ const rows=[['a','A',91,'A+'],['b','B',74,'B'],['c','C',62,'C']].map(([id,name,percentage,grade])=>({id,name,gender:'male',result:{complete:true,percentage,grade,total:percentage,maximum:100}}));
+ const rank=selectedLeagueRankings(rows,'male',3,['b','a'],['c']);assert.deepEqual(rank.top.map(r=>r.id),['a','b']);assert.deepEqual(rank.improve.map(r=>r.id),['c']);
 });
 function harness(data){let value=structuredClone(data),writes=0;return {get value(){return value},get writes(){return writes},runTransaction:async(_db,fn)=>fn({get:async()=>({exists:()=>value!==undefined,data:()=>structuredClone(value)}),set:(_ref,next)=>{value=structuredClone(next);writes++},update:(_ref,patch)=>{for(const [path,next] of Object.entries(patch)){const keys=path.split('.');let target=value;for(const key of keys.slice(0,-1))target=target[key]??=( {});target[keys.at(-1)]=structuredClone(next);}writes++;}})}}
 test('growth saves reject stale edits and concession transaction preserves unrelated student data',async()=>{
