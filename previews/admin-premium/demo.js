@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   document.querySelector('.applications-title').append(controls);
   // Keep existing navigation controls and handlers; organise their DOM order.
   const nav=document.querySelector('.nav');
-  const navGroups=[['DAILY WORK',['[data-section=overview]','[data-operations=today]','[data-section=students]','[data-section=admissions]','[data-section=attendance]','[data-section=fees]','[data-section=statements]','[data-section=marks]']],['INSTITUTE & RECORDS',['[data-records-centre]','[data-operations=accounts]','[data-section=courses]','[data-section=batches]','[data-workbench=journeys]','[data-section=reports]','[data-workbench=history]']],['WORKSPACE',['[data-workbench=preferences]','[data-section=settings]']]];
+  const navGroups=[['DAILY WORK',['[data-section=overview]','[data-operations=today]','[data-section=students]','[data-section=admissions]','[data-section=attendance]','[data-section=fees]','[data-section=statements]','[data-section=marks]']],['INSTITUTE & RECORDS',['[data-records-centre]','[data-operations=accounts]','[data-section=courses]','[data-section=batches]','[data-workbench=journeys]','[data-section=reports]','[data-workbench=history]']],['WORKSPACE',['[data-workbench=preferences]','[data-growth=prospects]','[data-growth=league]','[data-section=settings]']]];
   const captions=navGroups.map(([title])=>{const el=document.createElement('span');el.className='nav-caption studio-nav-caption';el.textContent=title;return el;});
   const navObserver=new MutationObserver(arrangeNav);
   function arrangeNav(){
