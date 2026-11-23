@@ -71,13 +71,16 @@
 @media(max-width:360px){.courses-section .course-body{padding-inline:17px}.courses-section .course-actions,.courses-section .course-bottom{padding-inline:17px}.courses-section .course-card h3{font-size:23px}}
 /* Keep all four original mobile actions visible; override legacy gold-on-gold text. */
 @media(max-width:700px){
- .mobile-actions{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px!important}
+ .mobile-actions{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px!important}
  .mobile-actions>a,.mobile-actions>button{width:100%!important;min-width:0}
  .mobile-actions>a.apply-special{color:#142536!important;min-width:0}
  .mobile-actions>a.apply-special .apply-label{color:#142536!important;display:inline-flex;align-items:center;justify-content:center;gap:4px;font-size:10px;line-height:1.4;white-space:nowrap;max-width:100%;isolation:isolate}
  .mobile-actions>a.apply-special .apply-label>.icon{width:12px;height:12px;flex-shrink:0;color:#142536}
  .mobile-actions>a.apply-special .apply-label::after{z-index:-1;opacity:.4}
 }
+.student-mobile-float{display:none}
+@media(max-width:700px){.student-mobile-float{position:fixed;z-index:79;right:14px;bottom:calc(78px + env(safe-area-inset-bottom));display:inline-flex;align-items:center;gap:7px;padding:10px 14px;border:1px solid #f1ce7b;border-radius:40px;background:linear-gradient(120deg,#153b5a,#081b2d);box-shadow:0 8px 25px #0008,0 0 14px #e5c17855;color:#ffe5a9;text-decoration:none;font-size:12px;font-weight:750;animation:portal-aura 4.2s ease-in-out infinite}.student-mobile-float span{font-size:15px}body:has(#paymentModal:not([hidden]),#paymentSuccessModal:not([hidden])) .student-mobile-float{visibility:hidden}}
+@media(prefers-reduced-motion:reduce){.student-mobile-float{animation:none}}
 
 /* The five guidance photographs keep the existing crossfade, controls and motion preferences. */
 .experience-slide[data-slide="0"]{object-position:50% 35%}.experience-slide[data-slide="2"]{object-position:50% 35%}
