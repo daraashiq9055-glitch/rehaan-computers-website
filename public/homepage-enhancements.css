@@ -19,6 +19,8 @@
 .student-portal-link::before,.student-portal-quick::before{content:'';position:absolute;inset:-180%;background:conic-gradient(from 0deg,transparent 0deg,transparent 245deg,#fff8dc 286deg,#b9dfff 307deg,transparent 335deg);animation:apply-border-orbit 5s linear infinite;z-index:-2;pointer-events:none}
 .student-portal-link::after,.student-portal-quick::after{content:'';position:absolute;inset:1.5px;border-radius:inherit;background:linear-gradient(120deg,#173b59,#0b2035 55%,#143553);z-index:-1;pointer-events:none}
 .student-portal-link{min-height:41px;padding:8px 15px;font-size:11px;font-weight:750;white-space:nowrap}
+.site-header nav>.student-portal-link{display:none}
+.header-actions>.student-portal-link{padding-inline:10px;gap:5px}
 .student-portal-link small{font-size:9px;color:#d0d9e1;border-left:1px solid #d2b77170;padding-left:8px}
 .student-portal-icon{color:#efcf79;font-size:15px;filter:drop-shadow(0 0 5px #efcf79aa)}
 .student-portal-link:hover,.student-portal-link:focus-visible,.student-portal-quick:hover,.student-portal-quick:focus-visible{box-shadow:0 0 0 3px #ffe9af30,0 10px 32px #d8b36c4d!important;transform:translateY(-2px)}
@@ -26,6 +28,7 @@
 @keyframes portal-aura{0%,100%{box-shadow:0 0 0 1px #f6d68b22,0 5px 22px #d6ad6b22}50%{box-shadow:0 0 0 2px #f6d68b42,0 8px 29px #d6ad6b46}}
 @media(max-width:700px){.header-actions>.student-portal-link{display:none}.mobile-actions .student-portal-quick{display:inline-flex;flex-direction:column;gap:2px;min-width:0;padding:5px 3px;font-size:9px;line-height:1.2;color:#f6dfa2!important}.student-portal-quick>span:first-child{font-size:15px;line-height:1}}
 @media(min-width:701px) and (max-width:1120px){.student-portal-link small{display:none}.student-portal-link{padding-inline:10px;font-size:10px}}
+@media(max-width:950px){.site-header nav>.student-portal-link{display:flex}}
 @media(prefers-reduced-motion:reduce){.student-portal-link,.student-portal-quick,.student-portal-link::before,.student-portal-quick::before{animation:none!important}}
 /* Hero application button, positioned in the former fee slot. */
 .hero-apply-slot{margin:25px 0 22px;max-width:100%;padding:3px 0}
