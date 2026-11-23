@@ -1,0 +1,40 @@
+import {stages,dailyQuestions} from './student-quiz.js';
+
+const $ = selector => document.querySelector(selector);
+const form=$('#studentLoginForm'), status=$('#loginStatus'), onboarding=$('#demoOnboarding'), interior=$('#demoInterior'), publicPage=$('.portal-dashboard');
+let currentStage='', questions=[], questionIndex=0, score=0, answered=false;
+const weekDay=new Date().getDay()||7;
+const escapeText=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
+
+$('#togglePassword')?.addEventListener('click',event=>{const input=$('#studentPassword'),show=input.type==='password';input.type=show?'text':'password';event.currentTarget.setAttribute('aria-label',show?'Hide password':'Show password');});
+function enterSetup(){publicPage.hidden=true;$('.portal-bottom-nav').hidden=true;document.body.classList.add('demo-active');onboarding.hidden=false;interior.hidden=true;window.scrollTo(0,0);}
+function chooseStage(){
+  $('#onboardingTitle').textContent='What are you learning now?';
+  $('#onboardingDescription').textContent='Choose your current subject. Earlier subjects will count as already learned for this demo quiz.';
+  $('#onboardingStep').innerHTML=`<div class="stage-list">${stages.map((stage,index)=>`<button type="button" data-stage="${escapeText(stage)}"><span>${String(index+1).padStart(2,'0')}</span>${escapeText(stage)}<b>↗</b></button>`).join('')}</div><p>Sample selection only. Admin Student Journey syncing will require secure student accounts.</p>`;
+  $('#onboardingStep').querySelectorAll('[data-stage]').forEach(button=>button.addEventListener('click',()=>openAccount(button.dataset.stage)));
+}
+function openAccount(stage){currentStage=stage;questions=dailyQuestions(stage,weekDay);questionIndex=0;score=0;answered=false;onboarding.hidden=true;interior.hidden=false;showPanel('quiz');window.scrollTo(0,0);}
+form.addEventListener('submit',event=>{event.preventDefault();if(form.elements.studentId.value.trim().toUpperCase()!=='DEMO001'||form.elements.password.value!=='Rehaan2026'){status.textContent='For the demo, enter DEMO001 and Rehaan2026.';return;}enterSetup();});
+$('#demoFollow').addEventListener('click',chooseStage);
+$('#demoLogout').addEventListener('click',()=>{interior.hidden=true;onboarding.hidden=true;document.body.classList.remove('demo-active');publicPage.hidden=false;$('.portal-bottom-nav').hidden=false;form.reset();status.textContent='Demo account: DEMO001 / Rehaan2026';window.scrollTo(0,0);});
+
+function showPanel(name){
+  document.querySelectorAll('[data-demo-tab]').forEach(button=>{const active=button.dataset.demoTab===name;button.classList.toggle('active',active);button.setAttribute('aria-current',active?'page':'false');});
+  if(name==='quiz'){renderQuestion();return;}
+  if(name==='progress'){$('#demoContent').innerHTML=`<div class="demo-welcome"><span>STUDENT JOURNEY · DEMO</span><h2>Your learning path</h2></div><div class="demo-panel"><small>CURRENT SUBJECT</small><h3>${escapeText(currentStage)}</h3><div class="stage-progress">${stages.map((stage,index)=>`<div class="${index<stages.indexOf(currentStage)?'done':index===stages.indexOf(currentStage)?'now':''}"><span>${index<stages.indexOf(currentStage)?'✓':String(index+1).padStart(2,'0')}</span><b>${escapeText(stage)}</b><small>${index<stages.indexOf(currentStage)?'Learned':index===stages.indexOf(currentStage)?'Learning now':'Next'}</small></div>`).join('')}</div><p>This preview does not update the live admin record.</p></div>`;return;}
+  if(name==='awards'){$('#demoContent').innerHTML='<div class="demo-welcome"><span>ACHIEVEMENTS · DEMO</span><h2>Your awards</h2></div><div class="demo-panel"><h3>Weekly top three</h3><p>The top three students receive points after the weekly results are approved. No demo points are saved.</p></div>';return;}
+  $('#demoContent').innerHTML=`<div class="demo-welcome"><span>STUDENT ACCOUNT · DEMO</span><h2>Aamir</h2></div><div class="demo-panel demo-profile"><div><small>STUDENT ID</small><strong>DEMO001</strong></div><div><small>LEARNING NOW</small><strong>${escapeText(currentStage)}</strong></div></div>`;
+}
+function renderQuestion(){
+  if(questionIndex>=questions.length){$('#demoContent').innerHTML=`<div class="quiz-finish demo-panel"><span class="eyebrow">TODAY'S PRACTICE COMPLETE</span><h2>${score} / 10 correct</h2><p>Your answers are shown instantly in this demo. The weekly top three and points are determined after seven days and approved results.</p><button class="gold-button" type="button" id="quizRestart">Try practice again</button></div>`;$('#quizRestart').addEventListener('click',()=>{questionIndex=0;score=0;renderQuestion();});return;}
+  const item=questions[questionIndex];answered=false;
+  $('#demoContent').innerHTML=`<section class="quiz-card demo-panel" aria-label="Daily quiz question"><div class="quiz-meta"><span>DAY ${weekDay} OF 7 · ${escapeText(item.difficulty.toUpperCase())}</span><strong>${questionIndex+1} / 10</strong></div><div class="quiz-track"><span style="width:${questionIndex*10}%"></span></div><p class="quiz-topic">${questionIndex<6?'PREVIOUSLY LEARNED':'LEARNING NOW'} · ${escapeText(item.stage)}</p><h2>${escapeText(item.question)}</h2><div class="quiz-options">${item.options.map((option,index)=>`<button type="button" data-option="${index}"><span>${'ABCD'[index]}</span><b>${escapeText(option)}</b><i aria-hidden="true"></i></button>`).join('')}</div><p class="quiz-feedback" id="quizFeedback" role="status">Choose one answer.</p><button class="quiz-next" type="button" id="quizNext" hidden>${questionIndex===9?'See result':'Next question'} →</button></section>`;
+  $('#demoContent').querySelectorAll('[data-option]').forEach(button=>button.addEventListener('click',()=>{if(answered)return;answered=true;const selected=Number(button.dataset.option),correct=item.answer;if(selected===correct)score++;$('#demoContent').querySelectorAll('[data-option]').forEach(option=>{option.disabled=true;const index=Number(option.dataset.option);if(index===correct){option.classList.add('correct');option.querySelector('i').textContent='✓';}else if(index===selected){option.classList.add('incorrect');option.querySelector('i').textContent='×';}});$('#quizFeedback').textContent=selected===correct?'Correct answer.':`The correct answer is ${item.options[correct]}.`;$('#quizNext').hidden=false;}));
+  $('#quizNext').addEventListener('click',()=>{questionIndex++;renderQuestion();window.scrollTo({top:0,behavior:'smooth'});});
+}
+document.querySelectorAll('[data-demo-tab]').forEach(button=>button.addEventListener('click',()=>showPanel(button.dataset.demoTab)));
+
+// Only an explicitly published public leaderboard replaces the sample results.
+async function refreshLeaderboard(){try{const response=await fetch('student-leaderboard.json',{cache:'no-store'});if(!response.ok)return;const data=await response.json();if(data.published!==true||!Array.isArray(data.students))return;const students=data.students.filter(row=>row&&typeof row.name==='string'&&row.name.trim()&&Number.isFinite(Number(row.percentage))&&Number(row.percentage)>=0&&Number(row.percentage)<=100).slice(0,10);if(!students.length)return;const top=document.querySelectorAll('.podium');for(const [index,position] of [1,0,2].entries()){const element=top[index],row=students[position];if(!element)continue;element.querySelector('small').textContent=row?.name||'—';element.querySelector('b').textContent=row?`${Number(row.percentage).toFixed(1)}%`:'—';element.querySelector('.avatar').textContent=row?.name?.trim().charAt(0).toUpperCase()||'✦';}$('.demo-ranks').innerHTML=students.slice(3).map((row,index)=>`<li><span>${String(index+4).padStart(2,'0')}</span><b>${escapeText(row.name)}</b><strong>${Number(row.percentage).toFixed(1)}%</strong></li>`).join('');$('.league-section .eyebrow').textContent='PUBLISHED RESULTS';$('.league-section .live-tag').textContent='Updated standings';$('.league-footnote').textContent='Standings refresh automatically every minute while this page is open.';}catch{/* Keep visible results when offline. */}}
+refreshLeaderboard();setInterval(refreshLeaderboard,60_000);
