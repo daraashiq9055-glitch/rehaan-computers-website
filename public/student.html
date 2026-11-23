@@ -7,16 +7,16 @@
   <meta name="description" content="Rehaan Computers Student Portal: weekly skills league, institute updates and student access.">
   <title>Student Portal | Rehaan Computers</title>
   <link rel="icon" href="visitor/assets/rehaan-mark.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="student-portal.css?v=20261124-student-1">
+  <link rel="stylesheet" href="student-portal.css?v=20261124-student-2">
 </head>
 <body id="top">
   <header class="portal-header">
     <a class="portal-brand" href="index.html" aria-label="Rehaan Computers home"><img src="visitor/assets/rehaan-mark.svg" alt="" width="42" height="42"><span>RC LEARN<small>BY REHAAN COMPUTERS</small></span></a>
-    <a class="portal-login-top" href="#login">Student Login <span aria-hidden="true">↗</span></a>
+    <a class="portal-login-top" href="index.html">Website <span aria-hidden="true">←</span></a>
   </header>
   <main class="portal-dashboard">
     <section class="login-section" id="login"><div class="login-intro"><span class="eyebrow">REHAAN COMPUTERS</span><h1>Student Login</h1><a class="student-return" href="index.html">← Back to website</a></div><form class="login-card" id="studentLoginForm"><label for="studentId">Student ID</label><input id="studentId" name="studentId" autocomplete="username" placeholder="Student ID" required><label for="studentPassword">Password</label><div class="password-wrap"><input id="studentPassword" name="password" type="password" autocomplete="current-password" placeholder="Password" required><button type="button" id="togglePassword" aria-label="Show password">◉</button></div><button class="gold-button login-submit" type="submit">Log in</button><p id="loginStatus" role="status">Demo account: DEMO001 / Rehaan2026</p></form></section>
-    <section class="league-section" id="leaderboard">
+    <section class="league-section" id="leaderboard" hidden>
       <div class="section-heading"><div><span class="eyebrow">DEMO RESULTS</span><h2>Skills League</h2></div><span class="live-tag">Sample students</span></div>
       <div class="league-card">
         <div class="league-tabs" aria-label="Leaderboard category"><span class="active">All joined students</span><span class="league-season">WEEKLY EXAMS · TOP 10</span></div>
@@ -30,14 +30,13 @@
         <p class="league-footnote">Illustrative results only. Real standings will use approved exam results.</p>
       </div>
     </section>
-    <section class="updates-section"><div class="section-heading"><div><span class="eyebrow">FROM YOUR INSTITUTE</span><h2>Updates</h2></div></div><div class="updates-grid"><article class="update-card"><span class="update-icon">◷</span><div><small>WEEKLY EXAM</small><h3>Sunday Skills Exam</h3><p>Exam schedule will appear here.</p></div></article><article class="update-card"><span class="update-icon">▦</span><div><small>COURSES</small><h3>New batches</h3><p>Course and class updates will appear here.</p></div></article><article class="update-card"><span class="update-icon">◉</span><div><small>NOTICE</small><h3>Class notices</h3><p>Important institute notices will appear here.</p></div></article></div></section>
+    <section class="updates-section" hidden><div class="section-heading"><div><span class="eyebrow">FROM YOUR INSTITUTE</span><h2>Updates</h2></div></div><div class="updates-grid"><article class="update-card"><span class="update-icon">◷</span><div><small>WEEKLY EXAM</small><h3>Sunday Skills Exam</h3><p>Exam schedule will appear here.</p></div></article><article class="update-card"><span class="update-icon">▦</span><div><small>COURSES</small><h3>New batches</h3><p>Course and class updates will appear here.</p></div></article><article class="update-card"><span class="update-icon">◉</span><div><small>NOTICE</small><h3>Class notices</h3><p>Important institute notices will appear here.</p></div></article></div></section>
   </main>
   <section class="demo-onboarding" id="demoOnboarding" hidden aria-label="Demo student setup"><div class="onboarding-card"><span class="eyebrow">STUDENT SETUP · DEMO</span><h2 id="onboardingTitle">Follow Rehaan Computers</h2><p id="onboardingDescription">Get class and exam updates before entering your student space.</p><div id="onboardingStep"><button class="gold-button" type="button" id="demoFollow">Follow and continue</button><p>This preview simulates following. Real notifications require browser permission on the published website.</p></div></div></section>
   <section class="demo-interior" id="demoInterior" hidden aria-label="Demo student account"><header class="demo-head"><span class="student-head-avatar" aria-hidden="true">A</span><div><small>RC LEARN · STUDENT DEMO</small><h1>Hello, Aamir</h1><p>ADM RC-DEMO-001 · Afternoon batch</p></div><button id="studentBell" type="button" aria-label="Open centre updates"><svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4"/></svg><i aria-hidden="true"></i></button></header><div class="demo-content" id="demoContent" aria-live="polite"></div><nav class="demo-nav" aria-label="Demo student sections"><button class="active" type="button" data-demo-tab="home">Home</button><button type="button" data-demo-tab="account">Account</button><button type="button" data-demo-tab="updates">Updates</button><button type="button" data-demo-tab="journey">Journey</button></nav><small class="portal-credit">CREATED BY · DAR YASIR</small></section>
   <dialog class="student-image-dialog" id="studentImageDialog" aria-label="Update image preview"><button type="button" id="closeStudentImage" aria-label="Close image preview">×</button><img alt=""></dialog>
   <dialog class="student-update-dialog" id="studentUpdateDialog" aria-label="Centre update details"><button type="button" id="closeStudentUpdate" aria-label="Close update details">×</button><div id="studentUpdateDetails"></div></dialog>
   <footer class="portal-footer"><a href="index.html">← Rehaan Computers home</a><span>REHAAN COMPUTERS · STUDENT PORTAL</span><a href="index.html#contact">Get help</a></footer>
-  <nav class="portal-bottom-nav" aria-label="Student portal shortcuts"><a class="selected" href="#top"><span>⌂</span>Home</a><a href="#leaderboard"><span>♛</span>League</a><a href="#login"><span>◉</span>Login</a></nav>
-  <script type="module" src="student-experience.js?v=20261124-student-1"></script>
+  <script type="module" src="student-experience.js?v=20261124-student-2"></script>
 </body>
 </html>

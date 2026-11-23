@@ -16,7 +16,7 @@ function attempt(){const entry=state.attempts?.[dateKey];return entry?.stage===c
 function ensureAttempt(){if(!state.attempts||typeof state.attempts!=='object')state.attempts={};if(!attempt()){state.attempts[dateKey]={stage:currentStage,answers:[]};saveState();}return state.attempts[dateKey];}
 function setActiveTab(name){document.querySelectorAll('[data-demo-tab]').forEach(button=>{const active=button.dataset.demoTab===name;button.classList.toggle('active',active);button.setAttribute('aria-current',active?'page':'false');});}
 function refreshBell(){const read=Array.isArray(state.readUpdates)?state.readUpdates:[];$('#studentBell i').hidden=sampleUpdates.every(item=>read.includes(item.id));}
-function enterSetup(){publicPage.hidden=true;$('.portal-bottom-nav').hidden=true;document.body.classList.add('demo-active');onboarding.hidden=false;interior.hidden=true;window.scrollTo(0,0);if(state.followed)chooseStage();}
+function enterSetup(){publicPage.hidden=true;document.body.classList.add('demo-active');onboarding.hidden=false;interior.hidden=true;window.scrollTo(0,0);if(state.followed)chooseStage();}
 function chooseStage(){
  $('#onboardingTitle').textContent='What are you learning now?';
  $('#onboardingDescription').textContent='Select your current subject. Earlier subjects are included in your learning journey.';
@@ -31,7 +31,7 @@ function openAccount(stage){
 $('#togglePassword')?.addEventListener('click',event=>{const input=$('#studentPassword'),show=input.type==='password';input.type=show?'text':'password';event.currentTarget.setAttribute('aria-label',show?'Hide password':'Show password');});
 form.addEventListener('submit',event=>{event.preventDefault();if(form.elements.studentId.value.trim().toUpperCase()!=='DEMO001'||form.elements.password.value!=='Rehaan2026'){status.textContent='For the demo, enter DEMO001 and Rehaan2026.';return;}if(state.followed&&stages.includes(state.stage))openAccount(state.stage);else enterSetup();});
 $('#demoFollow').addEventListener('click',()=>{state.followed=true;saveState();chooseStage();});
-function logout(){interior.hidden=true;onboarding.hidden=true;document.body.classList.remove('demo-active');publicPage.hidden=false;$('.portal-bottom-nav').hidden=false;form.reset();status.textContent='Demo account: DEMO001 / Rehaan2026';history.replaceState({portal:'login'},'','student.html#login');window.scrollTo(0,0);}
+function logout(){interior.hidden=true;onboarding.hidden=true;document.body.classList.remove('demo-active');publicPage.hidden=false;form.reset();status.textContent='Demo account: DEMO001 / Rehaan2026';history.replaceState({portal:'login'},'','student.html#login');window.scrollTo(0,0);}
 $('#studentBell').addEventListener('click',()=>navigate('updates'));
 
 function showPanel(name){activeTab=name;setActiveTab(name);if(name==='home'){renderHome();return;}if(name==='account'){renderAccount();return;}if(name==='updates'){renderUpdates();return;}renderJourney();}
