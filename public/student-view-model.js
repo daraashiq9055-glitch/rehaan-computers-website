@@ -1,10 +1,11 @@
 // A narrow projection of an admin application for a future student-owned view.
 // This module does not publish records or grant access to applications.
+import {feeStatement} from './admin-fee-statement-model.js';
 const text=value=>typeof value==='string'?value.trim():'';
 const money=value=>Number.isFinite(Number(value))&&Number(value)>=0?Math.round(Number(value)*100)/100:0;
 const dateKey=value=>/^\d{4}-\d{2}(-\d{2})?$/.test(value||'')?value:'';
 
-export function studentViewFromApplication(data){
+export function studentViewFromApplication(data,applicationId=''){
  if(!data||data.status!=='Approved'||!text(data.admissionNumber))throw Error('Only approved students with admission numbers can have a student view.');
  const feePeriods=Object.entries(data.monthlyFees||{}).filter(([due])=>/^\d{4}-\d{2}-\d{2}$/.test(due)).map(([due,settled])=>{
   const concession=data.feeConcessions?.[due],waived=money((Number(concession?.concession)||0)/100);
@@ -15,9 +16,14 @@ export function studentViewFromApplication(data){
  const attendance=Object.entries(data.monthlyAttendance||{}).filter(([month])=>/^\d{4}-\d{2}$/.test(month)).map(([month,value])=>({month,attended:Number(value.days)||0,classes:Number(value.totalDays)||0,note:text(value.note)})).sort((a,b)=>b.month.localeCompare(a.month));
  const course=text(data.coursePreference||data.course),byCourse=data.learningProgress?.byCourse||{},saved=byCourse[encodeURIComponent(course)]||{};
  const topics=Array.isArray(saved.topics)?saved.topics.filter(item=>item&&typeof item.title==='string').map(item=>({title:text(item.title),done:item.done===true})):[];
+ let statement=null;
+ try{
+  const calculated=feeStatement({id:applicationId,data});
+  if(calculated.reliable)statement={asOf:calculated.asOf,billed:calculated.totals.billed/100,received:calculated.totals.received/100,due:calculated.totals.due/100,monthlyTuition:calculated.rows[0]?.billed/100||999};
+ }catch{/* A disputed or incomplete fee record must not publish an estimated balance. */}
  return {
   profile:{name:text(data.fullName),admissionNumber:text(data.admissionNumber),dob:dateKey(data.dob),guardian:text(data.parentName),studentPhone:text(data.phone),guardianPhone:text(data.guardianPhone),course,batch:text(data.batch),joined:dateKey(data.admissionDate||data.approvedAt),status:text(data.studentLifecycle?.stage||'Active')},
-  fees:{admissionStatus:text(data.payment?.status),admissionAmount:money(data.payment?.amount),periods:feePeriods,receipts},
+  fees:{admissionStatus:text(data.payment?.status),admissionAmount:money(data.payment?.amount),periods:feePeriods,receipts,statement},
   attendance,
   journey:{course,topics}
  };

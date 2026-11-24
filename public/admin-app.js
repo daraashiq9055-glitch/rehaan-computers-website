@@ -1150,6 +1150,14 @@ function nextAdmissionNumber() {
 }
 
 
+async function syncLinkedPortalView(applicationId,sessionUid=verifiedAdminUid){
+    requireAdmin();
+    const {syncStudentPortal}=await import('./student-portal-access.js?v=20261124-portal-1');
+    const assertAdmin=()=>{requireAdmin();if(verifiedAdminUid!==sessionUid)throw Error('Your admin session changed.');};
+    assertAdmin();
+    return syncStudentPortal({db,doc,runTransaction,assertAdmin,applicationId});
+}
+
 async function loadApplications() {
 
     const list = getElement("applicationsList");
@@ -1198,6 +1206,18 @@ async function loadApplications() {
         adminState.apps.sort(compareAdmissionRecords);
         recordsLoaded = true;
         renderAdminList();
+        const linked=adminState.apps.filter(entry=>entry.data.studentPortalAccount?.uid).map(entry=>entry.id);
+        if(linked.length)void (async()=>{
+            const failures=[];
+            for(const id of linked){
+                if(verifiedAdminUid!==requestUid||sequence!==loadSequence)return;
+                try{await syncLinkedPortalView(id,requestUid);}catch(error){failures.push(id);console.warn('Student portal view could not refresh:',id,error);}
+            }
+            if(failures.length&&verifiedAdminUid===requestUid&&sequence===loadSequence){
+                const notice=document.createElement('p');notice.className='workbench-notice';notice.id='studentPortalSyncWarning';notice.setAttribute('role','alert');notice.textContent=`${failures.length} student portal view(s) could not refresh. Review Student Portal access in those student records before relying on displayed data.`;
+                document.querySelector('#studentPortalSyncWarning')?.remove();document.querySelector('#adminDashboard .content')?.prepend(notice);
+            }
+        })();
         getElement('settingsLoadWarning')?.remove();
         if(settingsState().error){const warning=document.createElement('p');warning.id='settingsLoadWarning';warning.className='workbench-notice';warning.setAttribute('role','alert');warning.textContent='Institute settings could not load. Default document details are in use. Refresh before issuing documents or changing settings.';document.querySelector('#adminDashboard .content')?.prepend(warning);}
 
@@ -1665,6 +1685,15 @@ function openAdminDetails(applicationId) {
                 </div>
             </div>
             <button type="button" class="admin-ghost-btn admin-class-followup">Class follow-up</button>
+            <section class="admin-student-portal" style="margin:15px 0;padding:15px;border:1px solid #bba46a;border-radius:12px;background:#102840;color:#f4e5bd">
+                <h4 style="margin:0 0 7px">Student Portal access</h4>
+                ${data.studentPortalAccount?.uid
+                    ? `<p style="margin:0 0 9px">Username: <strong>${escapeHTML(data.studentPortalAccount.username || '—')}</strong> · ${data.studentPortalAccount.enabled === true ? 'Enabled' : 'Disabled'}</p><button type="button" class="admin-ghost-btn admin-portal-refresh">Refresh student view</button> <button type="button" class="admin-ghost-btn admin-portal-toggle">${data.studentPortalAccount.enabled === true ? 'Disable access' : 'Restore access'}</button>`
+                    : data.status === 'Approved' && data.enrolmentStatus !== 'Cancelled' && data.admissionNumber
+                        ? '<p style="margin:0 0 9px">Create a separate student login. The password is shown only while you enter it.</p><label>Student username<input class="admin-portal-username" autocomplete="off" maxlength="24" placeholder="e.g. rc040"></label><label>Temporary password<input class="admin-portal-password" type="password" autocomplete="new-password" minlength="10" maxlength="72" placeholder="At least 10 characters"></label><button type="button" class="admin-save-btn admin-portal-create">Create student login</button>'
+                        : '<p style="margin:0">Approve the admission and assign an admission number before creating access.</p>'}
+                <p class="admin-portal-status" role="status" style="margin:9px 0 0"></p>
+            </section>
             <div class="admin-details-grid">
                 ${adminField("Parent / Guardian", data.parentName)}
                 ${adminField("Student Phone", data.phone)}
@@ -1735,7 +1764,33 @@ function openAdminDetails(applicationId) {
     );
 
     const editGroup = modal.querySelector(".admin-edit-fields");
-    modal.querySelector('.admin-class-followup').onclick=async()=>{const uid=verifiedAdminUid;try{requireAdmin();const {openFollowup}=await import('./admin-attendance.js?v=20261105-follow-6');requireAdmin();if(uid!==verifiedAdminUid||!modal.isConnected)return;const entry=adminState.apps.find(a=>a.id===id);if(entry)openFollowup(entry);}catch(error){alert(friendlyError(error));}};
+    const portalStatus=modal.querySelector('.admin-portal-status');
+    modal.querySelector('.admin-portal-create')?.addEventListener('click',async event=>{
+        const button=event.currentTarget,username=modal.querySelector('.admin-portal-username').value.trim(),passwordField=modal.querySelector('.admin-portal-password'),password=passwordField.value,uid=verifiedAdminUid;
+        if(!window.confirm('Create a student login for '+(data.fullName||'this student')+'? Give the username and temporary password directly to the student.'))return;
+        button.disabled=true;portalStatus.textContent='Creating student access…';let credential=null,linked=false;
+        try{
+            requireAdmin();
+            const [{createStudentAuthUser},{linkStudentPortal}]=await Promise.all([import('./student-portal-provision.js?v=20261124-portal-1'),import('./student-portal-access.js?v=20261124-portal-1')]);
+            requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your admin session changed.');
+            credential=await createStudentAuthUser(firebaseConfig,username,password);
+            await linkStudentPortal({db,doc,runTransaction,assertAdmin:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your admin session changed.');},applicationId,uid:credential.uid,username});linked=true;
+            await credential.close();credential=null;passwordField.value='';
+            await loadApplications();if(!modal.isConnected)return;closeAdminModal(modal);openAdminDetails(applicationId);
+        }catch(error){
+            if(credential&&!linked){
+                try{
+                    const latest=await getDoc(doc(db,'applications',applicationId));
+                    if(latest.data()?.studentPortalAccount?.uid===credential.uid){linked=true;}
+                    else await credential.rollback();
+                }catch(cleanup){console.error('Review student Auth account after an uncertain link:',cleanup);portalStatus.textContent='The login result is uncertain. Refresh this student record before trying again. '+friendlyError(error);return;}
+            }
+            portalStatus.textContent=(linked?'Login linked; refresh the student record. ':'Login was not created. ')+friendlyError(error);
+        }finally{passwordField.value='';if(credential)await credential.close().catch(()=>{});button.disabled=false;}
+    });
+    modal.querySelector('.admin-portal-refresh')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;portalStatus.textContent='Refreshing student view…';try{await syncLinkedPortalView(applicationId);portalStatus.textContent='Student view is current.';}catch(error){portalStatus.textContent='Student view could not refresh: '+friendlyError(error);}finally{button.disabled=false;}});
+    modal.querySelector('.admin-portal-toggle')?.addEventListener('click',async event=>{const button=event.currentTarget,uid=verifiedAdminUid,enabled=data.studentPortalAccount.enabled!==true;if(!window.confirm((enabled?'Restore':'Disable')+' this student’s portal access?'))return;button.disabled=true;portalStatus.textContent='Updating access…';try{requireAdmin();const {setStudentPortalEnabled}=await import('./student-portal-access.js?v=20261124-portal-1');await setStudentPortalEnabled({db,doc,runTransaction,assertAdmin:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your admin session changed.');},applicationId,enabled});await loadApplications();if(modal.isConnected){closeAdminModal(modal);openAdminDetails(applicationId);}}catch(error){portalStatus.textContent='Access was not changed: '+friendlyError(error);}finally{button.disabled=false;}});
+    modal.querySelector('.admin-class-followup').onclick=async()=>{const uid=verifiedAdminUid;try{requireAdmin();const {openFollowup}=await import('./admin-attendance.js?v=20261105-follow-6');requireAdmin();if(uid!==verifiedAdminUid||!modal.isConnected)return;const entry=adminState.apps.find(a=>a.id===applicationId);if(entry)openFollowup(entry);}catch(error){alert(friendlyError(error));}};
     modal.querySelector(".admin-toggle-edit").addEventListener("click", () => {
         editGroup.hidden = !editGroup.hidden;
         modal.querySelector(".admin-toggle-edit").textContent = editGroup.hidden ? "✎" : "✕";
@@ -2706,7 +2761,7 @@ function updateWorkspace() {
         import('./admin-attendance.js?v=20261105-follow-6').then(({mountAttendance})=>{
             if(verifiedAdminUid!==uid||workspaceSection!=='attendance')return;
             const guard=()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');};
-            mountAttendance({host:view,assertSession:guard,getRecords:()=>adminState.apps,save:async(id,month,input,expected)=>{guard();const saved=await saveAttendance({db,ref:doc(db,'applications',id),runTransaction,assertSession:guard,actor:uid,month,input,expected});guard();const entry=adminState.apps.find(a=>a.id===id);if(entry)entry.data.monthlyAttendance={...(entry.data.monthlyAttendance||{}),[month]:saved};return saved;}});
+            mountAttendance({host:view,assertSession:guard,getRecords:()=>adminState.apps,save:async(id,month,input,expected)=>{guard();const saved=await saveAttendance({db,ref:doc(db,'applications',id),runTransaction,assertSession:guard,actor:uid,month,input,expected});guard();const entry=adminState.apps.find(a=>a.id===id);if(entry)entry.data.monthlyAttendance={...(entry.data.monthlyAttendance||{}),[month]:saved};if(entry?.data.studentPortalAccount?.uid)try{await syncLinkedPortalView(id,uid);}catch(error){console.warn('Attendance saved but student view refresh failed:',error);const notice=document.createElement('p');notice.className='workbench-notice';notice.setAttribute('role','alert');notice.textContent='Attendance was saved, but the student portal view could not refresh. Open Student Details and use Refresh student view.';view.prepend(notice);}return saved;}});
         }).catch(()=>{if(verifiedAdminUid===uid&&workspaceSection==='attendance')view.textContent='Attendance could not load. Reload the dashboard.';});
     } else if (workspaceSection === "statements") {
         renderStatementDirectory(view);

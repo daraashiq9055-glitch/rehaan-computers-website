@@ -11,6 +11,7 @@ const sample={name:'Aamir',admission:'RC-DEMO-001',rank:12,feeDue:499,feeMonth:t
 const escapeText=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 function readState(){try{const value=JSON.parse(localStorage.getItem(storageKey)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}catch{return {};}}
 let state=readState(),currentStage='',mainQuestions=[],practiceBank=[],practiceIndex=0,practiceAnswered=false,mainAnswered=false,homeMode='dashboard',activeTab='home',updateFilter='All';
+let liveView=null,liveSession=false,stopLiveWatch=null,loginBusy=false;
 function saveState(){try{localStorage.setItem(storageKey,JSON.stringify(state));}catch{/* Preview still works without browser storage, but an attempt may not survive reload. */}}
 function attempt(){const entry=state.attempts?.[dateKey];return entry?.stage===currentStage&&Array.isArray(entry.answers)?entry:null;}
 function ensureAttempt(){if(!state.attempts||typeof state.attempts!=='object')state.attempts={};if(!attempt()){state.attempts[dateKey]={stage:currentStage,answers:[]};saveState();}return state.attempts[dateKey];}
@@ -36,13 +37,77 @@ function openAccount(stage){
  publicPage.hidden=true;document.body.classList.add('demo-active');homeMode='dashboard';onboarding.hidden=true;interior.hidden=false;refreshBell();showPanel('home');history.pushState({portal:'home'},'','#student-home');window.scrollTo(0,0);
 }
 $('#togglePassword')?.addEventListener('click',event=>{const input=$('#studentPassword'),show=input.type==='password';input.type=show?'text':'password';event.currentTarget.setAttribute('aria-label',show?'Hide password':'Show password');});
-form.addEventListener('submit',event=>{event.preventDefault();if(form.elements.studentId.value.trim().toUpperCase()!=='DEMO001'||form.elements.password.value!=='Rehaan2026'){status.textContent='For the demo, enter DEMO001 and Rehaan2026.';return;}enterSetup();});
-function logout(){interior.hidden=true;onboarding.hidden=true;document.body.classList.remove('demo-active');publicPage.hidden=false;form.reset();status.textContent='Demo account: DEMO001 / Rehaan2026';history.replaceState({portal:'login'},'','student.html#login');window.scrollTo(0,0);}
+form.addEventListener('submit',async event=>{
+ event.preventDefault();if(loginBusy)return;
+ const username=form.elements.studentId.value.trim(),password=form.elements.password.value;
+ if(username.toUpperCase()==='DEMO001'){
+  if(password!=='Rehaan2026'){status.textContent='Check the demo password and try again.';return;}
+  liveSession=false;liveView=null;enterSetup();return;
+ }
+ loginBusy=true;form.querySelector('[type=submit]').disabled=true;status.textContent='Checking your student account…';
+ try{
+  const auth=await import('./student-portal-auth.js?v=20261124-portal-1');
+  const session=await auth.signInStudent(username,password);
+  startLiveSession(session,auth);
+ }catch(error){status.textContent=error?.code==='auth/invalid-credential'?'Student ID or password is incorrect.':error?.message||'Login is unavailable. Please try again.';}
+ finally{loginBusy=false;form.querySelector('[type=submit]').disabled=false;form.elements.password.value='';}
+});
+async function logout(){
+ if(stopLiveWatch){stopLiveWatch();stopLiveWatch=null;}
+ const wasLive=liveSession;liveSession=false;liveView=null;
+ interior.hidden=true;onboarding.hidden=true;document.body.classList.remove('demo-active');publicPage.hidden=false;form.reset();status.textContent='Demo account: DEMO001 / Rehaan2026';history.replaceState({portal:'login'},'','student.html#login');window.scrollTo(0,0);
+ if(wasLive)try{const auth=await import('./student-portal-auth.js?v=20261124-portal-1');await auth.signOutStudent();}catch{status.textContent='Signed out of this screen. Check your connection before using another account.';}
+}
+async function startLiveSession(session,auth){
+ if(stopLiveWatch)stopLiveWatch();
+ liveSession=true;liveView=session.view;publicPage.hidden=true;onboarding.hidden=true;interior.hidden=false;document.body.classList.add('demo-active');
+ updateLiveHeader();showPanel('home');history.replaceState({portal:'home'},'','#student-home');window.scrollTo(0,0);
+ stopLiveWatch=await auth.watchStudent(session.ref,view=>{if(!liveSession)return;liveView=view;updateLiveHeader();showPanel(activeTab);},()=>{if(liveSession){void logout();status.textContent='Student access was changed or the connection failed. Please sign in again.';}});
+}
+function updateLiveHeader(){
+ const profile=liveView?.profile||{},name=profile.name||'Student';
+ $('.demo-head .student-head-avatar').textContent=name.charAt(0).toUpperCase();
+ $('.demo-head small').textContent='RC LEARN · STUDENT';
+ $('.demo-head h1').textContent='Hello, '+name;
+ $('.demo-head p').textContent=`ADM ${profile.admissionNumber||'—'} · ${profile.batch||'Batch not assigned'}`;
+ $('#studentBell i').hidden=true;
+}
+void (async()=>{try{const auth=await import('./student-portal-auth.js?v=20261124-portal-1');const session=await auth.restoreStudent();if(session&&!liveSession&&!loginBusy&&publicPage.hidden!==true)await startLiveSession(session,auth);}catch{/* Keep public login available if offline or a saved session is inactive. */}})();
 $('#studentBell').addEventListener('click',()=>navigate('updates'));
 
-function showPanel(name){activeTab=name;setActiveTab(name);if(name==='home'){renderHome();return;}if(name==='account'){renderAccount();return;}if(name==='updates'){renderUpdates();return;}renderJourney();}
+function showPanel(name){activeTab=name;setActiveTab(name);if(liveSession){renderLivePanel(name);return;}if(name==='home'){renderHome();return;}if(name==='account'){renderAccount();return;}if(name==='updates'){renderUpdates();return;}renderJourney();}
 function navigate(name,push=true){if(!['home','account','updates','journey'].includes(name))return;if(name==='home')homeMode='dashboard';showPanel(name);if(push)history.pushState({portal:name},'',`#student-${name}`);window.scrollTo({top:0,behavior:'smooth'});}
 window.addEventListener('popstate',event=>{const page=event.state?.portal;if(interior.hidden)return;if(page&&['home','account','updates','journey'].includes(page))navigate(page,false);else logout();});
+function liveRows(items){return items.map(([label,value])=>`<div class="account-row"><span>${escapeText(label)}</span><b>${escapeText(value||'Not recorded')}</b></div>`).join('');}
+function liveMoney(value){return `₹${Number(value||0).toLocaleString('en-IN',{maximumFractionDigits:2})}`;}
+function renderLivePanel(name){
+ const view=liveView||{},profile=view.profile||{},fees=view.fees||{},attendance=Array.isArray(view.attendance)?view.attendance:[],journey=view.journey||{};
+ const latest=attendance[0],periods=Array.isArray(fees.periods)?fees.periods:[],receipts=Array.isArray(fees.receipts)?fees.receipts:[],topics=Array.isArray(journey.topics)?journey.topics:[];
+ const done=topics.filter(topic=>topic.done===true).length,progress=topics.length?Math.round(done/topics.length*100):0;
+ const course=profile.course||'Course not recorded',batch=profile.batch||'Batch not assigned';
+ if(name==='home'){
+  $('#demoContent').innerHTML=`<section class="student-home"><div class="student-home-title"><span class="eyebrow">RC LEARN · YOUR DASHBOARD</span><h2>${escapeText(profile.name||'Your student space')}</h2><p>ADM ${escapeText(profile.admissionNumber||'—')} · ${escapeText(batch)}</p></div>
+   <div class="student-hero"><div><small>CURRENT COURSE</small><strong>${escapeText(course)}</strong><p>Your teacher's recorded learning journey appears below.</p></div><span class="learning-motif" aria-hidden="true"><i class="laptop-screen"></i><i class="laptop-base"></i><i class="book book-one"></i><i class="book book-two"></i></span></div>
+   <div class="student-quick-grid"><div><small>FEE DUE</small><b>${fees.statement?liveMoney(fees.statement.due):'Awaiting review'}</b></div><div><small>LATEST ATTENDANCE</small><b>${latest?`${Number(latest.attended)||0} / ${Number(latest.classes)||0}`:'Awaiting record'}</b></div><div><small>LEARNING TOPICS</small><b>${done} / ${topics.length}</b></div><div><small>WEEKLY RANK</small><b>Awaiting results</b></div></div>
+   <article class="student-quiz-entry demo-panel"><div class="student-quiz-icon" aria-hidden="true">✦</div><div><small>WEEKLY QUIZ</small><h3>${escapeText(course)}</h3><p>The scored quiz opens after your teacher publishes it for your account.</p></div><button class="gold-button" type="button" disabled aria-disabled="true">Quiz not published</button></article>
+   <article class="student-practice demo-panel"><div><small>EXTRA PRACTICE</small><h3>Keep learning</h3><p>Practice questions will open when your learning program is assigned.</p></div></article>
+   <div class="student-home-pair"><article class="student-rank"><div><small>SKILLS LEAGUE</small><strong>—</strong><p>Your rank appears after reviewed results are published.</p></div><span aria-hidden="true">♛</span></article><article class="student-latest"><small>CENTRE UPDATE</small><strong>Awaiting a notice</strong><p>Your centre has not published a student notice yet.</p><button type="button" id="openLatest">See updates →</button></article></div></section>`;
+  $('#openLatest').addEventListener('click',()=>navigate('updates'));return;
+ }
+ if(name==='account'){
+  $('#demoContent').innerHTML=`<section class="student-section"><div class="student-section-title"><span class="eyebrow">MY ACCOUNT</span><h2>Your records</h2><p>Details published from your admission record.</p></div>
+   <div class="student-account-grid"><article class="student-metric fee"><small>PENDING TUITION</small><strong>${fees.statement?liveMoney(fees.statement.due):'—'}</strong><span>${fees.statement?`As of ${escapeText(fees.statement.asOf)}`:'Fee statement needs centre review'}</span></article><article class="student-metric attendance"><small>LATEST ATTENDANCE</small><strong>${latest?`${Number(latest.attended)||0} / ${Number(latest.classes)||0}`:'—'}</strong><span>${latest?escapeText(latest.month):'No record published'}</span></article></div>
+   <details class="account-section" open><summary>Personal & admission details <span>⌄</span></summary><div class="account-section-body">${liveRows([['Full name',profile.name],['Admission number',profile.admissionNumber],['Date of birth',profile.dob],['Parent / guardian',profile.guardian],['Student phone',profile.studentPhone],['Guardian phone',profile.guardianPhone],['Course',course],['Batch',batch],['Joining date',profile.joined],['Account status',profile.status]])}</div></details>
+   <details class="account-section"><summary>Fees & receipts <span>⌄</span></summary><div class="account-section-body">${liveRows([['Admission fee status',fees.admissionStatus],['Admission fee recorded',liveMoney(fees.admissionAmount)],['Monthly tuition',fees.statement?liveMoney(fees.statement.monthlyTuition):'Awaiting review'],['Total monthly received',fees.statement?liveMoney(fees.statement.received):'Awaiting review'],['Pending monthly amount',fees.statement?liveMoney(fees.statement.due):'Awaiting review']])}${periods.map(item=>liveRows([[item.due,`${liveMoney(item.received)} received · ${liveMoney(item.concession)} concession`]])).join('')||'<div class="account-empty"><b>No monthly fee periods recorded</b><p>Ask the centre if you expected a payment here.</p></div>'}${receipts.length?`<h3>Receipts</h3>${receipts.map(item=>liveRows([[item.number||item.id,`${liveMoney(item.amount)} · ${item.date||'Date not recorded'}`]])).join('')}`:'<div class="account-empty"><b>No receipts published</b></div>'}<p class="demo-disclosure">Pending amounts appear only when the admin fee ledger passes validation.</p></div></details>
+   <details class="account-section"><summary>Attendance & timetable <span>⌄</span></summary><div class="account-section-body">${attendance.map(item=>liveRows([[item.month,`${Number(item.attended)||0} of ${Number(item.classes)||0} classes`]])).join('')||'<div class="account-empty"><b>No attendance recorded yet</b></div>'}${liveRows([['Batch',batch],['Timetable','Not published']])}</div></details>
+   <details class="account-section"><summary>Messages & groups <span>⌄</span></summary><div class="account-section-body"><div class="account-empty"><b>Centre contact is not published yet</b><p>Teacher messages and group links will appear here when enabled by the centre.</p></div></div></details>
+   <details class="account-section"><summary>Settings & security <span>⌄</span></summary><div class="account-section-body"><label class="setting-switch"><span>Reduce animations</span><input type="checkbox" id="reduceMotion" ${state.reduceMotion?'checked':''}></label><button class="account-action logout" type="button" id="demoLogout">Sign out</button></div></details></section>`;
+  $('#reduceMotion').addEventListener('change',event=>{state.reduceMotion=event.target.checked;document.body.classList.toggle('reduce-motion',state.reduceMotion);saveState();});
+  $('#demoLogout').addEventListener('click',logout);return;
+ }
+ if(name==='updates'){$('#demoContent').innerHTML=`<section class="student-section"><div class="student-section-title"><span class="eyebrow">CENTRE UPDATES</span><h2>Notes & announcements</h2><p>Posts from your centre will appear here.</p></div><div class="update-filters" role="group" aria-label="Update categories">${updateFilters.map(filter=>`<button type="button" data-update-filter="${escapeText(filter)}" aria-pressed="${filter===updateFilter}">${escapeText(filter)}</button>`).join('')}</div><div class="account-empty"><b>No ${escapeText(updateFilter==='All'?'updates':updateFilter.toLowerCase())} published yet</b><p>Check again after the centre posts an update.</p></div></section>`;$('#demoContent').querySelectorAll('[data-update-filter]').forEach(button=>button.addEventListener('click',()=>{updateFilter=button.dataset.updateFilter;renderLivePanel('updates');}));return;}
+ $('#demoContent').innerHTML=`<section class="student-section"><div class="student-section-title"><span class="eyebrow">YOUR LEARNING JOURNEY</span><h2>One skill at a time</h2><p>${escapeText(journey.course||course)}</p></div><article class="journey-overview"><div><small>TEACHER ASSESSED TOPICS</small><strong>${progress}%</strong><p>${done} of ${topics.length} topics completed</p></div><div class="journey-progress"><span style="width:${progress}%"></span></div></article><div class="journey-timeline">${topics.map((topic,index)=>`<div class="journey-step ${topic.done?'done':'later'}"><span>${topic.done?'✓':String(index+1).padStart(2,'0')}</span><div><b>${escapeText(topic.title)}</b><small>${topic.done?'Completed':'In progress or upcoming'}</small></div></div>`).join('')||'<div class="account-empty"><b>No topics assessed yet</b><p>Your teacher can add them in the admin learning checklist.</p></div>'}</div><article class="demo-panel journey-class"><small>DAILY CLASS LEARNING</small><h3>Awaiting a class note</h3><p>Your teacher has not published a note or image.</p></article></section>`;
+}
 function renderHome(){
  if(homeMode==='main'){renderMain();return;}
  if(homeMode==='practice'){renderPractice();return;}

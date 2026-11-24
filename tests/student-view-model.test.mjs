@@ -18,3 +18,11 @@ test('unapproved or unnumbered records cannot be projected',()=>{
  assert.throws(()=>studentViewFromApplication({status:'New',admissionNumber:'100'}));
  assert.throws(()=>studentViewFromApplication({status:'Approved'}));
 });
+test('a validated fee statement publishes the real pending amount, incomplete dates do not',()=>{
+ const data={status:'Approved',fullName:'Student',admissionNumber:'040',admissionDate:'2026-10-01',monthlyFees:{'2026-11-01':500}};
+ const clear=studentViewFromApplication(data,'application-040');
+ assert.equal(clear.fees.statement.due,499);
+ assert.equal(clear.fees.statement.monthlyTuition,999);
+ const incomplete=studentViewFromApplication({...data,admissionDate:''},'application-040');
+ assert.equal(incomplete.fees.statement,null);
+});

@@ -352,6 +352,31 @@ service cloud.firestore {
         ).data.uid == request.auth.uid;
     }
 
+    // A student-owned, sanitized copy of approved fields. The full application
+    // remains admin-only. Students cannot list views or change any value.
+    match /studentPortalViews/{studentUid} {
+      function portalAdmin() {
+        return request.auth != null
+          && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+          && verifiedAdmin();
+      }
+      function validView(d) {
+        return d.keys().hasOnly(['uid','applicationId','enabled','profile','fees','attendance','journey','updatedAt'])
+          && d.keys().hasAll(['uid','applicationId','enabled','profile','fees','attendance','journey','updatedAt'])
+          && d.uid == studentUid
+          && d.applicationId is string && d.applicationId.size() >= 1 && d.applicationId.size() <= 160
+          && d.enabled is bool
+          && d.profile is map && d.fees is map && d.attendance is list && d.journey is map
+          && d.updatedAt is string && d.updatedAt.size() >= 20 && d.updatedAt.size() <= 40;
+      }
+      allow get: if portalAdmin() || (
+        request.auth != null && request.auth.uid == studentUid && resource.data.enabled == true
+      );
+      allow list: if portalAdmin();
+      allow create, update: if portalAdmin() && validView(request.resource.data);
+      allow delete: if portalAdmin();
+    }
+
 
     /*
      * Everything else is denied.
