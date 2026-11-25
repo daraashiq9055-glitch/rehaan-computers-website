@@ -5,30 +5,51 @@ import {studentWhatsAppURL as whatsappURL} from './admin-whatsapp.js?v=20261104-
 let app=null;
 import {feeStatement} from './admin-fee-statement-model.js?v=20261102-settings-1';
 import {indiaDate,monthLabel,money,escapeHTML as e} from './admin-feature-model.js?v=20261102-settings-1';
-import {reminder,reminderAvailable} from './admin-reminder-model.js?v=20261125-reminder-3';
+import {reminder,reminderAvailable} from './admin-reminder-model.js?v=20261125-reminder-4';
 const monthNow=()=>indiaDate().slice(0,7);
 const previousMonth=()=>{const [y,m]=monthNow().split('-').map(Number);return new Date(Date.UTC(y,m-2,1)).toISOString().slice(0,7);};
 const records=()=>app.snapshot().records;
 function download(blob,name){const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),2000);}
 export async function reminderPNG(value){
- // Do not let an unrelated dashboard font keep a reminder download waiting.
+ if(!value.canImage||!value.statement.reliable||value.total<=0)throw Error('No verified pending fee to show.');
+ const {PAYMENT_QR}=await import('./admin-payment-qr.js?v=20261125-reminder-4');
+ const qr=new Image();qr.src=PAYMENT_QR;await qr.decode();
  await Promise.race([document.fonts.load('400 34px Inter').catch(()=>[]),new Promise(resolve=>setTimeout(resolve,2000))]);
  const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d');canvas.width=1600;
- const lines=[];function wrap(text,width,size=34){ctx.font=`${size}px Inter,Arial,sans-serif`;let line='';const result=[];for(const word of text.split(/\s+/)){if(ctx.measureText(line+' '+word).width>width&&line){result.push(line);line='';}line+=(line?' ':'')+word;}if(line)result.push(line);return result;}
- const name=wrap(value.statement.student.name,1320,46);
- value.rows.forEach(row=>lines.push({label:row.label,amount:money(row.balance)}));
- canvas.height=850+name.length*62+lines.length*94;
- ctx.fillStyle='#fbf6e9';ctx.fillRect(0,0,1600,canvas.height);
- ctx.fillStyle='#152d43';ctx.fillRect(0,0,1600,210);
- function text(s,x,y,size=34,colour='#21394c',weight=400){ctx.fillStyle=colour;ctx.font=`${weight} ${size}px Inter,Arial,sans-serif`;ctx.fillText(s,x,y);}
- text('REHAAN COMPUTERS',100,105,54,'#f7dfaa',700);text('MONTHLY FEE REMINDER',100,162,27,'#e5edf5',500);
- let y=290;name.forEach(line=>{text(line,100,y,46,'#21394c',600);y+=62;});text('Admission '+value.statement.student.admission+'  •  As of '+value.statement.asOf,100,y,28);y+=85;
- text('PENDING LEARNING MONTH',100,y,25,'#6d716c',600);text('REMAINING',1190,y,25,'#6d716c',600);y+=30;
- lines.forEach(row=>{ctx.strokeStyle='#d9cfb8';ctx.beginPath();ctx.moveTo(100,y);ctx.lineTo(1500,y);ctx.stroke();text(row.label,100,y+56,36);text(row.amount,1180,y+56,36,'#21394c',600);y+=94;});
- y+=30;ctx.fillStyle='#152d43';ctx.fillRect(100,y,1400,140);text('TOTAL REMAINING',135,y+54,28,'#eed7a5',500);text(money(value.total),135,y+110,48,'#fff4ce',700);y+=210;
- text('FEE PAYMENT  •  6006433125',100,y,34,'#21394c',600);y+=57;
- text('Already paid? Please share your payment confirmation.',100,y,28);y+=50;
- text('Includes current month and earlier pending fees. Not a receipt.',100,y,25,'#687169');
+ const navy='#102b49',ink='#162c43',muted='#51677a',gold='#e2b958',bg='#f4f7fb',white='#ffffff';
+ const month=value.statement.asOf.slice(0,7);
+ const groups=[['CURRENT MONTH',value.rows.filter(r=>r.month===month)],['PREVIOUS DUES',value.rows.filter(r=>r.month<month)]].filter(g=>g[1].length);
+ function wrap(s,width,size=38,weight=400){ctx.font=weight+' '+size+'px Inter,Arial,sans-serif';const out=[];let line='';for(const word of String(s).split(/\s+/)){if(line&&ctx.measureText(line+' '+word).width>width){out.push(line);line='';}line+=(line?' ':'')+word;}if(line)out.push(line);return out;}
+ const names=wrap('Dear '+value.statement.student.name+',',1370,48,650);
+ const admission=wrap('Admission No.: '+value.statement.student.admission,1370,31);
+ const groupsHeight=groups.reduce((h,g)=>h+64+g[1].length*78+20,0);
+ canvas.height=250+names.length*58+admission.length*40+48+groupsHeight+150+138+385+125;
+ function text(s,x,y,size=34,color=ink,weight=400,align='left'){ctx.fillStyle=color;ctx.font=weight+' '+size+'px Inter,Arial,sans-serif';ctx.textAlign=align;ctx.fillText(s,x,y);}
+ function box(x,y,w,h,color,r=20,stroke=null){ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fillStyle=color;ctx.fill();if(stroke){ctx.strokeStyle=stroke;ctx.lineWidth=2;ctx.stroke();}}
+ ctx.fillStyle=bg;ctx.fillRect(0,0,1600,canvas.height);
+ ctx.fillStyle=navy;ctx.fillRect(0,0,1600,184);ctx.fillStyle=gold;ctx.fillRect(0,184,1600,7);
+ box(70,48,104,86,'#214467',16);text('RC',122,107,45,white,700,'center');
+ text('REHAAN COMPUTERS',202,102,63,white,750);
+ text('MONTHLY FEE REMINDER',202,151,29,'#d6e5f3',600);
+ let y=250;
+ names.forEach(n=>{text(n,78,y,48,ink,650);y+=58;});
+ admission.forEach(n=>{text(n,78,y,31,muted,500);y+=40;});y+=28;
+ for(const [label,rows] of groups){
+  box(70,y,1460,52,navy,12);text(label,98,y+36,29,white,650);y+=64;
+  for(const row of rows){box(70,y,1460,66,white,10,'#dbe4ef');text(row.label,100,y+44,36,ink,500);text(money(row.balance),1498,y+44,38,navy,700,'right');y+=78;}y+=20;
+ }
+ box(70,y,1460,125,navy,20);text('TOTAL TO PAY',100,y+77,38,white,700);text(money(value.total),1495,y+83,67,'#f7d780',750,'right');y+=150;
+ box(70,y,1460,110,'#fff9ec',16,'#ead9ae');text('IMPORTANT NOTICE',100,y+37,27,'#7b571a',700);text('Please pay your monthly fee on time to avoid pending balances.',100,y+80,34,ink,500);y+=138;
+ box(70,y,1460,355,white,20,'#dbe4ef');
+ text('FEE PAYMENT',100,y+48,30,navy,700);text('Pay to: 6006433125',100,y+105,45,ink,700);
+ text('Scan with any UPI app',100,y+154,29,muted,500);
+ box(100,y+192,235,60,'#eef4ff',12);text('GPay',217,y+232,32,'#245fc7',700,'center');
+ box(350,y+192,235,60,'#f4effc',12);text('PhonePe',467,y+232,30,'#5f259f',700,'center');
+ box(600,y+192,340,60,'#edf7f3',12);text('J&K Bank mPay',770,y+232,27,'#15745c',700,'center');
+ const old=ctx.imageSmoothingEnabled;ctx.imageSmoothingEnabled=false;ctx.drawImage(qr,1165,y+9,315,315);ctx.imageSmoothingEnabled=old;
+ text('Scan to pay',1322,y+346,24,muted,600,'center');y+=385;
+ text('If already paid, kindly share your payment confirmation.',800,y+8,30,muted,500,'center');
+ text('Regards, Rehaan Computers',800,y+58,35,navy,700,'center');text('Fee reminder · Not a payment receipt',800,y+98,23,muted,400,'center');
  return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Image could not be created.')),'image/png'));
 }
 export function openReminder(entry,services=app){
@@ -46,7 +67,7 @@ export function openReminder(entry,services=app){
   if(!current()){status.textContent='The record or session changed. Close and reopen this reminder.';return;}
   if(!reminderAvailable(entry.data,indiaDate())){status.textContent='Reminders are available only for active enrolled students.';return;}
   if(action==='whatsapp'){const latest=reminder(entry);const url=whatsappURL(latest.statement.student.phone,latest.message);if(!url){status.textContent='Save a valid student mobile number first.';return;}const opened=window.open(url,'_blank');if(opened)opened.opener=null;status.textContent=opened?'WhatsApp opened. Review the message, attach the downloaded image if needed, and press Send. No delivery has been recorded.':'Pop-up blocked. Allow WhatsApp pop-ups and try again.';return;}
-  b.disabled=true;status.textContent='Preparing the complete reminder image…';try{const blob=await reminderPNG(value);if(!dialog.isConnected)return;if(!current())throw Error('Record or session changed. Reopen the reminder.');
+  b.disabled=true;status.textContent='Preparing the complete reminder image…';try{const blob=await reminderPNG(reminder(entry));if(!dialog.isConnected)return;if(!current())throw Error('Record or session changed. Reopen the reminder.');
    if(action==='download'){download(blob,'Rehaan-Fee-Reminder-'+value.statement.student.admission+'.png');status.textContent='Full reminder image downloaded. No payment or reminder status was changed.';}
    else{if(imageURL)URL.revokeObjectURL(imageURL);imageURL=URL.createObjectURL(blob);const img=document.createElement('img');img.src=imageURL;img.alt='Complete fee reminder for '+value.statement.student.name;dialog.querySelector('#nextReminderImage').replaceChildren(img);status.textContent='Complete reminder image ready. Download it to attach in WhatsApp.';}
   }catch(error){status.textContent=error.message;}finally{b.disabled=false;}
