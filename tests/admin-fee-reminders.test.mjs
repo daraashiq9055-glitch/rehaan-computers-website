@@ -1,62 +1,33 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {readFileSync} from 'node:fs';
-import vm from 'node:vm';
-// Exercise the actual dashboard functions without Firebase, messages or payments.
-const source=readFileSync(new URL('../public/admin-app.js',import.meta.url),'utf8');
-const billing=source.slice(source.indexOf('const MONTHLY_TUITION_FEE = 999;'),source.indexOf('async function openTuitionReminder'));
-const api=vm.runInNewContext(billing+';({select:actionableFeeReminder,message:tuitionWhatsAppMessage})',{Intl,Date,Math,Number,Boolean,adminIsEnrolled:data=>data.status==='Approved'});
-const now=day=>new Date(`2026-10-${String(day).padStart(2,'0')}T06:00:00Z`);
-const record=()=>({status:'Approved',admissionNumber:'001',admissionDate:'2026-07-10',fullName:'Test Student',photo:'keep-private-photo',payment:{status:'paid',amount:100,providerId:'keep-provider'},monthlyFees:{'2026-08-10':500},feeReminders:{'2026-08-10':'2026-08-11T06:00:00Z'},customLegacy:{keep:true}});
-test('unpaid reminders remain available on every calendar day, including the previously closed dates',()=>{
- const data=record(),before=structuredClone(data);
- for(let day=1;day<=31;day++){
-  const bill=api.select(data,now(day));assert.equal(bill.key,'2026-08-10');assert.equal(bill.remaining,499);assert.equal(bill.sent,true);
- }
- assert.deepEqual(data,before);
-});
-test('oldest partially paid month remains first after reminders; only clearing its balance advances the period',()=>{
- const data=record();data.feeReminders['2026-09-10']='2026-09-15T06:00:00Z';
- assert.equal(api.select(data,now(24)).key,'2026-08-10');
- data.monthlyFees['2026-08-10']=999;let bill=api.select(data,now(24));assert.equal(bill.key,'2026-09-10');assert.equal(bill.remaining,999);assert.equal(bill.sent,true);
- data.monthlyFees['2026-09-10']=300;assert.equal(api.select(data,now(24)).remaining,699);
- data.monthlyFees['2026-09-10']=999;assert.equal(api.select(data,now(24)).key,'2026-10-10');
-});
-test('upcoming reminders also work more than five days before due; paid current/upcoming periods are not requested',()=>{
- const data=record();data.admissionDate='2026-10-01';data.monthlyFees={};data.feeReminders={};
- let bill=api.select(data,now(2));assert.equal(bill.key,'2026-11-01');assert.ok(bill.diff>5);
- data.monthlyFees['2026-11-01']=999;assert.equal(api.select(data,now(24)),null);
- for(const status of ['New','Cancelled']){data.monthlyFees={};data.status=status;assert.equal(api.select(data,now(24)),null);}
- data.status='Approved';data.enrolmentStatus='Cancelled';assert.equal(api.select(data,now(24)),null);
-});
-test('month-wise warnings contain the oldest period and exact remaining balance without suggesting an overdue date is in the future',()=>{
- const data=record(),bill=api.select(data,now(24)),message=api.message(data,bill);
- assert.match(message,/OVERDUE MONTHLY FEE REMINDER/);assert.match(message,/Fee Month:\* \*July 2026\*/);assert.match(message,/\*AMOUNT TO PAY\*\n\*₹499\*/);assert.match(message,/Due Date:\* 10-08-2026/);assert.doesNotMatch(message,/on or before the due date/);
- const before=structuredClone(data);api.message(data,bill);assert.deepEqual(data,before);
-});
-test('short months, leap days and year changes still select the original oldest unpaid due date',()=>{
- for(const text of ['2026-12-31','2027-01-01','2027-02-28','2028-02-29']){
-  const data=record();assert.equal(api.select(data,new Date(text+'T06:00:00Z')).key,'2026-08-10');
+import {reminder} from '../public/admin-reminder-model.js';
+import {studentWhatsAppURL} from '../public/admin-whatsapp.js';
+import {feeStatement} from '../public/admin-fee-statement-model.js';
+const record=(joined='2026-10-10',monthlyFees={})=>({id:'test',data:{status:'Approved',admissionNumber:'RC1',fullName:'Test Student',phone:'9999999991',admissionDate:joined,monthlyFees,feeReminders:{'2026-11-10':'sent'}}});
+test('date boundaries and repeatable reminders regardless of payment status',()=>{
+ for(const [date,expected] of [['2026-11-24',false],['2026-11-25',true],['2026-11-30',true],['2026-12-01',false],['2026-12-25',true],['2027-02-28',true],['2028-02-29',true]]){
+  for(const fees of [{},{'2026-11-10':999,'2026-12-10':999}])assert.equal(reminder(record('2026-10-10',fees),date).canShare,expected);
  }
 });
-
-test('fee month names the learning month, while the original due date and balances stay unchanged',()=>{
- for(const [joined,due,label] of [['2026-10-01','2026-11-01','October 2026'],['2026-10-10','2026-11-10','October 2026'],['2026-12-10','2027-01-10','December 2026'],['2027-01-31','2027-02-28','January 2027'],['2028-01-31','2028-02-29','January 2028']]){
-  const data=record();data.admissionDate=joined;data.monthlyFees={};data.feeReminders={};const before=structuredClone(data),bill=api.select(data,new Date(joined+'T06:00:00Z'));
-  assert.equal(bill.key,due);const message=api.message(data,bill);assert.ok(message.includes('*Fee Month:* *'+label+'*'));assert.ok(message.includes('*Due Date:* '+due.split('-').reverse().join('-')));assert.ok(message.includes('*AMOUNT TO PAY*\n*₹999*'));assert.doesNotMatch(message,/PAYMENT NUMBER|pay directly to this number/);assert.deepEqual(data,before);
- }
+test('previous partial balance and current month separately listed and totaled',()=>{
+ const entry=record('2026-10-10',{'2026-11-10':500}),before=JSON.stringify(entry),r=reminder(entry,'2026-11-25');
+ assert.deepEqual(r.rows.map(row=>[row.month,row.balance]),[['2026-10',49900],['2026-11',99900]]);
+ assert.equal(r.total,149800);assert.equal(r.overdue,49900);assert.match(r.message,/CURRENT MONTH: November 2026/);assert.match(r.message,/October 2026/);assert.equal(JSON.stringify(entry),before);assert.equal(feeStatement(entry,'2026-11-25').totals.due,49900);
 });
-
-test('the rupee amount has its own bold line, with two decimal places for partial rupees',()=>{
- const data=record(),bill=api.select(data,now(24));bill.remaining=499.5;
- const message=api.message(data,bill);assert.match(message,/\*AMOUNT TO PAY\*\n\*₹499\.50\*/);assert.doesNotMatch(message,/Rs\.|PAYMENT NUMBER|pay directly to this number/);
+test('paid months omitted; fully paid still shareable',()=>{
+ const e=record('2026-10-10',{'2026-11-10':999});let r=reminder(e,'2026-11-25');assert.equal(r.total,99900);assert.equal(r.rows.length,1);assert.equal(r.rows[0].month,'2026-11');
+ e.data.monthlyFees['2026-12-10']=999;r=reminder(e,'2026-11-25');assert.equal(r.total,0);assert.equal(r.canShare,true);assert.match(r.message,/Fee already paid/);assert.doesNotMatch(r.message,/TOTAL REMAINING/);
 });
-
-
-test('payment contact is a distinct bold footer, without changing the student recipient or outstanding amount',()=>{
- const data=record(),before=structuredClone(data),bill=api.select(data,now(24)),message=api.message(data,bill);
- assert.match(message,/\*AMOUNT TO PAY\*\n\*₹499\*/);
- assert.ok(message.endsWith('──────────────────\n*FEE PAYMENT*\nPay to: *6006433125*\nPlease share your payment confirmation after paying.'));
- assert.equal(message.split('6006433125').length-1,1);
- assert.deepEqual(data,before);
+test('late anniversary includes current month without false overdue status',()=>{
+ const r=reminder(record('2026-10-30'),'2026-11-25');assert.deepEqual(r.rows.map(x=>[x.month,x.key,x.upcoming]),[['2026-10','2026-11-30',true],['2026-11','2026-12-30',true]]);assert.equal(r.total,199800);assert.equal(r.overdue,0);
+});
+test('new admissions, short months, leap year and year rollover',()=>{
+ for(const [joined,date,key] of [['2026-11-25','2026-11-25','2026-12-25'],['2026-12-31','2026-12-31','2027-01-31'],['2028-01-31','2028-01-31','2028-02-29']]){const r=reminder(record(joined),date);assert.equal(r.rows[0].key,key);assert.equal(r.total,99900);}
+});
+test('cancelled and pending excluded; unreliable ledger shares no amounts',()=>{
+ for(const change of [{status:'New'},{enrolmentStatus:'Cancelled'}])assert.equal(reminder({...record(),data:{...record().data,...change}},'2026-11-25').canShare,false);
+ const e=record();delete e.data.admissionDate;const r=reminder(e,'2026-11-25');assert.equal(r.canShare,true);assert.equal(r.total,0);assert.doesNotMatch(r.message,/TOTAL REMAINING|₹/);
+});
+test('WhatsApp encodes exact text to saved number repeatedly without writes',()=>{
+ const e=record(),before=JSON.stringify(e),r=reminder(e,'2026-11-25');for(let i=0;i<2;i++){const url=studentWhatsAppURL(e.data.phone,r.message);assert.equal(url,'https://wa.me/919999999991?text='+encodeURIComponent(r.message));}assert.equal(JSON.stringify(e),before);
 });
