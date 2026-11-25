@@ -29,7 +29,7 @@ export function reminder(entry,asOf){
   lines.push('Kindly review your '+label+' monthly fee status with Rehaan Computers. If already paid, please share your payment confirmation.');
  }
  lines.push('','*Regards,*','','Rehaan Computers');
- const message=lines.join('\n');
+ const message=lines.join('\n').replace(/\n{3,}/g,'\n\n').replace(/\*REHAAN COMPUTERS\*\n\n/,'*REHAAN COMPUTERS*\n').replace(/,\n\nAdmission No\./,',\nAdmission No.').replace(/\n\n──────────────────\n\n/g,'\n\n').replace(/\*IMPORTANT NOTICE\*\n\n/,'*IMPORTANT NOTICE*\n').replace(/Kindly ensure timely payment of your monthly fees to avoid pending balances\./,'Please pay your monthly fee on time to avoid pending balances.').replace(/\*FEE PAYMENT\*\n\n/,'*FEE PAYMENT*\n').replace(/\*Regards,\*\n\nRehaan Computers/,'*Regards, Rehaan Computers*');
  const canShare=reminderAvailable(entry.data,statement.asOf);
  return {statement:{...statement,reliable},rows,total,overdue,message,canShare,canImage:canShare&&reliable&&total>0};
 }
