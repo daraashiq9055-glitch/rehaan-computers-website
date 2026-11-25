@@ -42,3 +42,5 @@ test('approved compact wording and conditional sections',()=>{
  const paid=reminder(record('2026-10-10',{'2026-11-10':999,'2026-12-10':999}),'2026-11-25').message;
  assert.doesNotMatch(paid,/TOTAL TO PAY|6006433125|CURRENT MONTH|PREVIOUS DUES/);
 });
+
+test('compact message retains payment information without decorative separators',()=>{const s=reminder(record(),'2026-11-25').message;assert.doesNotMatch(s,/────|\n{3,}/);assert.match(s,/Please pay your monthly fee on time/);assert.match(s,/Pay to: \*6006433125\*/);assert.match(s,/\*Regards, Rehaan Computers\*/);});
