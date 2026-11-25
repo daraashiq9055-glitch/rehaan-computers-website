@@ -5,7 +5,7 @@ import {studentWhatsAppURL as whatsappURL} from './admin-whatsapp.js?v=20261104-
 let app=null;
 import {feeStatement} from './admin-fee-statement-model.js?v=20261102-settings-1';
 import {indiaDate,monthLabel,money,escapeHTML as e} from './admin-feature-model.js?v=20261102-settings-1';
-import {reminder,reminderAvailable} from './admin-reminder-model.js?v=20261125-reminder-1';
+import {reminder,reminderAvailable} from './admin-reminder-model.js?v=20261125-reminder-2';
 const monthNow=()=>indiaDate().slice(0,7);
 const previousMonth=()=>{const [y,m]=monthNow().split('-').map(Number);return new Date(Date.UTC(y,m-2,1)).toISOString().slice(0,7);};
 const records=()=>app.snapshot().records;
@@ -23,12 +23,12 @@ export async function reminderPNG(value){
  function text(s,x,y,size=34,colour='#21394c',weight=400){ctx.fillStyle=colour;ctx.font=`${weight} ${size}px Inter,Arial,sans-serif`;ctx.fillText(s,x,y);}
  text('REHAAN COMPUTERS',100,105,54,'#f7dfaa',700);text('MONTHLY FEE REMINDER',100,162,27,'#e5edf5',500);
  let y=290;name.forEach(line=>{text(line,100,y,46,'#21394c',600);y+=62;});text('Admission '+value.statement.student.admission+'  •  As of '+value.statement.asOf,100,y,28);y+=85;
- text('UNPAID LEARNING MONTH',100,y,25,'#6d716c',600);text('REMAINING',1190,y,25,'#6d716c',600);y+=30;
+ text('PENDING LEARNING MONTH',100,y,25,'#6d716c',600);text('REMAINING',1190,y,25,'#6d716c',600);y+=30;
  lines.forEach(row=>{ctx.strokeStyle='#d9cfb8';ctx.beginPath();ctx.moveTo(100,y);ctx.lineTo(1500,y);ctx.stroke();text(row.label,100,y+56,36);text(row.amount,1180,y+56,36,'#21394c',600);y+=94;});
- y+=30;ctx.fillStyle='#152d43';ctx.fillRect(100,y,1400,140);text('TOTAL TO PAY',135,y+54,28,'#eed7a5',500);text(money(value.total),135,y+110,48,'#fff4ce',700);y+=210;
+ y+=30;ctx.fillStyle='#152d43';ctx.fillRect(100,y,1400,140);text('TOTAL REMAINING',135,y+54,28,'#eed7a5',500);text(money(value.total),135,y+110,48,'#fff4ce',700);y+=210;
  text('FEE PAYMENT  •  6006433125',100,y,34,'#21394c',600);y+=57;
  text('Already paid? Please share your payment confirmation.',100,y,28);y+=50;
- text('Upcoming fees are excluded. This notice is not a payment receipt.',100,y,25,'#687169');
+ text('Includes current month and earlier pending fees. Not a receipt.',100,y,25,'#687169');
  return new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(Error('Image could not be created.')),'image/png'));
 }
 export function openReminder(entry,services=app){
@@ -38,7 +38,7 @@ export function openReminder(entry,services=app){
 
  document.querySelector('#nextReminder')?.remove();
  const value=reminder(entry),dialog=document.createElement('dialog');dialog.id='nextReminder';dialog.className='next-dialog';dialog.setAttribute('aria-label','Monthly fee reminder');
- dialog.innerHTML=`<h2>Monthly fee reminder</h2><p>${e(entry.data.fullName)} · ${e(entry.data.phone||'No saved phone')}<br>${value.statement.reliable?`${value.rows.length} unpaid months · <strong>${money(value.total)}</strong>`:'Fee record needs review; no balance quoted'}</p>${value.canShare?`<pre>${e(value.message)}</pre>`:`<p>${entry.data.status==='Approved'&&entry.data.admissionNumber&&entry.data.enrolmentStatus!=='Cancelled'?'Monthly reminders are available from the 25th through month-end (India time).':'Reminders are available only for active enrolled students.'}</p>`}<div class="next-actions"><button data-action="download" ${value.canImage?'':'disabled'}>Download reminder image · PNG</button><button data-action="image" ${value.canImage?'':'disabled'}>Preview image</button><button data-action="whatsapp" ${value.canShare?'':'disabled'}>Open WhatsApp · filled message</button><button data-action="close">Close</button></div><p id="nextReminderStatus" role="status">Open WhatsApp to use the full message shown above. Attaching the downloaded image is optional and manual. You still need to press Send; opening a chat does not mark fees paid.</p><div id="nextReminderImage"></div>`;
+ dialog.innerHTML=`<h2>Monthly fee reminder</h2><p>${e(entry.data.fullName)} · ${e(entry.data.phone||'No saved phone')}<br>${value.statement.reliable?`${value.rows.length} pending months · <strong>${money(value.total)}</strong>`:'Fee record needs review; no balance quoted'}</p>${value.canShare?`<pre>${e(value.message)}</pre>`:`<p>${entry.data.status==='Approved'&&entry.data.admissionNumber&&entry.data.enrolmentStatus!=='Cancelled'?'Monthly reminders are available from the 25th through month-end (India time).':'Reminders are available only for active enrolled students.'}</p>`}<div class="next-actions"><button data-action="download" ${value.canImage?'':'disabled'}>Download reminder image · PNG</button><button data-action="image" ${value.canImage?'':'disabled'}>Preview image</button><button data-action="whatsapp" ${value.canShare?'':'disabled'}>Open WhatsApp · filled message</button><button data-action="close">Close</button></div><p id="nextReminderStatus" role="status">Open WhatsApp to use the full message shown above. Attaching the downloaded image is optional and manual. You still need to press Send; opening a chat does not mark fees paid.</p><div id="nextReminderImage"></div>`;
  document.body.append(dialog);dialog.showModal();let imageURL;
  dialog.onclose=()=>{if(imageURL)URL.revokeObjectURL(imageURL);dialog.remove();};
  dialog.onclick=async event=>{const b=event.target.closest('[data-action]');if(!b||b.disabled)return;const action=b.dataset.action,status=dialog.querySelector('#nextReminderStatus');
