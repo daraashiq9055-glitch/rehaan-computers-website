@@ -1018,14 +1018,13 @@ function tuitionWhatsAppMessage(data, bill) {
     ].join("\n");
 }
 function actionableFeeReminder(data, now = new Date()) {
-    const today = indiaCalendarDate(now);
-    if (!adminIsEnrolled(data) || !data.admissionNumber || data.enrolmentStatus === "Cancelled" || today.day < 25) return null;
+    if (!adminIsEnrolled(data) || !data.admissionNumber || data.enrolmentStatus === "Cancelled") return null;
     return {available: true};
 }
 async function openTuitionReminder(id) {
     requireAdmin();const uid=verifiedAdminUid;
     try {
-        const {openReminder}=await import('./admin-desk.js?v=20261125-reminder-1');
+        const {openReminder}=await import('./admin-desk.js?v=20261125-reminder-3');
         requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');
         const entry=adminState.apps.find(row=>row.id===id);if(!entry)return;
         openReminder(entry,{identity:()=>verifiedAdminUid&&auth.currentUser?.uid===verifiedAdminUid?{uid:verifiedAdminUid}:null,snapshot:()=>({records:adminState.apps})});
@@ -1370,7 +1369,7 @@ function renderFeeManagement(list, entries) {
       <section class="rc-fees">
         <div class="rc-fees-top">
           <div><p class="rc-eyebrow">REHAAN COMPUTERS · ADMIN ONLY</p>
-          <h2>Fee Management</h2><p>₹999 monthly tuition · due on admission anniversary · reminders available 25th–month end</p></div>
+          <h2>Fee Management</h2><p>₹999 monthly tuition · due on admission anniversary · reminders available every day</p></div>
           <span class="rc-fees-tag">Manual WhatsApp reminders</span>
         </div>
         <div class="rc-fees-kpis">
@@ -1400,7 +1399,7 @@ function renderFeeManagement(list, entries) {
               </div>
             </div>`).join("") : '<p class="rc-fees-empty">No enrolled students match the current search and filters.</p>'}
         </div>
-        <p class="rc-fees-footnote">Monthly fee is ₹999. Recorded payments reduce the outstanding balance; for example, ₹500 paid leaves ₹499 due. The 🔔 WhatsApp reminder is available for all active enrolled students from the 25th through month-end (India time), regardless of fee status. You can send it again whenever needed during this period. Sending a reminder does not mark a month paid. Due dates and recorded payments are unchanged.</p>
+        <p class="rc-fees-footnote">Monthly fee is ₹999. Recorded payments reduce the outstanding balance; for example, ₹500 paid leaves ₹499 due. The 🔔 WhatsApp reminder is available for all active enrolled students every day, regardless of fee status. You can send it again whenever needed. Sending a reminder does not mark a month paid. Due dates and recorded payments are unchanged.</p>
       </section>`;
     const feeFilter = list.querySelector("#rcFeeFilter");
     feeFilter.value = adminState.feeFilter;
