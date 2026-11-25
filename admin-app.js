@@ -1024,7 +1024,7 @@ function actionableFeeReminder(data, now = new Date()) {
 async function openTuitionReminder(id) {
     requireAdmin();const uid=verifiedAdminUid;
     try {
-        const {openReminder}=await import('./admin-desk.js?v=20261125-reminder-3');
+        const {openReminder}=await import('./admin-desk.js?v=20261125-reminder-4');
         requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');
         const entry=adminState.apps.find(row=>row.id===id);if(!entry)return;
         openReminder(entry,{identity:()=>verifiedAdminUid&&auth.currentUser?.uid===verifiedAdminUid?{uid:verifiedAdminUid}:null,snapshot:()=>({records:adminState.apps})});
