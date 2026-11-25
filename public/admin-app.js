@@ -1019,20 +1019,13 @@ function tuitionWhatsAppMessage(data, bill) {
 }
 function actionableFeeReminder(data, now = new Date()) {
     const today = indiaCalendarDate(now);
-    const upcoming = tuitionPeriod(data, today);
-    const overdue = overdueMonthlyTuition(data, today);
-    if (overdue) {
-        const sent = Boolean((data.feeReminders || {})[overdue.key]);
-        if (overdue.balance > 0) return {
-            key: overdue.key, remaining: overdue.balance, diff: -overdue.daysLate, sent
-        };
-    }
-    return upcoming && upcoming.diff >= 0 && upcoming.remaining > 0 ? upcoming : null;
+    if (!adminIsEnrolled(data) || !data.admissionNumber || data.enrolmentStatus === "Cancelled" || today.day < 25) return null;
+    return {available: true};
 }
 async function openTuitionReminder(id) {
     requireAdmin();const uid=verifiedAdminUid;
     try {
-        const {openReminder}=await import('./admin-desk.js?v=20261105-follow-6');
+        const {openReminder}=await import('./admin-desk.js?v=20261125-reminder-1');
         requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');
         const entry=adminState.apps.find(row=>row.id===id);if(!entry)return;
         openReminder(entry,{identity:()=>verifiedAdminUid&&auth.currentUser?.uid===verifiedAdminUid?{uid:verifiedAdminUid}:null,snapshot:()=>({records:adminState.apps})});
@@ -1365,7 +1358,7 @@ function renderFeeManagement(list, entries) {
     const active = report.filter(x => x.current);
     const received = active.reduce((sum, x) => sum + x.paid, 0);
     const balance = active.reduce((sum, x) => sum + x.outstanding, 0);
-    const reminders = active.filter(x => x.eligibleReminder).length;
+    const reminders = report.filter(x => x.eligibleReminder).length;
     const overdue = active.filter(x => x.overdue).length;
     const filtered = report.filter(x => adminState.feeFilter === "all" ||
         (adminState.feeFilter === "reminders" && x.eligibleReminder) ||
@@ -1377,7 +1370,7 @@ function renderFeeManagement(list, entries) {
       <section class="rc-fees">
         <div class="rc-fees-top">
           <div><p class="rc-eyebrow">REHAAN COMPUTERS · ADMIN ONLY</p>
-          <h2>Fee Management</h2><p>₹999 monthly tuition · due on admission anniversary · reminders available anytime</p></div>
+          <h2>Fee Management</h2><p>₹999 monthly tuition · due on admission anniversary · reminders available 25th–month end</p></div>
           <span class="rc-fees-tag">Manual WhatsApp reminders</span>
         </div>
         <div class="rc-fees-kpis">
@@ -1403,11 +1396,11 @@ function renderFeeManagement(list, entries) {
                 ${x.current ? `<button type="button" data-fee-pay="${escapeHTML(x.id)}">Record Payment</button>` : ""}
                 <button type="button" data-new="monthlyStatus" data-student="${escapeHTML(x.id)}">Monthly status</button>
                 <button type="button" data-new="statement" data-student="${escapeHTML(x.id)}">Fee statement</button>
-                ${x.eligibleReminder ? `<button type="button" class="rc-reminder" data-fee-wa="${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 ${x.reminder?.sent ? "Remind again" : "Send reminder"}</button>` : ""}
+                ${x.eligibleReminder ? `<button type="button" class="rc-reminder" data-fee-wa="${escapeHTML(x.id)}" title="Open personalized WhatsApp message">🔔 Send reminder</button>` : ""}
               </div>
             </div>`).join("") : '<p class="rc-fees-empty">No enrolled students match the current search and filters.</p>'}
         </div>
-        <p class="rc-fees-footnote">Monthly fee is ₹999. Recorded payments reduce the outstanding balance; for example, ₹500 paid leaves ₹499 due. The 🔔 WhatsApp reminder is always available for an unpaid billing period. Previous unpaid months come first, including partial payments. Sending a reminder does not mark a month paid; you can remind again until its balance is cleared. Due dates and recorded payments are unchanged.</p>
+        <p class="rc-fees-footnote">Monthly fee is ₹999. Recorded payments reduce the outstanding balance; for example, ₹500 paid leaves ₹499 due. The 🔔 WhatsApp reminder is available for all active enrolled students from the 25th through month-end (India time), regardless of fee status. You can send it again whenever needed during this period. Sending a reminder does not mark a month paid. Due dates and recorded payments are unchanged.</p>
       </section>`;
     const feeFilter = list.querySelector("#rcFeeFilter");
     feeFilter.value = adminState.feeFilter;
@@ -1531,7 +1524,7 @@ function renderAdminList() {
                 <div class="row-meta">
                     <span>${escapeHTML(data.coursePreference || data.course || "—")}</span>
                     <span>· ${escapeHTML(data.batch || "—")}</span>
-                    ${actionableReminder ? `<button type="button" class="rc-phone-reminder" data-act="phone-reminder" title="Open WhatsApp reminder for unpaid fee">📱 ${escapeHTML(data.phone || "—")}</button>` : `<span class="row-phone">${escapeHTML(data.phone || "—")}</span>`}
+                    ${actionableReminder ? `<button type="button" class="rc-phone-reminder" data-act="phone-reminder" title="Open monthly WhatsApp fee reminder">📱 ${escapeHTML(data.phone || "—")}</button>` : `<span class="row-phone">${escapeHTML(data.phone || "—")}</span>`}
                     <span class="fee-chip ${paid ? "fee-ok" : "fee-pending"}">₹${ADMISSION_FEE}: ${escapeHTML(paymentLabel(data.payment))}</span>
                     ${tuition ? `<span class="fee-chip ${tuition.remaining === 0 ? "fee-ok" : "fee-pending"}">Monthly ₹${MONTHLY_TUITION_FEE}: ${tuition.remaining === 0 ? "Paid" : "₹" + tuition.remaining + " due " + tuition.key}</span>` : ""}
                     ${overdueTuition ? `<span class="fee-chip fee-pending">${overdueTuition.review ? "⚠ Cancellation review: " : "Overdue: "}₹${overdueTuition.balance} from ${overdueTuition.key} (${overdueTuition.daysLate} days). Admin decision required.</span>` : ""}
@@ -1543,7 +1536,7 @@ function renderAdminList() {
                 <button type="button" class="approve-application-btn" data-act="approve" data-next-admission="${nextAdm}" ${approved ? "disabled" : ""}>${approved ? "✓ Approved" : "Approve"}</button>
                 ${tuition ? `<button type="button" class="admin-ghost-btn rc-monthly-action" data-act="monthly-fee" title="Record or update this student’s monthly fee payment">💳 Manage Fee</button>` : ""}
                 ${actionableReminder
-                  ? `<button type="button" class="admin-ghost-btn rc-reminder-action" data-act="monthly-reminder" title="Open WhatsApp reminder for this student's unpaid monthly fee" aria-label="WhatsApp fee reminder for ${escapeHTML(data.fullName || "student")}">🔔 Fee reminder</button>` : ""}
+                  ? `<button type="button" class="admin-ghost-btn rc-reminder-action" data-act="monthly-reminder" title="Open this student's monthly WhatsApp fee reminder" aria-label="WhatsApp fee reminder for ${escapeHTML(data.fullName || "student")}">🔔 Fee reminder</button>` : ""}
                 ${studentChatURL(data) ? `<a class="admin-ghost-btn student-whatsapp" data-act="student-whatsapp" href="${escapeHTML(studentChatURL(data))}" target="_blank" rel="noopener noreferrer" aria-label="Open WhatsApp for ${escapeHTML(data.fullName || 'student')}">WhatsApp ↗</a>` : '<button type="button" class="admin-ghost-btn student-whatsapp" disabled title="Add a valid mobile number in Details first">WhatsApp · add number</button>'}
                 <button type="button" class="admin-ghost-btn" data-act="details">Details</button>
                 <button type="button" class="delete-application-btn" data-application-id="${escapeHTML(id)}">Delete</button>
