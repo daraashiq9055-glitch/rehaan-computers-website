@@ -7,14 +7,27 @@ export function reminderAvailable(data,asOf){
 }
 export function reminder(entry,asOf){
  const statement=feeStatement(entry,asOf);
- const rows=statement.rows.filter(r=>!r.upcoming&&r.balance>0);
- const total=rows.reduce((sum,r)=>sum+r.balance,0);
- let message=['*REHAAN COMPUTERS*','*Monthly Fee Reminder*','','Hello '+statement.student.name+',','Please clear the following pending course fees:','',...rows.map(r=>'• *'+r.label+'*: '+money(r.balance)),'','*TOTAL TO PAY: '+money(total)+'*','','If you have already paid, please share your payment confirmation.','','*FEE PAYMENT*','Pay to: *6006433125*'].join('\n');
- const configured=statement.reliable&&total>0?customMessage('fee',{name:statement.student.name,month:rows.map(r=>r.label).join(', '),amount:money(total),admission:statement.student.admission,due:rows[0]?.key||'',status:'Due'}):null;
- if(configured)message=renderSettingsTemplate(configured.template,configured.values)+'\n\n*PENDING MONTHS*\n'+rows.map(r=>'• *'+r.label+'*: '+money(r.balance)).join('\n')+'\n\n*TOTAL TO PAY: '+money(total)+'*\n\n*FEE PAYMENT*\nPay to: *6006433125*\nPlease share your payment confirmation after paying.';
- const month=monthLabel(statement.asOf.slice(0,7));
- if(!statement.reliable||total===0)message=['*REHAAN COMPUTERS*','*MONTHLY FEE REMINDER*','','Dear '+statement.student.name+',','This is a general fee reminder for '+month+'.','Kindly submit this month’s course fee by the end of the month, if it has not already been paid.','If you have already paid, please disregard this reminder.','','*Accounts Department*','Rehaan Computers'].join('\n');
- else message+='\n\nKindly also ensure that your '+month+' course fee is submitted by month-end, if not already paid.';
+ const month=statement.asOf.slice(0,7),label=monthLabel(month);
+ const [year,number]=month.split('-').map(Number);
+ // Read-only projection includes the current learning month even before its billing anniversary.
+ const nextMonth=new Date(Date.UTC(year,number,1)).toISOString().slice(0,10);
+ const projection=statement.reliable?feeStatement(entry,nextMonth):statement;
+ const reliable=statement.reliable&&projection.reliable;
+ const periods=reliable?projection.rows.filter(r=>r.month<=month).map(r=>({...r,upcoming:r.key>statement.asOf,status:r.balance===0?'Paid':r.key<statement.asOf?'Overdue':r.key===statement.asOf?'Due today':'Upcoming'})):[];
+ const current=periods.find(r=>r.month===month),previous=periods.filter(r=>r.month<month&&r.balance>0);
+ const rows=periods.filter(r=>r.balance>0),total=rows.reduce((sum,r)=>sum+r.balance,0);
+ const overdue=rows.filter(r=>!r.upcoming).reduce((sum,r)=>sum+r.balance,0);
+ const lines=['*REHAAN COMPUTERS*','*MONTHLY FEE REMINDER*','','Dear '+statement.student.name+',','Admission No.: '+statement.student.admission,'','*CURRENT MONTH: '+label+'*'];
+ if(current)lines.push(current.balance>0?'Remaining fee: *'+money(current.balance)+'* (recorded due date: '+current.key+')':'Fee already paid. Thank you!');
+ else lines.push('Kindly submit this month’s course fee by month-end, if it has not already been paid.');
+ if(previous.length)lines.push('','*PREVIOUS MONTHS — PENDING FEES*',...previous.map(r=>'• '+r.label+': *'+money(r.balance)+'* ('+r.status+', '+r.key+')'));
+ if(reliable&&rows.length)lines.push('','*TOTAL REMAINING: '+money(total)+'*','Due as of '+statement.asOf+': '+money(overdue)+'. Upcoming fees are included as an advance reminder, not overdue.','Kindly submit the current month’s fee by month-end if unpaid, and clear any previous pending fees.');
+ if(reliable&&!rows.length&&current)lines.push('','No pending balance through '+label+'.');
+ if(!reliable)lines.push('','Please contact the accounts team to confirm your fee balance.');
+ lines.push('','If you have already paid, kindly disregard the relevant reminder.','*Accounts Department*','Rehaan Computers');
+ if(total>0)lines.push('','*FEE PAYMENT*','Pay to: *6006433125*','Please share your payment confirmation after paying.');
+ const configured=reliable&&previous.length&&current?.balance===0?customMessage('fee',{name:statement.student.name,month:previous.map(r=>r.label).join(', '),amount:money(total),admission:statement.student.admission,due:previous[0].key,status:'Pending'}):null;
+ const message=(configured?renderSettingsTemplate(configured.template,configured.values)+'\n\n':'')+lines.join('\n');
  const canShare=reminderAvailable(entry.data,statement.asOf);
- return {statement,rows,total,message,canShare,canImage:canShare&&statement.reliable&&total>0};
+ return {statement:{...statement,reliable},rows,total,overdue,message,canShare,canImage:canShare&&reliable&&total>0};
 }
