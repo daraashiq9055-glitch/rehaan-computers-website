@@ -38,6 +38,7 @@ def run():
           }
         ''')
         mock+='\nexport const query=(ref,...constraints)=>({ref,constraints}), where=(...args)=>({kind:"where",args}),orderBy=(...args)=>({kind:"order",args}),documentId=()=>"__name__",startAfter=(...args)=>({kind:"after",args}),limit=(...args)=>({kind:"limit",args});\n'
+        mock+='\nexport const addDoc=async()=>{throw Error("Unexpected preview write")},deleteDoc=async()=>{throw Error("Unexpected preview delete")},updateDoc=async()=>{throw Error("Unexpected preview update")},serverTimestamp=()=>new Date().toISOString(),onSnapshot=()=>()=>{};\n'
         setup=(ROOT/'previews/admin-premium/demo.js').read_text().split('  const notify =')[0]+'})();'
         try:
             with sync_playwright() as p:

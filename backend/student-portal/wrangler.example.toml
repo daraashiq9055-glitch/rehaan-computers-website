@@ -1,0 +1,20 @@
+name = "rehaan-student-quiz"
+main = "worker.mjs"
+compatibility_date = "2026-11-24"
+
+[vars]
+FIREBASE_PROJECT_ID = "rehaan-computers"
+ALLOWED_ORIGINS = "https://rehaan-computers.web.app,https://rehaan-computers.firebaseapp.com"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rehaan-student-quiz"
+database_id = "REPLACE_WITH_CREATED_D1_DATABASE_ID"
+
+[[ratelimits]]
+name = "QUIZ_LIMITER"
+namespace_id = "1101"
+simple = { limit = 500, period = 60 }
+
+# Copy to wrangler.toml only after the D1 database and ID have been reviewed.
+# This file is a candidate, not a deployment command.

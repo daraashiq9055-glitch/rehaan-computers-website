@@ -1,55 +1,51 @@
-# Student portal integration status
+# Student Portal preview status
 
-The existing four-tab page in `public/student.html` has a working demo path and
-a separate, **preview-only** Firebase student login path. The live path reads
-only `studentPortalViews/{authenticatedUid}`. The demo values never appear in
-the live account tabs. This branch has not been deployed.
+The existing Home, Account, Updates and Journey tabs remain in place. This
+branch has **not been deployed**. The demo account is separate from Firebase
+student accounts. Live student screens never use demo fee, attendance, score or
+rank values.
 
-## Connected in this candidate
+## Connected candidate
 
-| Area | Source | Status |
+| Area | Preview implementation | Remaining release gate |
 | --- | --- | --- |
-| Login | Firebase Email/Password; admin-created username | Admin can create, disable, restore and refresh a linked account in Student Details. A separate Auth instance keeps the admin signed in during provisioning. Production Auth provider and real credentials still need verification. |
-| Profile and admission | Sanitized projection of `applications/{id}` | Student sees name, admission number, DOB, guardian, phone, course, batch and joining date. Admin-only notes, photo refs, tokens and Aadhaar fragments are excluded. |
-| Fees and receipts | Existing monthly ledger and validated fee statement | Student sees recorded periods and non-deleted receipts. Pending amount appears only if `feeStatement()` marks the ledger reliable. Concessions are separate from cash. |
-| Attendance | `monthlyAttendance` | Published through the linked view; attendance saves also refresh the view. |
-| Journey | Existing admin learning checklist | Teacher-assessed topics and completion percentage appear. Student-selected software is still demo-only. |
-| Updates | No student-facing source yet | Live tab has filter chips and an honest empty state; demo tab keeps labelled sample updates. |
-| Quiz, points, rank | No trusted scoring service yet | Live account says the scored quiz is not published. The demo quiz remains a browser-local preview only. |
+| Login | Admin creates, disables and restores a Firebase Email/Password account; student reads only their enabled UID view. | Test two real disposable students and one admin in the actual Firebase project. |
+| Profile, fee, receipts, attendance | Sanitized admin projection, validated fee statement and scoped Firestore read. | Compare against live admin edits, receipt deletion and both student screens. |
+| Updates and images | Admin can publish private per-student class notes, homework, announcements, exams, results and holidays; a resized JPG is stored in the private update document. Student can filter, open, mark read and save; bell shows unread items. | Real Firebase publication and image tests, including mobile and offline cases. |
+| Messages | Student sends to their own thread; admin replies in Student Details; read state and bell are stored. The admin register shows unread student threads and links to each conversation. | Test both real sessions, notifications and denial of cross-student access. Firestore messages have size/identity validation; per-student sending quotas are not implemented. |
+| Journey selection | Student chooses a listed learning program; Admin Student Details shows it live. Teacher-assessed checklist stays separate. | Verify both student choices against the admin view and course policy. |
+| Scored quiz | Separate Cloudflare Worker/D1 candidate holds keys, ten-question attempts, final score, seven-day rotation, points, streak and reviewed weekly/overall ranks. Student and admin client controls are prepared. | Worker and D1 are **not provisioned or deployed**; the service config remains disabled. Populate a reviewed question bank and test real Auth/D1 end to end. |
 
-## Firestore rules added in this candidate
+## Security rules in this candidate
 
-`studentPortalViews/{uid}` is a separate sanitized collection. A verified admin
-can get/list/write a view that has only the approved top-level keys. A signed-in
-student can **get only their own enabled UID document**. Students cannot list
-views or write them. `applications` stays admin-only. The emulator test covers
-two students, disabled access, cross-account reads and denied student writes.
+The existing `applications` collection remains admin-only. Under
+`studentPortalViews/{uid}`, a student can read only their own enabled view,
+updates, messages and learning choice. They can mark their own updates
+read/saved, send a bounded message, mark an admin reply read and select a
+listed program. They cannot edit fees, attendance, notes, results, admin
+replies, another student's data or question keys. Admins publish and reply.
+The Firestore emulator checks two distinct students, admin access, disabled
+access, cross-account denial and denied field edits.
 
-## Still required before production release
+## Verification and release
 
-1. Verify Email/Password is enabled and test provisioning with two real test
-   accounts against the production Auth configuration, without using real
-   student records.
-2. Add admin-authored updates, notes, uploaded images, group links and teacher
-   messaging with suitable private storage and rules.
-3. Add a trusted quiz service for question publication, once-per-day attempts,
-   seven-day question rotation, scoring, badges and approved leaderboard rank.
-   Browser storage cannot enforce these rules.
-4. Connect selected learning software to an admin-reviewed source of truth and
-   show it in the live Journey and quiz.
-5. Verify admin edits, fees, receipt deletion, attendance and journey changes
-   against two real student sessions, plus offline logout and recovery.
-6. Deploy the new Firestore rules together with the candidate only after the
-   production checks and the user's final release decision.
+Automated tests cover the projection, Firestore rules, one admin and two
+students in Firebase emulators, student UI fixtures and official quiz UI at
+320/360/390 px, the trusted quiz core and Worker with an in-memory D1
+adapter, the admin browser regression suite, and the candidate build. These
+tests do not prove the production Firebase Auth provider, real D1 binding,
+Worker endpoint or live account synchronization. The full checklist is in
+`backend/student-portal/README.md`. Keep `quizServiceConfig.enabled=false` and
+do not deploy Hosting or rules until the real-account checks pass and the user
+chooses the release.
 
-## Checks run
+The standard `python release-admin.py` checker now also requires the student
+Firestore rules and two-account Auth emulator integration to pass. Its default
+mode builds a separate candidate without deploying. Node, Java 21 and the
+Firebase emulator dependencies are required. Browser checks remain separate:
+`python tests/student-live-browser.py`, `python tests/student-quiz-browser.py`
+and `python tests/admin-candidate-browser.py`.
 
-- `node --test tests/student-view-model.test.mjs`
-- `tests/student-portal-rules.cjs` under the Firestore emulator
-- `python tests/student-live-browser.py` at 320, 360 and 390px with two
-  distinct stubbed Auth views (UI isolation only)
-- `python prepare-admin-release.py`
-- `python tests/admin-candidate-browser.py`
-
-The browser Auth stub is **not** a real Firebase login test. Do not call the
-Student Portal complete or deploy it as a finished private account system yet.
+The owner currently has one student test account and one shared admin account.
+A second disposable student account is still needed for the live isolation
+check. Do not substitute the demo login or emulator accounts for that check.

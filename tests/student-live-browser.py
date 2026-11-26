@@ -6,6 +6,7 @@ separately by student-portal-rules.cjs in the emulator.
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from threading import Thread
+import base64
 
 from playwright.sync_api import sync_playwright
 
@@ -21,9 +22,23 @@ const make=(uid,name,admission,course,phone)=>({
 });
 const views={alpha:make('student-alpha','Aisha Test','101','MS Word','9000000001'),
  beta:make('student-beta','Bilal Test','102','MS Excel','9000000002')};
-export async function signInStudent(username,password){if(password!=='StudentPass123'||!views[username])throw Error('Invalid student account');return {view:views[username],ref:username};}
+const updates={'student-alpha':[{id:'update-alpha',category:'Class notes',title:'Aisha lesson note',details:'Practice tables.',author:'Teacher',createdAt:'2026-11-24T00:00:00Z',image:'__TEST_IMAGE__',readByStudent:false,savedByStudent:false}],
+ 'student-beta':[{id:'update-beta',category:'Homework',title:'Bilal homework',details:'Practice formulas.',author:'Teacher',createdAt:'2026-11-24T00:00:00Z',image:'',readByStudent:false,savedByStudent:false}]};
+const messages={'student-alpha':[{id:'reply-alpha',sender:'admin',text:'Aisha centre reply',readByStudent:false,createdAt:{seconds:1795478400}}],
+ 'student-beta':[{id:'reply-beta',sender:'admin',text:'Bilal centre reply',readByStudent:false,createdAt:{seconds:1795478400}}]};
+const selections={'student-alpha':{program:'MS Word'},'student-beta':{program:'MS Excel'}};
+const updateWatch={},messageWatch={},selectionWatch={};
+export async function signInStudent(username,password){if(password!=='StudentPass123'||!views[username])throw Error('Invalid student account');return {user:{uid:views[username].uid},view:views[username],ref:username};}
 export async function restoreStudent(){return null;}
 export async function watchStudent(ref,onValue){return ()=>{};}
+export async function watchStudentUpdates(uid,onValue){updateWatch[uid]=onValue;onValue(updates[uid]);return ()=>{delete updateWatch[uid];};}
+export async function setStudentUpdateState(uid,id,changes){Object.assign(updates[uid].find(item=>item.id===id),changes);updateWatch[uid]?.(updates[uid]);}
+export async function watchStudentMessages(uid,onValue){messageWatch[uid]=onValue;onValue(messages[uid]);return ()=>{delete messageWatch[uid];};}
+export async function sendStudentMessage(uid,value){messages[uid].push({id:'sent-'+uid,sender:'student',text:value,readByStudent:true,createdAt:{seconds:1795478400}});messageWatch[uid]?.(messages[uid]);}
+export async function markStudentMessageRead(uid,id){messages[uid].find(item=>item.id===id).readByStudent=true;messageWatch[uid]?.(messages[uid]);}
+export async function watchStudentSelection(uid,onValue){selectionWatch[uid]=onValue;onValue(selections[uid]);return ()=>{delete selectionWatch[uid];};}
+export async function setStudentSelection(uid,program){selections[uid]={program};selectionWatch[uid]?.(selections[uid]);}
+export async function studentIdToken(uid){return 'test-token-'+uid;}
 export async function signOutStudent(){}
 """
 
@@ -37,6 +52,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 def main():
+    test_image = 'data:image/jpeg;base64,' + base64.b64encode((ROOT.parent / 'tests/fixtures/photo-check.jpg').read_bytes()).decode()
     server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
     Thread(target=server.serve_forever, daemon=True).start()
     url = f"http://127.0.0.1:{server.server_port}/student.html"
@@ -46,8 +62,11 @@ def main():
             try:
                 for width in (320, 360, 390):
                     page = browser.new_page(viewport={"width": width, "height": 780})
-                    page.route("**/student-portal-auth.js*", lambda route: route.fulfill(status=200, content_type="text/javascript", body=STUB))
+                    page.route("**/student-portal-auth.js*", lambda route: route.fulfill(status=200, content_type="text/javascript", body=STUB.replace('__TEST_IMAGE__', test_image)))
                     page.goto(url)
+                    if width == 320:
+                        compressed = page.evaluate("""async () => {const canvas=document.createElement('canvas');canvas.width=1800;canvas.height=1000;const context=canvas.getContext('2d');context.fillStyle='#d8b96f';context.fillRect(0,0,1800,1000);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));const file=new File([blob],'class.png',{type:'image/png'});const module=await import('./student-portal-updates.js');return module.prepareStudentUpdateImage(file);}""")
+                        assert compressed.startswith("data:image/jpeg;base64,") and len(compressed) <= 350000
                     for username, expected, other in (("alpha", "Aisha Test", "Bilal Test"), ("beta", "Bilal Test", "Aisha Test")):
                         page.locator("#studentId").fill(username)
                         page.locator("#studentPassword").fill("StudentPass123")
@@ -58,10 +77,34 @@ def main():
                         page.locator('[data-demo-tab="account"]').click()
                         assert expected in page.locator("#demoContent").inner_text()
                         assert other not in page.locator("#demoContent").inner_text()
+                        if page.locator("#studentMessagesSection").get_attribute("open") is None:
+                            page.locator("#studentMessagesSection summary").click()
+                        page.locator(".student-message").get_by_text(f"{expected.split()[0]} centre reply").wait_for()
+                        page.locator("#studentMessageText").fill(f"Message from {expected}")
+                        page.locator("#studentMessageForm button").click()
+                        page.locator(".student-message.mine").get_by_text(f"Message from {expected}").wait_for()
                         page.locator('[data-demo-tab="updates"]').click()
-                        assert "No updates published yet" in page.locator("#demoContent").inner_text()
+                        own_title = "Aisha lesson note" if username == "alpha" else "Bilal homework"
+                        other_title = "Bilal homework" if username == "alpha" else "Aisha lesson note"
+                        page.get_by_text(own_title).first.wait_for()
+                        assert other_title not in page.locator("#demoContent").inner_text()
+                        page.locator("[data-live-open]").click()
+                        page.locator("#studentUpdateDialog").get_by_text(own_title).wait_for()
+                        page.locator("#closeStudentUpdate").click()
+                        if username == "alpha":
+                            page.locator("[data-live-image]").click()
+                            page.locator("#studentImageDialog img").wait_for(state="visible")
+                            page.locator("#closeStudentImage").click()
+                        page.locator('[data-update-filter="Teacher messages"]').click()
+                        assert f"{expected.split()[0]} centre reply" in page.locator("#demoContent").inner_text()
+                        page.locator('[data-update-filter="All"]').click()
                         page.locator('[data-demo-tab="journey"]').click()
                         assert "Introduction" in page.locator("#demoContent").inner_text()
+                        assert ("MS Word" if username == "alpha" else "MS Excel") in page.locator("#studentLearningProgram").input_value()
+                        if username == "alpha":
+                            page.locator("#journeyClassImage").click()
+                            page.locator("#studentImageDialog img").wait_for(state="visible")
+                            page.locator("#closeStudentImage").click()
                         page.locator('[data-demo-tab="account"]').click()
                         page.locator(".account-section").last.locator("summary").click()
                         page.locator("#demoLogout").click()

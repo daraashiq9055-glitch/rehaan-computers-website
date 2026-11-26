@@ -42,7 +42,7 @@ def main():
         env=os.environ.copy();env['NODE_PATH']=str(deps/'node_modules')
         # Demo project plus loopback guards in the test scripts prevent production writes.
         print('Verifying rules with the local emulator. This step must pass before deployment.',flush=True)
-        run([npx,'--yes','firebase-tools@15.34.0','emulators:exec','--only','firestore','--project','demo-rehaan-settings','--config','firebase.emulator.json','node tests/admin-settings-rules.cjs && node tests/firestore-gender.test.cjs && node tests/admin-features-emulator.mjs'],env=env)
+        run([npx,'--yes','firebase-tools@15.34.0','emulators:exec','--only','auth,firestore','--project','demo-rehaan-settings','--config','firebase.emulator.json','node tests/admin-settings-rules.cjs && node tests/firestore-gender.test.cjs && node tests/admin-features-emulator.mjs && node tests/student-portal-rules.cjs && node tests/student-auth-integration.cjs'],env=env)
         run([sys.executable,'prepare-admin-release.py'])
         if not args.deploy:
             print('All local checks passed. Nothing deployed. Run python release-admin.py --deploy when ready.',flush=True)

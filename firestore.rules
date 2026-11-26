@@ -375,6 +375,97 @@ service cloud.firestore {
       allow list: if portalAdmin();
       allow create, update: if portalAdmin() && validView(request.resource.data);
       allow delete: if portalAdmin();
+
+      // Published notes and images are scoped to one enabled student view.
+      match /updates/{updateId} {
+        function admin() {
+          return request.auth != null
+            && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+            && verifiedAdmin();
+        }
+        function student() {
+          return request.auth != null && request.auth.uid == studentUid
+            && get(/databases/$(database)/documents/studentPortalViews/$(studentUid)).data.enabled == true;
+        }
+        function validUpdate(d) {
+          return d.keys().hasOnly(['category','title','details','author','createdAt','image','readByStudent','savedByStudent'])
+            && d.keys().hasAll(['category','title','details','author','createdAt','image','readByStudent','savedByStudent'])
+            && d.category in ['Class notes','Homework','Announcements','Exams','Results','Holidays']
+            && d.title is string && d.title.size() >= 2 && d.title.size() <= 120
+            && d.details is string && d.details.size() >= 1 && d.details.size() <= 5000
+            && d.author is string && d.author.size() >= 2 && d.author.size() <= 100
+            && d.createdAt is string && d.createdAt.size() >= 20 && d.createdAt.size() <= 40
+            && d.image is string && d.image.size() <= 350000
+            && (d.image == '' || d.image.matches('^data:image/jpeg;base64,[A-Za-z0-9+/]+={0,2}$'))
+            && d.readByStudent is bool && d.savedByStudent is bool;
+        }
+        allow get, list: if admin() || student();
+        allow create: if admin() && validUpdate(request.resource.data);
+        allow update: if (admin() && validUpdate(request.resource.data)) || (
+          student() && validUpdate(request.resource.data)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readByStudent','savedByStudent'])
+          && (request.resource.data.readByStudent == resource.data.readByStudent || request.resource.data.readByStudent == true)
+        );
+        allow delete: if admin();
+      }
+      match /messages/{messageId} {
+        function admin() {
+          return request.auth != null
+            && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+            && verifiedAdmin();
+        }
+        function student() {
+          return request.auth != null && request.auth.uid == studentUid
+            && get(/databases/$(database)/documents/studentPortalViews/$(studentUid)).data.enabled == true;
+        }
+        function validMessage(d) {
+          return d.keys().hasOnly(['sender','text','createdAt','readByStudent','readByAdmin'])
+            && d.keys().hasAll(['sender','text','createdAt','readByStudent','readByAdmin'])
+            && d.sender in ['student','admin']
+            && d.text is string && d.text.size() >= 1 && d.text.size() <= 1500
+            && d.createdAt is timestamp
+            && d.readByStudent is bool && d.readByAdmin is bool;
+        }
+        allow get, list: if admin() || student();
+        allow create: if validMessage(request.resource.data) && (
+          admin() && request.resource.data.sender == 'admin'
+            && request.resource.data.readByAdmin == true
+            && request.resource.data.readByStudent == false
+          || student() && request.resource.data.sender == 'student'
+            && request.resource.data.readByStudent == true
+            && request.resource.data.readByAdmin == false
+        ) && request.resource.data.createdAt == request.time;
+        allow update: if validMessage(request.resource.data) && (
+          admin() && resource.data.sender == 'student'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readByAdmin'])
+            && request.resource.data.readByAdmin == true
+          || student() && resource.data.sender == 'admin'
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['readByStudent'])
+            && request.resource.data.readByStudent == true
+        );
+        allow delete: if admin();
+      }
+      match /learning/current {
+        function admin() {
+          return request.auth != null
+            && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+            && verifiedAdmin();
+        }
+        function student() {
+          return request.auth != null && request.auth.uid == studentUid
+            && get(/databases/$(database)/documents/studentPortalViews/$(studentUid)).data.enabled == true;
+        }
+        function validSelection(d) {
+          return d.keys().hasOnly(['program','updatedAt'])
+            && d.keys().hasAll(['program','updatedAt'])
+            && d.program in ['Computer basics','Notepad','WordPad','MS Word','MS Excel','PowerPoint','MS Access','Outlook','Marg ERP','Tally Prime','Photoshop','InPage']
+            && d.updatedAt == request.time;
+        }
+        allow get: if admin() || student();
+        allow list: if false;
+        allow create, update: if (admin() || student()) && validSelection(request.resource.data);
+        allow delete: if admin();
+      }
     }
 
 

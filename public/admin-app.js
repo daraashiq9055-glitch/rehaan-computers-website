@@ -1,4 +1,6 @@
 import {studentChatURL} from './admin-whatsapp.js?v=20261104-wa-1';
+import {quizRequest,quizServiceConfig} from './student-quiz-service.js';
+import {stages as studentPrograms} from './student-quiz.js';
 import {settingsState,setSettingsState,failSettingsState,clearSettingsState,customMessage} from './admin-settings-state.js?v=20261102-settings-1';
 import {saveSharedSettings,renderSettingsTemplate} from './admin-settings-model.js?v=20261102-settings-1';
 import {saveAttendance} from './admin-attendance-model.js?v=20261102-settings-1';
@@ -7,6 +9,7 @@ import {saveMarkCard,saveMonthlyPayment,correctReceipt,deleteReceipt} from "./ad
 import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
 let activePhotoMigration = null;
+let stopStudentInbox = null;
 
 // Admin features adapted from website-updates d738bb2. The public site keeps its existing script.
 import { recordTime, isSafePhoto, csvCell, fieldValue, paymentPatch, assertUnchanged, validateChanges, canonicalRecord, formatGender, compareAdmissionRecords } from "./admin-records.js?v=20261102-settings-1";
@@ -1206,6 +1209,29 @@ async function loadApplications() {
         adminState.apps.sort(compareAdmissionRecords);
         recordsLoaded = true;
         renderAdminList();
+        stopStudentInbox?.();stopStudentInbox=null;
+        document.querySelector('#studentMessageInbox')?.remove();
+        const inboxStudents=adminState.apps.filter(entry=>entry.data.studentPortalAccount?.uid);
+        if(inboxStudents.length)void Promise.all([import('./student-admin-inbox.js'),import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js')]).then(([{watchAdminStudentInbox},sdk])=>{
+            const isCurrent=()=>verifiedAdminUid===requestUid&&sequence===loadSequence;
+            if(!isCurrent())return;
+            const panel=document.createElement('details');panel.id='studentMessageInbox';panel.className='workbench-notice';
+            const summary=document.createElement('summary'),body=document.createElement('div');summary.textContent='Student messages';panel.append(summary,body);
+            document.querySelector('#adminDashboard .content')?.prepend(panel);
+            stopStudentInbox=watchAdminStudentInbox({sdk,db,students:inboxStudents,isCurrent,onChange:rows=>{
+                const total=rows.reduce((sum,row)=>sum+row.unread,0),failed=rows.some(row=>row.error);
+                summary.textContent=`Student messages · ${total} unread${failed?' · Some threads unavailable':''}`;
+                body.replaceChildren();
+                for(const row of rows.filter(row=>row.unread||row.error)){
+                    const button=document.createElement('button');button.type='button';button.className='admin-ghost-btn';button.textContent=`${row.name} · ${row.error?'Reload to check':row.unread+' unread'}`;
+                    button.addEventListener('click',()=>{if(isCurrent()){openAdminDetails(row.id);document.querySelector('.admin-student-messages')?.scrollIntoView({block:'center',behavior:'smooth'});}});body.append(button);
+                }
+                if(!total&&!failed)body.textContent='No unread student messages.';
+            }});
+        }).catch(()=>{
+            if(verifiedAdminUid!==requestUid||sequence!==loadSequence)return;
+            const warning=document.createElement('p');warning.id='studentMessageInbox';warning.className='workbench-notice';warning.textContent='Student message notifications could not load. Refresh the register or open Student Details to check messages.';document.querySelector('#adminDashboard .content')?.prepend(warning);
+        });
         const linked=adminState.apps.filter(entry=>entry.data.studentPortalAccount?.uid).map(entry=>entry.id);
         if(linked.length)void (async()=>{
             const failures=[];
@@ -1694,6 +1720,24 @@ function openAdminDetails(applicationId) {
                         : '<p style="margin:0">Approve the admission and assign an admission number before creating access.</p>'}
                 <p class="admin-portal-status" role="status" style="margin:9px 0 0"></p>
             </section>
+            ${data.studentPortalAccount?.uid?'<section class="admin-student-learning" style="margin:15px 0;padding:15px;border:1px solid #bba46a66;border-radius:12px;background:#102840;color:#f4e5bd"><h4 style="margin:0 0 7px">Student learning selection</h4><p class="admin-student-learning-value" role="status">Loading student choice…</p><small>The teacher-assessed checklist remains in Student journeys.</small></section>':''}
+            ${data.studentPortalAccount?.uid ? `<section class="admin-student-updates" style="margin:15px 0;padding:15px;border:1px solid #bba46a66;border-radius:12px;background:#102840;color:#f4e5bd">
+                <h4 style="margin:0 0 8px">Publish a student update</h4>
+                <p style="margin:0 0 10px;font-size:12px">Private to this student. Class images are resized and saved with the update.</p>
+                <form class="admin-update-form" style="display:grid;gap:8px">
+                    <label>Category<select name="category"><option>Class notes</option><option>Homework</option><option>Announcements</option><option>Exams</option><option>Results</option><option>Holidays</option></select></label>
+                    <label>Title<input name="title" maxlength="120" required></label>
+                    <label>Details<textarea name="details" maxlength="5000" required></textarea></label>
+                    <label>Teacher / centre name<input name="author" maxlength="100" value="Rehaan Computers" required></label>
+                    <label>Class image (optional)<input name="image" type="file" accept="image/jpeg,image/png,image/webp"></label>
+                    <button type="submit" class="admin-save-btn">Publish update</button>
+                </form><p class="admin-update-status" role="status"></p><div class="admin-update-list">Loading published updates…</div>
+            </section>` : ''}
+            ${data.studentPortalAccount?.uid ? `<section class="admin-student-messages" style="margin:15px 0;padding:15px;border:1px solid #bba46a66;border-radius:12px;background:#102840;color:#f4e5bd">
+                <h4 style="margin:0 0 8px">Student messages</h4><div class="admin-message-list">Loading messages…</div>
+                <form class="admin-message-form" style="display:grid;gap:8px"><label>Reply to student<textarea name="reply" maxlength="1500" required></textarea></label><button class="admin-save-btn" type="submit">Send reply</button></form><p class="admin-message-status" role="status"></p>
+            </section>` : ''}
+            ${data.studentPortalAccount?.uid ? `<section class="admin-quiz-bank" style="margin:15px 0;padding:15px;border:1px solid #bba46a66;border-radius:12px;background:#102840;color:#f4e5bd"><h4 style="margin:0 0 8px">Centre weekly quiz</h4>${quizServiceConfig.enabled?`<p>Question bank and reviewed leaderboard are shared across enrolled students.</p><form class="admin-quiz-form" style="display:grid;gap:7px"><label>Program<select name="program">${studentPrograms.map(program=>`<option>${escapeHTML(program)}</option>`).join('')}</select></label><label>Question<input name="question" maxlength="300" required></label>${[0,1,2,3].map(index=>`<label>Option ${'ABCD'[index]}<input name="option${index}" maxlength="160" required></label>`).join('')}<label>Correct option<select name="answer"><option value="0">A</option><option value="1">B</option><option value="2">C</option><option value="3">D</option></select></label><button type="submit" class="admin-save-btn">Add verified question</button></form><div class="admin-quiz-counts">Loading bank…</div><div class="admin-quiz-question-list"></div><button type="button" class="admin-ghost-btn admin-publish-weekly">Publish reviewed weekly ranks</button> <button type="button" class="admin-ghost-btn admin-publish-overall">Publish reviewed overall ranks</button><p class="admin-quiz-status" role="status"></p>`:'<p>The trusted quiz service is not activated. Scored quizzes and official rankings stay unavailable to students.</p>'}</section>` : ''}
             <div class="admin-details-grid">
                 ${adminField("Parent / Guardian", data.parentName)}
                 ${adminField("Student Phone", data.phone)}
@@ -1790,6 +1834,95 @@ function openAdminDetails(applicationId) {
     });
     modal.querySelector('.admin-portal-refresh')?.addEventListener('click',async event=>{const button=event.currentTarget;button.disabled=true;portalStatus.textContent='Refreshing student view…';try{await syncLinkedPortalView(applicationId);portalStatus.textContent='Student view is current.';}catch(error){portalStatus.textContent='Student view could not refresh: '+friendlyError(error);}finally{button.disabled=false;}});
     modal.querySelector('.admin-portal-toggle')?.addEventListener('click',async event=>{const button=event.currentTarget,uid=verifiedAdminUid,enabled=data.studentPortalAccount.enabled!==true;if(!window.confirm((enabled?'Restore':'Disable')+' this student’s portal access?'))return;button.disabled=true;portalStatus.textContent='Updating access…';try{requireAdmin();const {setStudentPortalEnabled}=await import('./student-portal-access.js?v=20261124-portal-1');await setStudentPortalEnabled({db,doc,runTransaction,assertAdmin:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your admin session changed.');},applicationId,enabled});await loadApplications();if(modal.isConnected){closeAdminModal(modal);openAdminDetails(applicationId);}}catch(error){portalStatus.textContent='Access was not changed: '+friendlyError(error);}finally{button.disabled=false;}});
+    const modalGeneration=modal._generation,portalAdminUid=verifiedAdminUid;
+    const portalIsCurrent=()=>modal.isConnected&&!modal.hidden&&modal._generation===modalGeneration&&verifiedAdminUid===portalAdminUid;
+    const portalSdk=()=>import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
+    const requirePortalAdmin=()=>{requireAdmin();if(!portalIsCurrent())throw Error('Reopen Student Details before making changes.');};
+    if(data.studentPortalAccount?.uid){
+        const target=modal.querySelector('.admin-student-learning-value');
+        void portalSdk().then(({onSnapshot})=>{
+            if(!portalIsCurrent())return;
+            modal._portalUnsub=onSnapshot(doc(db,'studentPortalViews',data.studentPortalAccount.uid,'learning','current'),snapshot=>{
+                if(!portalIsCurrent())return;
+                target.textContent=snapshot.exists()?`Learning now: ${snapshot.data().program||'Not selected'}`:'The student has not selected a learning program yet.';
+            },error=>{if(portalIsCurrent())target.textContent='Student learning selection could not load: '+friendlyError(error);});
+        }).catch(error=>{if(portalIsCurrent())target.textContent='Student learning selection could not load: '+friendlyError(error);});
+    }
+    if(data.studentPortalAccount?.uid){
+        const studentUid=data.studentPortalAccount.uid,updatesPath=collection(db,'studentPortalViews',studentUid,'updates');
+        const updatesList=modal.querySelector('.admin-update-list'),updateStatus=modal.querySelector('.admin-update-status');
+        const refreshUpdates=async()=>{
+            requirePortalAdmin();const snapshot=await getDocs(updatesPath);if(!portalIsCurrent())return;
+            const rows=snapshot.docs.map(item=>({id:item.id,...item.data()})).sort((a,b)=>String(b.createdAt).localeCompare(String(a.createdAt)));
+            updatesList.innerHTML=rows.map(row=>`<article style="padding:10px 0;border-top:1px solid #bba46a55"><strong>${escapeHTML(row.title||'Update')}</strong><small style="display:block">${escapeHTML(row.category||'')} · ${escapeHTML(String(row.createdAt||'').slice(0,10))}</small><p>${escapeHTML(row.details||'')}</p>${/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(row.image||'')?`<img src="${escapeHTML(row.image)}" alt="${escapeHTML(row.title||'Class image')}" style="max-width:100%;max-height:150px;border-radius:8px">`:''}<button type="button" class="admin-ghost-btn" data-delete-update="${escapeHTML(row.id)}">Delete update</button></article>`).join('')||'<p>No updates published for this student.</p>';
+        };
+        void refreshUpdates().catch(error=>{if(modal.isConnected)updatesList.textContent='Updates could not load: '+friendlyError(error);});
+        modal.querySelector('.admin-update-form').addEventListener('submit',async event=>{
+            event.preventDefault();const form=event.currentTarget,button=form.querySelector('[type=submit]'),sessionUid=verifiedAdminUid;
+            button.disabled=true;updateStatus.textContent='Preparing update…';
+            try{
+                requirePortalAdmin();const [{studentUpdatePayload,prepareStudentUpdateImage},{addDoc:firestoreAddDoc}]=await Promise.all([import('./student-portal-updates.js?v=20261124-portal-1'),portalSdk()]);
+                const fields=new FormData(form),image=await prepareStudentUpdateImage(form.elements.image.files[0]);
+                requirePortalAdmin();if(sessionUid!==verifiedAdminUid)throw Error('Your admin session changed.');
+                const payload=studentUpdatePayload({category:fields.get('category'),title:fields.get('title'),details:fields.get('details'),author:fields.get('author'),image});
+                updateStatus.textContent='Publishing update…';await firestoreAddDoc(updatesPath,payload);
+                form.reset();updateStatus.textContent='Update published to this student.';
+                if(portalIsCurrent())await refreshUpdates().catch(error=>{updateStatus.textContent='Update published. Reload Student Details to refresh the list. '+friendlyError(error);});
+            }catch(error){updateStatus.textContent='Update was not published: '+friendlyError(error);}finally{button.disabled=false;}
+        });
+        updatesList.addEventListener('click',async event=>{
+            const button=event.target.closest('[data-delete-update]');if(!button||!window.confirm('Delete this student update?'))return;
+            button.disabled=true;updateStatus.textContent='Deleting update…';
+            try{const {deleteDoc:firestoreDeleteDoc}=await portalSdk();requirePortalAdmin();await firestoreDeleteDoc(doc(db,'studentPortalViews',studentUid,'updates',button.dataset.deleteUpdate));updateStatus.textContent='Update deleted.';if(portalIsCurrent())await refreshUpdates().catch(()=>{updateStatus.textContent='Update deleted. Reopen Student Details to refresh the list.';});}
+            catch(error){updateStatus.textContent='Update could not be deleted: '+friendlyError(error);button.disabled=false;}
+        });
+    }
+    if(data.studentPortalAccount?.uid){
+        const studentUid=data.studentPortalAccount.uid,messagesPath=collection(db,'studentPortalViews',studentUid,'messages');
+        const list=modal.querySelector('.admin-message-list'),messageStatus=modal.querySelector('.admin-message-status');
+        const renderMessages=async(snapshot,firestoreUpdateDoc)=>{
+            if(!portalIsCurrent())return;
+            const rows=snapshot.docs.map(item=>({id:item.id,...item.data()})).sort((a,b)=>(a.createdAt?.seconds||0)-(b.createdAt?.seconds||0));
+            list.innerHTML=rows.map(row=>`<article style="margin:8px 0;padding:9px;border-radius:9px;background:${row.sender==='student'?'#214866':'#3c3d46'}"><small>${row.sender==='student'?'Student':'Centre'} · ${row.createdAt?.toDate?.().toLocaleString('en-IN')||'Just now'}${row.sender==='student'&&!row.readByAdmin?' · Unread':''}</small><p style="white-space:pre-wrap">${escapeHTML(row.text||'')}</p></article>`).join('')||'<p>No messages yet.</p>';
+            for(const row of rows.filter(item=>item.sender==='student'&&!item.readByAdmin)){
+                try{requirePortalAdmin();await firestoreUpdateDoc(doc(db,'studentPortalViews',studentUid,'messages',row.id),{readByAdmin:true});}
+                catch(error){messageStatus.textContent='A message could not be marked read: '+friendlyError(error);}
+            }
+        };
+        void portalSdk().then(({onSnapshot,updateDoc})=>{
+            if(!portalIsCurrent())return;
+            const unsubscribe=onSnapshot(messagesPath,snapshot=>{void renderMessages(snapshot,updateDoc);},error=>{if(portalIsCurrent())list.textContent='Messages could not load: '+friendlyError(error);});
+            const previous=modal._portalUnsub;
+            modal._portalUnsub=()=>{previous?.();unsubscribe();};
+        }).catch(error=>{if(portalIsCurrent())list.textContent='Messages could not load: '+friendlyError(error);});
+        modal.querySelector('.admin-message-form').addEventListener('submit',async event=>{
+            event.preventDefault();const form=event.currentTarget,button=form.querySelector('[type=submit]'),text=form.elements.reply.value.trim();
+            if(!text||text.length>1500){messageStatus.textContent='Write a reply of at most 1,500 characters.';return;}
+            button.disabled=true;messageStatus.textContent='Sending reply…';
+            try{const {addDoc:firestoreAddDoc,serverTimestamp}=await portalSdk();requirePortalAdmin();await firestoreAddDoc(messagesPath,{sender:'admin',text,createdAt:serverTimestamp(),readByStudent:false,readByAdmin:true});form.reset();messageStatus.textContent='Reply sent.';}
+            catch(error){messageStatus.textContent='Reply was not sent: '+friendlyError(error);}finally{button.disabled=false;}
+        });
+    }
+    if(data.studentPortalAccount?.uid&&quizServiceConfig.enabled){
+        const quizStatus=modal.querySelector('.admin-quiz-status'),counts=modal.querySelector('.admin-quiz-counts'),quizForm=modal.querySelector('.admin-quiz-form'),questionList=modal.querySelector('.admin-quiz-question-list');let bankRows=[];
+        const token=async()=>{requireAdmin();return auth.currentUser.getIdToken();};
+        const drawBank=()=>{const selected=quizForm.elements.program.value;questionList.innerHTML=bankRows.filter(item=>item.active&&item.program===selected).slice(0,25).map(item=>`<article style="padding:7px;border-top:1px solid #bba46a44"><small>${escapeHTML(item.question)}</small><button type="button" class="admin-ghost-btn" data-quiz-deactivate="${escapeHTML(item.id)}">Deactivate</button></article>`).join('')||'<p>No active questions for this program.</p>';};
+        const refreshBank=async()=>{const result=await quizRequest('/admin/questions',{token:await token()});if(!modal.isConnected||modal.hidden)return;bankRows=result.questions||[];const active=bankRows.filter(item=>item.active);counts.textContent=studentPrograms.map(program=>`${program}: ${active.filter(item=>item.program===program).length}`).join(' · ');drawBank();};
+        void refreshBank().catch(error=>{counts.textContent='Question bank could not load: '+friendlyError(error);});
+        quizForm.elements.program.addEventListener('change',drawBank);
+        questionList.addEventListener('click',async event=>{const button=event.target.closest('[data-quiz-deactivate]');if(!button||!window.confirm('Deactivate this question for future quizzes? Existing attempts keep their saved question.'))return;button.disabled=true;quizStatus.textContent='Deactivating question…';try{await quizRequest('/admin/questions/'+encodeURIComponent(button.dataset.quizDeactivate),{method:'DELETE',token:await token()});quizStatus.textContent='Question deactivated for future quizzes.';await refreshBank();}catch(error){quizStatus.textContent='Question was not changed: '+friendlyError(error);button.disabled=false;}});
+        quizForm.addEventListener('submit',async event=>{
+            event.preventDefault();const form=event.currentTarget,button=form.querySelector('[type=submit]'),fields=new FormData(form);button.disabled=true;quizStatus.textContent='Adding question…';
+            try{await quizRequest('/admin/questions',{method:'POST',token:await token(),body:{program:fields.get('program'),question:fields.get('question'),options:[0,1,2,3].map(index=>fields.get('option'+index)),answer:Number(fields.get('answer'))}});quizStatus.textContent='Question added to the centre bank.';form.reset();await refreshBank();}
+            catch(error){quizStatus.textContent='Question was not added: '+friendlyError(error);}finally{button.disabled=false;}
+        });
+        for(const [selector,period] of [['.admin-publish-weekly','weekly'],['.admin-publish-overall','overall']])modal.querySelector(selector).addEventListener('click',async event=>{
+            if(!window.confirm(`Publish reviewed ${period} quiz standings for students?`))return;
+            const button=event.currentTarget;button.disabled=true;quizStatus.textContent='Publishing reviewed standings…';
+            try{const result=await quizRequest('/admin/publish',{method:'POST',token:await token(),body:{period}});quizStatus.textContent=`Published ${result.students} ${period} student result(s).`;}
+            catch(error){quizStatus.textContent='Standings were not published: '+friendlyError(error);}finally{button.disabled=false;}
+        });
+    }
     modal.querySelector('.admin-class-followup').onclick=async()=>{const uid=verifiedAdminUid;try{requireAdmin();const {openFollowup}=await import('./admin-attendance.js?v=20261105-follow-6');requireAdmin();if(uid!==verifiedAdminUid||!modal.isConnected)return;const entry=adminState.apps.find(a=>a.id===applicationId);if(entry)openFollowup(entry);}catch(error){alert(friendlyError(error));}};
     modal.querySelector(".admin-toggle-edit").addEventListener("click", () => {
         editGroup.hidden = !editGroup.hidden;
@@ -1914,6 +2047,7 @@ function scheduleModalClose(modal, delay) {
 
 function closeAdminModal(modal) {
     if (modal._canClose === false) return;
+    modal._portalUnsub?.();modal._portalUnsub=null;
     modal._generation++;
     modal.hidden = true;
     if (modal._returnFocus?.isConnected) modal._returnFocus.focus();
@@ -1942,6 +2076,7 @@ function adminCreateModal(id, inner) {
     }
     // A reused cropper must appear above the newer offline-student dialog.
     document.body.appendChild(modal);
+    modal._portalUnsub?.();modal._portalUnsub=null;
     modal._generation = (modal._generation || 0) + 1;
     modal._canClose = true;
     modal._returnFocus = document.activeElement;
@@ -2542,7 +2677,11 @@ async function updateDoc(reference, requested) {
         if (!snapshot.exists()) throw new Error("This record was deleted in another session. Refresh the register.");
         const latest = snapshot.data();
         assertUnchanged(original, latest, patch);
-        transaction.update(reference, { ...patch, updatedAt: new Date().toISOString(), updatedBy: verifiedAdminUid });
+        const now=new Date().toISOString();
+        if ((patch.status && patch.status !== 'Approved') || patch.enrolmentStatus === 'Cancelled') {
+            await disableLinkedPortal(transaction,reference.id,latest,now);
+        }
+        transaction.update(reference, { ...patch, updatedAt: now, updatedBy: verifiedAdminUid });
     });
 }
 
@@ -2571,8 +2710,19 @@ async function deleteDoc(reference) {
         if (!snapshot.exists()) throw new Error("Record no longer exists. Refresh the register.");
         // Preserve records changed after the administrator reviewed them.
         if (canonicalRecord(snapshot.data()) !== canonicalRecord(original)) throw new Error("The record changed. Refresh and review it before deleting.");
+        await disableLinkedPortal(transaction,reference.id,snapshot.data(),new Date().toISOString());
+        requireAdmin();if(verifiedAdminUid!==deletionUid)throw Error('Your session changed.');
         transaction.delete(reference);
     });
+}
+
+async function disableLinkedPortal(transaction,applicationId,data,now) {
+    const uid=data.studentPortalAccount?.uid;
+    if(!uid)return;
+    const viewRef=doc(db,'studentPortalViews',uid),view=await transaction.get(viewRef);
+    if(view.exists()&&view.data().applicationId===applicationId&&view.data().enabled===true){
+        transaction.update(viewRef,{enabled:false,updatedAt:now});
+    }
 }
 
 function friendlyError(error) {
@@ -2585,6 +2735,8 @@ function friendlyError(error) {
 }
 
 function clearAdminSession() {
+    stopStudentInbox?.();stopStudentInbox=null;
+    document.querySelector('#studentMessageInbox')?.remove();
     document.dispatchEvent(new Event("admin-session-cleared"));
     clearSettingsState();
     getElement("settingsLoadWarning")?.remove();
@@ -2604,7 +2756,7 @@ function clearAdminSession() {
     getElement("adminToolbar")?.remove();
     getElement("workspaceSummary").replaceChildren();
     getElement("workspaceView").replaceChildren();
-    document.querySelectorAll(".admin-modal,.admin-lightbox").forEach(modal => modal.remove());
+    document.querySelectorAll(".admin-modal,.admin-lightbox").forEach(modal => {modal._portalUnsub?.();modal.remove();});
     getElement("adminLoginForm").reset();
     getElement("adminPassword").type = "password";
     showAdminLogin();

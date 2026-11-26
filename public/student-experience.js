@@ -1,5 +1,6 @@
 import {stages,dailyQuestions,practiceQuestions} from './student-quiz.js';
 import {learningGroups,sampleUpdates,updateFilters} from './student-portal-data.js';
+import {quizRequest,quizServiceConfig,publicLeaderboard} from './student-quiz-service.js';
 
 const $=selector=>document.querySelector(selector);
 const form=$('#studentLoginForm'),status=$('#loginStatus'),onboarding=$('#demoOnboarding'),interior=$('#demoInterior'),publicPage=$('.portal-dashboard');
@@ -11,7 +12,7 @@ const sample={name:'Aamir',admission:'RC-DEMO-001',rank:12,feeDue:499,feeMonth:t
 const escapeText=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
 function readState(){try{const value=JSON.parse(localStorage.getItem(storageKey)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}catch{return {};}}
 let state=readState(),currentStage='',mainQuestions=[],practiceBank=[],practiceIndex=0,practiceAnswered=false,mainAnswered=false,homeMode='dashboard',activeTab='home',updateFilter='All';
-let liveView=null,liveSession=false,stopLiveWatch=null,loginBusy=false;
+let liveView=null,liveUid='',liveUpdates=[],liveMessages=[],liveSelection=null,liveQuiz=null,liveStats=null,liveQuizAnswers=[],liveQuizIndex=0,liveUpdateError='',liveMessageError='',liveSelectionError='',liveSession=false,stopLiveWatch=null,stopLiveUpdates=null,stopLiveMessages=null,stopLiveSelection=null,loginBusy=false;
 function saveState(){try{localStorage.setItem(storageKey,JSON.stringify(state));}catch{/* Preview still works without browser storage, but an attempt may not survive reload. */}}
 function attempt(){const entry=state.attempts?.[dateKey];return entry?.stage===currentStage&&Array.isArray(entry.answers)?entry:null;}
 function ensureAttempt(){if(!state.attempts||typeof state.attempts!=='object')state.attempts={};if(!attempt()){state.attempts[dateKey]={stage:currentStage,answers:[]};saveState();}return state.attempts[dateKey];}
@@ -48,39 +49,69 @@ form.addEventListener('submit',async event=>{
  try{
   const auth=await import('./student-portal-auth.js?v=20261124-portal-1');
   const session=await auth.signInStudent(username,password);
-  startLiveSession(session,auth);
+  await startLiveSession(session,auth);
  }catch(error){status.textContent=error?.code==='auth/invalid-credential'?'Student ID or password is incorrect.':error?.message||'Login is unavailable. Please try again.';}
  finally{loginBusy=false;form.querySelector('[type=submit]').disabled=false;form.elements.password.value='';}
 });
 async function logout(){
  if(stopLiveWatch){stopLiveWatch();stopLiveWatch=null;}
- const wasLive=liveSession;liveSession=false;liveView=null;
+ if(stopLiveUpdates){stopLiveUpdates();stopLiveUpdates=null;}
+ if(stopLiveMessages){stopLiveMessages();stopLiveMessages=null;}
+ if(stopLiveSelection){stopLiveSelection();stopLiveSelection=null;}
+ const wasLive=liveSession;liveSession=false;liveView=null;liveUid='';liveUpdates=[];liveMessages=[];liveSelection=null;liveQuiz=null;liveStats=null;liveQuizAnswers=[];
+ $('#studentImageDialog').close();$('#studentImageDialog img').removeAttribute('src');
+ $('#studentUpdateDialog').close();$('#studentUpdateDetails').replaceChildren();
+ $('#demoContent').replaceChildren();
+ $('.demo-head .student-head-avatar').textContent='A';$('.demo-head small').textContent='RC LEARN · STUDENT DEMO';
+ $('.demo-head h1').textContent='Hello, Aamir';$('.demo-head p').textContent='ADM RC-DEMO-001 · Afternoon batch';
  interior.hidden=true;onboarding.hidden=true;document.body.classList.remove('demo-active');publicPage.hidden=false;form.reset();status.textContent='Demo account: DEMO001 / Rehaan2026';history.replaceState({portal:'login'},'','student.html#login');window.scrollTo(0,0);
  if(wasLive)try{const auth=await import('./student-portal-auth.js?v=20261124-portal-1');await auth.signOutStudent();}catch{status.textContent='Signed out of this screen. Check your connection before using another account.';}
 }
 async function startLiveSession(session,auth){
  if(stopLiveWatch)stopLiveWatch();
- liveSession=true;liveView=session.view;publicPage.hidden=true;onboarding.hidden=true;interior.hidden=false;document.body.classList.add('demo-active');
+ if(stopLiveUpdates)stopLiveUpdates();
+ if(stopLiveMessages)stopLiveMessages();
+ if(stopLiveSelection)stopLiveSelection();
+ liveSession=true;liveUid=session.user.uid;liveView=session.view;liveUpdates=[];liveMessages=[];liveSelection=null;liveQuiz=null;liveStats=null;liveQuizAnswers=[];liveUpdateError='';liveMessageError='';liveSelectionError='';publicPage.hidden=true;onboarding.hidden=true;interior.hidden=false;document.body.classList.add('demo-active');
  updateLiveHeader();showPanel('home');history.replaceState({portal:'home'},'','#student-home');window.scrollTo(0,0);
- stopLiveWatch=await auth.watchStudent(session.ref,view=>{if(!liveSession)return;liveView=view;updateLiveHeader();showPanel(activeTab);},()=>{if(liveSession){void logout();status.textContent='Student access was changed or the connection failed. Please sign in again.';}});
+ const uid=liveUid,keep=unsubscribe=>{if(!liveSession||liveUid!==uid){unsubscribe?.();return false;}return true;};
+ const viewWatch=await auth.watchStudent(session.ref,view=>{if(!liveSession||liveUid!==uid)return;liveView=view;updateLiveHeader();showPanel(activeTab);},()=>{if(liveSession&&liveUid===uid){void logout();status.textContent='Student access was changed or the connection failed. Please sign in again.';}});if(!keep(viewWatch))return;stopLiveWatch=viewWatch;
+ if(typeof auth.watchStudentUpdates==='function'){const watcher=await auth.watchStudentUpdates(uid,rows=>{if(!liveSession||liveUid!==uid)return;liveUpdates=rows;liveUpdateError='';refreshLiveBell();if(['updates','home','journey'].includes(activeTab))showPanel(activeTab);},error=>{liveUpdateError=error?.message||'Updates could not load.';if(activeTab==='updates')showPanel('updates');});if(!keep(watcher))return;stopLiveUpdates=watcher;}
+ if(typeof auth.watchStudentMessages==='function'){const watcher=await auth.watchStudentMessages(uid,rows=>{if(!liveSession||liveUid!==uid)return;liveMessages=rows;liveMessageError='';refreshLiveBell();if(activeTab==='account'||activeTab==='updates')showPanel(activeTab);},error=>{liveMessageError=error?.message||'Messages could not load.';if(activeTab==='account')showPanel('account');});if(!keep(watcher))return;stopLiveMessages=watcher;}
+ if(typeof auth.watchStudentSelection==='function'){const watcher=await auth.watchStudentSelection(uid,selection=>{if(!liveSession||liveUid!==uid)return;liveSelection=selection;liveSelectionError='';if(activeTab==='journey'||activeTab==='home')showPanel(activeTab);},error=>{liveSelectionError=error?.message||'Learning selection could not load.';if(activeTab==='journey')showPanel('journey');});if(!keep(watcher))return;stopLiveSelection=watcher;}
+ if(quizServiceConfig.enabled)void refreshLiveStats();
 }
+async function refreshLiveStats(){
+ if(!liveSession||!quizServiceConfig.enabled)return;
+ const uid=liveUid;
+ try{
+  const auth=await import('./student-portal-auth.js?v=20261124-portal-1');
+  const stats=await quizRequest('/quiz/me',{token:await auth.studentIdToken(uid)});
+  if(!liveSession||liveUid!==uid)return;
+  liveStats=stats;
+  if(activeTab==='home'&&homeMode==='dashboard')showPanel('home');
+ }catch{/* Keep verified stats unavailable if the service is offline. */}
+}
+function refreshLiveBell(){$('#studentBell i').hidden=!liveUpdates.some(item=>item.readByStudent!==true)&&!liveMessages.some(item=>item.sender==='admin'&&item.readByStudent!==true);}
 function updateLiveHeader(){
  const profile=liveView?.profile||{},name=profile.name||'Student';
  $('.demo-head .student-head-avatar').textContent=name.charAt(0).toUpperCase();
  $('.demo-head small').textContent='RC LEARN · STUDENT';
  $('.demo-head h1').textContent='Hello, '+name;
  $('.demo-head p').textContent=`ADM ${profile.admissionNumber||'—'} · ${profile.batch||'Batch not assigned'}`;
- $('#studentBell i').hidden=true;
+ refreshLiveBell();
 }
 void (async()=>{try{const auth=await import('./student-portal-auth.js?v=20261124-portal-1');const session=await auth.restoreStudent();if(session&&!liveSession&&!loginBusy&&publicPage.hidden!==true)await startLiveSession(session,auth);}catch{/* Keep public login available if offline or a saved session is inactive. */}})();
-$('#studentBell').addEventListener('click',()=>navigate('updates'));
+$('#studentBell').addEventListener('click',()=>navigate(liveSession&&liveMessages.some(item=>item.sender==='admin'&&!item.readByStudent)?'account':'updates'));
 
-function showPanel(name){activeTab=name;setActiveTab(name);if(liveSession){renderLivePanel(name);return;}if(name==='home'){renderHome();return;}if(name==='account'){renderAccount();return;}if(name==='updates'){renderUpdates();return;}renderJourney();}
+function showPanel(name){const preserve=liveSession&&name==='account'&&activeTab==='account'&&$('#studentMessagesSection')?{opened:[...$('#demoContent').querySelectorAll('.account-section')].map(section=>section.open),draft:$('#studentMessageText')?.value||''}:null;activeTab=name;setActiveTab(name);if(liveSession){renderLivePanel(name);if(preserve){$('#demoContent').querySelectorAll('.account-section').forEach((section,index)=>{section.open=preserve.opened[index]||false;});if($('#studentMessageText'))$('#studentMessageText').value=preserve.draft;}return;}if(name==='home'){renderHome();return;}if(name==='account'){renderAccount();return;}if(name==='updates'){renderUpdates();return;}renderJourney();}
 function navigate(name,push=true){if(!['home','account','updates','journey'].includes(name))return;if(name==='home')homeMode='dashboard';showPanel(name);if(push)history.pushState({portal:name},'',`#student-${name}`);window.scrollTo({top:0,behavior:'smooth'});}
 window.addEventListener('popstate',event=>{const page=event.state?.portal;if(interior.hidden)return;if(page&&['home','account','updates','journey'].includes(page))navigate(page,false);else logout();});
 function liveRows(items){return items.map(([label,value])=>`<div class="account-row"><span>${escapeText(label)}</span><b>${escapeText(value||'Not recorded')}</b></div>`).join('');}
 function liveMoney(value){return `₹${Number(value||0).toLocaleString('en-IN',{maximumFractionDigits:2})}`;}
 function renderLivePanel(name){
+ if(name==='home'&&homeMode==='liveQuiz'){renderLiveQuiz();return;}
+ if(name==='home'&&homeMode==='livePractice'){renderPractice();return;}
  const view=liveView||{},profile=view.profile||{},fees=view.fees||{},attendance=Array.isArray(view.attendance)?view.attendance:[],journey=view.journey||{};
  const latest=attendance[0],periods=Array.isArray(fees.periods)?fees.periods:[],receipts=Array.isArray(fees.receipts)?fees.receipts:[],topics=Array.isArray(journey.topics)?journey.topics:[];
  const done=topics.filter(topic=>topic.done===true).length,progress=topics.length?Math.round(done/topics.length*100):0;
@@ -88,11 +119,11 @@ function renderLivePanel(name){
  if(name==='home'){
   $('#demoContent').innerHTML=`<section class="student-home"><div class="student-home-title"><span class="eyebrow">RC LEARN · YOUR DASHBOARD</span><h2>${escapeText(profile.name||'Your student space')}</h2><p>ADM ${escapeText(profile.admissionNumber||'—')} · ${escapeText(batch)}</p></div>
    <div class="student-hero"><div><small>CURRENT COURSE</small><strong>${escapeText(course)}</strong><p>Your teacher's recorded learning journey appears below.</p></div><span class="learning-motif" aria-hidden="true"><i class="laptop-screen"></i><i class="laptop-base"></i><i class="book book-one"></i><i class="book book-two"></i></span></div>
-   <div class="student-quick-grid"><div><small>FEE DUE</small><b>${fees.statement?liveMoney(fees.statement.due):'Awaiting review'}</b></div><div><small>LATEST ATTENDANCE</small><b>${latest?`${Number(latest.attended)||0} / ${Number(latest.classes)||0}`:'Awaiting record'}</b></div><div><small>LEARNING TOPICS</small><b>${done} / ${topics.length}</b></div><div><small>WEEKLY RANK</small><b>Awaiting results</b></div></div>
-   <article class="student-quiz-entry demo-panel"><div class="student-quiz-icon" aria-hidden="true">✦</div><div><small>WEEKLY QUIZ</small><h3>${escapeText(course)}</h3><p>The scored quiz opens after your teacher publishes it for your account.</p></div><button class="gold-button" type="button" disabled aria-disabled="true">Quiz not published</button></article>
-   <article class="student-practice demo-panel"><div><small>EXTRA PRACTICE</small><h3>Keep learning</h3><p>Practice questions will open when your learning program is assigned.</p></div></article>
-   <div class="student-home-pair"><article class="student-rank"><div><small>SKILLS LEAGUE</small><strong>—</strong><p>Your rank appears after reviewed results are published.</p></div><span aria-hidden="true">♛</span></article><article class="student-latest"><small>CENTRE UPDATE</small><strong>Awaiting a notice</strong><p>Your centre has not published a student notice yet.</p><button type="button" id="openLatest">See updates →</button></article></div></section>`;
-  $('#openLatest').addEventListener('click',()=>navigate('updates'));return;
+   <div class="student-quick-grid"><div><small>FEE DUE</small><b>${fees.statement?liveMoney(fees.statement.due):'Awaiting review'}</b></div><div><small>LATEST ATTENDANCE</small><b>${latest?`${Number(latest.attended)||0} / ${Number(latest.classes)||0}`:'Awaiting record'}</b></div><div><small>VISIT STREAK</small><b>${liveStats?`${Number(liveStats.streak)||0} day${liveStats.streak===1?'':'s'}`:'—'}</b></div><div><small>VERIFIED POINTS</small><b>${liveStats?Number(liveStats.points)||0:'—'}</b></div></div>
+   <article class="student-quiz-entry demo-panel"><div class="student-quiz-icon" aria-hidden="true">✦</div><div><small>WEEKLY QUIZ</small><h3>${escapeText(liveSelection?.program||'Choose your learning program')}</h3><p>${quizServiceConfig.enabled?'Ten scored questions. One final submission each day.':"The scored quiz opens after your teacher publishes it for your account."}</p></div><button class="gold-button" type="button" ${quizServiceConfig.enabled&&liveSelection?.program?'':'disabled aria-disabled="true"'} id="liveQuizButton">${quizServiceConfig.enabled?'Participate in quiz':'Quiz not published'}</button></article>
+   <article class="student-practice demo-panel"><div><small>EXTRA PRACTICE · NO POINTS</small><h3>Keep learning</h3><p>Unscored practice never changes your official result.</p></div><button type="button" id="livePracticeButton" ${liveSelection?.program?'':'disabled'}>Open practice →</button></article>
+   <div class="student-home-pair"><article class="student-rank"><div><small>SKILLS LEAGUE · WEEKLY</small><strong>${liveStats?.ranks?.weekly?.rank?`#${Number(liveStats.ranks.weekly.rank)}`:'—'}</strong><p>${liveStats?.ranks?.overall?.rank?`Overall rank #${Number(liveStats.ranks.overall.rank)}`:'Your rank appears after reviewed results are published.'}</p></div><span aria-hidden="true">♛</span></article><article class="student-latest"><small>CENTRE UPDATE</small><strong>${escapeText(liveUpdates[0]?.title||'Awaiting a notice')}</strong><p>${escapeText(liveUpdates[0]?.category||'Your centre has not published a student notice yet.')}</p><button type="button" id="openLatest">See updates →</button></article></div>${liveStats?.badges?.length?`<article class="demo-panel journey-badges"><small>VERIFIED BADGES</small><h3>${liveStats.badges.map(escapeText).join(' · ')}</h3></article>`:''}</section>`;
+  $('#openLatest').addEventListener('click',()=>navigate('updates'));$('#liveQuizButton').addEventListener('click',()=>{if(liveSelection?.program&&quizServiceConfig.enabled)void startOfficialQuiz();});$('#livePracticeButton').addEventListener('click',()=>{if(!liveSelection?.program)return;currentStage=liveSelection.program;const questions=dailyQuestions(currentStage,dayOfWeek);practiceBank=practiceQuestions(currentStage,questions,dayOfWeek);practiceIndex=0;homeMode='livePractice';showPanel('home');});return;
  }
  if(name==='account'){
   $('#demoContent').innerHTML=`<section class="student-section"><div class="student-section-title"><span class="eyebrow">MY ACCOUNT</span><h2>Your records</h2><p>Details published from your admission record.</p></div>
@@ -100,13 +131,75 @@ function renderLivePanel(name){
    <details class="account-section" open><summary>Personal & admission details <span>⌄</span></summary><div class="account-section-body">${liveRows([['Full name',profile.name],['Admission number',profile.admissionNumber],['Date of birth',profile.dob],['Parent / guardian',profile.guardian],['Student phone',profile.studentPhone],['Guardian phone',profile.guardianPhone],['Course',course],['Batch',batch],['Joining date',profile.joined],['Account status',profile.status]])}</div></details>
    <details class="account-section"><summary>Fees & receipts <span>⌄</span></summary><div class="account-section-body">${liveRows([['Admission fee status',fees.admissionStatus],['Admission fee recorded',liveMoney(fees.admissionAmount)],['Monthly tuition',fees.statement?liveMoney(fees.statement.monthlyTuition):'Awaiting review'],['Total monthly received',fees.statement?liveMoney(fees.statement.received):'Awaiting review'],['Pending monthly amount',fees.statement?liveMoney(fees.statement.due):'Awaiting review']])}${periods.map(item=>liveRows([[item.due,`${liveMoney(item.received)} received · ${liveMoney(item.concession)} concession`]])).join('')||'<div class="account-empty"><b>No monthly fee periods recorded</b><p>Ask the centre if you expected a payment here.</p></div>'}${receipts.length?`<h3>Receipts</h3>${receipts.map(item=>liveRows([[item.number||item.id,`${liveMoney(item.amount)} · ${item.date||'Date not recorded'}`]])).join('')}`:'<div class="account-empty"><b>No receipts published</b></div>'}<p class="demo-disclosure">Pending amounts appear only when the admin fee ledger passes validation.</p></div></details>
    <details class="account-section"><summary>Attendance & timetable <span>⌄</span></summary><div class="account-section-body">${attendance.map(item=>liveRows([[item.month,`${Number(item.attended)||0} of ${Number(item.classes)||0} classes`]])).join('')||'<div class="account-empty"><b>No attendance recorded yet</b></div>'}${liveRows([['Batch',batch],['Timetable','Not published']])}</div></details>
-   <details class="account-section"><summary>Messages & groups <span>⌄</span></summary><div class="account-section-body"><div class="account-empty"><b>Centre contact is not published yet</b><p>Teacher messages and group links will appear here when enabled by the centre.</p></div></div></details>
+   <details class="account-section" id="studentMessagesSection" ${liveMessages.some(item=>item.sender==='admin'&&!item.readByStudent)?'open':''}><summary>Messages ${liveMessages.some(item=>item.sender==='admin'&&!item.readByStudent)?'· New reply':''}<span>⌄</span></summary><div class="account-section-body"><div class="student-message-thread">${liveMessages.map(item=>`<article class="student-message ${item.sender==='student'?'mine':'from-centre'}"><small>${item.sender==='student'?'You':'Centre'} · ${item.createdAt?.seconds?new Date(item.createdAt.seconds*1000).toLocaleDateString('en-IN'):'Sending…'}</small><p>${escapeText(item.text||'')}</p></article>`).join('')||'<div class="account-empty"><b>No messages yet</b><p>Send a question to the centre below.</p></div>'}</div><form id="studentMessageForm"><label for="studentMessageText">Message the centre</label><textarea id="studentMessageText" maxlength="1500" rows="3" required placeholder="Write your question"></textarea><button class="account-action" type="submit">Send message</button></form><p id="studentMessageStatus" role="status">${escapeText(liveMessageError)}</p></div></details>
    <details class="account-section"><summary>Settings & security <span>⌄</span></summary><div class="account-section-body"><label class="setting-switch"><span>Reduce animations</span><input type="checkbox" id="reduceMotion" ${state.reduceMotion?'checked':''}></label><button class="account-action logout" type="button" id="demoLogout">Sign out</button></div></details></section>`;
   $('#reduceMotion').addEventListener('change',event=>{state.reduceMotion=event.target.checked;document.body.classList.toggle('reduce-motion',state.reduceMotion);saveState();});
+  const messageSection=$('#studentMessagesSection');
+  const markReplies=()=>{if(!messageSection.open)return;for(const item of liveMessages.filter(row=>row.sender==='admin'&&!row.readByStudent))void import('./student-portal-auth.js?v=20261124-portal-1').then(auth=>auth.markStudentMessageRead(liveUid,item.id)).catch(error=>{$('#studentMessageStatus').textContent=error?.message||'Could not mark the reply read.';});};
+  messageSection.addEventListener('toggle',markReplies);if(messageSection.open)markReplies();
+  $('#studentMessageForm').addEventListener('submit',async event=>{event.preventDefault();const button=event.currentTarget.querySelector('button'),input=$('#studentMessageText');button.disabled=true;$('#studentMessageStatus').textContent='Sending…';try{const auth=await import('./student-portal-auth.js?v=20261124-portal-1');await auth.sendStudentMessage(liveUid,input.value);input.value='';$('#studentMessageStatus').textContent='Message sent.';}catch(error){$('#studentMessageStatus').textContent='Message was not sent: '+(error?.message||'Try again.');}finally{button.disabled=false;}});
   $('#demoLogout').addEventListener('click',logout);return;
  }
- if(name==='updates'){$('#demoContent').innerHTML=`<section class="student-section"><div class="student-section-title"><span class="eyebrow">CENTRE UPDATES</span><h2>Notes & announcements</h2><p>Posts from your centre will appear here.</p></div><div class="update-filters" role="group" aria-label="Update categories">${updateFilters.map(filter=>`<button type="button" data-update-filter="${escapeText(filter)}" aria-pressed="${filter===updateFilter}">${escapeText(filter)}</button>`).join('')}</div><div class="account-empty"><b>No ${escapeText(updateFilter==='All'?'updates':updateFilter.toLowerCase())} published yet</b><p>Check again after the centre posts an update.</p></div></section>`;$('#demoContent').querySelectorAll('[data-update-filter]').forEach(button=>button.addEventListener('click',()=>{updateFilter=button.dataset.updateFilter;renderLivePanel('updates');}));return;}
- $('#demoContent').innerHTML=`<section class="student-section"><div class="student-section-title"><span class="eyebrow">YOUR LEARNING JOURNEY</span><h2>One skill at a time</h2><p>${escapeText(journey.course||course)}</p></div><article class="journey-overview"><div><small>TEACHER ASSESSED TOPICS</small><strong>${progress}%</strong><p>${done} of ${topics.length} topics completed</p></div><div class="journey-progress"><span style="width:${progress}%"></span></div></article><div class="journey-timeline">${topics.map((topic,index)=>`<div class="journey-step ${topic.done?'done':'later'}"><span>${topic.done?'✓':String(index+1).padStart(2,'0')}</span><div><b>${escapeText(topic.title)}</b><small>${topic.done?'Completed':'In progress or upcoming'}</small></div></div>`).join('')||'<div class="account-empty"><b>No topics assessed yet</b><p>Your teacher can add them in the admin learning checklist.</p></div>'}</div><article class="demo-panel journey-class"><small>DAILY CLASS LEARNING</small><h3>Awaiting a class note</h3><p>Your teacher has not published a note or image.</p></article></section>`;
+ if(name==='updates'){renderLiveUpdates();return;}
+ const selected=liveSelection?.program||'',selectedIndex=stages.indexOf(selected),classNote=liveUpdates.find(item=>item.category==='Class notes');
+ $('#demoContent').innerHTML=`<section class="student-section"><div class="student-section-title"><span class="eyebrow">YOUR LEARNING JOURNEY</span><h2>One skill at a time</h2><p>${escapeText(journey.course||course)}</p></div>
+ <article class="demo-panel journey-class"><small>CURRENT LEARNING PROGRAM</small><h3>${escapeText(selected||'Choose what you are learning')}</h3><form id="studentLearningForm"><label for="studentLearningProgram">Learning now</label><select id="studentLearningProgram" required><option value="">Select your program</option>${stages.map(stage=>`<option value="${escapeText(stage)}" ${stage===selected?'selected':''}>${escapeText(stage)}</option>`).join('')}</select><button class="account-action" type="submit">Save program</button></form><p id="studentLearningStatus" role="status">${escapeText(liveSelectionError)}</p></article>
+ ${selectedIndex>0?`<article class="demo-panel journey-class"><small>EARLIER IN YOUR PATHWAY</small><p>${stages.slice(0,selectedIndex).map(escapeText).join(' · ')}</p></article>`:''}
+ <article class="journey-overview"><div><small>TEACHER ASSESSED TOPICS</small><strong>${progress}%</strong><p>${done} of ${topics.length} topics completed</p></div><div class="journey-progress"><span style="width:${progress}%"></span></div></article><div class="journey-timeline">${topics.map((topic,index)=>`<div class="journey-step ${topic.done?'done':'later'}"><span>${topic.done?'✓':String(index+1).padStart(2,'0')}</span><div><b>${escapeText(topic.title)}</b><small>${topic.done?'Completed':'In progress or upcoming'}</small></div></div>`).join('')||'<div class="account-empty"><b>No topics assessed yet</b><p>Your teacher can add them in the admin learning checklist.</p></div>'}</div><article class="demo-panel journey-class"><small>DAILY CLASS LEARNING</small><h3>${escapeText(classNote?.title||'Awaiting a class note')}</h3><p>${escapeText(classNote?.details||'Your teacher has not published a note or image.')}</p>${/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(classNote?.image||'')?`<button class="feed-image" type="button" id="journeyClassImage" aria-label="View class image"><img src="${escapeText(classNote.image)}" alt="${escapeText(classNote.title||'Class note')} image"></button>`:''}</article></section>`;
+ $('#studentLearningForm').addEventListener('submit',async event=>{event.preventDefault();const button=event.currentTarget.querySelector('button'),program=$('#studentLearningProgram').value;button.disabled=true;$('#studentLearningStatus').textContent='Saving learning program…';try{const auth=await import('./student-portal-auth.js?v=20261124-portal-1');await auth.setStudentSelection(liveUid,program);$('#studentLearningStatus').textContent='Learning program saved.';}catch(error){$('#studentLearningStatus').textContent='Could not save program: '+(error?.message||'Try again.');}finally{button.disabled=false;}});
+ $('#journeyClassImage')?.addEventListener('click',()=>{const img=$('#studentImageDialog img');img.src=classNote.image;img.alt=classNote.title||'Class note';$('#studentImageDialog').showModal();});
+}
+function renderLiveUpdates(){
+ const visible=liveUpdates.filter(item=>updateFilter==='All'||updateFilter==='Saved'&&item.savedByStudent===true||item.category===updateFilter);
+ const safeImage=item=>/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(item.image||'')?item.image:'';
+ $('#demoContent').innerHTML=`<section class="student-section"><div class="student-section-title"><span class="eyebrow">CENTRE UPDATES</span><h2>Notes & announcements</h2><p>Published for your student account.</p></div><div class="update-filters" role="group" aria-label="Update categories">${updateFilters.map(filter=>`<button type="button" data-update-filter="${escapeText(filter)}" aria-pressed="${filter===updateFilter}">${escapeText(filter)}</button>`).join('')}</div><p role="status" id="liveUpdateStatus">${escapeText(liveUpdateError)}</p><div class="student-update-feed">${visible.map(item=>`<article class="student-feed-card ${item.readByStudent?'is-read':'is-unread'}"><div class="feed-meta"><span>${escapeText(item.category||'Update')}</span><span>${escapeText(String(item.createdAt||'').slice(0,10))}</span></div>${safeImage(item)?`<button class="feed-image" type="button" data-live-image="${escapeText(item.id)}" aria-label="View image for ${escapeText(item.title)}"><img src="${escapeText(item.image)}" alt="${escapeText(item.title)} update image"></button>`:''}<div class="feed-body"><h3>${escapeText(item.title||'Update')}</h3><p>${escapeText(item.details||'')}</p><small>From ${escapeText(item.author||'Centre')}</small></div><div class="feed-actions"><button type="button" data-live-open="${escapeText(item.id)}">Read details →</button><button type="button" data-live-save="${escapeText(item.id)}" aria-pressed="${item.savedByStudent===true}">${item.savedByStudent?'Saved ✓':'Save'}</button></div></article>`).join('')||`<div class="account-empty"><b>No ${escapeText(updateFilter==='All'?'updates':updateFilter.toLowerCase())} published yet</b><p>Check again after the centre posts an update.</p></div>`}</div></section>`;
+ $('#demoContent').querySelectorAll('[data-update-filter]').forEach(button=>button.addEventListener('click',()=>{updateFilter=button.dataset.updateFilter;renderLiveUpdates();}));
+ if(updateFilter==='Teacher messages'){
+  const replies=liveMessages.filter(item=>item.sender==='admin').slice().reverse();
+  $('#demoContent .student-update-feed').innerHTML=replies.map(item=>`<article class="student-feed-card ${item.readByStudent?'is-read':'is-unread'}"><div class="feed-meta"><span>CENTRE REPLY</span><span>${item.createdAt?.seconds?escapeText(new Date(item.createdAt.seconds*1000).toLocaleDateString('en-IN')):'Recent'}</span></div><div class="feed-body"><h3>Message from the centre</h3><p>${escapeText(item.text||'')}</p></div><div class="feed-actions"><button type="button" data-open-messages>Open conversation →</button></div></article>`).join('')||'<div class="account-empty"><b>No centre replies yet</b><p>Send a question from your Account tab.</p></div>';
+  $('#demoContent').querySelectorAll('[data-open-messages]').forEach(button=>button.addEventListener('click',()=>{navigate('account');$('#studentMessagesSection').open=true;}));
+ }
+ const change=async(id,fields)=>{try{const auth=await import('./student-portal-auth.js?v=20261124-portal-1');await auth.setStudentUpdateState(liveUid,id,fields);}catch(error){$('#liveUpdateStatus').textContent='Could not save this change: '+(error?.message||'Try again.');}};
+ $('#demoContent').querySelectorAll('[data-live-save]').forEach(button=>button.addEventListener('click',()=>{const item=liveUpdates.find(row=>row.id===button.dataset.liveSave);if(item)void change(item.id,{savedByStudent:!item.savedByStudent});}));
+ $('#demoContent').querySelectorAll('[data-live-open]').forEach(button=>button.addEventListener('click',()=>{const item=liveUpdates.find(row=>row.id===button.dataset.liveOpen);if(!item)return;$('#studentUpdateDetails').innerHTML=`<small>${escapeText(item.category)} · ${escapeText(String(item.createdAt||'').slice(0,10))} · ${escapeText(item.author)}</small><h2>${escapeText(item.title)}</h2>${safeImage(item)?`<img src="${escapeText(item.image)}" alt="${escapeText(item.title)}">`:''}<p>${escapeText(item.details)}</p>`;$('#studentUpdateDialog').showModal();if(!item.readByStudent)void change(item.id,{readByStudent:true});}));
+ $('#demoContent').querySelectorAll('[data-live-image]').forEach(button=>button.addEventListener('click',()=>{const item=liveUpdates.find(row=>row.id===button.dataset.liveImage);if(!item||!safeImage(item))return;const img=$('#studentImageDialog img');img.src=item.image;img.alt=item.title;$('#studentImageDialog').showModal();}));
+}
+async function startOfficialQuiz(){
+ const button=$('#liveQuizButton');if(button)button.disabled=true;
+ const uid=liveUid;
+ try{
+  const auth=await import('./student-portal-auth.js?v=20261124-portal-1'),token=await auth.studentIdToken(uid);
+  const quiz=await quizRequest('/quiz/today',{token});
+  if(!liveSession||liveUid!==uid||activeTab!=='home')return;
+  if(!Array.isArray(quiz.questions)||quiz.questions.length!==10||quiz.questions.some(item=>!Array.isArray(item.options)||item.options.length!==4))throw Error('The published quiz is incomplete. Contact the centre.');
+  liveQuiz=quiz;liveQuizAnswers=[];liveQuizIndex=0;homeMode='liveQuiz';showPanel('home');history.pushState({portal:'home'},'','#student-quiz');window.scrollTo(0,0);
+ }catch(error){if(button)button.disabled=false;const card=$('.student-quiz-entry p');if(card)card.textContent=error?.message||'Quiz could not load.';}
+}
+function renderLiveQuiz(){
+ if(!liveQuiz)return;
+ if(liveQuiz.completed){
+  $('#demoContent').innerHTML=`<section class="student-section"><button class="student-back" type="button" id="backHome">← Home</button><div class="quiz-finish demo-panel"><span class="eyebrow">VERIFIED DAILY QUIZ · COMPLETE</span><h2>${Number(liveQuiz.score)||0} / 10 correct</h2><p>Your result is saved by the quiz service. Points earned: ${Number(liveQuiz.points)||0}.</p></div><div class="journey-timeline">${liveQuiz.questions.map((item,index)=>{const answer=liveQuiz.selectedAnswers?.[index],correct=liveQuiz.correctAnswers?.[index];return `<article class="journey-step ${answer===correct?'done':'later'}"><span>${String(index+1).padStart(2,'0')}</span><div><b>${escapeText(item.question)}</b><small>${answer===correct?'Correct ✓':`Your answer: ${escapeText(item.options?.[answer]||'—')} · Correct: ${escapeText(item.options?.[correct]||'—')}`}</small></div></article>`;}).join('')}</div></section>`;
+  $('#backHome').addEventListener('click',backHome);return;
+ }
+ const index=liveQuizIndex,item=liveQuiz.questions[index];if(!item)return;
+ const chosen=liveQuizAnswers[index];
+ $('#demoContent').innerHTML=`<section class="student-section"><button class="student-back" type="button" id="backHome">← Home</button><div class="quiz-card demo-panel"><div class="quiz-meta"><span>OFFICIAL DAILY QUIZ</span><strong>${index+1} / 10</strong></div><div class="quiz-track"><span style="width:${index*10}%"></span></div><p class="quiz-topic">${escapeText(item.program||liveQuiz.program)}</p><h2>${escapeText(item.question)}</h2><div class="quiz-options">${item.options.map((option,position)=>`<button type="button" data-official-option="${position}" ${chosen!==undefined?'disabled':''} class="${chosen===position?'selected':''}"><span>${'ABCD'[position]}</span><b>${escapeText(option)}</b></button>`).join('')}</div><p class="quiz-feedback" id="officialFeedback" role="status">${chosen===undefined?'Choose one answer. Your score is revealed after all ten are submitted.':'Answer saved for this question.'}</p><button class="quiz-next" type="button" id="officialNext" ${chosen===undefined?'hidden':''}>${index===9?'Submit final answers':'Next question'} →</button></div></section>`;
+ $('#backHome').addEventListener('click',backHome);
+ $('#demoContent').querySelectorAll('[data-official-option]').forEach(button=>button.addEventListener('click',()=>{if(liveQuizAnswers[index]!==undefined)return;liveQuizAnswers[index]=Number(button.dataset.officialOption);renderLiveQuiz();}));
+ $('#officialNext').addEventListener('click',async()=>{
+  if(index<9){liveQuizIndex++;renderLiveQuiz();window.scrollTo({top:0,behavior:'smooth'});return;}
+  const button=$('#officialNext');button.disabled=true;$('#officialFeedback').textContent='Submitting your final answers…';
+  const uid=liveUid,quizDay=liveQuiz.day;
+  try{
+   const auth=await import('./student-portal-auth.js?v=20261124-portal-1');
+   const result=await quizRequest('/quiz/submit',{method:'POST',body:{day:quizDay,answers:liveQuizAnswers},token:await auth.studentIdToken(uid)});
+   if(!liveSession||liveUid!==uid)return;
+   liveQuiz=result;
+   if(activeTab==='home'&&homeMode==='liveQuiz')renderLiveQuiz();
+   void refreshLiveStats();
+  }
+  catch(error){button.disabled=false;const feedback=$('#officialFeedback');if(liveSession&&liveUid===uid&&feedback)feedback.textContent='Submission failed. Your answers are still on this screen. '+(error?.message||'Try again.');}
+ });
 }
 function renderHome(){
  if(homeMode==='main'){renderMain();return;}
@@ -190,5 +283,18 @@ document.querySelectorAll('[data-demo-tab]').forEach(button=>button.addEventList
 document.body.classList.toggle('reduce-motion',Boolean(state.reduceMotion));
 
 // Only an explicitly published public leaderboard replaces the sample results.
-async function refreshLeaderboard(){try{const response=await fetch('student-leaderboard.json',{cache:'no-store'});if(!response.ok)return;const data=await response.json();if(data.published!==true||!Array.isArray(data.students))return;const students=data.students.filter(row=>row&&typeof row.name==='string'&&row.name.trim()&&Number.isFinite(Number(row.percentage))&&Number(row.percentage)>=0&&Number(row.percentage)<=100).slice(0,10);if(!students.length)return;const top=document.querySelectorAll('.podium');for(const [index,position] of [1,0,2].entries()){const element=top[index],row=students[position];if(!element)continue;element.querySelector('small').textContent=row?.name||'—';element.querySelector('b').textContent=row?`${Number(row.percentage).toFixed(1)}%`:'—';element.querySelector('.avatar').textContent=row?.name?.trim().charAt(0).toUpperCase()||'✦';}$('.demo-ranks').innerHTML=students.slice(3).map((row,index)=>`<li><span>${String(index+4).padStart(2,'0')}</span><b>${escapeText(row.name)}</b><strong>${Number(row.percentage).toFixed(1)}%</strong></li>`).join('');$('.league-section .eyebrow').textContent='PUBLISHED RESULTS';$('.league-section .live-tag').textContent='Updated standings';$('.league-footnote').textContent='Standings refresh automatically every minute while this page is open.';}catch{/* Keep visible results when offline. */}}
-refreshLeaderboard();setInterval(refreshLeaderboard,60_000);
+let leaguePeriod='weekly';
+async function refreshLeaderboard(){
+ try{
+  let students=[];
+  if(quizServiceConfig.enabled){const official=await publicLeaderboard(leaguePeriod);if(official?.published)students=official.students.filter(row=>row&&typeof row.name==='string'&&Number.isFinite(Number(row.score))&&Number(row.score)>=0).slice(0,10).map(row=>({name:row.name,display:leaguePeriod==='overall'?`${Number(row.score)} pts`:`${(row.quizDays?Number(row.score)/(Number(row.quizDays)*10)*100:0).toFixed(1)}%`}));}
+  else{if(leaguePeriod!=='weekly')return;const response=await fetch('student-leaderboard.json',{cache:'no-store'});if(!response.ok)return;const data=await response.json();if(data.published!==true||!Array.isArray(data.students))return;students=data.students.filter(row=>row&&typeof row.name==='string'&&row.name.trim()&&Number.isFinite(Number(row.percentage))&&Number(row.percentage)>=0&&Number(row.percentage)<=100).slice(0,10).map(row=>({name:row.name,display:`${Number(row.percentage).toFixed(1)}%`}));}
+  if(!students.length){if(!$('.league-section').hidden){document.querySelectorAll('.podium').forEach(element=>{element.querySelector('small').textContent='—';element.querySelector('b').textContent='—';element.querySelector('.avatar').textContent='✦';});$('.demo-ranks').innerHTML='';$('.league-footnote').textContent=`${leaguePeriod==='weekly'?'Weekly':'Overall'} results have not been published yet.`;}return;}
+  $('.league-section').hidden=false;const top=document.querySelectorAll('.podium');
+  for(const [index,position] of [1,0,2].entries()){const element=top[index],row=students[position];if(!element)continue;element.querySelector('small').textContent=row?.name||'—';element.querySelector('b').textContent=row?.display||'—';element.querySelector('.avatar').textContent=row?.name?.trim().charAt(0).toUpperCase()||'✦';}
+  $('.demo-ranks').innerHTML=students.slice(3).map((row,index)=>`<li><span>${String(index+4).padStart(2,'0')}</span><b>${escapeText(row.name)}</b><strong>${escapeText(row.display)}</strong></li>`).join('');
+  $('.league-section .eyebrow').textContent=leaguePeriod==='weekly'?'WEEKLY RESULTS':'OVERALL POINTS';$('.league-section .live-tag').textContent='Reviewed standings';$('.league-footnote').textContent='Standings refresh automatically every minute while this page is open.';
+ }catch{/* Keep visible results when offline. */}
+}
+document.querySelectorAll('[data-league-period]').forEach(button=>button.addEventListener('click',()=>{leaguePeriod=button.dataset.leaguePeriod;document.querySelectorAll('[data-league-period]').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active));});void refreshLeaderboard();}));
+refreshLeaderboard();setInterval(()=>{void refreshLeaderboard();void refreshLiveStats();},60_000);
