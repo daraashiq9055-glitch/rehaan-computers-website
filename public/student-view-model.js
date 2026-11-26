@@ -22,7 +22,7 @@ export function studentViewFromApplication(data,applicationId=''){
   if(calculated.reliable)statement={asOf:calculated.asOf,billed:calculated.totals.billed/100,received:calculated.totals.received/100,due:calculated.totals.due/100,monthlyTuition:calculated.rows[0]?.billed/100||999};
  }catch{/* A disputed or incomplete fee record must not publish an estimated balance. */}
  return {
-  profile:{name:text(data.fullName),admissionNumber:text(data.admissionNumber),dob:dateKey(data.dob),guardian:text(data.parentName),studentPhone:text(data.phone),guardianPhone:text(data.guardianPhone),course,batch:text(data.batch),joined:dateKey(data.admissionDate||data.approvedAt),status:text(data.studentLifecycle?.stage||'Active')},
+  profile:{name:text(data.fullName),email:text(data.email),address:text(data.address),qualification:text(data.qualification),gender:text(data.gender),admissionNumber:text(data.admissionNumber),dob:dateKey(data.dob),guardian:text(data.parentName),studentPhone:text(data.phone),guardianPhone:text(data.guardianPhone),course,batch:text(data.batch),joined:dateKey(data.admissionDate||data.approvedAt),status:text(data.studentLifecycle?.stage||'Active')},
   fees:{admissionStatus:text(data.payment?.status),admissionAmount:money(data.payment?.amount),periods:feePeriods,receipts,statement},
   attendance,
   journey:{course,topics}

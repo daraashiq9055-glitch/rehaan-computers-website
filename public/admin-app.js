@@ -10,6 +10,7 @@ import { photoStorageConfig } from "./photo-storage-config.js";
 import { storeStudentPhoto, displayStudentPhoto, clearPhotoSession, isPrivateStudentPhoto } from "./photo-storage.js?v=20261018-login-fix-1";
 let activePhotoMigration = null;
 let stopStudentInbox = null;
+let stopPortalStudents=null,portalStudentRows=[];
 
 // Admin features adapted from website-updates d738bb2. The public site keeps its existing script.
 import { recordTime, isSafePhoto, csvCell, fieldValue, paymentPatch, assertUnchanged, validateChanges, canonicalRecord, formatGender, compareAdmissionRecords } from "./admin-records.js?v=20261102-settings-1";
@@ -1232,6 +1233,16 @@ async function loadApplications() {
             if(verifiedAdminUid!==requestUid||sequence!==loadSequence)return;
             const warning=document.createElement('p');warning.id='studentMessageInbox';warning.className='workbench-notice';warning.textContent='Student message notifications could not load. Refresh the register or open Student Details to check messages.';document.querySelector('#adminDashboard .content')?.prepend(warning);
         });
+        stopPortalStudents?.();stopPortalStudents=null;portalStudentRows=[];
+        if(inboxStudents.length)void Promise.all([import('./student-admin-portal.js'),import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js')]).then(([{watchPortalStudents},sdk])=>{
+            const isCurrent=()=>verifiedAdminUid===requestUid&&sequence===loadSequence;
+            if(!isCurrent())return;
+            stopPortalStudents=watchPortalStudents({db,sdk,students:inboxStudents,isCurrent,onChange:rows=>{
+                portalStudentRows=rows;
+                for(const row of rows){const entry=adminState.apps.find(item=>item.id===row.id);if(entry&&row.path)entry.data.portalLearning=row.path;}
+                document.dispatchEvent(new Event('student-portal-changed'));
+            }});
+        }).catch(()=>{if(verifiedAdminUid===requestUid)console.warn('Student portal sync unavailable.');});
         const linked=adminState.apps.filter(entry=>entry.data.studentPortalAccount?.uid).map(entry=>entry.id);
         if(linked.length)void (async()=>{
             const failures=[];
@@ -2735,6 +2746,7 @@ function friendlyError(error) {
 }
 
 function clearAdminSession() {
+    stopPortalStudents?.();stopPortalStudents=null;portalStudentRows=[];
     stopStudentInbox?.();stopStudentInbox=null;
     document.querySelector('#studentMessageInbox')?.remove();
     document.dispatchEvent(new Event("admin-session-cleared"));

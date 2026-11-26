@@ -34,7 +34,7 @@ def main():
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, executable_path="/usr/bin/chromium", args=["--no-sandbox"])
             try:
-                for width in (320, 360, 390):
+                for width in (320, 360, 390, 1366):
                     page = browser.new_page(viewport={"width": width, "height": 780})
                     page.route("**/student-portal-auth.js*", lambda route: route.fulfill(status=200, content_type="text/javascript", body=live_test.STUB))
                     page.route("**/student-quiz-service.js*", lambda route: route.fulfill(status=200, content_type="text/javascript", body=QUIZ_STUB))
@@ -47,6 +47,7 @@ def main():
                     page.locator("#studentId").fill("alpha")
                     page.locator("#studentPassword").fill("StudentPass123")
                     page.locator(".login-submit").click()
+                    page.locator("#followCentre").click()
                     page.locator("#liveQuizButton").get_by_text("Participate in quiz").wait_for()
                     page.locator("#liveQuizButton").click()
                     for index in range(10):

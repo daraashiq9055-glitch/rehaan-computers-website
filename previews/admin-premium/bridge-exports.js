@@ -1,6 +1,14 @@
 // Appended to the original admin module by the local preview launcher only.
 // Original UI entry points plus isolated, transaction-guarded preview services.
 export const previewAdminBridge = Object.freeze({
+  portalRows(){return verifiedAdminUid?structuredClone(portalStudentRows):[];},
+  async portalProgram(id,program){
+    requireAdmin();const actor=verifiedAdminUid,entry=adminState.apps.find(row=>row.id===id),uid=entry?.data.studentPortalAccount?.uid;
+    if(!uid)throw Error('Create portal access first.');
+    const sdk=await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');requireAdmin();if(actor!==verifiedAdminUid)throw Error('Session changed.');
+    await sdk.setDoc(doc(db,'studentPortalViews',uid,'learning','current'),{program,updatedAt:sdk.serverTimestamp()});
+  },
+  portalAction(id,action){requireAdmin();openAdminDetails(id);const selectors={access:'.admin-portal-toggle,.admin-portal-create',updates:'.admin-student-updates',messages:'.admin-student-messages',learning:'.admin-student-learning'};setTimeout(()=>document.querySelector(selectors[action]||'.admin-student-updates')?.scrollIntoView({block:'center',behavior:'smooth'}),80);},
   refresh() {return loadApplications();},
   identity() {return verifiedAdminUid?{uid:verifiedAdminUid,email:auth.currentUser?.email||''}:null;},
   async idToken() {requireAdmin();return 'local-preview-only';},

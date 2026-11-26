@@ -60,10 +60,18 @@ def main():
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, executable_path="/usr/bin/chromium", args=["--no-sandbox"])
             try:
-                for width in (320, 360, 390):
+                for width in (320, 360, 390, 1366):
                     page = browser.new_page(viewport={"width": width, "height": 780})
                     page.route("**/student-portal-auth.js*", lambda route: route.fulfill(status=200, content_type="text/javascript", body=STUB.replace('__TEST_IMAGE__', test_image)))
                     page.goto(url)
+                    assert 'Leaderboard will appear after the first official quiz' in page.locator('.league-footnote').inner_text()
+                    assert 'Sample A' not in page.locator('.portal-dashboard').inner_text()
+                    assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
+                    boxes={key:page.locator(selector).bounding_box() for key,selector in [('login','.login-section'),('league','.league-section'),('updates','.updates-section')]}
+                    assert boxes['league']['y'] >= boxes['login']['y']+boxes['login']['height']
+                    if width<760: assert boxes['updates']['y'] >= boxes['league']['y']+boxes['league']['height']
+                    else: assert boxes['updates']['x'] > boxes['league']['x']
+                    if width in (390,1366): page.screenshot(path=str(ROOT.parent/'build'/f'portal-landing-{width}.png'),full_page=True)
                     if width == 320:
                         compressed = page.evaluate("""async () => {const canvas=document.createElement('canvas');canvas.width=1800;canvas.height=1000;const context=canvas.getContext('2d');context.fillStyle='#d8b96f';context.fillRect(0,0,1800,1000);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));const file=new File([blob],'class.png',{type:'image/png'});const module=await import('./student-portal-updates.js');return module.prepareStudentUpdateImage(file);}""")
                         assert compressed.startswith("data:image/jpeg;base64,") and len(compressed) <= 350000
@@ -71,6 +79,7 @@ def main():
                         page.locator("#studentId").fill(username)
                         page.locator("#studentPassword").fill("StudentPass123")
                         page.locator(".login-submit").click()
+                        page.locator("#followCentre").click()
                         page.locator(".demo-head h1").get_by_text(f"Hello, {expected}").wait_for()
                         assert other not in page.locator("#demoInterior").inner_text()
                         assert "SAMPLE" not in page.locator("#demoContent").inner_text()
@@ -100,6 +109,8 @@ def main():
                         page.locator('[data-update-filter="All"]').click()
                         page.locator('[data-demo-tab="journey"]').click()
                         assert "Introduction" in page.locator("#demoContent").inner_text()
+                        assert "Currently learning" in page.locator("#demoContent").inner_text()
+                        if width in (390,1366) and username=='alpha': page.screenshot(path=str(ROOT.parent/'build'/f'portal-journey-{width}.png'),full_page=True)
                         assert ("MS Word" if username == "alpha" else "MS Excel") in page.locator("#studentLearningProgram").input_value()
                         if username == "alpha":
                             page.locator("#journeyClassImage").click()
@@ -113,7 +124,7 @@ def main():
                     page.close()
             finally:
                 browser.close()
-        print("PASS: two distinct portal views stay separate; four tabs, logout and 320/360/390px layouts work.")
+        print("PASS: two distinct portal views stay separate; four tabs, logout and 320/360/390/1366px layouts work.")
     finally:
         server.shutdown()
 
