@@ -23,12 +23,12 @@ try:
    page.goto(url);login();expect(page.locator('#followCentre')).to_be_visible();expect(page.locator('#demoInterior')).to_be_hidden()
    page.locator('#followCentre').click();expect(page.locator('#setupProgram')).to_be_visible();expect(page.locator('#demoInterior')).to_be_hidden()
    page.locator('#setupProgram').select_option('MS Word');page.locator('#setupLearning button').click();expect(page.locator('#demoInterior')).to_be_visible()
-   page.locator('[data-demo-tab=journey]').click();expect(page.locator('#studentLearningProgram')).to_have_value('MS Word');expect(page.locator('#demoContent')).to_contain_text('25%')
-   assert page.locator('.journey-class .journey-step.done').count()==3
+   page.locator('[data-demo-tab=journey]').click();expect(page.locator('#studentLearningProgram')).to_have_value('MS Word');expect(page.locator('#demoContent')).to_contain_text('OFFICIAL LEARNING CHECKLIST')
+   assert page.locator('.journey-overview').count()==1
    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
    page.reload();login();expect(page.locator('#demoInterior')).to_be_visible();expect(page.locator('#demoOnboarding')).to_be_hidden()
    page.locator('[data-demo-tab=journey]').click();expect(page.locator('#studentLearningProgram')).to_have_value('MS Word')
    page.close()
   browser.close()
- print('PASS: required follow → software selection → dashboard; MS Word pathway and browser/server-fixture persistence at 320/360/390/1366px.')
+ print('PASS: required follow → software selection → dashboard; Single official checklist and browser/server-fixture persistence at 320/360/390/1366px.')
 finally:server.shutdown()

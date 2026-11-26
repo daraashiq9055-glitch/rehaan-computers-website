@@ -12,7 +12,7 @@ import shutil
 import tempfile
 
 ROOT=Path(__file__).resolve().parent
-VERSION='20261126-student-portal-6'
+VERSION='20261126-student-management-7'
 
 def build(destination, audit_ready=False):
     destination=Path(destination)
@@ -26,7 +26,7 @@ def build(destination, audit_ready=False):
         text=text.replace('previewAdminBridge','adminWorkspace').replace('../../public/','../').replace('/public/','/')
         text=re.sub(r'admin-app\.js\?v=[A-Za-z0-9-]+','admin-app.js?v='+VERSION,text)
         return re.sub(r"(from\s+|import\s*)(['\"])(\.{1,2}/[^'\"]+\.js)(['\"])",lambda m:m[1]+m[2]+m[3]+'?v='+VERSION+m[4],text)
-    files=['portal-workspace.js','records.js','records-model.js','operations.js','accounts-model.js','payment-service.js','payment-ui.js','journey-service.js','growth-model.js','growth-store.js','growth-ui.js','workbench.js','theme.css','records.css','operations.css','growth.css','workbench.css']
+    files=['portal-workspace.js','portal-quiz-workshop.js','records.js','records-model.js','operations.js','accounts-model.js','payment-service.js','payment-ui.js','journey-service.js','growth-model.js','growth-store.js','growth-ui.js','workbench.js','theme.css','records.css','operations.css','growth.css','workbench.css']
     for name in files:
         text=(source/name).read_text(encoding='utf-8')
         if name.endswith('.js'):text=adapt(text)

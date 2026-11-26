@@ -32,7 +32,7 @@ export async function saveProgress({runTransaction,db,ref,assertSession,actor,ex
   if(data.status!=='Approved')throw Error('Only enrolled students can save course progress.');
   if((data.coursePreference||data.course||'')!==course)throw Error('The assigned course changed. Refresh before saving this checklist.');
   if(canonicalRecord(data.learningProgress??null)!==canonicalRecord(expected??null))throw Error('Another administrator changed course progress. Refresh before saving.');
-  const old=data.learningProgress||{};if(typeof old!=='object'||Array.isArray(old)||(old.byCourse!==undefined&&(!old.byCourse||typeof old.byCourse!=='object'||Array.isArray(old.byCourse))))throw Error('Stored learning progress needs review.');const next={...old,byCourse:{...(old.byCourse||{}),[courseKey(course)]:{course,topics:clean,updatedAt:now,updatedBy:actor}}};
+  const old=data.learningProgress||{};if(typeof old!=='object'||Array.isArray(old)||(old.byCourse!==undefined&&(!old.byCourse||typeof old.byCourse!=='object'||Array.isArray(old.byCourse))))throw Error('Stored learning progress needs review.');const prior=old.byCourse?.[courseKey(course)]||{};const assessed=clean.map(topic=>{const existing=prior.topics?.find(item=>item.id===topic.id);return {...existing,...topic,...(!existing||existing.done!==topic.done?{manual:true}:{})};});const next={...old,byCourse:{...(old.byCourse||{}),[courseKey(course)]:{...prior,course,topics:assessed,updatedAt:now,updatedBy:actor}}};
   tx.update(ref,{learningProgress:next,updatedAt:now,updatedBy:actor});return next;
  });
 }

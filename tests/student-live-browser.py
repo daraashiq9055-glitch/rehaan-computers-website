@@ -60,7 +60,7 @@ def main():
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, executable_path="/usr/bin/chromium", args=["--no-sandbox"])
             try:
-                for width in (320, 360, 390, 1366):
+                for width in (320, 360, 390, 768, 1024, 1366):
                     page = browser.new_page(viewport={"width": width, "height": 780})
                     page.route("**/student-portal-auth.js*", lambda route: route.fulfill(status=200, content_type="text/javascript", body=STUB.replace('__TEST_IMAGE__', test_image)))
                     page.goto(url)
@@ -73,6 +73,9 @@ def main():
                     else: assert boxes['updates']['x'] > boxes['league']['x']
                     if width in (390,1366): page.screenshot(path=str(ROOT.parent/'build'/f'portal-landing-{width}.png'),full_page=True)
                     if width == 320:
+                        page.locator('#studentId').fill('DEMO001');page.locator('#studentPassword').fill('Rehaan2026');page.locator('.login-submit').click()
+                        page.locator('#loginStatus').get_by_text('Invalid student account').wait_for()
+                        assert not page.locator('#demoInterior').is_visible()
                         compressed = page.evaluate("""async () => {const canvas=document.createElement('canvas');canvas.width=1800;canvas.height=1000;const context=canvas.getContext('2d');context.fillStyle='#d8b96f';context.fillRect(0,0,1800,1000);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));const file=new File([blob],'class.png',{type:'image/png'});const module=await import('./student-portal-updates.js');return module.prepareStudentUpdateImage(file);}""")
                         assert compressed.startswith("data:image/jpeg;base64,") and len(compressed) <= 350000
                     for username, expected, other in (("alpha", "Aisha Test", "Bilal Test"), ("beta", "Bilal Test", "Aisha Test")):
@@ -109,7 +112,7 @@ def main():
                         page.locator('[data-update-filter="All"]').click()
                         page.locator('[data-demo-tab="journey"]').click()
                         assert "Introduction" in page.locator("#demoContent").inner_text()
-                        assert "Currently learning" in page.locator("#demoContent").inner_text()
+                        assert "OFFICIAL LEARNING CHECKLIST" in page.locator("#demoContent").inner_text()
                         if width in (390,1366) and username=='alpha': page.screenshot(path=str(ROOT.parent/'build'/f'portal-journey-{width}.png'),full_page=True)
                         assert ("MS Word" if username == "alpha" else "MS Excel") in page.locator("#studentLearningProgram").input_value()
                         if username == "alpha":

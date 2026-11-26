@@ -7,14 +7,27 @@ export const previewAdminBridge = Object.freeze({
     if(!uid)throw Error('Create portal access first.');
     const sdk=await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');requireAdmin();if(actor!==verifiedAdminUid)throw Error('Session changed.');
     await sdk.setDoc(doc(db,'studentPortalViews',uid,'learning','current'),{program,updatedAt:sdk.serverTimestamp()});
+    const {syncLearningPath}=await import('/public/student-learning-path.js');
+    await syncLearningPath({db,sdk,applicationId:id,uid,assertAdmin:()=>{requireAdmin();if(actor!==verifiedAdminUid)throw Error('Session changed.');}});
+    await loadApplications();
   },
-  portalAction(id,action){requireAdmin();openAdminDetails(id);const selectors={access:'.admin-portal-toggle,.admin-portal-create',updates:'.admin-student-updates',messages:'.admin-student-messages',learning:'.admin-student-learning'};setTimeout(()=>document.querySelector(selectors[action]||'.admin-student-updates')?.scrollIntoView({block:'center',behavior:'smooth'}),80);},
+  async portalManage(action,id,input={}){
+    requireAdmin();const actor=verifiedAdminUid,guard=()=>{requireAdmin();if(actor!==verifiedAdminUid)throw Error('Your admin session changed.');};
+    const [sdk,{portalAdminAction}]=await Promise.all([import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js'),import('/public/student-portal-admin-service.js')]);guard();
+    const result=await portalAdminAction({db,sdk,config:firebaseConfig,assertAdmin:guard,actor,action,id,input});guard();
+    if(['create','access','refresh','attendance'].includes(action))await loadApplications();return result;
+  },
+  async portalThread(id,onChange,onError){
+    requireAdmin();const actor=verifiedAdminUid,entry=adminState.apps.find(row=>row.id===id),uid=entry?.data.studentPortalAccount?.uid;if(!uid)throw Error('Create portal access first.');
+    const sdk=await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');requireAdmin();if(actor!==verifiedAdminUid)throw Error('Session changed.');
+    return sdk.onSnapshot(sdk.collection(db,'studentPortalViews',uid,'messages'),snapshot=>{if(actor===verifiedAdminUid)onChange(snapshot.docs.map(row=>({id:row.id,...row.data()})));},onError);
+  },
   refresh() {return loadApplications();},
   identity() {return verifiedAdminUid?{uid:verifiedAdminUid,email:auth.currentUser?.email||''}:null;},
   async idToken() {requireAdmin();return 'local-preview-only';},
   topics(id) {const data=adminState.apps.find(entry=>entry.id===id)?.data;const course=courses.find(item=>item.title===(data?.coursePreference||data?.course));return structuredClone(course?.learn?.length?course.learn:['Computer fundamentals','Practical coursework','Course assessment']);},
   async lifecycle(id,input) {requireAdmin();const uid=verifiedAdminUid;const result=await saveLifecycle({...input,db,ref:doc(db,'applications',id),runTransaction,actor:uid,assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');}});await loadApplications();return result;},
-  async progress(id,input) {requireAdmin();const uid=verifiedAdminUid;const result=await saveProgress({...input,db,ref:doc(db,'applications',id),runTransaction,actor:uid,assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');}});await loadApplications();return result;},
+  async progress(id,input) {requireAdmin();const uid=verifiedAdminUid;const result=await saveProgress({...input,db,ref:doc(db,'applications',id),runTransaction,actor:uid,assertSession:()=>{requireAdmin();if(verifiedAdminUid!==uid)throw Error('Your session changed.');}});if(adminState.apps.find(row=>row.id===id)?.data.studentPortalAccount?.uid)await syncLinkedPortalView(id,uid);await loadApplications();return result;},
   snapshot() {
     return {ready: Boolean(verifiedAdminUid && recordsLoaded), records: verifiedAdminUid && recordsLoaded ? structuredClone(adminState.apps) : []};
   },

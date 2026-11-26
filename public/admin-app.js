@@ -1239,7 +1239,7 @@ async function loadApplications() {
             if(!isCurrent())return;
             stopPortalStudents=watchPortalStudents({db,sdk,students:inboxStudents,isCurrent,onChange:rows=>{
                 portalStudentRows=rows;
-                for(const row of rows){const entry=adminState.apps.find(item=>item.id===row.id);if(entry&&row.path)entry.data.portalLearning=row.path;}
+                for(const row of rows){const entry=adminState.apps.find(item=>item.id===row.id);if(entry&&row.learningProgress)entry.data.learningProgress=row.learningProgress;}
                 document.dispatchEvent(new Event('student-portal-changed'));
             }});
         }).catch(()=>{if(verifiedAdminUid===requestUid)console.warn('Student portal sync unavailable.');});

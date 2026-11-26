@@ -1,5 +1,9 @@
 # Student Portal preview status
 
+Latest management revision: see `student-portal-management-20261126.md`.
+The separate learning-path UI from the previous preview has been removed.
+The existing Student Journeys checklist is the sole official progress record.
+
 The existing Home, Account, Updates and Journey tabs remain in place. This
 branch has **not been deployed**. The demo account is separate from Firebase
 student accounts. Live student screens never use demo fee, attendance, score or
@@ -13,7 +17,7 @@ rank values.
 | Profile, fee, receipts, attendance | Sanitized admin projection, validated fee statement and scoped Firestore read. | Compare against live admin edits, receipt deletion and both student screens. |
 | Updates and images | Admin can publish private per-student class notes, homework, announcements, exams, results and holidays; a resized JPG is stored in the private update document. Student can filter, open, mark read and save; bell shows unread items. | Real Firebase publication and image tests, including mobile and offline cases. |
 | Messages | Student sends to their own thread; admin replies in Student Details; read state and bell are stored. The admin register shows unread student threads and links to each conversation. | Test both real sessions, notifications and denial of cross-student access. Firestore messages have size/identity validation; per-student sending quotas are not implemented. |
-| Journey selection | Student chooses a listed learning program; Admin Student Details shows it live. Teacher-assessed checklist stays separate. | Verify both student choices against the admin view and course policy. |
+| Journey selection | Student selection is applied to the existing official checklist by the signed-in admin listener. Saved teacher values are preserved; the student sees the same checklist through its private projection. | Verify both student choices against the admin view and course policy. |
 | Scored quiz | Separate Cloudflare Worker/D1 candidate holds keys, ten-question attempts, final score, seven-day rotation, points, streak and reviewed weekly/overall ranks. Student and admin client controls are prepared. | Worker and D1 are **not provisioned or deployed**; the service config remains disabled. Populate a reviewed question bank and test real Auth/D1 end to end. |
 
 ## Security rules in this candidate
