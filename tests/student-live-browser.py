@@ -8,7 +8,7 @@ from pathlib import Path
 from threading import Thread
 import base64
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, expect
 
 
 ROOT = Path(__file__).resolve().parents[1] / "public"
@@ -28,6 +28,12 @@ const messages={'student-alpha':[{id:'reply-alpha',sender:'admin',text:'Aisha ce
  'student-beta':[{id:'reply-beta',sender:'admin',text:'Bilal centre reply',readByStudent:false,createdAt:{seconds:1795478400}}]};
 const selections={'student-alpha':{program:'MS Word'},'student-beta':{program:'MS Excel'}};
 const updateWatch={},messageWatch={},selectionWatch={};
+const onboarding={},requests={},requestWatch={};
+export async function readStudentOnboarding(uid){return onboarding[uid]||null;}
+export async function completeStudentOnboarding(uid){onboarding[uid]={followed:true};}
+export async function watchLearnedRequests(uid,onValue){requestWatch[uid]=onValue;onValue(requests[uid]||null);return ()=>{delete requestWatch[uid];};}
+export async function saveLearnedRequests(uid,programs){requests[uid]={programs,updatedAt:{seconds:1795478400}};requestWatch[uid]?.(requests[uid]);}
+
 export async function signInStudent(username,password){if(password!=='StudentPass123'||!views[username])throw Error('Invalid student account');return {user:{uid:views[username].uid},view:views[username],ref:username};}
 export async function restoreStudent(){return null;}
 export async function watchStudent(ref,onValue){return ()=>{};}
@@ -85,7 +91,9 @@ def main():
                         page.locator("#followCentre").click()
                         page.locator(".demo-head h1").get_by_text(f"Hello, {expected}").wait_for()
                         assert other not in page.locator("#demoInterior").inner_text()
+                        assert page.locator('#studentBell').get_attribute('aria-label').startswith('2') or '2 unread' in page.locator('#studentBell').get_attribute('aria-label')
                         assert "SAMPLE" not in page.locator("#demoContent").inner_text()
+                        if width in (390,1366) and username=='alpha':page.screenshot(path=str(ROOT.parent/'build'/f'portal-home-{width}.png'),full_page=True)
                         page.locator('[data-demo-tab="account"]').click()
                         assert expected in page.locator("#demoContent").inner_text()
                         assert other not in page.locator("#demoContent").inner_text()
@@ -103,6 +111,9 @@ def main():
                         page.locator("[data-live-open]").click()
                         page.locator("#studentUpdateDialog").get_by_text(own_title).wait_for()
                         page.locator("#closeStudentUpdate").click()
+                        expect(page.locator("#studentBell")).to_have_attribute("aria-label", "Notifications, 0 unread")
+                        page.locator("[data-live-save]").click()
+                        expect(page.locator("[data-live-save]")).to_have_attribute("aria-pressed", "true")
                         if username == "alpha":
                             page.locator("[data-live-image]").click()
                             page.locator("#studentImageDialog img").wait_for(state="visible")
@@ -111,6 +122,8 @@ def main():
                         assert f"{expected.split()[0]} centre reply" in page.locator("#demoContent").inner_text()
                         page.locator('[data-update-filter="All"]').click()
                         page.locator('[data-demo-tab="journey"]').click()
+                        page.locator('#learnedRequestForm [value="Notepad"]').check();page.locator('#learnedRequestForm [type=submit]').click()
+                        page.locator('#learnedRequestForm').get_by_text('Awaiting teacher confirmation',exact=True).wait_for()
                         assert "Introduction" in page.locator("#demoContent").inner_text()
                         assert "OFFICIAL LEARNING CHECKLIST" in page.locator("#demoContent").inner_text()
                         if width in (390,1366) and username=='alpha': page.screenshot(path=str(ROOT.parent/'build'/f'portal-journey-{width}.png'),full_page=True)
@@ -120,14 +133,13 @@ def main():
                             page.locator("#studentImageDialog img").wait_for(state="visible")
                             page.locator("#closeStudentImage").click()
                         page.locator('[data-demo-tab="account"]').click()
-                        page.locator(".account-section").last.locator("summary").click()
                         page.locator("#demoLogout").click()
                         page.locator("#studentLoginForm").wait_for(state="visible")
                     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), f"Horizontal overflow at {width}px"
                     page.close()
             finally:
                 browser.close()
-        print("PASS: two distinct portal views stay separate; four tabs, logout and 320/360/390/1366px layouts work.")
+        print("PASS: two distinct portal views stay separate; four tabs, logout and 320/360/390/768/1024/1366px layouts work.")
     finally:
         server.shutdown()
 

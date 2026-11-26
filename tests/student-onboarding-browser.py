@@ -10,6 +10,7 @@ spec=importlib.util.spec_from_file_location('live',ROOT/'tests/student-live-brow
 # A test-only persistent store simulates an acknowledged server selection.
 stub=live.STUB.replace("'student-alpha':{program:'MS Word'}", "'student-alpha':JSON.parse(localStorage.getItem('fixture-selection')||'null')")
 stub=stub.replace("selections[uid]={program};selectionWatch[uid]?.(selections[uid]);", "selections[uid]={program};localStorage.setItem('fixture-selection',JSON.stringify({program}));selectionWatch[uid]?.(selections[uid]);")
+stub=stub.replace("return onboarding[uid]||null;", "return JSON.parse(localStorage.getItem('fixture-follow-'+uid)||'null');").replace("onboarding[uid]={followed:true};", "onboarding[uid]={followed:true};localStorage.setItem('fixture-follow-'+uid,JSON.stringify(onboarding[uid]));")
 server=ThreadingHTTPServer(('127.0.0.1',0),partial(SimpleHTTPRequestHandler,directory=str(ROOT/'public')));Thread(target=server.serve_forever,daemon=True).start()
 try:
  with sync_playwright() as p:

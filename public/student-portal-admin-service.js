@@ -1,9 +1,13 @@
+import {broadcastUpdate} from './student-broadcast.js';
+import {mergeSelectedProgram,topicProgram} from './student-learning-path.js';
+import {studentViewFromApplication} from './student-view-model.js';
 import {createStudentAuthUser} from './student-portal-provision.js';
 import {linkStudentPortal,setStudentPortalEnabled,syncStudentPortal} from './student-portal-access.js';
 import {studentUpdatePayload,prepareStudentUpdateImage} from './student-portal-updates.js';
 import {saveAttendance} from './admin-attendance-model.js';
 export async function portalAdminAction({db,sdk,config,assertAdmin,actor,action,id,input={},provision=createStudentAuthUser}){
- assertAdmin();const ref=sdk.doc(db,'applications',id),snapshot=await sdk.getDoc(ref);assertAdmin();
+ assertAdmin();if(action==='broadcast')return broadcastUpdate({db,sdk,assertAdmin,input});
+ const ref=sdk.doc(db,'applications',id),snapshot=await sdk.getDoc(ref);assertAdmin();
  if(!snapshot.exists())throw Error('Student record no longer exists.');
  const data=snapshot.data(),uid=data.studentPortalAccount?.uid;
  const deps={db,doc:sdk.doc,runTransaction:sdk.runTransaction,assertAdmin,applicationId:id};
@@ -17,6 +21,18 @@ export async function portalAdminAction({db,sdk,config,assertAdmin,actor,action,
  }
  if(action==='attendance'){const saved=await saveAttendance({db,ref,runTransaction:sdk.runTransaction,assertSession:assertAdmin,actor,month:input.month,input:input.value,expected:input.expected});if(uid)await syncStudentPortal(deps);return saved;}
  if(!uid)throw Error('Create student portal access first.');
+ if(action==='learnedRequests'){const request=await sdk.getDoc(sdk.doc(db,'studentPortalViews',uid,'learning','requests'));return request.exists()?{...request.data(),version:request.data().updatedAt.toMillis()}:null;}
+ if(action==='reviewLearning')return sdk.runTransaction(db,async tx=>{
+  const requestRef=sdk.doc(db,'studentPortalViews',uid,'learning','requests'),viewRef=sdk.doc(db,'studentPortalViews',uid),selectionRef=sdk.doc(db,'studentPortalViews',uid,'learning','current');
+  const [app,request,view,selection]=await Promise.all([tx.get(ref),tx.get(requestRef),tx.get(viewRef),tx.get(selectionRef)]);assertAdmin();
+  if(!app.exists()||app.data().studentPortalAccount?.uid!==uid||!request.exists()||request.data().updatedAt.toMillis()!==input.version)throw Error('The student request changed. Reopen the review.');
+  const requested=request.data().programs;if(!Array.isArray(input.approved)||input.approved.some(program=>!requested.includes(program)))throw Error('Review only requested software.');
+  const source=app.data(),course=source.coursePreference||source.course,key=encodeURIComponent(course),program=selection.exists()?selection.data().program:source.learningProgress?.byCourse?.[key]?.currentProgram;
+  if(!program)throw Error('The student must select their current software first.');
+  const progress=structuredClone(mergeSelectedProgram(source,program,selection.data()?.updatedAt?.toMillis?.()||0)),entry=progress.byCourse[key];
+  entry.topics=entry.topics.map(topic=>{const software=topicProgram(topic);if(!requested.includes(software))return topic;const approved=input.approved.includes(software);return {...topic,...(approved?{done:true,manual:true}:{}),requestStatus:approved?'confirmed':'needs-practice',requestVersion:input.version};});
+  tx.update(ref,{learningProgress:progress});if(view.exists())tx.update(viewRef,{journey:studentViewFromApplication({...source,learningProgress:progress}).journey,updatedAt:new Date().toISOString()});return true;
+ });
  if(action==='access')return setStudentPortalEnabled({...deps,enabled:input.enabled});
  if(action==='refresh')return syncStudentPortal(deps);
  if(action==='publish'){

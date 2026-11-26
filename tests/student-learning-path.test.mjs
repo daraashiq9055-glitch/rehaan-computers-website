@@ -5,8 +5,8 @@ import {studentViewFromApplication} from '../public/student-view-model.js';
 const base=()=>({status:'Approved',admissionNumber:'101',coursePreference:'Office',studentPortalAccount:{uid:'student-1'}});
 test('selection updates only the existing official checklist and its exact student projection',()=>{
  const data=base(),next=mergeSelectedProgram(data,'MS Word',1),course=next.byCourse.Office;
- assert.equal(course.topics.length,12);assert.deepEqual(course.topics.filter(row=>row.done).map(row=>row.title),['Computer basics','Notepad','WordPad']);assert.equal(course.currentProgram,'MS Word');
- const view=studentViewFromApplication({...data,learningProgress:next});assert.equal(view.journey.currentProgram,'MS Word');assert.equal(view.journey.topics.filter(row=>row.done).length,3);
+ assert.equal(course.topics.length,12);assert.deepEqual(course.topics.filter(row=>row.done).map(row=>row.title),[]);assert.equal(course.currentProgram,'MS Word');
+ const view=studentViewFromApplication({...data,learningProgress:next});assert.equal(view.journey.currentProgram,'MS Word');assert.equal(view.journey.topics.filter(row=>row.done).length,0);
  assert.equal(mergeSelectedProgram({...data,learningProgress:next},'MS Word',1),next);
 });
 test('preserves every existing assessment and course; manual corrections survive new selection',()=>{
@@ -20,7 +20,14 @@ test('transaction uses latest identity and selection, updates sanitized view, de
  const record=base(),view={uid:'student-1',enabled:true};let writes=0;
  const sdk={doc:(_, ...parts)=>parts.join('/'),runTransaction:async(_,fn)=>fn({get:async ref=>({exists:()=>true,data:()=>ref.startsWith('applications')?record:ref.endsWith('learning/current')?{program:'MS Word',updatedAt:{toMillis:()=>12}}:view}),update:(ref,patch)=>{writes++;Object.assign(ref.startsWith('applications')?record:view,patch);}})};
  const args={sdk,db:{},applicationId:'a',uid:'student-1',assertAdmin:()=>{}};
- await syncLearningPath(args);assert.equal(record.learningProgress.byCourse.Office.currentProgram,'MS Word');assert.equal(view.journey.topics.filter(row=>row.done).length,3);assert.equal(record.portalLearning,undefined);
+ await syncLearningPath(args);assert.equal(record.learningProgress.byCourse.Office.currentProgram,'MS Word');assert.equal(view.journey.topics.filter(row=>row.done).length,0);assert.equal(record.portalLearning,undefined);
  await syncLearningPath(args);assert.equal(writes,2);await syncLearningPath({...args,uid:'other-user'});assert.equal(writes,2);
  await assert.rejects(syncLearningPath({...args,assertAdmin:()=>{throw Error('Session changed');}}),/Session changed/);
+});
+
+test('existing Excel, Access and Word checklist names are reused without duplicate software topics',()=>{
+ const data={...base(),learningProgress:{byCourse:{Office:{topics:[{id:'excel',title:'Excel',done:true},{id:'access',title:'Access',done:false},{id:'word',title:'Word',done:true}]}}}};
+ const topics=mergeSelectedProgram(data,'MS Excel',3).byCourse.Office.topics;
+ assert.equal(topics.length,12);assert.equal(topics.filter(row=>row.program==='MS Excel').length,1);
+ assert.equal(topics.find(row=>row.id==='excel').done,true);assert.equal(topics.find(row=>row.id==='word').title,'Word');
 });

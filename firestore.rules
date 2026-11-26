@@ -445,6 +445,29 @@ service cloud.firestore {
         );
         allow delete: if admin();
       }
+      // Account setup is a one-way acknowledgement, never a push subscription claim.
+      match /preferences/onboarding {
+        function owner() { return request.auth != null && request.auth.uid == studentUid
+          && get(/databases/$(database)/documents/studentPortalViews/$(studentUid)).data.enabled == true; }
+        allow get: if verifiedAdmin() || owner();
+        allow create: if owner() && request.resource.data.keys().hasOnly(['followed','completedAt'])
+          && request.resource.data.keys().hasAll(['followed','completedAt'])
+          && request.resource.data.followed == true && request.resource.data.completedAt == request.time;
+        allow update, delete, list: if false;
+      }
+      // These are requests, not verified completion or official progress.
+      match /learning/requests {
+        function owner() { return request.auth != null && request.auth.uid == studentUid
+          && get(/databases/$(database)/documents/studentPortalViews/$(studentUid)).data.enabled == true; }
+        function valid(d) { return d.keys().hasOnly(['programs','updatedAt']) && d.keys().hasAll(['programs','updatedAt'])
+          && d.programs is list && d.programs.size() <= 12
+          && d.programs.toSet().size() == d.programs.size()
+          && d.programs.hasOnly(['Computer basics','Notepad','WordPad','MS Word','MS Excel','PowerPoint','MS Access','Outlook','Marg ERP','Tally Prime','Photoshop','InPage'])
+          && d.updatedAt == request.time; }
+        allow get: if verifiedAdmin() || owner();
+        allow create, update: if owner() && valid(request.resource.data);
+        allow list, delete: if false;
+      }
       match /learning/current {
         function admin() {
           return request.auth != null

@@ -15,7 +15,7 @@ export const previewAdminBridge = Object.freeze({
     requireAdmin();const actor=verifiedAdminUid,guard=()=>{requireAdmin();if(actor!==verifiedAdminUid)throw Error('Your admin session changed.');};
     const [sdk,{portalAdminAction}]=await Promise.all([import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js'),import('/public/student-portal-admin-service.js')]);guard();
     const result=await portalAdminAction({db,sdk,config:firebaseConfig,assertAdmin:guard,actor,action,id,input});guard();
-    if(['create','access','refresh','attendance'].includes(action))await loadApplications();return result;
+    if(['create','access','refresh','attendance','reviewLearning'].includes(action))await loadApplications();return result;
   },
   async portalThread(id,onChange,onError){
     requireAdmin();const actor=verifiedAdminUid,entry=adminState.apps.find(row=>row.id===id),uid=entry?.data.studentPortalAccount?.uid;if(!uid)throw Error('Create portal access first.');

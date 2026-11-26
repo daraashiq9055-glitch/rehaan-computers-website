@@ -15,7 +15,7 @@ export function studentViewFromApplication(data,applicationId=''){
  const receipts=Object.entries(data.feeReceipts||{}).filter(([id])=>!deleted.has(id)).map(([id,receipt])=>({id,number:text(receipt.number),date:dateKey(receipt.date),due:dateKey(receipt.due),amount:money((Number(receipt.amount)||0)/100)})).sort((a,b)=>b.date.localeCompare(a.date));
  const attendance=Object.entries(data.monthlyAttendance||{}).filter(([month])=>/^\d{4}-\d{2}$/.test(month)).map(([month,value])=>({month,attended:Number(value.days)||0,classes:Number(value.totalDays)||0,note:text(value.note)})).sort((a,b)=>b.month.localeCompare(a.month));
  const course=text(data.coursePreference||data.course),byCourse=data.learningProgress?.byCourse||{},saved=byCourse[encodeURIComponent(course)]||{};
- const topics=Array.isArray(saved.topics)?saved.topics.filter(item=>item&&typeof item.title==='string').map(item=>({title:text(item.title),done:item.done===true,...(item.program?{program:text(item.program)}:{})})):[];
+ const topics=Array.isArray(saved.topics)?saved.topics.filter(item=>item&&typeof item.title==='string').map(item=>({title:text(item.title),done:item.done===true,...(item.program?{program:text(item.program)}:{}),...(item.requestStatus?{requestStatus:text(item.requestStatus),requestVersion:item.requestVersion||0}:{})})):[];
  let statement=null;
  try{
   const calculated=feeStatement({id:applicationId,data});
