@@ -25,7 +25,7 @@ with tempfile.TemporaryDirectory() as temp:
    for width in [320,360,390,768,1024,1366]:
     page=browser.new_page(viewport={'width':width,'height':850});errors=[];page.on('pageerror',lambda error:errors.append(str(error)));page.on('dialog',lambda dialog:dialog.accept())
     page.goto(f'http://127.0.0.1:{server.server_port}/test-management.html')
-    expect(page.locator('[data-portal-quick=create]')).to_be_visible();assert page.locator('.portal-admin-stats article').count()==7
+    expect(page.locator('[data-portal-quick=create]')).to_be_visible();assert page.locator('.portal-admin-stats article').count()==7;assert page.locator('.portal-quick-actions button').count()==8
     def open_action(action,student='alpha'):
      page.locator(f'[data-portal-quick="{action}"]').first.click()
      page.locator('.portal-picker select').select_option(student)
@@ -36,9 +36,7 @@ with tempfile.TemporaryDirectory() as temp:
     page.locator('#centrePublishForm [name=title]').fill('Centre notice');page.locator('#centrePublishForm [name=details]').fill('Classes start at ten.');page.locator('#centrePublishForm [type=submit]').click()
     expect(page.locator('#broadcastPreview')).to_contain_text('2 recipients');expect(page.locator('#broadcastPreview')).to_contain_text('Rehaan Computers');fit()
     page.locator('#confirmCentrePublish').click();expect(page.locator('#broadcastStatus')).to_contain_text('Published to 2 students');close()
-    open_action('access');page.locator('#portalToggleAccess').click();expect(page.locator('#portalToggleAccess')).to_have_text('Restore access');page.locator('#portalToggleAccess').click();expect(page.locator('#portalToggleAccess')).to_have_text('Disable access');close()
-    for action,category in [('homework','Homework'),('notes','Class notes'),('notice','Announcements'),('exam','Exams'),('result','Results')]:
-     open_action(action);expect(page.locator('#portalPublish [name=category]')).to_have_value(category);page.locator('[name=title]').fill('Private test update');page.locator('[name=details]').fill('Only for this student');page.locator('#portalPublish button').click();expect(page.locator('[role=status]')).to_contain_text('published');fit();close()
+    open_action('updates');page.locator('[name=title]').fill('Private test update');page.locator('[name=details]').fill('Only for this student');page.locator('#portalPublish button').click();expect(page.locator('[role=status]')).to_contain_text('published');fit();close()
     open_action('attendance','beta');page.locator('[name=days]').fill('11');page.locator('[name=totalDays]').fill('20');page.locator('#portalAttendance button').click();expect(page.locator('[role=status]')).to_contain_text('Attendance saved');close()
     open_action('messages');page.locator('[name=text]').fill('Private reply');page.locator('#portalReply button').click();expect(page.locator('[role=status]')).to_contain_text('Reply sent');close()
     open_action('journey');assert page.locator('[data-topic]').count()==2;page.locator('[data-topic="1"]').check();page.locator('#portalJourney button').click();expect(page.locator('[role=status]')).to_contain_text('Official checklist saved');close()
@@ -52,5 +50,5 @@ with tempfile.TemporaryDirectory() as temp:
     if width in [390,1366]:page.screenshot(path=str(ROOT/'build'/f'management-admin-{width}.png'),full_page=True)
     assert not errors,errors;page.close()
    browser.close()
-  print('PASS: 14 direct quick actions including reviewed centre publishing, login form/password clearing, access toggle, private categories, attendance, replies, official checklist, fees and quiz drafts at 320/360/390/768/1024/1366px; Student Details never invoked.')
+  print('PASS: 8 direct control-centre actions including centre publishing, login form/password clearing, private updates, attendance, replies, official checklist, fees and quiz drafts at 320/360/390/768/1024/1366px; Student Details never invoked.')
  finally:server.shutdown()

@@ -97,6 +97,7 @@ def main():
                         page.locator('[data-demo-tab="account"]').click()
                         assert expected in page.locator("#demoContent").inner_text()
                         assert other not in page.locator("#demoContent").inner_text()
+                        if width in (390,1366) and username=='alpha':page.screenshot(path=str(ROOT.parent/'build'/f'portal-account-{width}.png'),full_page=True)
                         if page.locator("#studentMessagesSection").get_attribute("open") is None:
                             page.locator("#studentMessagesSection summary").click()
                         page.locator(".student-message").get_by_text(f"{expected.split()[0]} centre reply").wait_for()
@@ -108,6 +109,7 @@ def main():
                         other_title = "Bilal homework" if username == "alpha" else "Aisha lesson note"
                         page.get_by_text(own_title).first.wait_for()
                         assert other_title not in page.locator("#demoContent").inner_text()
+                        if width in (390,1366) and username=='alpha':page.screenshot(path=str(ROOT.parent/'build'/f'portal-updates-{width}.png'),full_page=True)
                         page.locator("[data-live-open]").click()
                         page.locator("#studentUpdateDialog").get_by_text(own_title).wait_for()
                         page.locator("#closeStudentUpdate").click()
