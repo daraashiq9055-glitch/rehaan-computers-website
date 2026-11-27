@@ -1,3 +1,4 @@
+import {basicsExercises,approveQuestions} from '../previews/admin-premium/weekly-bank.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
@@ -44,7 +45,17 @@ test('review question bank requires separate approval; readiness blocks activati
  const latest=(await call(environment,'/admin/questions','admin-0001')).data.questions.find(q=>q.id===first.id);
  assert.equal((await call(environment,'/admin/questions','admin-0001','POST',{...latest,expectedUpdatedAt:latest.updated_at,status:'Approved'})).status,200);
  assert.equal((await call(environment,'/admin/activation','admin-0001','POST',{enabled:true,programs:['Computer basics']})).status,400);
- for(let i=0;i<70;i++)db.sql.prepare("INSERT INTO question_bank(id,program,question,options_json,answer,active,created_at,author_uid,status,difficulty,explanation) VALUES(?,'Computer basics',?,?,0,1,'2026-11-23','admin-0001','Approved','Foundation','Teacher explanation')").run('approved-'+String(i).padStart(3,'0'),'Reviewed computer question number '+i+'?',JSON.stringify(['Right','Wrong B','Wrong C','Wrong D']));
+ const exercises=basicsExercises();
+ assert.equal(new Set(exercises.map(row=>row.question)).size,70);
+ assert.equal((await call(environment,'/admin/questions/import','admin-0001','POST',{questions:exercises})).status,200);
+ const pending=(await call(environment,'/admin/questions','admin-0001')).data.questions.filter(row=>row.id.startsWith('rc-basics-math-'));
+ let finished=0;
+ await approveQuestions(async(path,{body})=>{
+  const response=await call(environment,path,'admin-0001','POST',body);
+  assert.equal(response.status,200,JSON.stringify(response.data));
+ },pending,done=>{finished=done;});
+ assert.equal(finished,70);
+
  assert.equal((await call(environment,'/admin/activation','admin-0001','POST',{enabled:true,programs:['Computer basics']})).status,200);
  const used=new Set();for(let d=23;d<=29;d++){const day='2026-11-'+d,quiz=await call(environment,'/quiz/today','student-alpha','GET',undefined,day);assert.equal(quiz.status,200);assert.equal(quiz.data.questions.length,10);assert(!quiz.data.correctAnswers);for(const q of quiz.data.questions){assert.equal(q.options.length,4);assert(!('answer'in q));assert(!used.has(q.id));used.add(q.id);}const result=await call(environment,'/quiz/submit','student-alpha','POST',{day,answers:Array(10).fill(0)},day);assert.equal(result.status,200);assert.equal(result.data.correctAnswers.length,10);const retry=await call(environment,'/quiz/submit','student-alpha','POST',{day,answers:Array(10).fill(3)},day);assert.equal(retry.data.score,result.data.score);}
  assert.equal((await call(environment,'/quiz/me','student-beta')).data.quizDays,0);

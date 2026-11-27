@@ -25,6 +25,8 @@ try:
     if path=='/admin/questions':
      if request.method=='POST':questions[0]={**body,'updated_at':str(int(questions[0]['updated_at'])+1)};result={'status':body['status']}
      else:result={'questions':questions,'readiness':[dict(program='Computer basics',approvedCurrent=0,approvedPrevious=0,currentNeeded=70,previousNeeded=0,missingCurrent=70,missingPrevious=0,ready=False)]}
+    elif path=='/admin/questions/drafts':result={'version':1,'questions':[]}
+    elif path=='/admin/questions/import':result={'imported':len(body['questions'])}
     elif path=='/admin/publications/preview':result={**body,'publicationId':'publication-001','recipients':[dict(id='beta',uid='beta-uid',name='Bilal Test',admissionNumber='102')]}
     elif path=='/admin/publications':
      if request.method=='POST':publications[:]=[dict(id='publication-001',payload=body['payload'],target=body['target'],recipients=[dict(uid='beta-uid')],scheduled_at=body['scheduledAt'],revision=1,state='scheduled')];result={'state':'scheduled'}
@@ -35,7 +37,7 @@ try:
     route.fulfill(content_type='application/json',body=json.dumps(result))
    page.route('https://review.fixture.workers.dev/**',api)
    page.goto(f'http://127.0.0.1:{server.server_port}/review-ui-test.html');page.locator('[data-portal-quick=quiz]').first.click()
-   page.locator('[data-review-route=schedule]').click();expect(page.locator('#activateReview')).to_be_disabled();expect(page.locator('#scheduleReadiness')).to_contain_text('Teacher approve');page.locator('[data-review-route=bank]').click();expect(page.locator('#reviewQuestionForm')).to_be_visible()
+   page.locator('[data-review-route=schedule]').click();expect(page.locator('#activateReview')).to_be_disabled();expect(page.locator('#scheduleReadiness')).to_contain_text('Approve questions');page.locator('[data-review-route=bank]').click();page.get_by_text('Manage individual questions and imports',exact=True).click();expect(page.locator('#reviewQuestionForm')).to_be_visible()
    expect(page.locator('#bankReadiness')).to_contain_text('Need 70 current');page.locator('[data-edit]').click();page.locator('#reviewQuestionForm [name=status]').select_option('Review');page.locator('#reviewQuestionForm [type=submit]').click();page.locator('[data-approve]').click();expect(page.locator('#bankList')).to_contain_text('Approved')
    page.locator('#bankFilter').select_option('Draft');expect(page.locator('#bankList')).to_contain_text('No questions match');page.locator('#bankFilter').select_option('All')
    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1');page.locator('[data-close]').click()

@@ -1,3 +1,4 @@
+import {basicsExercises,approveQuestions} from './weekly-bank.js';
 import {reviewRequest} from '/public/student-review-service.js';
 import {studentPrograms} from '/public/student-programs.js';
 import {prepareStudentUpdateImage} from '/public/student-portal-updates.js';
@@ -12,6 +13,56 @@ export function renderReviewQuiz(host,app){
  const bankControls=host.querySelector('.portal-drawer-actions');bank.append(bankControls);
  for(const node of [...host.children])if(node===form||node.classList.contains('portal-form-pair')||node.matches('label,#bankList'))bank.append(node);
  host.append(bank);
+ const tools=document.createElement('details');
+ tools.innerHTML='<summary>Manage individual questions and imports</summary>';
+ while(bank.firstChild)tools.append(bank.firstChild);
+ bank.append(tools);
+ const week=document.createElement('section');
+ week.className='weekly-approval';
+ week.innerHTML='<h3>Prepare a quiz week</h3><p>Students get 10 questions a day for seven days.</p><label>Programme <select id="weekProgram">'+studentPrograms.map(p=>'<option>'+e(p)+'</option>').join('')+'</select></label><p id="weekCount" role="status">Loading question bank…</p><button type="button" id="approveWeek" disabled>Approve week</button>';
+ bank.prepend(week);
+ const weekProgram=week.querySelector('select'),approveWeek=week.querySelector('button');
+ function candidates(){
+  const entry=readiness.find(row=>row.program===weekProgram.value);
+  if(!entry)return [];
+  const earlier=studentPrograms.slice(0,studentPrograms.indexOf(entry.program));
+  const key=row=>row.question.normalize('NFKC').trim().replace(/\s+/g,' ').toLowerCase();
+  const used=new Set(rows.filter(row=>row.status==='Approved'&&row.program===entry.program).map(key));
+  const earlierApproved=new Set(rows.filter(row=>row.status==='Approved'&&earlier.includes(row.program)).map(key));
+  const eligible=rows.filter(row=>['Draft','Review'].includes(row.status));
+  const take=(matches,count)=>{
+   const selected=[];
+   for(const row of eligible){
+    if(selected.length===count)break;
+    if(matches(row)&&!used.has(key(row))){used.add(key(row));selected.push(row);}
+   }
+   return selected;
+  };
+  return [...take(row=>row.program===entry.program&&!earlierApproved.has(key(row)),entry.missingCurrent),
+   ...take(row=>earlier.includes(row.program)&&!earlierApproved.has(key(row)),entry.missingPrevious)];
+ }
+ function displayWeek(){
+  const row=readiness.find(item=>item.program===weekProgram.value);
+  const count=candidates().length;
+  const missing=row?row.missingCurrent+row.missingPrevious:0;
+  approveWeek.disabled=!row||!missing||count<missing;
+  approveWeek.textContent=row?.ready?'Week approved':'Approve '+count+' questions for the week';
+  week.querySelector('#weekCount').textContent=!row?'Loading question bank…':row.ready?'Ready for seven days. Open Weekly Schedule to enable private attempts.':
+   count<missing?'Need '+(missing-count)+' more distinct drafts. Add or import questions under Manage individual questions and imports.':
+   count+' questions are ready for your approval. You can inspect answers under Manage individual questions and imports.';
+ }
+ weekProgram.onchange=displayWeek;
+ approveWeek.onclick=()=>task(async()=>{
+  const selected=candidates();
+  if(!selected.length)return;
+  weekProgram.disabled=true;approveWeek.disabled=true;
+  try{
+   await approveQuestions(api,selected,(done,total)=>{status.textContent='Approving '+done+' of '+total+'…';});
+  }finally{
+   try{await refresh();}finally{weekProgram.disabled=false;}
+  }
+ });
+
  const routes=document.createElement('div');routes.className='quiz-centre-actions';routes.innerHTML='<button data-review-route="bank">Question Bank</button><button data-review-route="schedule">Weekly Schedule</button><button data-review-route="results">Leaderboard &amp; Results</button>';status.before(routes);
  const sections=[...host.querySelectorAll('details.quiz-activation-checklist')];sections.forEach(node=>node.hidden=true);
  routes.onclick=event=>{const route=event.target.dataset.reviewRoute;if(!route)return;for(const button of routes.children)button.setAttribute('aria-pressed',String(button.dataset.reviewRoute===route));bank.hidden=route!=='bank';sections.forEach((node,index)=>{node.hidden=route!==(index===0?'schedule':'results');node.open=!node.hidden;});};
@@ -25,10 +76,10 @@ export function renderReviewQuiz(host,app){
   if(!entry){schedule.textContent='Readiness unavailable. Open Question Bank and refresh the bank.';return;}
   const daily=entry.previousNeeded?'4 current and 6 earlier questions':'10 current questions';
   schedule.textContent='Each day for seven days: '+daily+'. '+(entry.ready?'The bank is ready. Enable private review attempts for this programme.':
-   'Need '+entry.missingCurrent+' current and '+entry.missingPrevious+' earlier approved questions. Open Question Bank, edit a draft, choose Review, save, then select Teacher approve.');
+   'Need '+entry.missingCurrent+' current and '+entry.missingPrevious+' earlier approved questions. Open Question Bank, choose the programme, then select Approve questions for the week.');
  }
  programSelect.onchange=showSchedule;
- async function refresh(){readiness=[];showSchedule();const data=await api('/admin/questions');rows=data.questions;readiness=data.readiness;showSchedule();host.querySelector('#bankReadiness').innerHTML=`<details class="quiz-activation-checklist" open><summary>Question bank · ${rows.length} loaded · ${rows.filter(r=>r.status==='Approved').length} approved</summary><p>${rows.filter(r=>r.status==='Draft').length} drafts · ${rows.filter(r=>r.status==='Review').length} awaiting teacher approval. To approve a draft, open Edit, set Status to Review, choose Save for teacher review, then Teacher approve.</p>${data.readiness.map(row=>`<p><b>${e(row.program)}</b>: ${row.approvedCurrent}/${row.currentNeeded} current + ${row.approvedPrevious}/${row.previousNeeded} earlier approved. ${row.ready?'Ready for review attempts':`Need ${row.missingCurrent} current and ${row.missingPrevious} earlier.`}</p>`).join('')}</details>`;list();status.textContent='Bank loaded from private review service.';}
+ async function refresh(){readiness=[];showSchedule();const data=await api('/admin/questions');rows=data.questions;readiness=data.readiness;displayWeek();showSchedule();host.querySelector('#bankReadiness').innerHTML=`<details class="quiz-activation-checklist"><summary>Question bank · ${rows.length} loaded · ${rows.filter(r=>r.status==='Approved').length} approved</summary><p>${rows.filter(r=>r.status==='Draft').length} drafts · ${rows.filter(r=>r.status==='Review').length} awaiting teacher approval. Use the weekly approval button to approve the required questions together.</p>${data.readiness.map(row=>`<p><b>${e(row.program)}</b>: ${row.approvedCurrent}/${row.currentNeeded} current + ${row.approvedPrevious}/${row.previousNeeded} earlier approved. ${row.ready?'Ready for review attempts':`Need ${row.missingCurrent} current and ${row.missingPrevious} earlier.`}</p>`).join('')}</details>`;list();status.textContent='Bank loaded from private review service.';}
  form.onsubmit=event=>{event.preventDefault();void task(async()=>{const fields=new FormData(form);await api('/admin/questions',{method:'POST',body:{...(edit?{id:edit.id,revision:edit.revision,expectedUpdatedAt:edit.updated_at}:{}),program:fields.get('program'),difficulty:fields.get('difficulty'),question:fields.get('question'),options:[0,1,2,3].map(i=>fields.get('option'+i)),answer:Number(fields.get('answer')),explanation:fields.get('explanation'),status:fields.get('status')}});edit=null;form.reset();await refresh();status.textContent='Question saved.';});};
  host.querySelector('#bankNew').onclick=()=>{edit=null;form.reset();};host.querySelector('#bankRefresh').onclick=()=>task(refresh);['bankSearch','bankFilter','bankProgram'].forEach(id=>host.querySelector('#'+id).oninput=list);
  host.querySelector('#bankExport').onclick=()=>download('rc-learn-question-bank.json',{version:1,questions:rows});host.querySelector('#bankTemplate').onclick=()=>download('rc-learn-import-template.json',{version:1,questions:[{program:'Computer basics',difficulty:'Foundation',question:'Which device is used to enter text?',options:['Keyboard','Monitor','Speaker','Projector'],answer:0,explanation:'A keyboard enters letters and numbers.',status:'Draft'}]});
@@ -40,14 +91,25 @@ export function renderReviewQuiz(host,app){
   const pending=data.questions.filter(row=>!ids.has(row.id)&&!texts.has(String(row.question).trim().toLowerCase()));
   if(pending.length)await api('/admin/questions/import',{method:'POST',body:{questions:pending}});
   await refresh();
-  status.textContent=pending.length+' imported as Draft. '+(data.questions.length-pending.length)+' already in the bank. Choose Review, save, then select Teacher approve.';
+  status.textContent=pending.length+' imported as Draft. '+(data.questions.length-pending.length)+' already in the bank. Use the weekly approval button above.';
  };
  host.querySelector('#bankImport').onchange=event=>task(async()=>{const file=event.target.files[0];if(!file||file.size>700000)throw Error('Choose JSON under 700 KB.');await importRows(JSON.parse(await file.text()));});
  host.querySelector('#bankSeed').onclick=()=>task(async()=>{await importRows(await api('/admin/questions/drafts'));});
  for(const [id,enabled] of [['activateReview',true],['disableReview',false]])host.querySelector('#'+id).onclick=()=>task(async()=>{await api('/admin/activation',{method:'POST',body:{enabled,programs:[host.querySelector('#activateProgram').value]}});status.textContent=enabled?'Private review attempts enabled for the selected software only.':'Private review attempts disabled.';});
  host.querySelector('#previewResults').onclick=()=>task(async()=>{const input={period:host.querySelector('#reviewPeriod').value,cycle:host.querySelector('#reviewCycle').value||undefined},result=await api('/admin/results/preview',{method:'POST',body:input});const container=host.querySelector('#resultsPreview');container.innerHTML=`<ol>${result.students.map(row=>`<li>${e(row.display_name)} · ${row.score} · ${row.quiz_days} quiz days</li>`).join('')}</ol><p>Weekly top three awards: 50 / 30 / 20 points. Review all scores before publishing.</p><button id="publishReviewedResults">Publish reviewed results privately</button>`;container.querySelector('button').onclick=()=>task(async()=>{await api('/admin/publish',{method:'POST',body:{...input,reviewToken:result.reviewToken}});container.replaceChildren();status.textContent='Private reviewed results published.';});});
  routes.querySelector('[data-review-route="bank"]').click();
- void task(refresh);
+ void task(async()=>{
+  await refresh();
+  const first=studentPrograms[0];
+  const need=70-new Set(rows.filter(row=>row.program===first&&row.status!=='Archived').map(row=>row.question.trim().toLowerCase())).size;
+  if(need<=0)return;
+  const seed=await api('/admin/questions/drafts');
+  const known=new Set(rows.map(row=>row.question.trim().toLowerCase()));
+  const ids=new Set(rows.map(row=>row.id));
+  const additions=[...seed.questions.filter(row=>row.program===first),...basicsExercises()].filter(row=>!ids.has(row.id)&&!known.has(row.question.trim().toLowerCase())).slice(0,need);
+  if(additions.length)await importRows({version:1,questions:additions});
+  status.textContent='Weekly bank prepared.';
+ });
 }
 export function renderReviewPublishing(host,app){
  const api=client(host,app);let editing=null,reviewed=null,rows=[];
