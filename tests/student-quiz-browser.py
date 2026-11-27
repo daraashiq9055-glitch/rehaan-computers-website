@@ -22,7 +22,7 @@ export async function quizRequest(path,{body}={}){
  if(path==='/quiz/submit'){if(!result)result={program:'MS Word',questions,completed:true,score:body.answers.filter(answer=>answer===0).length,points:100,selectedAnswers:body.answers,correctAnswers:Array(10).fill(0)};return result;}
  throw Error('Unknown quiz route');
 }
-export async function publicLeaderboard(period){return {published:true,students:[{rank:1,name:'Aisha Test',score:period==='overall'?420:10,quizDays:1},{rank:2,name:'Bilal Test',score:period==='overall'?350:8,quizDays:1}]};}
+export async function publicLeaderboard(period){return {published:true,students:[{rank:1,name:'Aisha Test',score:period==='overall'?420:10,quizDays:1},{rank:2,name:'Bilal Test',score:period==='overall'?350:8,quizDays:1},...Array.from({length:10},(_,index)=>({rank:index+3,name:'Fixture student '+(index+3),score:7,quizDays:1}))]};}
 """
 
 
@@ -38,8 +38,8 @@ def main():
                 blocked.route("**/student-portal-auth.js*",lambda route:route.fulfill(content_type="text/javascript",body=live_test.STUB))
                 blocked.route("**/student-quiz-service.js*",lambda route:route.fulfill(content_type="text/javascript",body=QUIZ_STUB.replace('quizReady:true','quizReady:false')))
                 blocked.goto(url);blocked.locator('#studentId').fill('alpha');blocked.locator('#studentPassword').fill('StudentPass123');blocked.locator('.login-submit').click();blocked.locator('#followCentre').click()
-                expect(blocked.locator('#liveQuizButton')).to_be_disabled();expect(blocked.locator('.reward-strip')).to_contain_text('Starting soon');blocked.close()
-                for width in (320, 360, 390, 1366):
+                expect(blocked.locator('#liveQuizButton')).to_be_disabled();expect(blocked.locator('#liveQuizButton')).to_have_text('Locked');blocked.close()
+                for width in (390, 320, 360, 430, 1366):
                     page = browser.new_page(viewport={"width": width, "height": 780})
                     page.route("**/student-portal-auth.js*", lambda route: route.fulfill(status=200, content_type="text/javascript", body=live_test.STUB))
                     page.route("**/student-quiz-service.js*", lambda route: route.fulfill(status=200, content_type="text/javascript", body=QUIZ_STUB))
@@ -49,6 +49,10 @@ def main():
                     page.locator(".podium.first b").get_by_text("420 pts").wait_for()
                     page.locator('[data-league-period="weekly"]').click()
                     page.locator(".podium.first b").get_by_text("100.0%").wait_for()
+                    expect(page.locator(".demo-ranks li")).to_have_count(7)
+                    expect(page.locator(".demo-ranks li").last).to_contain_text("Fixture student 10")
+                    for rank, metal in [(1, "gold"), (2, "silver"), (3, "bronze")]:
+                        expect(page.locator(".rank-medal." + metal)).to_have_text(str(rank))
                     page.locator("#studentId").fill("alpha")
                     page.locator("#studentPassword").fill("StudentPass123")
                     page.locator(".login-submit").click()

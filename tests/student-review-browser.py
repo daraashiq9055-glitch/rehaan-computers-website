@@ -35,7 +35,7 @@ try:
     route.fulfill(content_type='application/json',body=json.dumps(result))
    page.route('https://review.fixture.workers.dev/**',api)
    page.goto(f'http://127.0.0.1:{server.server_port}/review-ui-test.html');page.locator('[data-portal-quick=quiz]').first.click()
-   expect(page.locator('#reviewQuestionForm')).to_be_hidden();page.locator('[data-review-route=bank]').click();expect(page.locator('#reviewQuestionForm')).to_be_visible()
+   page.locator('[data-review-route=schedule]').click();expect(page.locator('#activateReview')).to_be_disabled();expect(page.locator('#scheduleReadiness')).to_contain_text('Teacher approve');page.locator('[data-review-route=bank]').click();expect(page.locator('#reviewQuestionForm')).to_be_visible()
    expect(page.locator('#bankReadiness')).to_contain_text('Need 70 current');page.locator('[data-edit]').click();page.locator('#reviewQuestionForm [name=status]').select_option('Review');page.locator('#reviewQuestionForm [type=submit]').click();page.locator('[data-approve]').click();expect(page.locator('#bankList')).to_contain_text('Approved')
    page.locator('#bankFilter').select_option('Draft');expect(page.locator('#bankList')).to_contain_text('No questions match');page.locator('#bankFilter').select_option('All')
    assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1');page.locator('[data-close]').click()

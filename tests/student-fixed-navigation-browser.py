@@ -14,7 +14,7 @@ server=ThreadingHTTPServer(('127.0.0.1',0),partial(Quiet,directory=str(ROOT/'pub
 try:
  with sync_playwright() as p:
   browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
-  for width in [320,360,390,768,1024,1366]:
+  for width in [390,320,360,430,768,1024,1366]:
    page=browser.new_page(viewport={'width':width,'height':650});errors=[];page.on('pageerror',lambda error:errors.append(str(error)));page.route('**/student-portal-auth.js*',lambda route:route.fulfill(content_type='text/javascript',body=stub))
    page.goto(f'http://127.0.0.1:{server.server_port}/student.html');page.locator('#studentId').fill('alpha');page.locator('#studentPassword').fill('StudentPass123');page.locator('.login-submit').click();page.locator('#followCentre').click();expect(page.locator('#demoInterior')).to_be_visible()
    for tab in ['home','account','updates','journey']:
@@ -35,5 +35,5 @@ try:
      page.evaluate('window.scrollTo({top:0,behavior:"instant"})');page.screenshot(path=str(ROOT/'build'/f'student-fixed-{tab}-{width}.png'))
    assert not errors,errors;page.close()
   browser.close()
- print('PASS: 24 tab/viewport combinations, each tested at top/middle/bottom (72 scroll positions); nav remains at viewport bottom, last content clears navigation, no horizontal overflow or page errors at 320/360/390/768/1024/1366px.')
+ print('PASS: 28 tab/viewport combinations, each tested at top/middle/bottom (84 scroll positions); nav remains at viewport bottom, last content clears navigation, no horizontal overflow or page errors at 320/360/390/430/768/1024/1366px.')
 finally:server.shutdown()
