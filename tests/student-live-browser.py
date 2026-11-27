@@ -79,12 +79,13 @@ def main():
                     else: assert boxes['updates']['x'] > boxes['league']['x']
                     if width in (390,1366): page.screenshot(path=str(ROOT.parent/'build'/f'portal-landing-{width}.png'),full_page=True)
                     if width == 320:
-                        page.locator('#studentId').fill('DEMO001');page.locator('#studentPassword').fill('Rehaan2026');page.locator('.login-submit').click()
+                        page.locator('#enterStudentPortal').click();page.locator('#studentId').fill('DEMO001');page.locator('#studentPassword').fill('Rehaan2026');page.locator('.login-submit').click()
                         page.locator('#loginStatus').get_by_text('Invalid student account').wait_for()
                         assert not page.locator('#demoInterior').is_visible()
                         compressed = page.evaluate("""async () => {const canvas=document.createElement('canvas');canvas.width=1800;canvas.height=1000;const context=canvas.getContext('2d');context.fillStyle='#d8b96f';context.fillRect(0,0,1800,1000);const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));const file=new File([blob],'class.png',{type:'image/png'});const module=await import('./student-portal-updates.js');return module.prepareStudentUpdateImage(file);}""")
                         assert compressed.startswith("data:image/jpeg;base64,") and len(compressed) <= 350000
                     for username, expected, other in (("alpha", "Aisha Test", "Bilal Test"), ("beta", "Bilal Test", "Aisha Test")):
+                        if page.locator('#enterStudentPortal').is_visible(): page.locator('#enterStudentPortal').click()
                         page.locator("#studentId").fill(username)
                         page.locator("#studentPassword").fill("StudentPass123")
                         page.locator(".login-submit").click()

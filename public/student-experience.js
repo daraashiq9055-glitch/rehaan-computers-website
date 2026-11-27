@@ -64,7 +64,7 @@ async function logout(){
  $('#demoContent').replaceChildren();
  $('.demo-head .student-head-avatar').textContent='A';$('.demo-head small').textContent='RC LEARN · STUDENT DEMO';
  $('.demo-head h1').textContent='Hello, Aamir';$('.demo-head p').textContent='ADM RC-DEMO-001 · Afternoon batch';
- interior.hidden=true;onboarding.hidden=true;document.body.classList.remove('demo-active');publicPage.hidden=false;form.reset();status.textContent='Use the student username provided by your centre.';history.replaceState({portal:'login'},'','student.html#login');window.scrollTo(0,0);
+ interior.hidden=true;onboarding.hidden=true;document.body.classList.remove('demo-active');publicPage.hidden=false;form.hidden=true;loginEntry.hidden=false;entryStatus.textContent='';form.reset();status.textContent='Use the student username provided by your centre.';history.replaceState({portal:'login'},'','student.html#login');window.scrollTo(0,0);
  if(wasLive)try{const auth=await import('./student-portal-auth.js?v=20261127-portal-9');await auth.signOutStudent();}catch{status.textContent='Signed out of this screen. Check your connection before using another account.';}
 }
 async function startLiveSession(session,auth){
@@ -124,11 +124,30 @@ function updateLiveHeader(){
  $('.demo-head p').textContent=`ADM ${profile.admissionNumber||'—'} · ${profile.batch||'Batch not assigned'}`;
  refreshLiveBell();
 }
-void (async()=>{try{const auth=await import('./student-portal-auth.js?v=20261127-portal-9');const session=await auth.restoreStudent();if(session&&!liveSession&&!loginBusy&&publicPage.hidden!==true)await startLiveSession(session,auth);}catch{/* Keep public login available if offline or a saved session is inactive. */}})();
+const loginEntry=$('#enterStudentPortal'),entryStatus=$('#entryStatus');
+loginEntry.addEventListener('click',async()=>{
+ if(loginBusy)return;
+ loginBusy=true;loginEntry.disabled=true;entryStatus.textContent='Checking your session…';
+ try{
+  const auth=await import('./student-portal-auth.js?v=20261127-portal-9');
+  const session=await auth.restoreStudent();
+  if(session){await startLiveSession(session,auth);return;}
+  status.textContent='Enter the username and password from your centre.';
+ }catch(error){status.textContent=error.message||'Please sign in again.';}
+ finally{loginBusy=false;loginEntry.disabled=false;entryStatus.textContent='';}
+ form.hidden=false;loginEntry.hidden=true;form.elements.studentId.focus();
+});
 $('#studentBell').addEventListener('click',()=>navigate(liveSession&&liveMessages.some(item=>item.sender==='admin'&&!item.readByStudent)?'account':'updates'));
 
 function showPanel(name){const preserve=liveSession&&name==='account'&&activeTab==='account'&&$('#studentMessagesSection')?{opened:[...$('#demoContent').querySelectorAll('.account-section')].map(section=>section.open),draft:$('#studentMessageText')?.value||''}:null;activeTab=name;setActiveTab(name);if(liveSession){renderLivePanel(name);if(preserve){$('#demoContent').querySelectorAll('.account-section').forEach((section,index)=>{section.open=preserve.opened[index]||false;});if($('#studentMessageText'))$('#studentMessageText').value=preserve.draft;}return;}if(name==='home'){renderHome();return;}if(name==='account'){renderAccount();return;}if(name==='updates'){renderUpdates();return;}renderJourney();}
-function navigate(name,push=true){if(!['home','account','updates','journey'].includes(name))return;if(name==='home')homeMode='dashboard';showPanel(name);if(push)history.pushState({portal:name},'',`#student-${name}`);requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));}
+function navigate(name,push=true){if(!['home','account','updates','journey'].includes(name))return;
+ const previous=activeTab;
+if(name==='home')homeMode='dashboard';showPanel(name);
+ if(previous!==name&&!document.body.classList.contains('reduce-motion')&&!matchMedia('(prefers-reduced-motion: reduce)').matches){
+  const tabs=['home','journey','updates','account'],offset=tabs.indexOf(name)>tabs.indexOf(previous)?14:-14;
+  $('#demoContent').animate([{opacity:.55,transform:'translateX('+offset+'px)'},{opacity:1,transform:'translateX(0)'}],{duration:280,easing:'cubic-bezier(.2,.8,.2,1)'});
+ }
+ if(push)history.pushState({portal:name},'',`#student-${name}`);requestAnimationFrame(()=>window.scrollTo({top:0,behavior:'auto'}));}
 window.addEventListener('popstate',event=>{const page=event.state?.portal;if(interior.hidden)return;if(page&&['home','account','updates','journey'].includes(page))navigate(page,false);else logout();});
 function liveRows(items){return items.map(([label,value])=>`<div class="account-row"><span>${escapeText(label)}</span><b>${escapeText(value||'Not recorded')}</b></div>`).join('');}
 function liveMoney(value){return `₹${Number(value||0).toLocaleString('en-IN',{maximumFractionDigits:2})}`;}
@@ -228,7 +247,7 @@ function renderLiveQuiz(){
   }
   $('.quiz-track span').style.width=liveQuizAnswers.length*10+'%';
   $('#officialNext').disabled=false;
-  $('#officialFeedback').textContent='Choice '+ 'ABCD'[position]+' selected · '+liveQuizAnswers.length+' of 10 answered. '+(index===9?'Submit to see your score and correct answers.':'Tap another option to change, or Next question to continue.');
+  $('#officialFeedback').textContent='✓ Selected '+ 'ABCD'[position]+': '+item.options[position]+' · '+liveQuizAnswers.length+' of 10 answered. '+(index===9?'Submit to see your score and correct answers.':'Tap another option to change, or Next question to continue.');
  });
  $('#officialNext').addEventListener('click',async()=>{
   if(index<9){liveQuizIndex++;renderLiveQuiz();window.scrollTo({top:0,behavior:state.reduceMotion||matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});return;}

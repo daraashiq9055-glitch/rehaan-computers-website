@@ -20,7 +20,7 @@ try:
    page.route('**/student-portal-auth.js*',lambda route:route.fulfill(content_type='text/javascript',body=stub))
    url=f'http://127.0.0.1:{server.server_port}/student.html'
    def login():
-    page.locator('#studentId').fill('alpha');page.locator('#studentPassword').fill('StudentPass123');page.locator('.login-submit').click()
+    page.locator('#enterStudentPortal').click();page.locator('#studentId').fill('alpha');page.locator('#studentPassword').fill('StudentPass123');page.locator('.login-submit').click()
    page.goto(url);login();expect(page.locator('#followCentre')).to_be_visible();expect(page.locator('#demoInterior')).to_be_hidden()
    page.locator('#followCentre').click();expect(page.locator('#setupProgram')).to_be_visible();expect(page.locator('#demoInterior')).to_be_hidden()
    page.locator('#setupProgram').select_option('MS Word');page.locator('#setupLearning button').click();expect(page.locator('#demoInterior')).to_be_visible()

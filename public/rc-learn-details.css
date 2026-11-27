@@ -82,3 +82,12 @@
     animation: rc-choice-confirm 450ms ease-out;
   }
 }
+
+#studentLoginForm[hidden], #enterStudentPortal[hidden] { display: none; }
+.portal-entry { align-self: flex-start; min-height: 44px; margin-top: 12px; padding-inline: 26px; }
+#entryStatus { color: #f0dfb8; font-size: .85rem; }
+.quiz-options button[data-official-option][aria-pressed="true"] {
+  background: linear-gradient(105deg,#504229,#2c2b29);
+  border: 2px solid #edcf93;
+  color: #fff5df;
+}

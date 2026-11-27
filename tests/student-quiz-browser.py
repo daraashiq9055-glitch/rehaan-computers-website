@@ -37,7 +37,7 @@ def main():
                 blocked=browser.new_page(viewport={"width":320,"height":780})
                 blocked.route("**/student-portal-auth.js*",lambda route:route.fulfill(content_type="text/javascript",body=live_test.STUB))
                 blocked.route("**/student-quiz-service.js*",lambda route:route.fulfill(content_type="text/javascript",body=QUIZ_STUB.replace('quizReady:true','quizReady:false')))
-                blocked.goto(url);blocked.locator('#studentId').fill('alpha');blocked.locator('#studentPassword').fill('StudentPass123');blocked.locator('.login-submit').click();blocked.locator('#followCentre').click()
+                blocked.goto(url);blocked.locator('#enterStudentPortal').click();blocked.locator('#studentId').fill('alpha');blocked.locator('#studentPassword').fill('StudentPass123');blocked.locator('.login-submit').click();blocked.locator('#followCentre').click()
                 expect(blocked.locator('#liveQuizButton')).to_be_disabled();expect(blocked.locator('#liveQuizButton')).to_have_text('Locked');blocked.close()
                 for width in (390, 320, 360, 430, 1366):
                     page = browser.new_page(viewport={"width": width, "height": 780})
@@ -53,7 +53,7 @@ def main():
                     expect(page.locator(".demo-ranks li").last).to_contain_text("Fixture student 10")
                     for rank, metal in [(1, "gold"), (2, "silver"), (3, "bronze")]:
                         expect(page.locator(".rank-medal." + metal)).to_have_text(str(rank))
-                    page.locator("#studentId").fill("alpha")
+                    page.locator('#enterStudentPortal').click();page.locator("#studentId").fill("alpha")
                     page.locator("#studentPassword").fill("StudentPass123")
                     page.locator(".login-submit").click()
                     page.locator("#followCentre").click()

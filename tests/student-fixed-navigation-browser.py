@@ -16,7 +16,7 @@ try:
   browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
   for width in [390,320,360,430,768,1024,1366]:
    page=browser.new_page(viewport={'width':width,'height':650});errors=[];page.on('pageerror',lambda error:errors.append(str(error)));page.route('**/student-portal-auth.js*',lambda route:route.fulfill(content_type='text/javascript',body=stub))
-   page.goto(f'http://127.0.0.1:{server.server_port}/student.html');page.locator('#studentId').fill('alpha');page.locator('#studentPassword').fill('StudentPass123');page.locator('.login-submit').click();page.locator('#followCentre').click();expect(page.locator('#demoInterior')).to_be_visible()
+   page.goto(f'http://127.0.0.1:{server.server_port}/student.html');page.locator('#enterStudentPortal').click();page.locator('#studentId').fill('alpha');page.locator('#studentPassword').fill('StudentPass123');page.locator('.login-submit').click();page.locator('#followCentre').click();expect(page.locator('#demoInterior')).to_be_visible()
    for tab in ['home','account','updates','journey']:
     page.locator(f'[data-demo-tab={tab}]').click()
     if tab=='account':page.locator('.account-section').evaluate_all('nodes=>nodes.forEach(node=>node.open=true)')

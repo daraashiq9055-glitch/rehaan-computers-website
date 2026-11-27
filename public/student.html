@@ -10,7 +10,7 @@
   <link rel="stylesheet" href="student-portal.css?v=20261127-student-10">
   <style>.update-filters{display:flex!important;flex-wrap:wrap!important;gap:7px!important;overflow:visible!important}.update-filters button{flex:1 1 calc(33.333% - 7px);min-width:0!important;padding:8px 5px!important;font-size:10px!important;white-space:nowrap}@media(max-width:340px){.update-filters button{flex-basis:calc(50% - 7px)}}</style>
   <link rel="stylesheet" href="rc-learn-product.css?v=20261128-1">
-  <link rel="stylesheet" href="rc-learn-details.css?v=20261128-5">
+  <link rel="stylesheet" href="rc-learn-details.css?v=20261128-6">
 </head>
 <body id="top">
   <header class="portal-header">
@@ -19,7 +19,7 @@
   </header>
   <a class="portal-back-link" href="index.html">← Back to Rehaan Computers website</a>
   <main class="portal-dashboard">
-    <section class="login-section" id="login"><div class="login-intro"><span class="eyebrow">REHAAN COMPUTERS</span><h1>Student Login</h1></div><form class="login-card" id="studentLoginForm"><label for="studentId">Student username</label><input id="studentId" name="studentId" autocomplete="username" placeholder="Student username" required><label for="studentPassword">Password</label><div class="password-wrap"><input id="studentPassword" name="password" type="password" autocomplete="current-password" placeholder="Password" required><button type="button" id="togglePassword" aria-label="Show password">◉</button></div><button class="gold-button login-submit" type="submit">Log in</button><p id="loginStatus" role="status">Use the student username provided by your centre.</p></form><a class="portal-admission-link" href="index.html#admission">Apply for Admission →</a></section>
+    <section class="login-section" id="login"><div class="login-intro"><span class="eyebrow">REHAAN COMPUTERS</span><h1>Student Portal</h1><button type="button" class="gold-button portal-entry" id="enterStudentPortal" aria-controls="studentLoginForm">Log in</button><span id="entryStatus" role="status"></span></div><form class="login-card" id="studentLoginForm" hidden><label for="studentId">Student username</label><input id="studentId" name="studentId" autocomplete="username" placeholder="Student username" required><label for="studentPassword">Password</label><div class="password-wrap"><input id="studentPassword" name="password" type="password" autocomplete="current-password" placeholder="Password" required><button type="button" id="togglePassword" aria-label="Show password">◉</button></div><button class="gold-button login-submit" type="submit">Log in</button><p id="loginStatus" role="status">Use the student username provided by your centre.</p></form><a class="portal-admission-link" href="index.html#admission">Apply for Admission →</a></section>
     <section class="league-section" id="leaderboard">
       <div class="section-heading"><div><span class="eyebrow">OFFICIAL QUIZ LEADERBOARD</span><h2>Quiz Leaderboard</h2></div><span class="live-tag">Awaiting first quiz</span></div>
       <div class="league-card">
@@ -42,7 +42,7 @@
   <dialog class="student-image-dialog" id="studentImageDialog" aria-label="Update image preview"><button type="button" id="closeStudentImage" aria-label="Close image preview">×</button><img alt=""></dialog>
   <dialog class="student-update-dialog" id="studentUpdateDialog" aria-label="Centre update details"><button type="button" id="closeStudentUpdate" aria-label="Close update details">×</button><div id="studentUpdateDetails"></div></dialog>
   <footer class="portal-footer"><a href="index.html">← Rehaan Computers home</a><span>REHAAN COMPUTERS · STUDENT PORTAL</span><a href="index.html#contact">Get help</a></footer>
-  <script type="module" src="student-experience.js?v=20261128-3"></script>
+  <script type="module" src="student-experience.js?v=20261128-4"></script>
   <script type="module" src="rc-learn-product.js?v=20261128-1"></script>
 </body>
 </html>

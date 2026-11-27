@@ -24,7 +24,7 @@ try:
   page.goto(f'http://127.0.0.1:{server.server_port}/student.html')
   expect(page.get_by_text('DESIGN PREVIEW · Sample records only · No live services')).to_be_visible()
   def login():
-   page.locator('#studentId').fill('alpha');page.locator('#studentPassword').fill('StudentPass123');page.locator('.login-submit').click()
+   page.locator('#enterStudentPortal').click();page.locator('#studentId').fill('alpha');page.locator('#studentPassword').fill('StudentPass123');page.locator('.login-submit').click()
   login();page.locator('#followCentre').click();page.locator('#setupProgram').select_option('MS Word');page.locator('#setupLearning button').click();expect(page.locator('#demoInterior')).to_be_visible()
   for tab in ['home','updates','journey','account']:
    page.locator(f'[data-demo-tab={tab}]').click();assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')
