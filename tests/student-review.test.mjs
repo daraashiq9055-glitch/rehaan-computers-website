@@ -1,4 +1,4 @@
-import {basicsExercises,approveQuestions} from '../previews/admin-premium/weekly-bank.js';
+import {basicsExercises,approveQuestions,setProgrammeOpen} from '../previews/admin-premium/weekly-bank.js';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
@@ -56,7 +56,15 @@ test('review question bank requires separate approval; readiness blocks activati
  },pending,done=>{finished=done;});
  assert.equal(finished,70);
 
- assert.equal((await call(environment,'/admin/activation','admin-0001','POST',{enabled:true,programs:['Computer basics']})).status,200);
+ const adminApi=async(path,options={})=>{
+  const response=await call(environment,path,'admin-0001',options.method||'GET',options.body);
+  assert.equal(response.status,200,JSON.stringify(response.data));return response.data;
+ };
+ assert.deepEqual(await setProgrammeOpen(adminApi,'Computer basics',true),['Computer basics']);
+ assert.deepEqual(await setProgrammeOpen(adminApi,'Computer basics',false),[]);
+ assert.equal((await call(environment,'/quiz/today','student-alpha')).status,409);
+ assert.deepEqual(await setProgrammeOpen(adminApi,'Computer basics',true),['Computer basics']);
+ assert.equal((await call(environment,'/quiz/me','student-alpha')).data.quizReady,true);
  const used=new Set();for(let d=23;d<=29;d++){const day='2026-11-'+d,quiz=await call(environment,'/quiz/today','student-alpha','GET',undefined,day);assert.equal(quiz.status,200);assert.equal(quiz.data.questions.length,10);assert(!quiz.data.correctAnswers);for(const q of quiz.data.questions){assert.equal(q.options.length,4);assert(!('answer'in q));assert(!used.has(q.id));used.add(q.id);}const result=await call(environment,'/quiz/submit','student-alpha','POST',{day,answers:Array(10).fill(0)},day);assert.equal(result.status,200);assert.equal(result.data.correctAnswers.length,10);const retry=await call(environment,'/quiz/submit','student-alpha','POST',{day,answers:Array(10).fill(3)},day);assert.equal(retry.data.score,result.data.score);}
  assert.equal((await call(environment,'/quiz/me','student-beta')).data.quizDays,0);
  assert.equal((await call(environment,'/admin/publish','admin-0001','POST',{period:'weekly'},'2026-11-30')).status,400);

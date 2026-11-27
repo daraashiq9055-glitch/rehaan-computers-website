@@ -12,7 +12,7 @@ import shutil
 import tempfile
 
 ROOT=Path(__file__).resolve().parent
-VERSION='20261128-review-quiz-images'
+VERSION='20261128-review-start-quiz'
 
 def build(destination, audit_ready=False):
     destination=Path(destination)

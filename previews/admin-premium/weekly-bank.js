@@ -37,3 +37,19 @@ export async function approveQuestions(api,questions,progress){
  }
  progress(completed,questions.length);
 }
+
+// The deployed review API replaces the entire activation list on each write.
+export async function setProgrammeOpen(api,program,open){
+ const read=async()=>{
+  const {quizEnabled}=await api('/admin/status');
+  return quizEnabled?.enabled ? quizEnabled.programs : [];
+ };
+ const before=await read();
+ if(before.includes(program)!==open){
+  const programs=open?[...before,program]:before.filter(item=>item!==program);
+  await api('/admin/activation',{method:'POST',body:{enabled:programs.length>0,programs:programs.length?programs:[program]}});
+ }
+ const after=await read();
+ if(after.includes(program)!==open)throw Error('The saved schedule changed. Refresh to see which programmes are open.');
+ return after;
+}

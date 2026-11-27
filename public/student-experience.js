@@ -14,7 +14,7 @@ const escapeText=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<'
 function readState(){try{const value=JSON.parse(localStorage.getItem(storageKey)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}catch{return {};}}
 let state=readState(),currentStage='',mainQuestions=[],practiceBank=[],practiceIndex=0,practiceAnswered=false,mainAnswered=false,homeMode='dashboard',activeTab='home',updateFilter='All';
 let learnedRequests=null,stopLearnedRequests=null;
-let quizStatusError='';
+let quizStatusError='',quizStartError='',openingFor='';
 let liveView=null,liveUid='',liveUpdates=[],liveMessages=[],liveSelection=null,selectionReady=false,followedHere=false,liveQuiz=null,liveStats=null,liveQuizAnswers=[],liveQuizIndex=0,liveUpdateError='',liveMessageError='',liveSelectionError='',liveSession=false,stopLiveWatch=null,stopLiveUpdates=null,stopLiveMessages=null,stopLiveSelection=null,loginBusy=false;
 function saveState(){try{localStorage.setItem(storageKey,JSON.stringify(state));}catch{/* Preview still works without browser storage, but an attempt may not survive reload. */}}
 function attempt(){const entry=state.attempts?.[dateKey];return entry?.stage===currentStage&&Array.isArray(entry.answers)?entry:null;}
@@ -58,7 +58,7 @@ async function logout(){
  if(stopLiveUpdates){stopLiveUpdates();stopLiveUpdates=null;}
  if(stopLiveMessages){stopLiveMessages();stopLiveMessages=null;}
  if(stopLiveSelection){stopLiveSelection();stopLiveSelection=null;}
- const wasLive=liveSession;liveSession=false;quizStatusError='';liveView=null;liveUid='';liveUpdates=[];liveMessages=[];liveSelection=null;liveQuiz=null;liveStats=null;liveQuizAnswers=[];
+ const wasLive=liveSession;liveSession=false;quizStatusError='';quizStartError='';openingFor='';liveView=null;liveUid='';liveUpdates=[];liveMessages=[];liveSelection=null;liveQuiz=null;liveStats=null;liveQuizAnswers=[];
  $('#studentImageDialog').close();$('#studentImageDialog img').removeAttribute('src');
  $('#studentUpdateDialog').close();$('#studentUpdateDetails').replaceChildren();
  $('#demoContent').replaceChildren();
@@ -160,17 +160,19 @@ function renderLivePanel(name){
  const done=topics.filter(topic=>topic.done===true).length,progress=topics.length?Math.round(done/topics.length*100):0;
  const course=profile.course||'Course not recorded',batch=profile.batch||'Batch not assigned';
  if(name==='home'){
-  const quizAvailable=quizServiceConfig.enabled&&(!quizServiceConfig.reviewOnly||liveStats?.quizReady===true);
+  const quizAvailable=quizServiceConfig.enabled;
   const verified=liveStats,earned=verified&&Array.isArray(liveStats.badges)?liveStats.badges:[];
   $('#demoContent').innerHTML=`<section class="student-home"><article class="learn-welcome"><span class="eyebrow">YOUR LEARNING SPACE</span><h2>Welcome back, ${escapeText((profile.name||'Student').split(' ')[0])}</h2><p>ADM ${escapeText(profile.admissionNumber||'—')} · ${escapeText(batch)}</p><div class="current-pill"><span>Currently learning</span><b>${escapeText(programLabel(journey.currentProgram||liveSelection?.program||course))}</b></div></article>${verified?`<div class="reward-strip"><article><small>STREAK</small><strong>${Number(liveStats.streak)||0} days</strong></article><article><small>POINTS</small><strong>${Number(liveStats.points)||0}</strong></article><article><small>LEAGUE RANK</small><strong>${liveStats.ranks?.weekly?.rank?'#'+Number(liveStats.ranks.weekly.rank):'—'}</strong></article></div>`:''}<article class="learn-badges"><div><small>ACHIEVEMENTS</small><span>${earned.length?'Verified achievements':'Locked until the official quiz opens'}</span></div><div class="badge-levels">${['Learner','Bronze','Silver','Gold','Platinum','Diamond'].map(level=>`<span class="badge-level ${earned.includes(level)?'earned':''}"><i aria-hidden="true">◇</i>${level}${earned.includes(level)?' ✓':''}</span>`).join('')}</div>${earned.filter(level=>!['Learner','Bronze','Silver','Gold','Platinum','Diamond'].includes(level)).map(level=>`<span class="verified-award">${escapeText(level)}</span>`).join('')}</article><article class="student-latest"><small>TODAY AT RC LEARN</small><strong>${escapeText(liveUpdates[0]?.title||'You are up to date')}</strong><p>${escapeText(liveUpdates[0]?.details?.slice(0,130)||'Your published class updates will appear here.')}</p><button type="button" id="openLatest">Open Updates →</button></article><div class="student-quick-grid learn-summary"><div><small>FEE PENDING</small><b>${fees.statement?liveMoney(fees.statement.due):'Awaiting review'}</b></div><div><small>ATTENDANCE</small><b>${latest?`${latest.attended} / ${latest.classes||'—'} classes`:'Not recorded'}</b></div></div><article class="student-quiz-entry demo-panel"><div class="student-quiz-icon" aria-hidden="true">✦</div><div><small>OFFICIAL WEEKLY QUIZ</small><h3>${quizAvailable?'Your next challenge':'Quiz will open after teacher approval'}</h3><p>${quizAvailable?'10 reviewed questions. One final submission.':'Your centre will announce the first reviewed weekly quiz.'}</p></div><button class="gold-button" type="button" id="liveQuizButton" ${quizAvailable?'':'disabled'}>${quizAvailable?'Participate in quiz':'Locked'}</button></article></section>`;
   const quizCard=$('.student-quiz-entry');
   $('.learn-welcome').after(quizCard);
-  if(!quizAvailable&&quizServiceConfig.enabled){
-   quizCard.querySelector('p').textContent=quizStatusError?'Could not check your quiz: '+quizStatusError:
-    liveStats?'Your programme needs an approved bank and enabled private attempts. Ask your teacher to check Weekly Schedule.':'Checking availability for your account…';
-   const retry=document.createElement('button');retry.type='button';retry.textContent='Check availability';
-   retry.onclick=()=>{retry.disabled=true;retry.textContent='Checking…';void refreshLiveStats();};
-   quizCard.append(retry);
+  if(quizAvailable){
+   const programme=liveSelection?.program;
+   quizCard.querySelector('h3').textContent=programme?programLabel(programme)+' quiz':'Today’s quiz';
+   const detail=quizCard.querySelector('p');
+   detail.setAttribute('role','status');
+   detail.textContent=quizStartError||quizStatusError||'10 questions · Score after submission';
+   const start=$('#liveQuizButton');start.disabled=openingFor===liveUid;
+   start.textContent=start.disabled?'Opening quiz…':quizStartError?'Try again':'Start quiz';
   }
   const notice=liveUpdates.find(item=>['Announcements','Holidays','Exams'].includes(item.category));
   const noticeCard=document.createElement('button');noticeCard.type='button';noticeCard.className='home-centre-notice';noticeCard.innerHTML=`<small>LATEST CENTRE NOTICE</small><strong>${escapeText(notice?.title||'No centre notice published yet')}</strong><span>View updates →</span>`;noticeCard.onclick=()=>navigate('updates');$('.student-quick-grid').after(noticeCard);
@@ -218,6 +220,8 @@ function renderLiveUpdates(){
  $('#demoContent').querySelectorAll('[data-live-image]').forEach(button=>button.addEventListener('click',()=>{const item=liveUpdates.find(row=>row.id===button.dataset.liveImage);if(!item||!safeImage(item))return;const img=$('#studentImageDialog img');img.src=item.image;img.alt=item.title;$('#studentImageDialog').showModal();if(!item.readByStudent)void change(item.id,{readByStudent:true});}));
 }
 async function startOfficialQuiz(){
+ if(openingFor===liveUid)return;
+ openingFor=liveUid;quizStartError='';
  const button=$('#liveQuizButton');if(button){button.disabled=true;button.textContent='Opening quiz…';}
  const uid=liveUid;
  try{
@@ -226,7 +230,18 @@ async function startOfficialQuiz(){
   if(!liveSession||liveUid!==uid||activeTab!=='home')return;
   if(!Array.isArray(quiz.questions)||quiz.questions.length!==10||quiz.questions.some(item=>!Array.isArray(item.options)||item.options.length!==4))throw Error('The published quiz is incomplete. Contact the centre.');
   liveQuiz=quiz;liveQuizAnswers=[];liveQuizIndex=0;homeMode='liveQuiz';showPanel('home');history.pushState({portal:'home'},'','#student-quiz');window.scrollTo(0,0);
- }catch(error){if(button){button.disabled=false;button.textContent='Try opening again';}const card=$('.student-quiz-entry p');if(card)card.textContent=error?.message||'Quiz could not load.';}
+ }catch(error){
+  if(!liveSession||liveUid!==uid)return;
+  const programme=liveSelection?.program;
+  const message=error?.message||'Quiz could not load.';
+  const label=programme?programLabel(programme):'Your programme';
+  quizStartError=message==='Private quiz attempts are disabled pending teacher approval and readiness.'?
+   label+' is closed for this account. In Quiz Centre, open the quiz for '+label+'.':
+   label+' · '+message;
+ }finally{
+  if(openingFor===uid)openingFor='';
+  if(liveSession&&liveUid===uid&&activeTab==='home'&&homeMode==='dashboard')showPanel('home');
+ }
 }
 function renderLiveQuiz(){
  if(!liveQuiz)return;

@@ -36,9 +36,9 @@ def main():
             try:
                 blocked=browser.new_page(viewport={"width":320,"height":780})
                 blocked.route("**/student-portal-auth.js*",lambda route:route.fulfill(content_type="text/javascript",body=live_test.STUB))
-                blocked.route("**/student-quiz-service.js*",lambda route:route.fulfill(content_type="text/javascript",body=QUIZ_STUB.replace('quizReady:true','quizReady:false')))
+                blocked.route("**/student-quiz-service.js*",lambda route:route.fulfill(content_type="text/javascript",body=QUIZ_STUB.replace('quizReady:true','quizReady:false').replace("if(path==='/quiz/today')return","if(path==='/quiz/today')throw Error('Private attempts are closed for this programme.');if(false)return")))
                 blocked.goto(url);blocked.locator('#enterStudentPortal').click();blocked.locator('#studentId').fill('alpha');blocked.locator('#studentPassword').fill('StudentPass123');blocked.locator('.login-submit').click();blocked.locator('#followCentre').click()
-                expect(blocked.locator('#liveQuizButton')).to_be_disabled();expect(blocked.locator('#liveQuizButton')).to_have_text('Locked');blocked.close()
+                blocked.locator('#liveQuizButton').click();expect(blocked.locator('.student-quiz-entry')).to_contain_text('Private attempts are closed');blocked.close()
                 for width in (390, 320, 360, 430, 1366):
                     page = browser.new_page(viewport={"width": width, "height": 780})
                     page.route("**/student-portal-auth.js*", lambda route: route.fulfill(status=200, content_type="text/javascript", body=live_test.STUB))
@@ -57,7 +57,7 @@ def main():
                     page.locator("#studentPassword").fill("StudentPass123")
                     page.locator(".login-submit").click()
                     page.locator("#followCentre").click()
-                    page.locator("#liveQuizButton").get_by_text("Participate in quiz").wait_for()
+                    page.locator("#liveQuizButton").get_by_text("Start quiz").wait_for()
                     page.locator("#liveQuizButton").click()
                     for index in range(10):
                         page.locator(".quiz-options button").first.wait_for()
