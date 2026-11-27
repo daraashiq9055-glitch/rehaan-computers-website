@@ -26,7 +26,7 @@ def build(destination, audit_ready=False):
         text=text.replace('previewAdminBridge','adminWorkspace').replace('../../public/','../').replace('/public/','/')
         text=re.sub(r'admin-app\.js\?v=[A-Za-z0-9-]+','admin-app.js?v='+VERSION,text)
         return re.sub(r"(from\s+|import\s*)(['\"])(\.{1,2}/[^'\"]+\.js)(['\"])",lambda m:m[1]+m[2]+m[3]+'?v='+VERSION+m[4],text)
-    files=['records.js','records-model.js','operations.js','accounts-model.js','payment-service.js','payment-ui.js','journey-service.js','workbench.js','theme.css','records.css','operations.css','workbench.css']
+    files=['records.js','records-model.js','operations.js','accounts-model.js','payment-service.js','payment-ui.js','journey-service.js','mobile-updates.js','workbench.js','theme.css','records.css','operations.css','workbench.css']
     for name in files:
         text=(source/name).read_text(encoding='utf-8')
         if name.endswith('.js'):text=adapt(text)
@@ -60,7 +60,7 @@ def build(destination, audit_ready=False):
     presentation=presentation.rstrip()[:-3]+'}\nsetupShell();\n'
     presentation+="document.querySelector('#workspaceDate').textContent=new Intl.DateTimeFormat('en-IN',{day:'numeric',month:'long',year:'numeric',timeZone:'Asia/Kolkata'}).format(new Date());\n"
     (ui/'shell.js').write_text(presentation, encoding='utf-8')
-    (ui/'main.js').write_text("import './shell.js?v="+VERSION+"';\nimport './workbench.js?v="+VERSION+"';\nimport {adminWorkspace} from '../admin-app.js?v="+VERSION+"';\nimport {createPaymentUI} from './payment-ui.js?v="+VERSION+"';\nadminWorkspace.installPaymentForm(createPaymentUI);\nimport {initDesk} from '../admin-desk.js?v="+VERSION+"';\ninitDesk(adminWorkspace);\n", encoding='utf-8')
+    (ui/'main.js').write_text("import './shell.js?v="+VERSION+"';\nimport './workbench.js?v="+VERSION+"';\nimport './mobile-updates.js?v="+VERSION+"';\nimport {adminWorkspace} from '../admin-app.js?v="+VERSION+"';\nimport {createPaymentUI} from './payment-ui.js?v="+VERSION+"';\nadminWorkspace.installPaymentForm(createPaymentUI);\nimport {initDesk} from '../admin-desk.js?v="+VERSION+"';\ninitDesk(adminWorkspace);\n", encoding='utf-8')
     bridge=(source/'bridge-exports.js').read_text(encoding='utf-8')
     # The preview credential must never override the real Firebase token method.
     bridge=bridge.replace("  async idToken() {requireAdmin();return 'local-preview-only';},\n",'')

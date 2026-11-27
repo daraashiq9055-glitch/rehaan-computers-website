@@ -317,7 +317,7 @@ service cloud.firestore {
         return value in ['Notepad','WordPad','MS Word','MS Excel','PowerPoint','MS Access','Outlook','Marg ERP','TallyPrime','Photoshop','InPage'];
       }
       function validSummary(d) {
-        return d.keys().hasOnly(['admissionNumber','pendingRupees','fullName','dob','batch','course','monthlyAttendance','currentProgram'])
+        return d.keys().hasOnly(['admissionNumber','pendingRupees','fullName','dob','batch','course','monthlyAttendance','currentProgram','streakCount','streakLastDay','streakReturnedAt'])
           && d.admissionNumber is string
           && d.admissionNumber.size() >= 1
           && d.admissionNumber.size() <= 40
@@ -328,7 +328,10 @@ service cloud.firestore {
           && (!('batch' in d) || (d.batch is string && d.batch.size() <= 80))
           && (!('course' in d) || (d.course is string && d.course.size() <= 120))
           && (!('monthlyAttendance' in d) || d.monthlyAttendance is map)
-          && (!('currentProgram' in d) || approvedProgram(d.currentProgram));
+          && (!('currentProgram' in d) || approvedProgram(d.currentProgram))
+          && (!('streakCount' in d) || (d.streakCount is int && d.streakCount >= 0 && d.streakCount <= 100000))
+          && (!('streakLastDay' in d) || (d.streakLastDay is string && d.streakLastDay.size() == 10))
+          && (!('streakReturnedAt' in d) || (d.streakReturnedAt is number && d.streakReturnedAt >= 0));
       }
       allow get: if request.auth != null
         && ((request.auth.uid == uid && sessionAllowed()) || registrar());
@@ -340,7 +343,16 @@ service cloud.firestore {
             request.auth != null
             && request.auth.uid == uid
             && sessionAllowed()
-            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentProgram'])
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentProgram','streakCount','streakLastDay','streakReturnedAt'])
+            && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['streakCount','streakLastDay','streakReturnedAt'])
+                || (request.resource.data.streakCount is int
+                    && request.resource.data.streakCount >= 1
+                    && request.resource.data.streakCount <= resource.data.get('streakCount', 0) + 1
+                    && request.resource.data.streakLastDay is string
+                    && request.resource.data.streakLastDay.size() == 10
+                    && request.resource.data.streakLastDay != resource.data.get('streakLastDay', '')
+                    && request.resource.data.streakReturnedAt is number
+                    && request.resource.data.streakReturnedAt >= 0))
           )
         );
       allow list, delete: if false;
@@ -371,6 +383,60 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['disabled','cutoff'])
         && request.resource.data.disabled is bool
         && request.resource.data.cutoff == request.time;
+      allow list, delete: if false;
+    }
+
+    /* Published RC Learn tuition updates. Drafts remain administrator-only. */
+    match /rcLearnUpdates/{updateId} {
+      function updatesAdmin() {
+        return request.auth != null
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+      }
+      function validUpdate(d) {
+        return d.keys().hasOnly(['kind','title','body','day','batch','examDay','photo','published','createdAt','createdBy','updatedAt','updatedBy'])
+          && d.kind in ['Class notes','Homework','Notice','Exam']
+          && d.title is string && d.title.size() >= 2 && d.title.size() <= 140
+          && d.body is string && d.body.size() >= 2 && d.body.size() <= 4000
+          && d.day is string && d.day.size() == 10
+          && d.batch is string && d.batch.size() <= 80
+          && d.examDay is string && (d.examDay == '' || d.examDay.size() == 10)
+          && d.photo is string && d.photo.size() <= 500000
+          && d.published is bool
+          && d.createdAt is string && d.createdAt.size() >= 20 && d.createdAt.size() <= 40
+          && d.createdBy is string && d.createdBy.size() >= 20 && d.createdBy.size() <= 128
+          && (!('updatedAt' in d) || (d.updatedAt is string && d.updatedAt.size() >= 20 && d.updatedAt.size() <= 40))
+          && (!('updatedBy' in d) || d.updatedBy == request.auth.uid);
+      }
+      allow get, list: if request.auth != null && (resource.data.published == true || updatesAdmin());
+      allow create: if updatesAdmin() && validUpdate(request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid;
+      allow update: if updatesAdmin() && validUpdate(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.updatedBy == request.auth.uid;
+      allow delete: if false;
+    }
+
+    /* Public, read-only release notice used by installed Android apps. */
+    match /rcLearnPublic/androidRelease {
+      function releaseAdmin() {
+        return request.auth != null
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+      }
+      function validRelease(d) {
+        return d.keys().hasOnly(['versionCode','versionName','title','message','apkUrl','required','publishedAt'])
+          && d.versionCode is int && d.versionCode >= 1 && d.versionCode <= 1000000
+          && d.versionName is string && d.versionName.size() >= 1 && d.versionName.size() <= 30
+          && d.title is string && d.title.size() >= 2 && d.title.size() <= 100
+          && d.message is string && d.message.size() >= 2 && d.message.size() <= 500
+          && d.apkUrl is string && d.apkUrl.size() >= 12 && d.apkUrl.size() <= 500
+          && d.required is bool
+          && d.publishedAt is string && d.publishedAt.size() >= 20 && d.publishedAt.size() <= 40;
+      }
+      allow get: if true;
+      allow create, update: if releaseAdmin() && validRelease(request.resource.data);
       allow list, delete: if false;
     }
 

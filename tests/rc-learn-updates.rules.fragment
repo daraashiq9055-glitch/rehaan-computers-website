@@ -1,0 +1,25 @@
+    match /rcLearnUpdates/{updateId} {
+      function updatesAdmin() {
+        return request.auth != null
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+      }
+      function validUpdate(d) {
+        return d.keys().hasOnly(['kind','title','body','day','batch','examDay','photo','published','createdAt','createdBy','updatedAt','updatedBy'])
+          && d.kind in ['Class notes','Homework','Notice','Exam']
+          && d.title is string && d.title.size() >= 2 && d.title.size() <= 140
+          && d.body is string && d.body.size() >= 2 && d.body.size() <= 4000
+          && d.day is string && d.day.size() == 10
+          && d.batch is string && d.batch.size() <= 80
+          && d.examDay is string && (d.examDay == '' || d.examDay.size() == 10)
+          && d.photo is string && d.photo.size() <= 500000
+          && d.published is bool
+          && d.createdAt is string && d.createdAt.size() >= 20 && d.createdAt.size() <= 40
+          && d.createdBy == request.auth.uid
+          && (!('updatedAt' in d) || (d.updatedAt is string && d.updatedAt.size() >= 20 && d.updatedAt.size() <= 40))
+          && (!('updatedBy' in d) || d.updatedBy == request.auth.uid);
+      }
+      allow get, list: if request.auth != null && (resource.data.published == true || updatesAdmin());
+      allow create, update: if updatesAdmin() && validUpdate(request.resource.data);
+      allow delete: if false;
+    }
