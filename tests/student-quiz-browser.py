@@ -5,7 +5,7 @@ from pathlib import Path
 from threading import Thread
 import importlib.util
 
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import sync_playwright, expect
 
 ROOT = Path(__file__).resolve().parents[1]
 spec = importlib.util.spec_from_file_location("live_test", ROOT / "tests/student-live-browser.py")
@@ -13,11 +13,11 @@ live_test = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(live_test)
 
 QUIZ_STUB = """
-export const quizServiceConfig={enabled:true};
+export const quizServiceConfig={enabled:true,reviewOnly:true};
 const questions=Array.from({length:10},(_,index)=>({id:'question-'+index,program:'MS Word',question:'Question '+(index+1)+' about MS Word?',options:['Correct answer','Wrong B','Wrong C','Wrong D']}));
 let result=null;
 export async function quizRequest(path,{body}={}){
- if(path==='/quiz/me')return {streak:3,points:result?100:0,badges:result?['Perfect Quiz']:[],ranks:{weekly:result?{rank:1}:null,overall:null}};
+ if(path==='/quiz/me')return {quizReady:true,streak:3,points:result?100:0,badges:result?['Perfect Quiz']:[],ranks:{weekly:result?{rank:1}:null,overall:null}};
  if(path==='/quiz/today')return result||{program:'MS Word',questions,completed:false};
  if(path==='/quiz/submit'){if(!result)result={program:'MS Word',questions,completed:true,score:body.answers.filter(answer=>answer===0).length,points:100,selectedAnswers:body.answers,correctAnswers:Array(10).fill(0)};return result;}
  throw Error('Unknown quiz route');
@@ -34,6 +34,11 @@ def main():
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True, executable_path="/usr/bin/chromium", args=["--no-sandbox"])
             try:
+                blocked=browser.new_page(viewport={"width":320,"height":780})
+                blocked.route("**/student-portal-auth.js*",lambda route:route.fulfill(content_type="text/javascript",body=live_test.STUB))
+                blocked.route("**/student-quiz-service.js*",lambda route:route.fulfill(content_type="text/javascript",body=QUIZ_STUB.replace('quizReady:true','quizReady:false')))
+                blocked.goto(url);blocked.locator('#studentId').fill('alpha');blocked.locator('#studentPassword').fill('StudentPass123');blocked.locator('.login-submit').click();blocked.locator('#followCentre').click()
+                expect(blocked.locator('#liveQuizButton')).to_be_disabled();expect(blocked.locator('.reward-strip')).to_contain_text('Starting soon');blocked.close()
                 for width in (320, 360, 390, 1366):
                     page = browser.new_page(viewport={"width": width, "height": 780})
                     page.route("**/student-portal-auth.js*", lambda route: route.fulfill(status=200, content_type="text/javascript", body=live_test.STUB))
@@ -53,15 +58,19 @@ def main():
                     for index in range(10):
                         page.locator(".quiz-options button").first.wait_for()
                         assert page.locator(".quiz-options button").count() == 4
-                        page.locator('[data-official-option="0"]').click()
+                        page.locator(f'[data-official-option="{1 if index==0 else 0}"]').click()
                         page.locator("#officialNext").click()
-                    page.get_by_text("10 / 10 correct").wait_for()
-                    assert page.locator(".journey-step.done").count() == 10
+                    page.get_by_text("9 / 10 correct").wait_for()
+                    assert page.locator(".journey-step.done").count() == 9
+                    assert page.locator('.official-answer-review .is-correct').count()==10
+                    assert page.locator('.official-answer-review .is-wrong').count()==1
+                    colours=page.locator('.official-answer-review').first.evaluate("node=>[getComputedStyle(node.querySelector('.is-correct')).backgroundColor,getComputedStyle(node.querySelector('.is-wrong')).backgroundColor].map(value=>value.match(/\\d+/g).map(Number))")
+                    assert colours[0][1]>colours[0][0] and colours[1][0]>colours[1][1]
                     assert page.evaluate("document.documentElement.scrollWidth <= innerWidth + 1"), width
                     page.close()
             finally:
                 browser.close()
-        print("PASS: trusted quiz UI shows ten four-choice questions, one final result and mobile fit at 320/360/390px.")
+        print("PASS: private quiz UI blocks unready attempts/rewards and shows ten four-choice questions, one final result and mobile fit at 320/360/390px.")
     finally:
         server.shutdown()
 

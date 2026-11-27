@@ -1,4 +1,4 @@
-export const programs=['Computer basics','Notepad','WordPad','MS Word','MS Excel','PowerPoint','MS Access','Outlook','Marg ERP','Tally Prime','Photoshop','InPage'];
+export const programs=['Computer basics','Notepad','WordPad','MS Word','MS Excel','PowerPoint','MS Access','Tally Prime','Marg ERP','Photoshop','InPage','Outlook'];
 
 export function indiaDay(now=new Date()){
  const parts=Object.fromEntries(new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now).filter(part=>part.type!=='literal').map(part=>[part.type,part.value]));

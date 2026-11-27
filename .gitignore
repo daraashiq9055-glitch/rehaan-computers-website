@@ -38,3 +38,10 @@ security-artifacts/
 
 # Local notification deployment bindings (sender keys must stay outside this repo).
 backend/notifications/wrangler.local.toml
+
+# Local RC Learn review bindings and Cloudflare state.
+backend/student-portal/wrangler.review.local.toml
+**/.dev.vars
+**/.wrangler/
+
+backend/student-portal/build/

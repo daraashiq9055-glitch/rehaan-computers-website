@@ -1,0 +1,501 @@
+{
+  "version": 1,
+  "notice": "Teacher-review drafts only. Check accuracy, curriculum and software version before approval. Not published.",
+  "questions": [
+    {
+      "id": "rc-review-001",
+      "program": "Computer basics",
+      "difficulty": "Foundation",
+      "question": "Which component is primarily responsible for executing program instructions?",
+      "options": [
+        "CPU",
+        "Monitor",
+        "Keyboard",
+        "Printer"
+      ],
+      "answer": 0,
+      "explanation": "The CPU executes the instructions supplied by programs.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-002",
+      "program": "Computer basics",
+      "difficulty": "Foundation",
+      "question": "Which storage usually loses its contents when the computer is powered off?",
+      "options": [
+        "SSD",
+        "RAM",
+        "Hard disk",
+        "USB flash drive"
+      ],
+      "answer": 1,
+      "explanation": "RAM is volatile working memory; saved files on persistent storage remain.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-003",
+      "program": "Computer basics",
+      "difficulty": "Intermediate",
+      "question": "Why should you keep a separate backup of important documents?",
+      "options": [
+        "To replace the operating system",
+        "To increase screen resolution",
+        "To recover files after loss or damage",
+        "To prevent all malware automatically"
+      ],
+      "answer": 2,
+      "explanation": "An independent backup helps recover data after accidental deletion or device failure.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-004",
+      "program": "Notepad",
+      "difficulty": "Foundation",
+      "question": "What type of content is Windows Notepad primarily designed to edit?",
+      "options": [
+        "Plain text",
+        "Slide presentations",
+        "Relational databases",
+        "Layered images"
+      ],
+      "answer": 0,
+      "explanation": "Notepad is a plain-text editor; it does not provide rich document layout.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-005",
+      "program": "Notepad",
+      "difficulty": "Foundation",
+      "question": "Which action creates a second text file while keeping the original file unchanged?",
+      "options": [
+        "Select All",
+        "Find",
+        "Save As with a different file name",
+        "Cut"
+      ],
+      "answer": 2,
+      "explanation": "Save As with another file name saves a separate copy.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-006",
+      "program": "Notepad",
+      "difficulty": "Intermediate",
+      "question": "What does the Find command help you locate inside a text file?",
+      "options": [
+        "A word or phrase",
+        "A printer cartridge",
+        "A spreadsheet chart",
+        "A slide transition"
+      ],
+      "answer": 0,
+      "explanation": "Find searches the document text for the specified characters.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-007",
+      "program": "WordPad",
+      "difficulty": "Foundation",
+      "question": "Which feature distinguished WordPad from a basic plain-text editor?",
+      "options": [
+        "Relational queries",
+        "Character formatting such as bold",
+        "Spreadsheet formulas",
+        "Photo layers"
+      ],
+      "answer": 1,
+      "explanation": "WordPad supported rich-text formatting. Availability varies: Microsoft removed it from newer Windows releases.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-008",
+      "program": "WordPad",
+      "difficulty": "Foundation",
+      "question": "What happens when you apply bold to selected text in a rich-text document?",
+      "options": [
+        "The selected text becomes heavier",
+        "The file is automatically deleted",
+        "A new spreadsheet opens",
+        "The text is translated"
+      ],
+      "answer": 0,
+      "explanation": "Bold changes the appearance of the selected characters, not their meaning.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-009",
+      "program": "WordPad",
+      "difficulty": "Intermediate",
+      "question": "Which file format historically preserved WordPad rich-text formatting?",
+      "options": [
+        "CSV",
+        "RTF",
+        "EXE",
+        "WAV"
+      ],
+      "answer": 1,
+      "explanation": "Rich Text Format (RTF) can preserve basic character and paragraph formatting.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-010",
+      "program": "MS Word",
+      "difficulty": "Foundation",
+      "question": "Which feature applies the same heading format consistently throughout a document?",
+      "options": [
+        "Styles",
+        "Mail Merge recipients",
+        "Zoom",
+        "Word count"
+      ],
+      "answer": 0,
+      "explanation": "Heading styles apply consistent formatting and support document structure.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-011",
+      "program": "MS Word",
+      "difficulty": "Foundation",
+      "question": "Which tool combines a standard letter with a list of recipients?",
+      "options": [
+        "Track Changes",
+        "Mail Merge",
+        "Page Color",
+        "Format Painter only"
+      ],
+      "answer": 1,
+      "explanation": "Mail Merge inserts fields from a data source into a common document.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-012",
+      "program": "MS Word",
+      "difficulty": "Intermediate",
+      "question": "What is the purpose of a page break in a Word document?",
+      "options": [
+        "Delete the previous page",
+        "Make every paragraph bold",
+        "Start following content on a new page",
+        "Change the keyboard language"
+      ],
+      "answer": 2,
+      "explanation": "A page break moves following content to the next page without repeated blank lines.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-013",
+      "program": "MS Excel",
+      "difficulty": "Foundation",
+      "question": "Which formula adds the values in cells A1 through A5?",
+      "options": [
+        "=SUM(A1:A5)",
+        "=ADD(A1-A5)",
+        "=TOTAL(A1;A5)",
+        "=A1:A5"
+      ],
+      "answer": 0,
+      "explanation": "SUM with the range A1:A5 includes all five cells.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-014",
+      "program": "MS Excel",
+      "difficulty": "Foundation",
+      "question": "Which cell reference stays fixed when a formula is copied to another location?",
+      "options": [
+        "A1",
+        "A$1",
+        "$A1",
+        "$A$1"
+      ],
+      "answer": 3,
+      "explanation": "Both the column and row are absolute in $A$1.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-015",
+      "program": "MS Excel",
+      "difficulty": "Intermediate",
+      "question": "What does filtering a table normally do to rows that do not meet the filter?",
+      "options": [
+        "Deletes them permanently",
+        "Hides them from the filtered view",
+        "Converts them to formulas",
+        "Changes their saved values"
+      ],
+      "answer": 1,
+      "explanation": "Filtering temporarily hides nonmatching rows; it does not delete them.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-016",
+      "program": "PowerPoint",
+      "difficulty": "Foundation",
+      "question": "Which view is useful for rearranging the order of presentation slides?",
+      "options": [
+        "Slide Sorter",
+        "Notes Page only",
+        "Print Preview only",
+        "Reading a PDF"
+      ],
+      "answer": 0,
+      "explanation": "Slide Sorter displays slide thumbnails for easy reordering.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-017",
+      "program": "PowerPoint",
+      "difficulty": "Foundation",
+      "question": "What is the main difference between a slide transition and an object animation?",
+      "options": [
+        "They are always identical",
+        "Transitions affect movement between slides",
+        "Animations only change paper size",
+        "Transitions can only edit text"
+      ],
+      "answer": 1,
+      "explanation": "Transitions control slide-to-slide changes; animations affect objects within a slide.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-018",
+      "program": "PowerPoint",
+      "difficulty": "Intermediate",
+      "question": "Which feature helps apply a consistent design across many slides?",
+      "options": [
+        "Slide Master",
+        "Spell Check",
+        "Presenter timer only",
+        "Clipboard history"
+      ],
+      "answer": 0,
+      "explanation": "Slide Master controls shared layout and formatting for associated slides.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-019",
+      "program": "MS Access",
+      "difficulty": "Foundation",
+      "question": "What is the purpose of a primary key in an Access table?",
+      "options": [
+        "Identify each record uniquely",
+        "Store only pictures",
+        "Apply page margins",
+        "Create a slide show"
+      ],
+      "answer": 0,
+      "explanation": "A primary key uniquely identifies records and supports relationships.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-020",
+      "program": "MS Access",
+      "difficulty": "Foundation",
+      "question": "Which Access object is used to retrieve records matching specified criteria?",
+      "options": [
+        "Report footer",
+        "Query",
+        "Slide",
+        "Theme"
+      ],
+      "answer": 1,
+      "explanation": "A query selects and can combine records according to criteria.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-021",
+      "program": "MS Access",
+      "difficulty": "Intermediate",
+      "question": "Which Access object is designed to present data in a formatted printable layout?",
+      "options": [
+        "Report",
+        "Keyboard shortcut",
+        "Worksheet tab",
+        "Transition"
+      ],
+      "answer": 0,
+      "explanation": "Reports provide structured output suitable for printing or distribution.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-022",
+      "program": "Tally Prime",
+      "difficulty": "Foundation",
+      "question": "What should you verify before entering transactions for a company in Tally Prime?",
+      "options": [
+        "Only the wallpaper",
+        "The selected company and accounting period",
+        "The monitor brand",
+        "The keyboard colour"
+      ],
+      "answer": 1,
+      "explanation": "Selecting the right company and period prevents entries in the wrong accounts.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-023",
+      "program": "Tally Prime",
+      "difficulty": "Foundation",
+      "question": "Which voucher is generally used to record money received into cash or bank?",
+      "options": [
+        "Receipt voucher",
+        "Purchase order only",
+        "Stock journal only",
+        "Payroll attendance only"
+      ],
+      "answer": 0,
+      "explanation": "A receipt voucher records incoming cash or bank amounts; account selection must reflect the actual transaction.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-024",
+      "program": "Tally Prime",
+      "difficulty": "Intermediate",
+      "question": "Why should opening ledger balances be checked before regular entries begin?",
+      "options": [
+        "They determine screen brightness",
+        "They replace all invoices",
+        "They affect subsequent account balances",
+        "They prevent users from printing"
+      ],
+      "answer": 2,
+      "explanation": "Incorrect opening balances can distort later balances and reports.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-025",
+      "program": "Marg ERP",
+      "difficulty": "Foundation",
+      "question": "What should you check when selecting an item for a sales invoice?",
+      "options": [
+        "Only its position on screen",
+        "Item identity, quantity and applicable price",
+        "Only the company logo",
+        "Only the printer name"
+      ],
+      "answer": 1,
+      "explanation": "Correct item, quantity and pricing are essential for an accurate invoice.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-026",
+      "program": "Marg ERP",
+      "difficulty": "Foundation",
+      "question": "Why is the batch number important when managing batch-tracked stock?",
+      "options": [
+        "It identifies the relevant stock batch",
+        "It changes the user password",
+        "It replaces every purchase document",
+        "It controls screen resolution"
+      ],
+      "answer": 0,
+      "explanation": "Batch identifiers support stock traceability, including expiry-related tracking when applicable.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-027",
+      "program": "Marg ERP",
+      "difficulty": "Intermediate",
+      "question": "What should be done before making a major data migration or restore in ERP software?",
+      "options": [
+        "Delete the newest invoices",
+        "Ignore existing records",
+        "Create and verify a backup",
+        "Change all item names"
+      ],
+      "answer": 2,
+      "explanation": "A verified backup provides a recovery path if a migration or restore goes wrong.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-028",
+      "program": "Photoshop",
+      "difficulty": "Foundation",
+      "question": "Why are separate layers useful when editing an image?",
+      "options": [
+        "They force all pixels to merge",
+        "They allow independent editing of elements",
+        "They remove the need to save",
+        "They always reduce file size"
+      ],
+      "answer": 1,
+      "explanation": "Layers let you edit elements independently without immediately changing others.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-029",
+      "program": "Photoshop",
+      "difficulty": "Foundation",
+      "question": "What is the purpose of a layer mask?",
+      "options": [
+        "Hide or reveal parts of a layer non-destructively",
+        "Delete the entire document",
+        "Change the monitor colour mode",
+        "Rename every layer"
+      ],
+      "answer": 0,
+      "explanation": "A layer mask controls visibility while retaining the underlying layer pixels.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-030",
+      "program": "Photoshop",
+      "difficulty": "Intermediate",
+      "question": "Which format is commonly used to retain Photoshop layers for later editing?",
+      "options": [
+        "JPEG",
+        "Plain TXT",
+        "PSD",
+        "CSV"
+      ],
+      "answer": 2,
+      "explanation": "PSD preserves Photoshop editing information such as layers when saved with compatible options.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-031",
+      "program": "InPage",
+      "difficulty": "Foundation",
+      "question": "Which writing direction is normally used for Urdu text?",
+      "options": [
+        "Left to right",
+        "Right to left",
+        "Bottom to top only",
+        "Random direction"
+      ],
+      "answer": 1,
+      "explanation": "Urdu is normally written from right to left.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-032",
+      "program": "InPage",
+      "difficulty": "Foundation",
+      "question": "Why should a document be previewed before printing from a layout application?",
+      "options": [
+        "To remove all punctuation",
+        "To replace the source file",
+        "To check text flow, margins and page layout",
+        "To change the computer password"
+      ],
+      "answer": 2,
+      "explanation": "Print preview helps identify layout and pagination problems before using paper.",
+      "status": "Draft"
+    },
+    {
+      "id": "rc-review-033",
+      "program": "InPage",
+      "difficulty": "Intermediate",
+      "question": "What should you check if Urdu text appears incorrectly after opening a document on another computer?",
+      "options": [
+        "Font availability and text compatibility",
+        "Only the mouse speed",
+        "Only the monitor size",
+        "The recycle bin name"
+      ],
+      "answer": 0,
+      "explanation": "Missing fonts or incompatible text encoding/software versions can affect how text is displayed.",
+      "status": "Draft"
+    }
+  ]
+}

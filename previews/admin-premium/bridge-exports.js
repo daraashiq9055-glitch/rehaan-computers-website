@@ -13,6 +13,11 @@ export const previewAdminBridge = Object.freeze({
   },
   async portalManage(action,id,input={}){
     requireAdmin();const actor=verifiedAdminUid,guard=()=>{requireAdmin();if(actor!==verifiedAdminUid)throw Error('Your admin session changed.');};
+    const {reviewServiceConfig,reviewRequest}=await import('/public/student-review-service.js');
+    if(reviewServiceConfig.enabled&&['learnedRequests','reviewLearning'].includes(action)){
+      const entry=adminState.apps.find(row=>row.id===id),uid=entry?.data.studentPortalAccount?.uid;
+      const result=await reviewRequest(action==='learnedRequests'?'/admin/journey/requests':'/admin/journey/review',await auth.currentUser.getIdToken(),{method:'POST',body:{uid,...input}});guard();if(action==='reviewLearning')await loadApplications();return result;
+    }
     const [sdk,{portalAdminAction}]=await Promise.all([import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js'),import('/public/student-portal-admin-service.js')]);guard();
     const result=await portalAdminAction({db,sdk,config:firebaseConfig,assertAdmin:guard,actor,action,id,input});guard();
     if(['create','access','refresh','attendance','reviewLearning'].includes(action))await loadApplications();return result;

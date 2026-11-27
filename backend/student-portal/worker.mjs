@@ -1,6 +1,6 @@
 import {cycleStart,indiaDay,lastClosedCycle,planQuiz,publicQuestions,questionOkay,scoreQuiz,verifiedAwards} from './quiz-core.mjs';
 
-class HttpError extends Error{constructor(status,message){super(message);this.status=status;}}
+export class HttpError extends Error{constructor(status,message){super(message);this.status=status;}}
 const profileValue=(fields,key)=>fields?.[key]?.stringValue||'';
 const d1=(db,sql,...values)=>db.prepare(sql).bind(...values);
 const parse=value=>{try{return JSON.parse(value);}catch{throw new HttpError(503,'Stored quiz data needs administrator review.');}};
@@ -21,7 +21,7 @@ function bearerUid(request){
  // and authorizes a read using the deployed student/admin security rules.
  return {uid,bearer};
 }
-async function student(request,env,fetcher,selectionNeeded=false){
+export async function student(request,env,fetcher,selectionNeeded=false){
  const {uid,bearer}=bearerUid(request);
  const view=await firestoreDoc(`studentPortalViews/${encodeURIComponent(uid)}`,bearer,env,fetcher);
  if(!view||view.fields?.uid?.stringValue!==uid||view.fields?.enabled?.booleanValue!==true)throw new HttpError(403,'Student access is not active.');
@@ -30,12 +30,12 @@ async function student(request,env,fetcher,selectionNeeded=false){
  if(selectionNeeded){const selected=await firestoreDoc(`studentPortalViews/${encodeURIComponent(uid)}/learning/current`,bearer,env,fetcher);program=selected?.fields?.program?.stringValue||'';if(!program)throw new HttpError(409,'Choose your learning program in Journey before starting the quiz.');}
  return {uid,name,admission,program};
 }
-async function admin(request,env,fetcher){
+export async function admin(request,env,fetcher){
  const {uid,bearer}=bearerUid(request),record=await firestoreDoc(`admins/${encodeURIComponent(uid)}`,bearer,env,fetcher);
  if(record?.fields?.uid?.stringValue!==uid||record?.fields?.isAdmin?.booleanValue!==true)throw new HttpError(403,'Administrator access required.');
  return uid;
 }
-async function jsonBody(request){
+export async function jsonBody(request){
  if(!request.headers.get('Content-Type')?.startsWith('application/json'))throw new HttpError(415,'Send JSON.');
  const text=await request.text();if(text.length>12000)throw new HttpError(413,'Request is too large.');
  try{return JSON.parse(text);}catch{throw new HttpError(400,'Invalid JSON.');}
@@ -100,7 +100,7 @@ async function latestPublishedCycle(db){
  const row=await d1(db,"SELECT MAX(period_key) AS cycle FROM league_entries WHERE period='weekly'").first();
  return row?.cycle||'';
 }
-async function publishLeaderboard(db,period,day,requestedCycle){
+export async function publishLeaderboard(db,period,day,requestedCycle,preview=false,reviewToken=null){
  if(!['weekly','overall'].includes(period))throw new HttpError(400,'Choose weekly or overall.');
  const key=period==='weekly'?(requestedCycle||lastClosedCycle(day)):'all';
  if(period==='weekly'){
@@ -114,6 +114,10 @@ async function publishLeaderboard(db,period,day,requestedCycle){
  if(participants.length>300)throw new HttpError(409,'More than 300 results require a reviewed pagination release before publishing.');
  if(!participants.length)throw new HttpError(409,'No completed quizzes are ready for publication.');
  participants.sort((a,b)=>b.score-a.score||b.quiz_days-a.quiz_days||a.uid.localeCompare(b.uid));
+ const signature=JSON.stringify({period,key,participants});
+ const token=[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(signature)))].map(x=>x.toString(16).padStart(2,'0')).join('');
+ if(preview)return {period,key,students:participants,reviewToken:token};
+ if(reviewToken!==null&&token!==reviewToken)throw new HttpError(409,'Results changed. Preview the league again before publishing.');
  const publishedAt=new Date().toISOString(),statements=[d1(db,'DELETE FROM league_entries WHERE period=? AND period_key=?',period,key)];
  const ranked=participants.map((row,index)=>({...row,rank:index+1,display_name:row.display_name||'Student'}));
  // Bind the whole snapshot as one JSON value to stay within D1 parameter and

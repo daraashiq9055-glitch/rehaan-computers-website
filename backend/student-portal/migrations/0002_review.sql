@@ -1,0 +1,12 @@
+ALTER TABLE question_bank ADD COLUMN difficulty TEXT NOT NULL DEFAULT 'Foundation';
+ALTER TABLE question_bank ADD COLUMN explanation TEXT NOT NULL DEFAULT '';
+ALTER TABLE question_bank ADD COLUMN status TEXT NOT NULL DEFAULT 'Draft';
+ALTER TABLE question_bank ADD COLUMN reviewed_by TEXT;
+ALTER TABLE question_bank ADD COLUMN reviewed_at TEXT;
+ALTER TABLE question_bank ADD COLUMN updated_at TEXT;
+UPDATE question_bank SET active=0;
+CREATE TABLE review_settings (id TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE publications (id TEXT PRIMARY KEY, payload_json TEXT NOT NULL, target_json TEXT NOT NULL, recipients_json TEXT NOT NULL, scheduled_at TEXT NOT NULL, author_uid TEXT NOT NULL, state TEXT NOT NULL DEFAULT 'scheduled', revision INTEGER NOT NULL DEFAULT 1, updated_at TEXT NOT NULL, error TEXT);
+CREATE TABLE publication_deliveries (publication_id TEXT NOT NULL, uid TEXT NOT NULL, revision INTEGER NOT NULL, read_at TEXT, PRIMARY KEY(publication_id,uid));
+ALTER TABLE publications ADD COLUMN lease_until TEXT NOT NULL DEFAULT '';
+ALTER TABLE question_bank ADD COLUMN revision INTEGER NOT NULL DEFAULT 1;

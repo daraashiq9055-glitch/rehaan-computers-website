@@ -1,3 +1,4 @@
+import {reviewServiceConfig} from './student-review-service.js';
 import {syncLearningPath} from './student-learning-path.js';
 
 export function watchPortalStudents({db,sdk,students,isCurrent,onChange}){
@@ -13,7 +14,7 @@ export function watchPortalStudents({db,sdk,students,isCurrent,onChange}){
   stops.push(sdk.onSnapshot(sdk.doc(db,'studentPortalViews',uid,'learning','current'),snap=>{
    if(stopped||!isCurrent())return;
    set({program:snap.exists()?snap.data().program:''});
-   if(snap.exists())void syncLearningPath({db,sdk,applicationId:student.id,uid,assertAdmin:()=>{if(stopped||!isCurrent())throw Error('Admin session changed.');}}).then(learningProgress=>{if(learningProgress)set({learningProgress});}).catch(()=>set({error:'Learning projection could not sync. Refresh to retry.'}));
+   if(snap.exists()&&!reviewServiceConfig.enabled)void syncLearningPath({db,sdk,applicationId:student.id,uid,assertAdmin:()=>{if(stopped||!isCurrent())throw Error('Admin session changed.');}}).then(learningProgress=>{if(learningProgress)set({learningProgress});}).catch(()=>set({error:'Learning projection could not sync. Refresh to retry.'}));
   },fail));
  }
  emit();return ()=>{stopped=true;stops.forEach(stop=>stop());rows.clear();};

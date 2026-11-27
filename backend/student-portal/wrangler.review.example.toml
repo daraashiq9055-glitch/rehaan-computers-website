@@ -1,0 +1,27 @@
+name = "rc-learn-private-review"
+main = "review-worker.mjs"
+compatibility_date = "2026-11-24"
+workers_dev = true
+
+[vars]
+REVIEW_MODE = "true"
+FIREBASE_PROJECT_ID = "rehaan-computers"
+ALLOWED_ORIGINS = "http://localhost:8000,http://127.0.0.1:8000"
+REVIEW_ADMIN_UIDS = "REPLACE_WITH_ADMIN_FIREBASE_UID"
+REVIEW_STUDENT_UIDS = "REPLACE_WITH_FIRST_UID,REPLACE_WITH_SECOND_UID"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "rc-learn-quiz-review"
+database_id = "REPLACE_WITH_REVIEW_DATABASE_UUID"
+
+[[ratelimits]]
+name = "QUIZ_LIMITER"
+namespace_id = "1109"
+simple = { limit = 500, period = 60 }
+
+[triggers]
+crons = ["* * * * *"]
+
+# FIREBASE_SERVICE_ACCOUNT is a Worker secret, never a TOML variable.
+# Copy to wrangler.review.local.toml. Never use a production quiz database ID.
