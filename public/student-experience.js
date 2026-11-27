@@ -203,12 +203,22 @@ function renderLiveQuiz(){
  }
  const index=liveQuizIndex,item=liveQuiz.questions[index];if(!item)return;
  const chosen=liveQuizAnswers[index];
- $('#demoContent').innerHTML=`<section class="student-section"><button class="student-back" type="button" id="backHome">← Home</button><div class="quiz-card demo-panel"><div class="quiz-meta"><span>OFFICIAL DAILY QUIZ</span><strong>${index+1} / 10</strong></div><div class="quiz-track"><span style="width:${index*10}%"></span></div><p class="quiz-topic">${escapeText(item.program||liveQuiz.program)}</p><h2>${escapeText(item.question)}</h2><div class="quiz-options">${item.options.map((option,position)=>`<button type="button" data-official-option="${position}" ${chosen!==undefined?'disabled':''} class="${chosen===position?'selected':''}"><span>${'ABCD'[position]}</span><b>${escapeText(option)}</b></button>`).join('')}</div><p class="quiz-feedback" id="officialFeedback" role="status">${chosen===undefined?'Choose one answer. Your score is revealed after all ten are submitted.':'Answer saved for this question.'}</p><button class="quiz-next" type="button" id="officialNext" ${chosen===undefined?'hidden':''}>${index===9?'Submit final answers':'Next question'} →</button></div></section>`;
+ $('#demoContent').innerHTML=`<section class="student-section"><button class="student-back" type="button" id="backHome">← Home</button><div class="quiz-card demo-panel"><div class="quiz-meta"><span>Question</span><strong>${index+1} / 10</strong></div><div class="quiz-track"><span style="width:${liveQuizAnswers.length*10}%"></span></div><p class="quiz-topic">${escapeText(item.program||liveQuiz.program)}</p><h2>${escapeText(item.question)}</h2><div class="quiz-options">${item.options.map((option,position)=>`<button type="button" data-official-option="${position}" aria-pressed="${chosen===position}" class="${chosen===position?'selected':''}"><span>${'ABCD'[position]}</span><b>${escapeText(option)}</b></button>`).join('')}</div><p class="quiz-feedback" id="officialFeedback" role="status">${chosen===undefined?'Choose A, B, C or D. You can change your choice before continuing.':'Choice selected.'}</p><button class="quiz-next" type="button" id="officialNext" ${chosen===undefined?'disabled':''}>${index===9?'Submit final answers':'Next question'} →</button></div></section>`;
  $('#backHome').addEventListener('click',backHome);
- $('#demoContent').querySelectorAll('[data-official-option]').forEach(button=>button.addEventListener('click',()=>{if(liveQuizAnswers[index]!==undefined)return;liveQuizAnswers[index]=Number(button.dataset.officialOption);renderLiveQuiz();}));
+ const choices=[...$('#demoContent').querySelectorAll('[data-official-option]')];
+ choices.forEach((choice,position)=>choice.onclick=()=>{
+  liveQuizAnswers[index]=position;
+  for(const option of choices){
+   option.classList.toggle('selected',option===choice);
+   option.setAttribute('aria-pressed',String(option===choice));
+  }
+  $('.quiz-track span').style.width=liveQuizAnswers.length*10+'%';
+  $('#officialNext').disabled=false;
+  $('#officialFeedback').textContent='Choice '+ 'ABCD'[position]+' selected · '+liveQuizAnswers.length+' of 10 answered. '+(index===9?'Submit to see your score and correct answers.':'Tap another option to change, or Next question to continue.');
+ });
  $('#officialNext').addEventListener('click',async()=>{
   if(index<9){liveQuizIndex++;renderLiveQuiz();window.scrollTo({top:0,behavior:state.reduceMotion||matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});return;}
-  const button=$('#officialNext');button.disabled=true;$('#officialFeedback').textContent='Submitting your final answers…';
+  const button=$('#officialNext');button.disabled=true;choices.forEach(choice=>choice.disabled=true);$('#officialFeedback').textContent='Submitting your final answers…';
   const uid=liveUid,quizDay=liveQuiz.day;
   try{
    const auth=await import('./student-portal-auth.js?v=20261127-portal-9');
@@ -218,7 +228,7 @@ function renderLiveQuiz(){
    if(activeTab==='home'&&homeMode==='liveQuiz')renderLiveQuiz();
    void refreshLiveStats();
   }
-  catch(error){button.disabled=false;const feedback=$('#officialFeedback');if(liveSession&&liveUid===uid&&feedback)feedback.textContent='Submission failed. Your answers are still on this screen. '+(error?.message||'Try again.');}
+  catch(error){button.disabled=false;choices.forEach(choice=>choice.disabled=false);const feedback=$('#officialFeedback');if(liveSession&&liveUid===uid&&feedback)feedback.textContent='Submission failed. Your answers are still on this screen. '+(error?.message||'Try again.');}
  });
 }
 function renderHome(){

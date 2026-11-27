@@ -19,3 +19,26 @@
 @media (prefers-reduced-motion: reduce) {
   #demoContent > section { animation: none !important; }
 }
+
+.quiz-options button[aria-pressed="true"] {
+  border-color: #e3c48b;
+  box-shadow: inset 3px 0 #e3c48b;
+}
+@keyframes portal-card-arrive {
+  from { opacity: .6; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  body:not(.reduce-motion) .student-home > article,
+  body:not(.reduce-motion) .student-feed-card,
+  body:not(.reduce-motion) .account-identity {
+    animation: portal-card-arrive 220ms ease-out backwards;
+  }
+  body:not(.reduce-motion) .student-home > article:nth-of-type(2),
+  body:not(.reduce-motion) .student-feed-card:nth-child(2) { animation-delay: 40ms; }
+  body:not(.reduce-motion) .quiz-options button {
+    transition: border-color 140ms, box-shadow 140ms, transform 140ms;
+  }
+  body:not(.reduce-motion) .quiz-options button:active { transform: scale(.985); }
+  body:not(.reduce-motion) .quiz-track span { transition: width 180ms ease-out; }
+}
