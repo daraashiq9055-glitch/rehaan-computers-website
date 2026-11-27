@@ -22,13 +22,13 @@ export function attendanceMessage(entry,month,value){
  return lines.join('\n');
 }
 export function followupMessage(name){return '*REHAAN COMPUTERS*\n*Important Notice*\n\nHello '+name+', you haven’t attended classes recently. Please let us know whether you will continue your course.\n\n*1.* I will return to classes. I will tell you my joining date.\n*2.* I need a break. I will tell you when I can return.\n*3.* Please call me to discuss.\n*4.* I cannot continue. Please cancel my admission.\n\n*Please reply with 1, 2, 3 or 4 within 24 hours. If we do not receive a reply, we may cancel your admission.*';}
-export async function saveAttendance({db,ref,runTransaction,assertSession,actor,month,input,expected}){
+export async function saveAttendance({db,ref,summaryRef=null,runTransaction,assertSession,actor,month,input,expected}){
  const clean=attendanceValue(month,input);if(!actor)throw Error('Sign in again.');
  return runTransaction(db,async tx=>{assertSession();const snap=await tx.get(ref);assertSession();if(!snap.exists())throw Error('Student no longer exists.');const data=snap.data(),map=data.monthlyAttendance;
  if(map!==undefined&&(!map||typeof map!=='object'||Array.isArray(map)))throw Error('Stored attendance needs review.');
  if(data.admissionDate&&month<String(data.admissionDate).slice(0,7))throw Error('Choose the admission month or a later month.');
  if(canonicalRecord(map?.[month]??null)!==canonicalRecord(expected??null))throw Error('Attendance changed in another session. Refresh and review before saving.');
- const value={...clean,updatedAt:new Date().toISOString(),updatedBy:actor};tx.update(ref,{['monthlyAttendance.'+month]:value});return value;});
+ const value={...clean,updatedAt:new Date().toISOString(),updatedBy:actor};tx.update(ref,{['monthlyAttendance.'+month]:value});if(summaryRef)tx.set(summaryRef,{monthlyAttendance:{[month]:value}},{merge:true});return value;});
 }
 
 export function suggestedNotice(value){

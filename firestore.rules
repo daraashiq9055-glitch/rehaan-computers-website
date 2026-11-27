@@ -296,6 +296,85 @@ service cloud.firestore {
 
 
     /*
+     * RC LEARN MOBILE SUMMARY
+     *
+     * This document contains only fields that may be shown in the student's
+     * own app. The private application record remains administrator-only.
+     */
+    match /studentFeeSummaries/{uid} {
+      function registrar() {
+        return request.auth != null
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+      }
+      function sessionAllowed() {
+        let path = /databases/$(database)/documents/rcLearnAccess/$(uid);
+        return !exists(path)
+          || (get(path).data.disabled == false
+              && request.auth.token.auth_time * 1000 > get(path).data.cutoff.toMillis());
+      }
+      function approvedProgram(value) {
+        return value in ['Notepad','WordPad','MS Word','MS Excel','PowerPoint','MS Access','Outlook','Marg ERP','TallyPrime','Photoshop','InPage'];
+      }
+      function validSummary(d) {
+        return d.keys().hasOnly(['admissionNumber','pendingRupees','fullName','dob','batch','course','monthlyAttendance','currentProgram'])
+          && d.admissionNumber is string
+          && d.admissionNumber.size() >= 1
+          && d.admissionNumber.size() <= 40
+          && d.pendingRupees is number
+          && d.pendingRupees >= 0
+          && (!('fullName' in d) || (d.fullName is string && d.fullName.size() <= 120))
+          && (!('dob' in d) || (d.dob is string && d.dob.size() <= 24))
+          && (!('batch' in d) || (d.batch is string && d.batch.size() <= 80))
+          && (!('course' in d) || (d.course is string && d.course.size() <= 120))
+          && (!('monthlyAttendance' in d) || d.monthlyAttendance is map)
+          && (!('currentProgram' in d) || approvedProgram(d.currentProgram));
+      }
+      allow get: if request.auth != null
+        && ((request.auth.uid == uid && sessionAllowed()) || registrar());
+      allow create: if registrar() && validSummary(request.resource.data);
+      allow update: if validSummary(request.resource.data)
+        && (
+          registrar()
+          || (
+            request.auth != null
+            && request.auth.uid == uid
+            && sessionAllowed()
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['currentProgram'])
+          )
+        );
+      allow list, delete: if false;
+    }
+
+    match /rcLearnLinks/{uid} {
+      function registrar() {
+        return request.auth != null
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+      }
+      allow get: if registrar();
+      allow create: if registrar()
+        && request.resource.data.keys().hasOnly(['applicationId'])
+        && request.resource.data.applicationId is string;
+      allow update: if registrar() && request.resource.data == resource.data;
+      allow list, delete: if false;
+    }
+
+    match /rcLearnAccess/{uid} {
+      function registrar() {
+        return request.auth != null
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.uid == request.auth.uid
+          && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+      }
+      allow get: if registrar();
+      allow create, update: if registrar()
+        && request.resource.data.keys().hasOnly(['disabled','cutoff'])
+        && request.resource.data.disabled is bool
+        && request.resource.data.cutoff == request.time;
+      allow list, delete: if false;
+    }
+
+    /*
      * Everything else is denied.
      */
     match /{document=**} {

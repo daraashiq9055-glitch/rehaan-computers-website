@@ -27,7 +27,7 @@ async function writePilotSummary(transaction, db, data, due, paid, monthly, now)
   const uid = data.rcLearnUid || (data.admissionNumber === '040' ? 'ShnX2EUQARbWwD2plwEZhnLrbcZ2' : '');
   if (!uid || data.status !== 'Approved' || data.enrolmentStatus === 'Cancelled') return;
   const joined = String(data.admissionDate || data.approvedAt || '').slice(0,10);
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(joined)) throw Error('Review admission date for 040.');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(joined)) throw Error('Review this student’s admission date before syncing RC Learn.');
   const [year,month,day] = joined.split('-').map(Number);
   const parts = new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Kolkata',year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(new Date(now));
   const local = Object.fromEntries(parts.map(p => [p.type,p.value]));
@@ -41,7 +41,15 @@ async function writePilotSummary(transaction, db, data, due, paid, monthly, now)
     cents += Math.max(0,paise(monthly)-paise(fees[date] ?? 0));
   }
   const {doc} = await import('https://www.gstatic.com/firebasejs/12.2.1/firebase-firestore.js');
-  transaction.set(doc(db,'studentFeeSummaries',uid),{admissionNumber:String(data.admissionNumber),pendingRupees:cents/100});
+  transaction.set(doc(db,'studentFeeSummaries',uid),{
+    admissionNumber:String(data.admissionNumber),
+    pendingRupees:cents/100,
+    fullName:String(data.fullName||''),
+    dob:String(data.dob||''),
+    batch:String(data.batch||''),
+    course:String(data.coursePreference||data.course||''),
+    monthlyAttendance:data.monthlyAttendance&&typeof data.monthlyAttendance==='object'?data.monthlyAttendance:{}
+  },{merge:true});
 }
 export async function linkStudentAccount({db, ref, uid, runTransaction, doc, assertSession}) {
   if (!/^[A-Za-z0-9]{28}$/.test(uid) || uid === 'ShnX2EUQARbWwD2plwEZhnLrbcZ2') throw Error('Choose a separate test login.');
