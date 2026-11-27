@@ -15,7 +15,7 @@ def build_review(url):
     path=public/'student-review-service.js';text=path.read_text(encoding='utf-8');text=text.replace("{enabled:false,url:''}",'{enabled:true,url:'+json.dumps(url)+'}');path.write_text(text,encoding='utf-8')
     path=public/'student-quiz-service.js';text=path.read_text(encoding='utf-8');text=re.sub(r"enabled:false,url:'[^']+'",'enabled:true,reviewOnly:true,url:'+json.dumps(url),text);start=text.index('export async function publicLeaderboard(');text=text[:start]+"export async function publicLeaderboard(){return null;}\n";path.write_text(text,encoding='utf-8')
     for filename in ['student.html','admin.html']:
-        path=public/filename;text=path.read_text(encoding='utf-8');text=re.sub(r'(<body[^>]*>)',r'\1<div style="background:#302c1d;color:#f3db9b;padding:8px;font:12px sans-serif;text-align:center">PRIVATE REVIEW · Allowlisted accounts only · Public quiz remains disabled</div>',text,count=1);path.write_text(text,encoding='utf-8')
+        path=public/filename;text=path.read_text(encoding='utf-8');text=re.sub(r'(<body[^>]*>)',r'\1<div style="background:#302c1d;color:#f3db9b;padding:8px;font:12px sans-serif;text-align:center">PRIVATE REVIEW · Quiz &amp; images v2 · Allowlisted accounts only · Public quiz remains disabled</div>',text,count=1);path.write_text(text,encoding='utf-8')
     # Refuse accidental Firebase Hosting deployment from this review-only folder.
     (destination/'firebase.json').write_text(json.dumps({'hosting':{'public':'DO-NOT-DEPLOY-PRIVATE-REVIEW'}}),encoding='utf-8')
     print('Private authenticated review built:',public)
