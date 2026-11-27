@@ -52,7 +52,11 @@ def main():
     subprocess.run([node,'--test','tests/student-review.test.mjs'],cwd=ROOT,check=True)
     cli=[npx,'--yes','wrangler@4.50.0']
     def run(*command,secret=None,capture=False):
-        result=subprocess.run([*cli,*command],cwd=ROOT,input=secret,text=True,capture_output=capture or secret is not None)
+        # Wrangler can emit Unicode box-drawing/status characters.  Explicit
+        # UTF-8 with replacement keeps Windows CP1252 console settings from
+        # crashing the helper while it parses machine-readable JSON output.
+        result=subprocess.run([*cli,*command],cwd=ROOT,input=secret,text=True,
+            encoding='utf-8',errors='replace',capture_output=capture or secret is not None)
         if result.returncode:
             # Never echo command stdin: it can contain the service-account key.
             if secret is None and capture:print(result.stdout+result.stderr)
