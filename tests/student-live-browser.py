@@ -70,7 +70,7 @@ def main():
                     page = browser.new_page(viewport={"width": width, "height": 780})
                     page.route("**/student-portal-auth.js*", lambda route: route.fulfill(status=200, content_type="text/javascript", body=STUB.replace('__TEST_IMAGE__', test_image)))
                     page.goto(url)
-                    assert 'Leaderboard will appear after the first official quiz' in page.locator('.league-footnote').inner_text()
+                    assert 'No results published yet.' in page.locator('.league-footnote').inner_text()
                     assert 'Sample A' not in page.locator('.portal-dashboard').inner_text()
                     assert page.evaluate('document.documentElement.scrollWidth <= innerWidth + 1')
                     boxes={key:page.locator(selector).bounding_box() for key,selector in [('login','.login-section'),('league','.league-section'),('updates','.updates-section')]}
@@ -124,7 +124,7 @@ def main():
                         assert f"{expected.split()[0]} centre reply" in page.locator("#demoContent").inner_text()
                         page.locator('[data-update-filter="All"]').click()
                         page.locator('[data-demo-tab="journey"]').click()
-                        page.locator('#learnedRequestForm [value="Notepad"]').check();page.locator('#learnedRequestForm [type=submit]').click()
+                        page.locator('.learning-request').filter(has=page.locator('#learnedRequestForm')).locator('summary').click();page.locator('#learnedRequestForm [value="Notepad"]').check();page.locator('#learnedRequestForm [type=submit]').click()
                         page.locator('#learnedRequestForm').get_by_text('Awaiting teacher confirmation',exact=True).wait_for()
                         assert "Introduction" in page.locator("#demoContent").inner_text()
                         assert "OFFICIAL LEARNING CHECKLIST" in page.locator("#demoContent").inner_text()

@@ -19,6 +19,7 @@ class Quiet(SimpleHTTPRequestHandler):
 def run():
     with tempfile.TemporaryDirectory() as directory:
         output=builder.build(Path(directory)/'candidate')
+        assert (output/'public/admin-attendance.js').read_bytes()==(ROOT/'public/admin-attendance.js').read_bytes()
         app=(output/'public/admin-app.js').read_text()
         assert app.startswith((ROOT/'public/admin-app.js').read_text())
         for path in (output/'public/admin-ui').glob('*.js'):
@@ -84,12 +85,15 @@ def run():
                             print('Overflow:',width,selector,page.evaluate("[...document.querySelectorAll('body *')].filter(e=>e.getBoundingClientRect().right>innerWidth+1&&getComputedStyle(e).position!=='fixed').slice(0,12).map(e=>[e.tagName,e.id,e.className,e.getBoundingClientRect().right])"),flush=True)
                         assert page.evaluate('document.documentElement.scrollWidth<=innerWidth'),(width,selector)
                         if selector=='[data-workbench=portal]':
-                            expect(page.locator('#adminWorkbench')).to_contain_text('QUIZ MANAGEMENT')
+                            expect(page.locator('#adminWorkbench')).to_contain_text('QUIZ CENTRE')
                             expect(page.locator('#portalSearch')).to_be_visible()
                             page.locator('#portalSearch').fill('no-student-with-this-name')
                             expect(page.locator('#adminWorkbench')).to_contain_text('No students match')
                             page.locator('#portalSearch').fill('')
-                            if width in (390,1512):page.screenshot(path=str(ROOT/'build'/f'admin-portal-{width}.png'),full_page=True)
+                            if width in (390,1512):
+                                page.locator('.portal-workspace-head p').evaluate("node=>node.textContent='VISUAL TEST FIXTURE · No live student records'")
+                                page.evaluate('scrollTo({top:0,behavior:"instant"})');page.screenshot(path=str(ROOT/'build'/f'admin-portal-{width}.png'),full_page=True)
+                            page.locator('[data-portal-quick=attendance]').click();expect(page.locator('#attendanceForm')).to_be_visible();expect(page.locator('#rcAttendanceExports')).to_be_visible();assert page.locator('#portalAttendance').count()==0
                 assert page.evaluate('__adminPreview.records')==original and page.evaluate('__adminPreview.writes.length')==0
                 page.locator('[data-workbench=history]').click();expect(page.locator('#adminWorkbench')).to_contain_text('Secure history is not enabled yet');assert page.evaluate('__adminPreview.auditReads||0')==0
                 print('PASS: candidate requires manual sign-in, contains no demo controls, retains all 17 views at six widths and never reads unconfigured history or writes while browsing',flush=True)

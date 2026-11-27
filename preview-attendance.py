@@ -7,7 +7,7 @@ module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
 preview = module.preview
 original = preview.preview_html
-preview.preview_html = lambda: original().replace(b'</head>', b'<script data-preview-only src="/previews/admin-premium/attendance-demo.js"></script></head>')
+preview.preview_html = lambda *args, **kwargs: original(*args, **kwargs).replace(b'</head>', b'<script data-preview-only src="/previews/admin-premium/attendance-demo.js"></script></head>')
 if __name__ == '__main__':
     print('ATTENDANCE PREVIEW: monthly totals, editable notices and WhatsApp drafts.', flush=True)
     print('Fictional students only. Nothing is deployed. Attendance opens automatically.', flush=True)
