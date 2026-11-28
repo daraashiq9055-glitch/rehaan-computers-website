@@ -79,6 +79,7 @@ def main():
     run('d1','execute',DB_NAME,'--config',str(local),'--remote','--file',str(BACKEND/'schema.sql'))
     status=json_output(run('d1','execute',DB_NAME,'--config',str(local),'--remote','--command',"SELECT name FROM pragma_table_info('question_bank') WHERE name='status'",'--json',capture=True))
     if not any(row.get('results') for row in status):run('d1','execute',DB_NAME,'--config',str(local),'--remote','--file',str(BACKEND/'migrations/0002_review.sql'))
+    run('d1','execute',DB_NAME,'--config',str(local),'--remote','--file',str(BACKEND/'migrations/0003_competition.sql'))
     result=run('deploy','--config',str(local),capture=True);print(result)
     run('secret','put','FIREBASE_SERVICE_ACCOUNT','--config',str(local),secret=key)
     urls=re.findall(r'https://[a-z0-9-]+\.[a-z0-9-]+\.workers\.dev',result)

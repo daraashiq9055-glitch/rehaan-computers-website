@@ -89,3 +89,62 @@ test('scheduled centre publications deliver without browser, retain read flags o
  assert.equal(db.sql.prepare('SELECT state FROM publications').get().state,'deleted');db.sql.close();
 });
 test('Firestore codec retains precise timestamps and nested canonical checklist data',()=>{const original={program:'MS Word',updatedAt:new Date('2026-11-23T12:34:56.789Z'),topics:[{done:false,title:'Notepad'}]};assert.deepEqual(encode(decode({timestampValue:'2026-11-23T12:34:56.123456789Z'})),{timestampValue:'2026-11-23T12:34:56.123456789Z'});const value=decode(encode(original));assert.equal(value.updatedAt.toMillis(),original.updatedAt.getTime());assert.deepEqual(value.topics,original.topics);});
+
+test('shared weekly competition uses confirmed Journey history, 8 correct = 8 points, and one frozen public podium',async()=>{
+ const db=database();db.sql.exec(file('migrations/0003_competition.sql'));
+ const environment=env(db),server=store();
+ const {shortcutDrafts}=await import('../backend/student-portal/shortcut-drafts.mjs');
+ const {dailyMix}=await import('../backend/student-portal/competition.mjs');
+ assert.deepEqual(dailyMix('MS Word',[]),[{program:'MS Word',count:10}]);
+ assert.deepEqual(dailyMix('MS Word',[{title:'WordPad',done:true}]),[{program:'WordPad',count:6},{program:'MS Word',count:4}]);
+ for(const student of ['alpha','beta']){
+  server.docs.get('studentPortalViews/student-'+student).journey={topics:['Computer basics','Notepad','WordPad'].map(title=>({title,done:true}))};
+ }
+ const run=async(path,user='admin-0001',method='GET',input,day='2026-11-23')=>{
+  const response=await call(environment,path,user,method,input,day,server);
+  assert.equal(response.status,200,JSON.stringify(response.data));return response.data;
+ };
+ const initial=await run('/admin/competition');assert.deepEqual(initial.subjects.map(s=>s.missing),[21,21,28]);
+ for(const {program,needed} of initial.subjects){
+  const drafts=shortcutDrafts(program).slice(0,needed);
+  await run('/admin/questions/import','admin-0001','POST',{questions:drafts});
+  const pending=(await run('/admin/questions')).questions.filter(q=>q.program===program);
+  const batch={questions:pending.map(q=>({id:q.id,revision:q.revision}))};
+  assert.equal((await run('/admin/questions/approve-group','admin-0001','POST',batch)).approved,needed);
+  assert.equal((await call(environment,'/admin/questions/approve-group','admin-0001','POST',batch)).status,409);
+ }
+ await run('/admin/competition/open','admin-0001','POST',{});
+ const ids=new Set();
+ for(const [user,points] of [['student-alpha',8],['student-beta',9]]){
+  assert.equal((await run('/competition/me',user)).rank,null);
+  const attempt=await run('/competition/today',user),again=await run('/competition/today',user);
+  assert.deepEqual(again,attempt);assert.equal(attempt.questions.length,10);
+  assert.deepEqual(['Notepad','WordPad','MS Word'].map(p=>attempt.questions.filter(q=>q.program===p).length),[3,3,4]);
+  assert(attempt.questions.every(q=>q.options.length===4&&!('answer'in q)&&!('explanation'in q)));
+  const answers=attempt.questions.map((q,i)=>{
+   if(user==='student-alpha')ids.add(q.id);
+   const key=db.sql.prepare('SELECT answer FROM question_bank WHERE id=?').get(q.id).answer;
+   return i<points?key:i===9?null:(key+1)%4;
+  });
+  const submit=(choices)=>run('/competition/submit',user,'POST',{day:attempt.day,answers:choices});
+  const result=await submit(answers);
+  assert.equal(result.score,points);assert.equal(result.stats.points,points);assert.equal(result.rank,1);
+  assert.equal(result.weeklyTotal,points);assert.equal(result.points,points);assert.equal(result.explanations.length,10);
+  assert.equal((await submit(Array(10).fill(0))).stats.points,points);
+ }
+ const now=await run('/competition/me','student-alpha');
+ assert.equal(now.rank,2);assert.equal(now.students.length,2);assert(now.students[1].mine);
+ const tomorrow=await run('/competition/today','student-alpha','GET',undefined,'2026-11-24');
+ assert(tomorrow.questions.every(q=>!ids.has(q.id)));
+ assert.equal((await run('/competition/published')).published,false);
+ const week={week:initial.week};
+ assert.equal((await call(environment,'/admin/competition/publish','admin-0001','POST',week)).status,409);
+ await run('/admin/competition/preview','admin-0001','POST',week,'2026-11-30');
+ await run('/admin/competition/publish','admin-0001','POST',week,'2026-11-30');
+ await run('/admin/competition/publish','admin-0001','POST',week,'2026-11-30');
+ const official=await run('/competition/published');
+ assert.deepEqual(official.students.map(r=>r.score),[9,8]);assert(!('uid'in official.students[0]));
+ const recognition=await run('/competition/me','student-alpha','GET',undefined,'2026-11-30');
+ assert.deepEqual(recognition.podium,[{week:initial.week,rank:2}]);assert.equal(recognition.points,8);
+ db.sql.close();
+});

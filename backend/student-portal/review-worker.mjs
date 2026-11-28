@@ -1,3 +1,5 @@
+import {shortcutDrafts} from './shortcut-drafts.mjs';
+import {competition} from './competition.mjs';
 import teacherDrafts from './question-drafts.json' with {type:'json'};
 import {handleRequest,student,admin,HttpError,publishLeaderboard} from './worker.mjs';
 import {indiaDay,programs} from './quiz-core.mjs';
@@ -20,13 +22,38 @@ export async function handleReview(request,env,fetcher=fetch,storeOverride=null,
  if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
  try{
   configured(env);const ip=request.headers.get('CF-Connecting-IP');if(!ip||!env.QUIZ_LIMITER)throw new HttpError(503,'Request protection unavailable.');if(!(await env.QUIZ_LIMITER.limit({key:ip})).success)throw new HttpError(429,'Please wait before retrying.');
-  const path=new URL(request.url).pathname,isAdmin=path.startsWith('/admin/'),identity=isAdmin?await admin(request,env,fetcher):await student(request,env,fetcher,path==='/quiz/today'||path==='/quiz/me');
+  const path=new URL(request.url).pathname;
+  if(path==='/competition/published'&&request.method==='GET')return reply(await competition({path,method:'GET',env,now}));
+  const isAdmin=path.startsWith('/admin/'),identity=isAdmin?await admin(request,env,fetcher):await student(request,env,fetcher,path==='/quiz/today'||path==='/quiz/me');
   const uid=isAdmin?identity:identity.uid;if(!(isAdmin?adminUids(env):reviewUids(env)).includes(uid))throw new HttpError(403,'This account is not enrolled in private review.');
   const store=()=>storeOverride||serverStore(env,fetcher);
+  if(path.startsWith('/competition/')||path.startsWith('/admin/competition')){
+   return reply(await competition({path,method:request.method,env,identity,input:request.method==='POST'?await body(request):null,now,store}));
+  }
   if(path==='/admin/status'&&request.method==='GET')return reply({reviewOnly:true,quizEnabled:JSON.parse((await env.DB.prepare("SELECT value FROM review_settings WHERE id='activation'").first())?.value||'null'),readiness:readiness(await bankRows(env.DB)),serverSyncConfigured:Boolean(env.FIREBASE_SERVICE_ACCOUNT),students:reviewUids(env).length,sync:(await env.DB.prepare("SELECT id,value FROM review_settings WHERE id LIKE 'sync:%'").all()).results||[]});
+  if(path==='/admin/shortcut-drafts'&&request.method==='GET')return reply({questions:shortcutDrafts(new URL(request.url).searchParams.get('program'))});
   if(path==='/admin/questions/drafts'&&request.method==='GET')return reply(teacherDrafts);
   if(path==='/admin/questions'&&request.method==='GET')return reply({questions:await bankRows(env.DB),readiness:readiness(await bankRows(env.DB))});
   if(path==='/admin/questions'&&request.method==='POST')return reply(await saveQuestion(env.DB,await body(request),uid));
+  if(path==='/admin/questions/approve-group'&&request.method==='POST'){
+   const {questions}=await body(request);
+   if(!Array.isArray(questions)||!questions.length||questions.length>1000)throw new HttpError(400,'Select 1–1000 reviewed drafts.');
+   const bank=new Map((await bankRows(env.DB)).map(q=>[q.id,q]));
+   const ids=new Set();
+   for(const item of questions){
+    const q=bank.get(item?.id);
+    if(!q||ids.has(q.id)||q.revision!==item.revision||!['Draft','Review'].includes(q.status))throw new HttpError(409,'The bank changed. Refresh and review the updated questions.');
+    normalizeQuestion({...q,status:'Review'},uid,q);ids.add(q.id);
+   }
+   const saved=await env.DB.prepare(`WITH reviewed AS MATERIALIZED (
+    SELECT q.id FROM question_bank q JOIN json_each(?) j ON q.id=json_extract(j.value,'$.id')
+    WHERE q.revision=json_extract(j.value,'$.revision') AND q.status IN ('Draft','Review'))
+    UPDATE question_bank SET status='Approved',active=1,reviewed_by=?,reviewed_at=?,updated_at=?,revision=revision+1
+    WHERE id IN (SELECT id FROM reviewed) AND (SELECT COUNT(*) FROM reviewed)=?`)
+    .bind(JSON.stringify(questions),uid,now.toISOString(),now.toISOString(),questions.length).run();
+   if(saved.meta.changes!==questions.length)throw new HttpError(409,'The bank changed. Refresh and review the updated questions.');
+   return reply({approved:questions.length});
+  }
   if(path==='/admin/questions/import'&&request.method==='POST'){
    const input=await body(request);if(!Array.isArray(input.questions)||input.questions.length>100||!input.questions.length)throw Error('Import 1–100 questions at a time.');
    const rows=input.questions.map(row=>normalizeQuestion({...row,id:row.id||crypto.randomUUID().replaceAll('-',''),status:'Draft'},uid));

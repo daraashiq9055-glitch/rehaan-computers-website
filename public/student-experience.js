@@ -1,3 +1,4 @@
+import {rankPanel,standingsPanel,achievements} from './student-competition.js';
 import {studentPrograms,programLabel} from './student-programs.js';
 import {stages,dailyQuestions,practiceQuestions} from './student-quiz.js';
 import {learningGroups,sampleUpdates,updateFilters} from './student-portal-data.js';
@@ -14,6 +15,7 @@ const escapeText=value=>String(value).replace(/[&<>"']/g,char=>({'&':'&amp;','<'
 function readState(){try{const value=JSON.parse(localStorage.getItem(storageKey)||'{}');return value&&typeof value==='object'&&!Array.isArray(value)?value:{};}catch{return {};}}
 let state=readState(),currentStage='',mainQuestions=[],practiceBank=[],practiceIndex=0,practiceAnswered=false,mainAnswered=false,homeMode='dashboard',activeTab='home',updateFilter='All';
 let learnedRequests=null,stopLearnedRequests=null;
+let statsRead=0,rankMoved=false,milestone='';
 let quizStatusError='',quizStartError='',openingFor='';
 let liveView=null,liveUid='',liveUpdates=[],liveMessages=[],liveSelection=null,selectionReady=false,followedHere=false,liveQuiz=null,liveStats=null,liveQuizAnswers=[],liveQuizIndex=0,liveUpdateError='',liveMessageError='',liveSelectionError='',liveSession=false,stopLiveWatch=null,stopLiveUpdates=null,stopLiveMessages=null,stopLiveSelection=null,loginBusy=false;
 function saveState(){try{localStorage.setItem(storageKey,JSON.stringify(state));}catch{/* Preview still works without browser storage, but an attempt may not survive reload. */}}
@@ -58,7 +60,7 @@ async function logout(){
  if(stopLiveUpdates){stopLiveUpdates();stopLiveUpdates=null;}
  if(stopLiveMessages){stopLiveMessages();stopLiveMessages=null;}
  if(stopLiveSelection){stopLiveSelection();stopLiveSelection=null;}
- const wasLive=liveSession;liveSession=false;quizStatusError='';quizStartError='';openingFor='';liveView=null;liveUid='';liveUpdates=[];liveMessages=[];liveSelection=null;liveQuiz=null;liveStats=null;liveQuizAnswers=[];
+ const wasLive=liveSession;liveSession=false;statsRead++;rankMoved=false;milestone='';quizStatusError='';quizStartError='';openingFor='';liveView=null;liveUid='';liveUpdates=[];liveMessages=[];liveSelection=null;liveQuiz=null;liveStats=null;liveQuizAnswers=[];
  $('#studentImageDialog').close();$('#studentImageDialog img').removeAttribute('src');
  $('#studentUpdateDialog').close();$('#studentUpdateDetails').replaceChildren();
  $('#demoContent').replaceChildren();
@@ -99,18 +101,41 @@ function liveSetup(){
  $('#setupLogout')?.addEventListener('click',logout);
  $('#setupLearning')?.addEventListener('submit',async event=>{event.preventDefault();const form=event.currentTarget,button=form.querySelector('button');button.disabled=true;try{const auth=await import('./student-portal-auth.js?v=20261127-portal-9');if(liveUid!==uid)return;await auth.setStudentSelection(uid,$('#setupProgram').value);}catch(error){form.querySelector('[role=status]').textContent=error.message;}finally{button.disabled=false;}});
 }
+function acceptStats(stats){
+ rankMoved=!!liveStats?.rank&&!!stats.rank&&liveStats.rank!==stats.rank;
+ const newest=stats.badges?.at(-1);
+ if(newest&&newest!=='Learner'&&liveUid){
+  const key='rc-competition-badge:'+liveUid;
+  try{if(localStorage.getItem(key)!==newest){milestone=newest;localStorage.setItem(key,newest);}}catch{}
+ }
+ liveStats=stats;
+}
+function showMilestone(){
+ if(!milestone)return;
+ const note=document.createElement('p');note.className='milestone-toast';note.setAttribute('role','status');note.textContent='Congratulations · '+milestone+' achieved';milestone='';
+ $('#demoContent').prepend(note);setTimeout(()=>note.remove(),4000);
+}
 async function refreshLiveStats(){
  if(!liveSession||!quizServiceConfig.enabled)return;
- const uid=liveUid;
+ const uid=liveUid,read=++statsRead;
  try{
   const auth=await import('./student-portal-auth.js?v=20261127-portal-9');
-  const stats=await quizRequest('/quiz/me',{token:await auth.studentIdToken(uid)});
-  if(!liveSession||liveUid!==uid)return;
-  quizStatusError='';liveStats=stats;
-  if(activeTab==='home'&&homeMode==='dashboard')showPanel('home');
+  const stats=await quizRequest(quizServiceConfig.competition?'/competition/me':'/quiz/me',{token:await auth.studentIdToken(uid)});
+  if(!liveSession||liveUid!==uid||read!==statsRead)return;
+  quizStatusError='';acceptStats(stats);
+  if(activeTab==='home'&&homeMode==='dashboard'){
+   const expanded=$('.weekly-standings details')?.open;
+   showPanel('home');if(expanded&&$('.weekly-standings details'))$('.weekly-standings details').open=true;
+  }
+  if(activeTab==='home'&&homeMode==='liveQuiz'&&liveQuiz?.completed){
+   const panel=$('.my-week-rank'),board=$('.weekly-standings'),expanded=board?.querySelector('details')?.open;
+   if(panel)panel.outerHTML=rankPanel(stats,rankMoved);
+   if(board){board.outerHTML=standingsPanel(stats);$('.weekly-standings details').open=Boolean(expanded);}
+   rankMoved=false;showMilestone();
+  }
  }catch(error){
-  if(!liveSession||liveUid!==uid)return;
-  liveStats=null;quizStatusError=error.message||'Connection failed.';
+  if(!liveSession||liveUid!==uid||read!==statsRead)return;
+  quizStatusError=error.message||'Connection failed.';
   if(activeTab==='home'&&homeMode==='dashboard')showPanel('home');
  }
 }
@@ -165,14 +190,23 @@ function renderLivePanel(name){
   $('#demoContent').innerHTML=`<section class="student-home"><article class="learn-welcome"><span class="eyebrow">YOUR LEARNING SPACE</span><h2>Welcome back, ${escapeText((profile.name||'Student').split(' ')[0])}</h2><p>ADM ${escapeText(profile.admissionNumber||'—')} · ${escapeText(batch)}</p><div class="current-pill"><span>Currently learning</span><b>${escapeText(programLabel(journey.currentProgram||liveSelection?.program||course))}</b></div></article>${verified?`<div class="reward-strip"><article><small>STREAK</small><strong>${Number(liveStats.streak)||0} days</strong></article><article><small>POINTS</small><strong>${Number(liveStats.points)||0}</strong></article><article><small>LEAGUE RANK</small><strong>${liveStats.ranks?.weekly?.rank?'#'+Number(liveStats.ranks.weekly.rank):'—'}</strong></article></div>`:''}<article class="learn-badges"><div><small>ACHIEVEMENTS</small><span>${earned.length?'Verified achievements':'Locked until the official quiz opens'}</span></div><div class="badge-levels">${['Learner','Bronze','Silver','Gold','Platinum','Diamond'].map(level=>`<span class="badge-level ${earned.includes(level)?'earned':''}"><i aria-hidden="true">◇</i>${level}${earned.includes(level)?' ✓':''}</span>`).join('')}</div>${earned.filter(level=>!['Learner','Bronze','Silver','Gold','Platinum','Diamond'].includes(level)).map(level=>`<span class="verified-award">${escapeText(level)}</span>`).join('')}</article><article class="student-latest"><small>TODAY AT RC LEARN</small><strong>${escapeText(liveUpdates[0]?.title||'You are up to date')}</strong><p>${escapeText(liveUpdates[0]?.details?.slice(0,130)||'Your published class updates will appear here.')}</p><button type="button" id="openLatest">Open Updates →</button></article><div class="student-quick-grid learn-summary"><div><small>FEE PENDING</small><b>${fees.statement?liveMoney(fees.statement.due):'Awaiting review'}</b></div><div><small>ATTENDANCE</small><b>${latest?`${latest.attended} / ${latest.classes||'—'} classes`:'Not recorded'}</b></div></div><article class="student-quiz-entry demo-panel"><div class="student-quiz-icon" aria-hidden="true">✦</div><div><small>OFFICIAL WEEKLY QUIZ</small><h3>${quizAvailable?'Your next challenge':'Quiz will open after teacher approval'}</h3><p>${quizAvailable?'10 reviewed questions. One final submission.':'Your centre will announce the first reviewed weekly quiz.'}</p></div><button class="gold-button" type="button" id="liveQuizButton" ${quizAvailable?'':'disabled'}>${quizAvailable?'Participate in quiz':'Locked'}</button></article></section>`;
   const quizCard=$('.student-quiz-entry');
   $('.learn-welcome').after(quizCard);
+  if(quizServiceConfig.competition){
+   const header=document.createElement('section');header.className='competition-pair';
+   quizCard.before(header);header.append(quizCard);header.insertAdjacentHTML('beforeend',rankPanel(liveStats,rankMoved));rankMoved=false;
+   header.insertAdjacentHTML('afterend',standingsPanel(liveStats));
+   const badgeBox=$('.learn-badges');if(badgeBox)badgeBox.innerHTML=achievements(liveStats);
+   $('.reward-strip')?.remove();showMilestone();
+  }
   if(quizAvailable){
    const programme=liveSelection?.program;
-   quizCard.querySelector('h3').textContent=programme?programLabel(programme)+' quiz':'Today’s quiz';
+   quizCard.querySelector('h3').textContent=quizServiceConfig.competition?'Official Quiz':programme?programLabel(programme)+' quiz':'Today’s quiz';
    const detail=quizCard.querySelector('p');
    detail.setAttribute('role','status');
-   detail.textContent=quizStartError||quizStatusError||'10 questions · Score after submission';
-   const start=$('#liveQuizButton');start.disabled=openingFor===liveUid;
-   start.textContent=start.disabled?'Opening quiz…':quizStartError?'Try again':'Start quiz';
+   const submitted=quizServiceConfig.competition&&liveStats?.todaySubmitted;
+   const closed=quizServiceConfig.competition&&liveStats?.open===false&&!submitted;
+   detail.textContent=quizStartError||quizStatusError||(submitted?'Your score is saved.':closed?'Your centre has not opened this week’s competition.':'10 questions · Score after submission');
+   const start=$('#liveQuizButton');start.disabled=openingFor===liveUid||closed;
+   start.textContent=closed?'Awaiting opening':start.disabled?'Opening quiz…':quizStartError?'Try again':submitted?'View result':'Start quiz';
   }
   const notice=liveUpdates.find(item=>['Announcements','Holidays','Exams'].includes(item.category));
   const noticeCard=document.createElement('button');noticeCard.type='button';noticeCard.className='home-centre-notice';noticeCard.innerHTML=`<small>LATEST CENTRE NOTICE</small><strong>${escapeText(notice?.title||'No centre notice published yet')}</strong><span>View updates →</span>`;noticeCard.onclick=()=>navigate('updates');$('.student-quick-grid').after(noticeCard);
@@ -219,6 +253,20 @@ function renderLiveUpdates(){
  $('#demoContent').querySelectorAll('[data-live-open]').forEach(button=>button.addEventListener('click',()=>{const item=liveUpdates.find(row=>row.id===button.dataset.liveOpen);if(!item)return;$('#studentUpdateDetails').innerHTML=`<small>${escapeText(item.category)} · ${escapeText(String(item.createdAt||'').slice(0,10))} · ${escapeText(item.author)}</small><h2>${escapeText(item.title)}</h2>${safeImage(item)?`<img src="${escapeText(item.image)}" alt="${escapeText(item.title)}">`:''}<p>${escapeText(item.details)}</p>`;$('#studentUpdateDialog').showModal();if(!item.readByStudent)void change(item.id,{readByStudent:true});}));
  $('#demoContent').querySelectorAll('[data-live-image]').forEach(button=>button.addEventListener('click',()=>{const item=liveUpdates.find(row=>row.id===button.dataset.liveImage);if(!item||!safeImage(item))return;const img=$('#studentImageDialog img');img.src=item.image;img.alt=item.title;$('#studentImageDialog').showModal();if(!item.readByStudent)void change(item.id,{readByStudent:true});}));
 }
+function draftKey(quiz){return 'rc-quiz-draft:'+liveUid+':'+quiz.day;}
+function saveLocalChoices(){
+ if(!quizServiceConfig.competition||!liveQuiz||liveQuiz.completed)return;
+ try{sessionStorage.setItem(draftKey(liveQuiz),JSON.stringify({ids:liveQuiz.questions.map(q=>q.id),answers:liveQuizAnswers,index:liveQuizIndex}));}catch{}
+}
+function restoreLocalChoices(quiz){
+ if(!quizServiceConfig.competition||quiz.completed)return;
+ try{
+  const draft=JSON.parse(sessionStorage.getItem(draftKey(quiz)));
+  if(JSON.stringify(draft?.ids)!==JSON.stringify(quiz.questions.map(q=>q.id)))return;
+  if(!Number.isInteger(draft.index)||draft.index<0||draft.index>9||!Array.isArray(draft.answers)||draft.answers.length>10||!draft.answers.every(n=>n===null||(Number.isInteger(n)&&n>=0&&n<4)))return;
+  liveQuizAnswers=draft.answers;liveQuizIndex=draft.index;
+ }catch{}
+}
 async function startOfficialQuiz(){
  if(openingFor===liveUid)return;
  openingFor=liveUid;quizStartError='';
@@ -226,10 +274,10 @@ async function startOfficialQuiz(){
  const uid=liveUid;
  try{
   const auth=await import('./student-portal-auth.js?v=20261127-portal-9'),token=await auth.studentIdToken(uid);
-  const quiz=await quizRequest('/quiz/today',{token});
+  const quiz=await quizRequest(quizServiceConfig.competition?'/competition/today':'/quiz/today',{token});
   if(!liveSession||liveUid!==uid||activeTab!=='home')return;
   if(!Array.isArray(quiz.questions)||quiz.questions.length!==10||quiz.questions.some(item=>!Array.isArray(item.options)||item.options.length!==4))throw Error('The published quiz is incomplete. Contact the centre.');
-  liveQuiz=quiz;liveQuizAnswers=[];liveQuizIndex=0;homeMode='liveQuiz';showPanel('home');history.pushState({portal:'home'},'','#student-quiz');window.scrollTo(0,0);
+  liveQuiz=quiz;liveQuizAnswers=[];liveQuizIndex=0;restoreLocalChoices(quiz);homeMode='liveQuiz';showPanel('home');history.pushState({portal:'home'},'','#student-quiz');window.scrollTo(0,0);
  }catch(error){
   if(!liveSession||liveUid!==uid)return;
   const programme=liveSelection?.program;
@@ -247,6 +295,12 @@ function renderLiveQuiz(){
  if(!liveQuiz)return;
  if(liveQuiz.completed){
   $('#demoContent').innerHTML=`<section class="student-section"><button class="student-back" type="button" id="backHome">← Home</button><div class="quiz-finish demo-panel"><span class="eyebrow">VERIFIED DAILY QUIZ · COMPLETE</span><h2>${Number(liveQuiz.score)||0} / 10 correct</h2><p>Your result is saved by the quiz service. Points earned: ${Number(liveQuiz.points)||0}.</p></div><div class="journey-timeline">${liveQuiz.questions.map((item,index)=>{const answer=liveQuiz.selectedAnswers?.[index],correct=liveQuiz.correctAnswers?.[index];return `<article class="journey-step ${answer===correct?'done':'later'}"><span>${String(index+1).padStart(2,'0')}</span><div><b>${escapeText(item.question)}</b><small>${answer===correct?'Correct ✓':`Your answer: ${escapeText(item.options?.[answer]||'—')} · Correct: ${escapeText(item.options?.[correct]||'—')}`}</small><ol class="official-answer-review">${item.options.map((option,position)=>`<li class="${position===correct?'is-correct':position===answer?'is-wrong':''}"><span>${'ABCD'[position]}. ${escapeText(option)}</span>${position===correct?'<b>✓ Correct answer</b>':position===answer?'<b>✕ Your answer</b>':''}</li>`).join('')}</ol></div></article>`;}).join('')}</div></section>`;
+  if(quizServiceConfig.competition&&liveStats){
+   $('.quiz-finish').insertAdjacentHTML('afterend',rankPanel(liveStats,rankMoved)+standingsPanel(liveStats));rankMoved=false;showMilestone();
+   for(const [i,card] of [...document.querySelectorAll('.official-answer-review')].entries()){
+    const reason=document.createElement('p');reason.textContent=liveQuiz.explanations?.[i]||'';card.after(reason);
+   }
+  }
   $('#backHome').addEventListener('click',backHome);return;
  }
  const index=liveQuizIndex,item=liveQuiz.questions[index];if(!item)return;
@@ -255,7 +309,7 @@ function renderLiveQuiz(){
  $('#backHome').addEventListener('click',backHome);
  const choices=[...$('#demoContent').querySelectorAll('[data-official-option]')];
  choices.forEach((choice,position)=>choice.onclick=()=>{
-  liveQuizAnswers[index]=position;
+  liveQuizAnswers[index]=position;saveLocalChoices();
   for(const option of choices){
    option.classList.toggle('selected',option===choice);
    option.setAttribute('aria-pressed',String(option===choice));
@@ -264,15 +318,20 @@ function renderLiveQuiz(){
   $('#officialNext').disabled=false;
   $('#officialFeedback').textContent='✓ Selected '+ 'ABCD'[position]+': '+item.options[position]+' · '+liveQuizAnswers.length+' of 10 answered. '+(index===9?'Submit to see your score and correct answers.':'Tap another option to change, or Next question to continue.');
  });
+ if(quizServiceConfig.competition&&chosen===undefined){
+  const skip=document.createElement('button');skip.type='button';skip.className='student-back';skip.textContent='Leave unanswered';
+  $('#officialNext').after(skip);skip.onclick=()=>{liveQuizAnswers[index]=null;const next=$('#officialNext');next.disabled=false;next.click();};
+ }
  $('#officialNext').addEventListener('click',async()=>{
-  if(index<9){liveQuizIndex++;renderLiveQuiz();window.scrollTo({top:0,behavior:state.reduceMotion||matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});return;}
+  if(index<9){liveQuizIndex++;saveLocalChoices();renderLiveQuiz();window.scrollTo({top:0,behavior:state.reduceMotion||matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});return;}
   const button=$('#officialNext');button.disabled=true;choices.forEach(choice=>choice.disabled=true);$('#officialFeedback').textContent='Submitting your final answers…';
   const uid=liveUid,quizDay=liveQuiz.day;
   try{
    const auth=await import('./student-portal-auth.js?v=20261127-portal-9');
-   const result=await quizRequest('/quiz/submit',{method:'POST',body:{day:quizDay,answers:liveQuizAnswers},token:await auth.studentIdToken(uid)});
+   const result=await quizRequest(quizServiceConfig.competition?'/competition/submit':'/quiz/submit',{method:'POST',body:{day:quizDay,answers:liveQuizAnswers},token:await auth.studentIdToken(uid)});
    if(!liveSession||liveUid!==uid)return;
-   liveQuiz=result;
+   try{sessionStorage.removeItem(draftKey(liveQuiz));}catch{}
+   liveQuiz=result;if(result.stats){statsRead++;acceptStats(result.stats);}
    if(activeTab==='home'&&homeMode==='liveQuiz')renderLiveQuiz();
    void refreshLiveStats();
   }
@@ -365,18 +424,20 @@ let leaguePeriod='weekly',leaderboardRequest=0;
 async function refreshLeaderboard(){
  const request=++leaderboardRequest;
  try{
-  let students=[];
-  if(quizServiceConfig.enabled){const official=await publicLeaderboard(leaguePeriod);if(request!==leaderboardRequest)return;if(official?.published)students=official.students.filter(row=>row&&typeof row.name==='string'&&Number.isFinite(Number(row.score))&&Number(row.score)>=0).slice(0,10).map(row=>({name:row.name,display:leaguePeriod==='overall'?`${Number(row.score)} pts`:`${(row.quizDays?Number(row.score)/(Number(row.quizDays)*10)*100:0).toFixed(1)}%`}));}
+  let students=[],publication=null;
+  if(quizServiceConfig.enabled){const official=await publicLeaderboard(leaguePeriod);if(request!==leaderboardRequest)return;publication=official;if(official?.published)students=official.students.filter(row=>row&&typeof row.name==='string'&&Number.isFinite(Number(row.score))&&Number(row.score)>=0).slice(0,10).map(row=>({name:row.name,display:quizServiceConfig.competition||leaguePeriod==='overall'?`${Number(row.score)} pts`:`${(row.quizDays?Number(row.score)/(Number(row.quizDays)*10)*100:0).toFixed(1)}%`}));}
 
   if(!students.length){if(!$('.league-section').hidden){document.querySelectorAll('.podium').forEach(element=>{element.querySelector('small').textContent='—';element.querySelector('b').textContent='—';element.querySelector('.avatar').textContent='✦';});$('.demo-ranks').innerHTML='';$('.league-footnote').textContent='No results published yet.';}return;}
   $('.league-section').hidden=false;const top=document.querySelectorAll('.podium');
   for(const [index,position] of [1,0,2].entries()){const element=top[index],row=students[position];if(!element)continue;element.querySelector('small').textContent=row?.name||'—';element.querySelector('b').textContent=row?.display||'—';element.querySelector('.avatar').textContent=row?.name?.trim().charAt(0).toUpperCase()||'✦';}
   $('.demo-ranks').innerHTML=students.slice(3).map((row,index)=>`<li><span>${String(index+4).padStart(2,'0')}</span><b>${escapeText(row.name)}</b><strong>${escapeText(row.display)}</strong></li>`).join('');
-  $('.league-section .eyebrow').textContent=leaguePeriod==='weekly'?'WEEKLY RESULTS':'OVERALL POINTS';$('.league-section .live-tag').textContent='Reviewed standings';$('.league-footnote').textContent='Standings refresh automatically every minute while this page is open.';
- }catch{/* Keep visible results when offline. */}
+  $('.league-section .eyebrow').textContent=leaguePeriod==='weekly'?'WEEKLY RESULTS':'OVERALL POINTS';$('.league-section .live-tag').textContent='Reviewed standings';$('.league-footnote').textContent=publication?.week?'Week of '+publication.week+' · Published '+new Date(publication.publishedAt).toLocaleDateString('en-IN',{timeZone:'Asia/Kolkata'}):'Standings refresh automatically every minute while this page is open.';
+ }catch{if(quizServiceConfig.competition) $('.league-footnote').textContent='Could not refresh the published standings. Retrying automatically.';}
 }
 document.querySelectorAll('[data-league-period]').forEach(button=>button.addEventListener('click',()=>{leaguePeriod=button.dataset.leaguePeriod;document.querySelectorAll('[data-league-period]').forEach(item=>{const active=item===button;item.classList.toggle('active',active);item.setAttribute('aria-pressed',String(active));});void refreshLeaderboard();}));
-refreshLeaderboard();setInterval(()=>{void refreshLeaderboard();void refreshLiveStats();},60_000);
+if(quizServiceConfig.competition)document.querySelector('[data-league-period="overall"]').hidden=true;
+function refreshVisible(){if(document.hidden)return;if(liveSession)void refreshLiveStats();else void refreshLeaderboard();}
+refreshVisible();setInterval(refreshVisible,60_000);document.addEventListener('visibilitychange',refreshVisible);window.addEventListener('pageshow',refreshVisible);
 
 // Public notices must be explicitly published; private student updates stay private.
 void (async()=>{try{const response=await fetch('student-centre-updates.json',{cache:'no-store'});if(!response.ok)return;const data=await response.json();if(data.published!==true||!Array.isArray(data.updates))return;const rows=data.updates.filter(row=>typeof row.title==='string'&&typeof row.details==='string').slice(0,10);if(rows.length)$('#publicCentreUpdates').innerHTML=rows.map(row=>`<article class="update-card"><div><small>${escapeText(row.category||'CENTRE NOTICE')}</small><h3>${escapeText(row.title)}</h3><p>${escapeText(row.details)}</p></div></article>`).join('');}catch{}})();
