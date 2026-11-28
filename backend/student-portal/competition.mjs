@@ -67,6 +67,13 @@ function result(row){
  return {day:row.day,program:row.program,questions:publicQuestions(paper),completed,score:row.score,points:row.score,
   ...(completed?{selectedAnswers:JSON.parse(row.choices),correctAnswers:paper.map(q=>q.answer),explanations:paper.map(q=>q.explanation)}:{})};
 }
+function shuffle(items){
+ for(let i=items.length-1;i>0;i--){
+  const j=Math.floor(Math.random()*(i+1));
+  [items[i],items[j]]=[items[j],items[i]];
+ }
+ return items;
+}
 async function attempt(db,uid,name,week,day,store){
  const saved=()=>query(db,'SELECT * FROM competition_attempts WHERE uid=? AND day=?',uid,day).first();
  const existing=await saved();if(existing)return result(existing);
@@ -78,11 +85,12 @@ async function attempt(db,uid,name,week,day,store){
  const bank=(await bankRows(db)).filter(approved),paper=[];
  for(const {program,count} of profile.mix){
   const pool=bank.filter(r=>r.program===program&&!used.has(normalized(r.question)));
-  for(let i=pool.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[pool[i],pool[j]]=[pool[j],pool[i]];}
+  shuffle(pool);
   const start=paper.length;
   for(const q of pool){
    const key=normalized(q.question);if(used.has(key))continue;
-   used.add(key);paper.push({id:q.id,program,question:q.question,options:q.options,answer:q.answer,explanation:q.explanation});
+   const order=shuffle([0,1,2,3]);
+   used.add(key);paper.push({id:crypto.randomUUID(),program,question:q.question,options:order.map(i=>q.options[i]),answer:order.indexOf(q.answer),explanation:q.explanation});
    if(paper.length-start===count)break;
   }
   if(paper.length-start<count)throw new HttpError(409,program+' needs '+(count-paper.length+start)+' more approved questions for your attempt.');

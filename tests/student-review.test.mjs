@@ -122,8 +122,9 @@ test('shared weekly competition uses confirmed Journey history, 8 correct = 8 po
   assert.deepEqual(['Notepad','WordPad','MS Word'].map(p=>attempt.questions.filter(q=>q.program===p).length),[3,3,4]);
   assert(attempt.questions.every(q=>q.options.length===4&&!('answer'in q)&&!('explanation'in q)));
   const answers=attempt.questions.map((q,i)=>{
-   if(user==='student-alpha')ids.add(q.id);
-   const key=db.sql.prepare('SELECT answer FROM question_bank WHERE id=?').get(q.id).answer;
+   if(user==='student-alpha')ids.add(q.question);
+   const bank=db.sql.prepare('SELECT options_json,answer FROM question_bank WHERE question=?').get(q.question);
+   const key=q.options.indexOf(JSON.parse(bank.options_json)[bank.answer]);assert(key>=0);
    return i<points?key:i===9?null:(key+1)%4;
   });
   const submit=(choices)=>run('/competition/submit',user,'POST',{day:attempt.day,answers:choices});
@@ -134,8 +135,11 @@ test('shared weekly competition uses confirmed Journey history, 8 correct = 8 po
  }
  const now=await run('/competition/me','student-alpha');
  assert.equal(now.rank,2);assert.equal(now.students.length,2);assert(now.students[1].mine);
- const tomorrow=await run('/competition/today','student-alpha','GET',undefined,'2026-11-24');
- assert(tomorrow.questions.every(q=>!ids.has(q.id)));
+ for(let d=24;d<=29;d++){
+  const next=await run('/competition/today','student-alpha','GET',undefined,'2026-11-'+d);
+  for(const q of next.questions){assert(!ids.has(q.question));ids.add(q.question);}
+ }
+ assert.equal(ids.size,70);
  assert.equal((await run('/competition/published')).published,false);
  const week={week:initial.week};
  assert.equal((await call(environment,'/admin/competition/publish','admin-0001','POST',week)).status,409);
