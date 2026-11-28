@@ -1,4 +1,4 @@
-import {shortcutDrafts} from './shortcut-drafts.mjs';
+import {competitionDrafts} from './shortcut-drafts.mjs';
 import {competition} from './competition.mjs';
 import teacherDrafts from './question-drafts.json' with {type:'json'};
 import {handleRequest,student,admin,HttpError,publishLeaderboard} from './worker.mjs';
@@ -27,11 +27,11 @@ export async function handleReview(request,env,fetcher=fetch,storeOverride=null,
   const isAdmin=path.startsWith('/admin/'),identity=isAdmin?await admin(request,env,fetcher):await student(request,env,fetcher,path==='/quiz/today'||path==='/quiz/me');
   const uid=isAdmin?identity:identity.uid;if(!(isAdmin?adminUids(env):reviewUids(env)).includes(uid))throw new HttpError(403,'This account is not enrolled in private review.');
   const store=()=>storeOverride||serverStore(env,fetcher);
-  if(path.startsWith('/competition/')||path.startsWith('/admin/competition')){
+  if(path.startsWith('/competition/')||(path==='/admin/competition'||path.startsWith('/admin/competition/'))){
    return reply(await competition({path,method:request.method,env,identity,input:request.method==='POST'?await body(request):null,now,store}));
   }
   if(path==='/admin/status'&&request.method==='GET')return reply({reviewOnly:true,quizEnabled:JSON.parse((await env.DB.prepare("SELECT value FROM review_settings WHERE id='activation'").first())?.value||'null'),readiness:readiness(await bankRows(env.DB)),serverSyncConfigured:Boolean(env.FIREBASE_SERVICE_ACCOUNT),students:reviewUids(env).length,sync:(await env.DB.prepare("SELECT id,value FROM review_settings WHERE id LIKE 'sync:%'").all()).results||[]});
-  if(path==='/admin/shortcut-drafts'&&request.method==='GET')return reply({questions:shortcutDrafts(new URL(request.url).searchParams.get('program'))});
+  if(path==='/admin/competition-drafts'&&request.method==='GET')return reply({questions:competitionDrafts(new URL(request.url).searchParams.get('program'))});
   if(path==='/admin/questions/drafts'&&request.method==='GET')return reply(teacherDrafts);
   if(path==='/admin/questions'&&request.method==='GET')return reply({questions:await bankRows(env.DB),readiness:readiness(await bankRows(env.DB))});
   if(path==='/admin/questions'&&request.method==='POST')return reply(await saveQuestion(env.DB,await body(request),uid));

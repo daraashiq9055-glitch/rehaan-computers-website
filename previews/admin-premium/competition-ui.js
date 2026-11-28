@@ -1,6 +1,6 @@
 import {basicsExercises} from './weekly-bank.js';
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-export function competitionDesk(host,api){
+export function competitionDesk(host,api,onBank=()=>{}){
  const panel=document.createElement('section');
  panel.className='weekly-approval';
  panel.innerHTML='<h3>Weekly competition</h3><p role="status">Loading competition…</p><div class="competition-controls"></div>';
@@ -17,11 +17,13 @@ export function competitionDesk(host,api){
  async function render(){
   const [state,bank]=await Promise.all([api('/admin/competition'),api('/admin/questions')]);
   if(!panel.isConnected)return;
+  onBank(bank.questions);
   const pending=program=>bank.questions.filter(q=>q.program===program&&['Draft','Review'].includes(q.status)&&
    (!['Notepad','WordPad','MS Word'].includes(program)||/shortcut|keystroke|ctrl\+|shift\+|alt\+/i.test(q.question)));
   status.textContent='Week of '+state.week+' · '+state.eligibleCount+' eligible students · '+(state.open?'Open':'Waiting to open');
   const groups=state.subjects.flatMap(s=>pending(s.program));
-  controls.innerHTML=`<div data-panel="bank"><button data-approve-all ${groups.length?'':'disabled'}>Approve all reviewed subjects (${groups.length})</button>`+state.subjects.map(s=>`<details><summary>${esc(s.program)} · ${s.approved}/${s.needed} approved · ${s.missing} needed</summary>
+  const short=state.subjects.filter(s=>s.missing>pending(s.program).length);
+  controls.innerHTML=`<div data-panel="bank"><button data-prepare-all ${short.length?'':'disabled'}>Prepare all missing drafts</button><button data-approve-all ${groups.length?'':'disabled'}>Approve all reviewed subjects (${groups.length})</button>`+state.subjects.map(s=>`<details><summary>${esc(s.program)} · ${s.approved}/${s.needed} approved · ${s.missing} needed</summary>
    <button data-prepare="${esc(s.program)}">Prepare missing drafts</button>
    <button data-approve-subject="${esc(s.program)}" ${!pending(s.program).length?'disabled':''}>Approve reviewed drafts (${pending(s.program).length})</button>
    ${pending(s.program).map(q=>`<p><b>${esc(q.question)}</b><br>${q.options.map((o,i)=>esc(o)+(i===q.answer?' ✓':'')).join(' · ')}<br>${esc(q.explanation)}</p>`).join('')}</details>`).join('')+
@@ -34,18 +36,27 @@ export function competitionDesk(host,api){
    ${state.completedWeeks.map(w=>`<button data-preview="${w}">Preview podium · ${w}</button>`).join('')}<div id="finalPodium"></div></div>`;
   show(route);
   controls.querySelector('#openCompetition').onclick=()=>task(async()=>{await post('/admin/competition/open');await render();});
-  for(const b of controls.querySelectorAll('[data-prepare]'))b.onclick=()=>task(async()=>{
-   const program=b.dataset.prepare;
-   const shortcuts=await api('/admin/shortcut-drafts?program='+encodeURIComponent(program));
-   const seeds=shortcuts.questions.length?shortcuts.questions:(await api('/admin/questions/drafts')).questions.filter(q=>q.program===program);
+  async function prepareSubject(program){
+   const generated=await api('/admin/competition-drafts?program='+encodeURIComponent(program));
+   const seeds=generated.questions.length?generated.questions:(await api('/admin/questions/drafts')).questions.filter(q=>q.program===program);
    if(program==='Computer basics')seeds.push(...basicsExercises());
    const keys=new Set(bank.questions.map(q=>q.question.trim().toLowerCase())),ids=new Set(bank.questions.map(q=>q.id));
    const missing=state.subjects.find(s=>s.program===program).missing;
    const drafts=seeds.filter(q=>!keys.has(q.question.trim().toLowerCase())&&!ids.has(q.id)).slice(0,Math.max(0,missing-pending(program).length));
    if(drafts.length)await post('/admin/questions/import',{questions:drafts});
    const remaining=Math.max(0,missing-pending(program).length-drafts.length);
-   await render();status.textContent=drafts.length+' new drafts for '+program+'. '+(remaining?'Add or import '+remaining+' more under Manage individual questions and imports.':'Expand the subject to review its four choices, answer and explanation.');
-  });
+   return program+' · '+drafts.length+' new drafts'+(remaining?' · add or import '+remaining+' more':'');
+  }
+  async function prepare(subjects){
+   const messages=[];
+   for(const subject of subjects){
+    status.textContent='Preparing '+subject+' questions…';
+    messages.push(await prepareSubject(subject));
+   }
+   await render();status.textContent=messages.join(' / ')+'. Expand each subject to review its questions, answers and explanations.';
+  }
+  controls.querySelector('[data-prepare-all]').onclick=()=>task(()=>prepare(short.map(s=>s.program)));
+  for(const b of controls.querySelectorAll('[data-prepare]'))b.onclick=()=>task(()=>prepare([b.dataset.prepare]));
   for(const b of controls.querySelectorAll('[data-approve-subject]'))b.onclick=()=>task(async()=>{
    await approve(pending(b.dataset.approveSubject));
   });

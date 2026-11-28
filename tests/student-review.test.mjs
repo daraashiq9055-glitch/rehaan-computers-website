@@ -152,3 +152,16 @@ test('shared weekly competition uses confirmed Journey history, 8 correct = 8 po
  assert.deepEqual(recognition.podium,[{week:initial.week,rank:2}]);assert.equal(recognition.points,8);
  db.sql.close();
 });
+
+test('the teacher can prepare a full subject bank for every later Journey programme',async()=>{
+ const {programs,questionOkay}=await import('../backend/student-portal/quiz-core.mjs');
+ const db=database(),environment=env(db);
+ for(const program of programs.slice(1)){
+  const response=await call(environment,'/admin/competition-drafts?program='+encodeURIComponent(program),'admin-0001');
+  assert.equal(response.status,200);
+  const questions=response.data.questions;
+  assert(questions.length>=70);assert.equal(new Set(questions.map(q=>q.question)).size,questions.length);
+  assert(questions.every(q=>questionOkay(q)&&q.status==='Draft'&&q.question.includes(program)&&q.explanation.length>=5));
+ }
+ db.sql.close();
+});

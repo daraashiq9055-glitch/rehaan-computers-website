@@ -1,3 +1,4 @@
+import courseConcepts from './course-concepts.json' with {type:'json'};
 // Windows desktop defaults. Teachers review these against their installed version.
 const editing=[
  ['Ctrl+C','copy the selected text'],['Ctrl+X','cut the selected text'],['Ctrl+V','paste the clipboard contents'],
@@ -30,5 +31,20 @@ export function shortcutDrafts(program){
    question:reverse?`In ${program} for Windows, what does the shortcut ${key} do when editing text?`:
    `In ${program} for Windows, which keyboard shortcut lets you ${action}?`,options:candidates,answer,
    explanation:`In ${program}, use ${key} to ${action}.`};
+ }));
+}
+
+
+export function competitionDrafts(program){
+ const concepts=Object.hasOwn(courseConcepts,program)?courseConcepts[program]:null;
+ if(!concepts)return shortcutDrafts(program);
+ return concepts.flatMap(([term,description],i)=>[false,true].map(reverse=>{
+  const options=[0,1,2,3].map(offset=>concepts[(i+offset*8)%concepts.length][reverse?1:0]);
+  const answer=(i+Number(reverse))%4;
+  options.unshift(...options.splice(options.length-answer,answer));
+  return {id:'rc-concept-'+program.replace(/\W/g,'').toLowerCase()+'-'+i+'-'+Number(reverse),program,
+   difficulty:'Foundation',status:'Draft',
+   question:reverse?`In ${program}, which description matches “${term}”?`:`In ${program}, which term fits this description? ${description}`,
+   options,answer,explanation:term+' — '+description};
  }));
 }
